@@ -1,0 +1,652 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "_discoveryapis_commons",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/_discoveryapis_commons-1.0.7",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "args",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/args-2.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "async",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/async-2.13.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "audio_session",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/audio_session-0.1.25",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "boolean_selector",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "characters",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/characters-1.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "clock",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/clock-1.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "collection",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/collection-1.19.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "convert",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/convert-3.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "crypto",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/crypto-3.0.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "csslib",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/csslib-1.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "cupertino_icons",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.8",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "device_info_plus",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-9.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
+      "name": "device_info_plus_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus_platform_interface-7.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "fake_async",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/fake_async-1.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "ffi",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/ffi-2.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "file",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/file-7.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "file_picker",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/file_picker-6.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
+    },
+    {
+      "name": "fixnum",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/fixnum-1.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "flutter",
+      "rootUri": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter/packages/flutter",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "flutter_lints",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-5.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "flutter_markdown",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_markdown-0.6.23",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "flutter_plugin_android_lifecycle",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.28",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "flutter_test",
+      "rootUri": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter/packages/flutter_test",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "flutter_web_plugins",
+      "rootUri": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter/packages/flutter_web_plugins",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "google_identity_services_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_identity_services_web-0.3.3+1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "google_sign_in",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in-6.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "google_sign_in_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_android-6.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "google_sign_in_ios",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_ios-5.9.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "google_sign_in_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_platform_interface-2.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "google_sign_in_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_web-0.12.4+4",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "googleapis",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/googleapis-12.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "html",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/html-0.15.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "http",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "http_parser",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "intl",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.19.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "js",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/js-0.7.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "just_audio",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/just_audio-0.9.46",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "just_audio_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/just_audio_platform_interface-4.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "just_audio_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/just_audio_web-0.4.16",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "leak_tracker",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-10.0.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "leak_tracker_flutter_testing",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_flutter_testing-3.0.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "leak_tracker_testing",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_testing-3.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "lints",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/lints-5.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "markdown",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/markdown-7.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "matcher",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.17",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "material_color_utilities",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/material_color_utilities-0.11.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "meta",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.16.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "path",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "path_provider",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider-2.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "path_provider_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_android-2.2.17",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "path_provider_foundation",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_foundation-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "path_provider_linux",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_linux-2.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
+    },
+    {
+      "name": "path_provider_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_platform_interface-2.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "path_provider_windows",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_windows-2.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "petitparser",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/petitparser-6.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "photo_view",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/photo_view-0.14.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "platform",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/platform-3.1.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "plugin_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "rxdart",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/rxdart-0.28.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "sky_engine",
+      "rootUri": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter/bin/cache/pkg/sky_engine",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "source_span",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "sprintf",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sprintf-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "sqflite",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite-2.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "sqflite_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_android-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "sqflite_common",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_common-2.5.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "sqflite_common_ffi",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_common_ffi-2.3.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "sqflite_darwin",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_darwin-2.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "sqflite_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_platform_interface-2.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "sqlite3",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/sqlite3-2.7.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "stack_trace",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/stack_trace-1.12.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "stream_channel",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/stream_channel-2.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "string_scanner",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/string_scanner-1.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "syncfusion_flutter_core",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_core-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_flutter_pdf",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdf-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_flutter_pdfviewer",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdfviewer-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_flutter_signaturepad",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_signaturepad-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_pdfviewer_macos",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_macos-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_pdfviewer_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_platform_interface-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_pdfviewer_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_web-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "syncfusion_pdfviewer_windows",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_windows-24.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "synchronized",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/synchronized-3.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "term_glyph",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/term_glyph-1.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "test_api",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/test_api-0.7.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "typed_data",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/typed_data-1.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "url_launcher",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher-6.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "url_launcher_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.16",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "url_launcher_ios",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_ios-6.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "url_launcher_linux",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_linux-3.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "url_launcher_macos",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_macos-3.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "url_launcher_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_platform_interface-2.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "url_launcher_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_web-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "url_launcher_windows",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_windows-3.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "uuid",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-4.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "vector_math",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/vector_math-2.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.14"
+    },
+    {
+      "name": "video_player",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/video_player-2.10.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "video_player_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.8.7",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "video_player_avfoundation",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_avfoundation-2.7.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "video_player_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_platform_interface-6.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "video_player_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_web-2.3.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "vm_service",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-15.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/web-1.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "win32",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.14.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "win32_registry",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-1.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "xdg_directories",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/xdg_directories-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "xml",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/xml-6.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "repertoire",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    }
+  ],
+  "generator": "pub",
+  "generatorVersion": "3.8.1",
+  "flutterRoot": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter",
+  "flutterVersion": "3.32.5",
+  "pubCache": "file:///C:/Users/adith/AppData/Local/Pub/Cache"
+}
