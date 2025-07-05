@@ -35,6 +35,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String? _errorMessage;
   String _searchQuery = '';
   Map<String, dynamic> _filterOptions = {};
+  String _sortOption = 'alphabetical_asc'; // Default sort option
 
   int _galleryColumns = 1;
   bool _isInitialLoadComplete = false; // New flag
@@ -177,13 +178,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
       return matchesSearch && titleMatch && artistComposerMatch && orderedTagsMatch && tagsMatch && practiceTrackingMatch && practiceDurationMatch;
     }).toList();
 
-    // Sort by last practiced, most recent at the bottom
-    filteredPieces.sort((a, b) {
-      if (a.lastPracticeTime == null && b.lastPracticeTime == null) return 0;
-      if (a.lastPracticeTime == null) return 1; // Nulls go to the end
-      if (b.lastPracticeTime == null) return -1; // Nulls go to the end
-      return a.lastPracticeTime!.compareTo(b.lastPracticeTime!); // Ascending order
-    });
+    // Apply sorting based on _sortOption
+    if (_sortOption == 'alphabetical_asc') {
+      filteredPieces.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    } else if (_sortOption == 'alphabetical_desc') {
+      filteredPieces.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+    } else if (_sortOption == 'oldest_practice_asc') {
+      filteredPieces.sort((a, b) {
+        if (a.lastPracticeTime == null && b.lastPracticeTime == null) return 0;
+        if (a.lastPracticeTime == null) return -1;
+        if (b.lastPracticeTime == null) return 1;
+        return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
+      });
+    } else if (_sortOption == 'oldest_practice_desc') {
+      filteredPieces.sort((a, b) {
+        if (a.lastPracticeTime == null && b.lastPracticeTime == null) return 0;
+        if (a.lastPracticeTime == null) return 1;
+        if (b.lastPracticeTime == null) return -1;
+        return b.lastPracticeTime!.compareTo(a.lastPracticeTime!);
+      });
+    }
 
     return filteredPieces;
   }
@@ -240,11 +254,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           initialValue: _filterOptions['orderedTags'],
                           onChanged: (value) => _filterOptions['orderedTags'] = value,
                         ),
-                        TextFormField(
-                          decoration: const InputDecoration(labelText: 'Tags'),
-                          initialValue: _filterOptions['tags'],
-                          onChanged: (value) => _filterOptions['tags'] = value,
-                        ),
+                        
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'Practice Tracking'),
                           value: _filterOptions['practiceTracking'],
@@ -296,6 +306,45 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       child: const Text('Clear Filter'),
                     ),
                   ],
+                ),
+              );
+            },
+          ),
+          
+          IconButton(
+            icon: const Icon(Icons.sort),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Sort Options'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        title: const Text('Alphabetical'),
+                        trailing: _sortOption.startsWith('alphabetical') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                        onTap: () {
+                          setState(() {
+                            _sortOption = _sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
+                          });
+                          _loadMusicPieces();
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        title: const Text('Last Practiced'),
+                        trailing: _sortOption.startsWith('last_practiced') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                        onTap: () {
+                          setState(() {
+                            _sortOption = _sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
+                          });
+                          _loadMusicPieces();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

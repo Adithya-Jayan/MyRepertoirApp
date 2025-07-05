@@ -16,7 +16,7 @@ class MusicPieceCard extends StatelessWidget {
         onTap: onTap,
         child: SingleChildScrollView(
           child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -45,7 +45,7 @@ class MusicPieceCard extends StatelessWidget {
                 runSpacing: 4.0,
                 children: [
                   if (piece.orderedTags.isNotEmpty)
-                    ...piece.orderedTags.map((ot) => Chip(label: FittedBox(fit: BoxFit.scaleDown, child: Text(ot.name)))),
+                    ...piece.orderedTags.expand((ot) => ot.tags.map((tag) => Chip(label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag))))),
                 ],
               ),
               const SizedBox(height: 8.0),

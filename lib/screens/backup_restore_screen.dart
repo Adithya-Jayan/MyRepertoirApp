@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/music_piece_repository.dart';
 import '../models/music_piece.dart';
@@ -35,7 +36,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
       if (outputFile != null) {
         final file = File(outputFile);
-        await file.writeAsString(jsonString);
+        await file.writeAsBytes(utf8.encode(jsonString));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data backed up successfully!'))
         );
@@ -63,7 +64,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!); 
-        final jsonString = await file.readAsString();
+        final jsonBytes = await file.readAsBytes();
+        final jsonString = utf8.decode(jsonBytes);
         final List<dynamic> musicPiecesJson = jsonDecode(jsonString);
         final List<MusicPiece> restoredPieces = musicPiecesJson.map((e) => MusicPiece.fromJson(e)).toList();
 
@@ -118,8 +120,28 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             title: const Text('Restore from Local Backup'),
             onTap: _restoreData,
           ),
+          ListTile(
+            leading: const Icon(Icons.folder),
+            title: const Text('Change Storage Folder'),
+            onTap: _changeStorageFolder,
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _changeStorageFolder() async {
+    final selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    if (selectedDirectory != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('appStoragePath', selectedDirectory);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Storage folder updated to: $selectedDirectory')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Folder selection cancelled.')),
+      );
+    }
   }
 }
