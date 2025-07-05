@@ -1,21 +1,18 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
-import '../models/media_item.dart';
-import '../models/music_piece.dart';
 import 'package:uuid/uuid.dart';
+import '../models/music_piece.dart';
+import '../models/media_item.dart';
+import '../models/media_type.dart';
 
 class FileScannerService {
-  Future<List<MusicPiece>> scanDirectoryForMusicPieces() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+  Future<List<MusicPiece>> scanDirectory(String directoryPath) async {
+    final Directory directory = Directory(directoryPath);
+    List<MusicPiece> scannedPieces = [];
 
-    if (selectedDirectory == null) {
-      // User canceled the picker
+    if (!await directory.exists()) {
       return [];
     }
-
-    List<MusicPiece> scannedPieces = [];
-    final directory = Directory(selectedDirectory);
 
     await for (var entity in directory.list(recursive: true, followLinks: false)) {
       if (entity is File) {
@@ -26,17 +23,20 @@ class FileScannerService {
         MediaType? mediaType;
         if (['.pdf'].contains(fileExtension)) {
           mediaType = MediaType.pdf;
-        } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].contains(fileExtension)) {
+        } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].contains(fileExtension)) {
           mediaType = MediaType.image;
-        } else if (['.mp3', '.wav', '.flac', '.aac'].contains(fileExtension)) {
+        } else if (['.mp3', '.wav', '.flac'].contains(fileExtension)) {
           mediaType = MediaType.audio;
-        } else if (['.mp4', '.mov', '.avi', '.mkv'].contains(fileExtension)) {
-          mediaType = MediaType.videoLink; // Assuming video files are treated as links for now
+        } else if (['.mp4', '.mov', '.avi'].contains(fileExtension)) {
+          mediaType = MediaType.videoLink; // Assuming local video files are treated as links for now
         } else if (['.md', '.txt'].contains(fileExtension)) {
           mediaType = MediaType.markdown;
         }
 
         if (mediaType != null) {
+          // For simplicity, creating a new MusicPiece for each relevant file found.
+          // In a real app, you might group files into existing MusicPieces
+          // based on folder structure or metadata.
           final mediaItem = MediaItem(
             id: const Uuid().v4(),
             type: mediaType,
@@ -44,14 +44,13 @@ class FileScannerService {
             title: fileName,
           );
 
-          // For simplicity, creating a new MusicPiece for each file found.
-          // In a real app, you'd have more sophisticated logic to group related files.
-          scannedPieces.add(MusicPiece(
+          final musicPiece = MusicPiece(
             id: const Uuid().v4(),
-            title: fileName,
+            title: fileName, // Use filename as title for now
             artistComposer: 'Unknown', // Placeholder
             mediaItems: [mediaItem],
-          ));
+          );
+          scannedPieces.add(musicPiece);
         }
       }
     }

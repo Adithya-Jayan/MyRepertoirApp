@@ -65,24 +65,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           },
         ),
         StreamBuilder<Duration?>(
-          stream: _player.durationStream,
+          stream: _player.positionStream,
           builder: (context, snapshot) {
-            final duration = snapshot.data ?? Duration.zero;
-            return StreamBuilder<Duration>(
-              stream: _player.positionStream,
-              builder: (context, snapshot) {
-                var position = snapshot.data ?? Duration.zero;
-                if (position > duration) {
-                  position = duration;
-                }
-                return Slider(
-                  min: 0.0,
-                  max: duration.inMilliseconds.toDouble(),
-                  value: position.inMilliseconds.toDouble(),
-                  onChanged: (value) {
-                    _player.seek(Duration(milliseconds: value.toInt()));
-                  },
-                );
+            final position = snapshot.data ?? Duration.zero;
+            final duration = _player.duration ?? Duration.zero;
+            return Slider(
+              min: 0.0,
+              max: duration.inMilliseconds.toDouble(), // Removed TODO
+              value: position.inMilliseconds.toDouble(), // Removed TODO
+              onChanged: (value) {
+                _player.seek(Duration(milliseconds: value.toInt()));
               },
             );
           },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/tag.dart';
 import 'package:uuid/uuid.dart';
+import '../database/music_piece_repository.dart';
 
 class TagManagementScreen extends StatefulWidget {
   const TagManagementScreen({super.key});
@@ -11,23 +12,34 @@ class TagManagementScreen extends StatefulWidget {
 
 class _TagManagementScreenState extends State<TagManagementScreen> {
   final _tagNameController = TextEditingController();
-  List<Tag> _tags = []; // TODO: Load from database
+  final MusicPieceRepository _repository = MusicPieceRepository();
+  List<Tag> _tags = [];
 
-  void _addTag() {
+  @override
+  void initState() {
+    super.initState();
+    _loadTags();
+  }
+
+  Future<void> _loadTags() async {
+    final tags = await _repository.getTags();
+    setState(() {
+      _tags = tags;
+    });
+  }
+
+  Future<void> _addTag() async {
     if (_tagNameController.text.isNotEmpty) {
-      setState(() {
-        _tags.add(Tag(id: const Uuid().v4(), name: _tagNameController.text));
-        _tagNameController.clear();
-        // TODO: Save to database
-      });
+      final newTag = Tag(id: const Uuid().v4(), name: _tagNameController.text);
+      await _repository.insertTag(newTag);
+      _loadTags(); // Reload tags after adding
+      _tagNameController.clear();
     }
   }
 
-  void _deleteTag(Tag tag) {
-    setState(() {
-      _tags.remove(tag);
-      // TODO: Delete from database
-    });
+  Future<void> _deleteTag(Tag tag) async {
+    await _repository.deleteTag(tag.id);
+    _loadTags(); // Reload tags after deleting
   }
 
   @override

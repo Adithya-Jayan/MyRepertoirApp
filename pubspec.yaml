@@ -30,25 +30,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   sqflite: ^2.3.0 # For SQLite database
+  sqflite_common_ffi: ^2.3.3
   path_provider: ^2.1.1 # For getting local paths
   uuid: ^4.2.1 # For generating unique IDs
-  google_sign_in: ^6.1.0 # For user authentication
-  googleapis: ^12.0.0 # For Google Drive API access
+  
   http: ^1.1.0 # For making HTTP requests
-  file_picker: ^6.1.1 # For picking files from local storage
-  syncfusion_flutter_pdfviewer: ^24.2.8 # Or another PDF viewer
-  flutter_markdown: ^0.6.17 # For rendering markdown
-  photo_view: ^0.14.0 # For zoomable images
-  just_audio: ^0.9.36 # For audio playback
+  file_picker: ^10.2.0 # For picking files from local storage
+  syncfusion_flutter_pdfviewer: ^30.1.38 # Or another PDF viewer
+  flutter_markdown: ^0.7.7+1 # For rendering markdown
+  photo_view: ^0.15.0 # For zoomable images
+  just_audio: ^0.10.4 # For audio playback
   video_player: ^2.8.1 # For video playback
   url_launcher: ^6.2.2 # For opening URLs
-  path: ^1.8.0 # For path manipulation
-  sqflite_common_ffi: ^2.3.0 # For desktop database support
+  shared_preferences: ^2.2.2 # For storing simple key-value pairs
+  flutter_speed_dial: ^7.0.0
+  provider: ^6.0.5 # For state management
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +56,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

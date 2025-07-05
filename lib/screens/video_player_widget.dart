@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -17,7 +16,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(File(widget.videoPath))
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoPath))
       ..initialize().then((_) {
         setState(() {});
       });
@@ -36,19 +35,25 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             aspectRatio: _controller.value.aspectRatio,
             child: Stack(
               alignment: Alignment.bottomCenter,
-              children: <Widget>[
+              children: [
                 VideoPlayer(_controller),
                 VideoProgressIndicator(_controller, allowScrubbing: true),
-                _PlayPauseOverlay(controller: _controller),
+                _ControlsOverlay(controller: _controller),
               ],
             ),
           )
-        : const Center(child: CircularProgressIndicator());
+        : const CircularProgressIndicator();
   }
 }
 
-class _PlayPauseOverlay extends StatelessWidget {
-  const _PlayPauseOverlay({required this.controller});
+class _ControlsOverlay extends StatelessWidget {
+  const _ControlsOverlay({required this.controller});
+
+  static const List<Duration> _exampleChapterTimes = <Duration>[
+    Duration(minutes: 5, seconds: 0),
+    Duration(minutes: 10, seconds: 0),
+    Duration(minutes: 15, seconds: 0),
+  ];
 
   final VideoPlayerController controller;
 
@@ -61,9 +66,9 @@ class _PlayPauseOverlay extends StatelessWidget {
           reverseDuration: const Duration(milliseconds: 200),
           child: controller.value.isPlaying
               ? const SizedBox.shrink()
-              : Container(
+              : const ColoredBox(
                   color: Colors.black26,
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.play_arrow,
                       color: Colors.white,

@@ -2,12 +2,6 @@
   "configVersion": 2,
   "packages": [
     {
-      "name": "_discoveryapis_commons",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/_discoveryapis_commons-1.0.7",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
       "name": "args",
       "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/args-2.7.0",
       "packageUri": "lib/",
@@ -21,9 +15,9 @@
     },
     {
       "name": "audio_session",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/audio_session-0.1.25",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/audio_session-0.2.2",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "3.6"
     },
     {
       "name": "boolean_selector",
@@ -56,6 +50,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "cross_file",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/cross_file-0.3.4+2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "crypto",
       "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/crypto-3.0.6",
       "packageUri": "lib/",
@@ -68,16 +68,10 @@
       "languageVersion": "3.1"
     },
     {
-      "name": "cupertino_icons",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.8",
-      "packageUri": "lib/",
-      "languageVersion": "3.1"
-    },
-    {
       "name": "device_info_plus",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-9.1.2",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-11.5.0",
       "packageUri": "lib/",
-      "languageVersion": "2.18"
+      "languageVersion": "3.7"
     },
     {
       "name": "device_info_plus_platform_interface",
@@ -105,9 +99,9 @@
     },
     {
       "name": "file_picker",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/file_picker-6.2.1",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/file_picker-10.2.0",
       "packageUri": "lib/",
-      "languageVersion": "2.19"
+      "languageVersion": "3.4"
     },
     {
       "name": "fixnum",
@@ -123,21 +117,27 @@
     },
     {
       "name": "flutter_lints",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-5.0.0",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-6.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.8"
     },
     {
       "name": "flutter_markdown",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_markdown-0.6.23",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_markdown-0.7.7+1",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.4"
     },
     {
       "name": "flutter_plugin_android_lifecycle",
       "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.28",
       "packageUri": "lib/",
       "languageVersion": "3.6"
+    },
+    {
+      "name": "flutter_speed_dial",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_speed_dial-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "flutter_test",
@@ -150,48 +150,6 @@
       "rootUri": "file:///C:/Users/adith/dev/flutter_windows_3.32.5-stable/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.7"
-    },
-    {
-      "name": "google_identity_services_web",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_identity_services_web-0.3.3+1",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "google_sign_in",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in-6.3.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
-    },
-    {
-      "name": "google_sign_in_android",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_android-6.2.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
-    },
-    {
-      "name": "google_sign_in_ios",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_ios-5.9.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "google_sign_in_platform_interface",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_platform_interface-2.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "google_sign_in_web",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_web-0.12.4+4",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "googleapis",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/googleapis-12.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
     },
     {
       "name": "html",
@@ -213,21 +171,15 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.19.0",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "js",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/js-0.7.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.3"
     },
     {
       "name": "just_audio",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/just_audio-0.9.46",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/just_audio-0.10.4",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.6"
     },
     {
       "name": "just_audio_platform_interface",
@@ -261,9 +213,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/lints-5.1.1",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/lints-6.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.8"
     },
     {
       "name": "markdown",
@@ -286,6 +238,12 @@
     {
       "name": "meta",
       "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.16.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "nested",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/nested-1.0.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -339,7 +297,7 @@
     },
     {
       "name": "photo_view",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/photo_view-0.14.0",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/photo_view-0.15.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -356,10 +314,58 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "provider",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/provider-6.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "rxdart",
       "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/rxdart-0.28.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
+    },
+    {
+      "name": "shared_preferences",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences-2.5.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "shared_preferences_android",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.10",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "shared_preferences_foundation",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_foundation-2.5.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "shared_preferences_linux",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_linux-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "shared_preferences_platform_interface",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_platform_interface-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "shared_preferences_web",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_web-2.4.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "shared_preferences_windows",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_windows-2.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
     },
     {
       "name": "sky_engine",
@@ -441,51 +447,57 @@
     },
     {
       "name": "syncfusion_flutter_core",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_core-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_core-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_flutter_pdf",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdf-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdf-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_flutter_pdfviewer",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdfviewer-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_pdfviewer-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_flutter_signaturepad",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_signaturepad-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_flutter_signaturepad-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "syncfusion_pdfviewer_linux",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_linux-30.1.38",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_pdfviewer_macos",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_macos-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_macos-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_pdfviewer_platform_interface",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_platform_interface-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_platform_interface-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_pdfviewer_web",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_web-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_web-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "syncfusion_pdfviewer_windows",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_windows-24.2.9",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/syncfusion_pdfviewer_windows-30.1.38",
       "packageUri": "lib/",
-      "languageVersion": "2.17"
+      "languageVersion": "3.7"
     },
     {
       "name": "synchronized",
@@ -621,9 +633,9 @@
     },
     {
       "name": "win32_registry",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-1.1.5",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-2.1.0",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "3.7"
     },
     {
       "name": "xdg_directories",

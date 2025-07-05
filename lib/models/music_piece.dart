@@ -1,12 +1,11 @@
+import 'dart:convert';
 import './media_item.dart';
+import './ordered_tag.dart';
 
 class MusicPiece {
   String id;  // e.g., Uuid.v4()
   String title;
   String artistComposer;
-  List<String> genre;  // or String
-  String instrumentation;
-  String difficulty;  // or Enum
   List<String> tags;
   DateTime? lastAccessed;
   bool isFavorite;
@@ -15,14 +14,13 @@ class MusicPiece {
   bool enablePracticeTracking;
   String? googleDriveFileId;  // nullable, for main piece data sync
   List<MediaItem> mediaItems;  // List of associated media
+  List<String> groupIds;
+  List<OrderedTag> orderedTags;
 
   MusicPiece({
     required this.id,
     required this.title,
     required this.artistComposer,
-    this.genre = const [],
-    this.instrumentation = '',
-    this.difficulty = '',
     this.tags = const [],
     this.lastAccessed,
     this.isFavorite = false,
@@ -31,6 +29,8 @@ class MusicPiece {
     this.enablePracticeTracking = false,
     this.googleDriveFileId,
     this.mediaItems = const [],
+    this.groupIds = const [],
+    this.orderedTags = const [],
   });
 
   // Add toJson() and fromJson() methods for MusicPiece
@@ -38,41 +38,72 @@ class MusicPiece {
         'id': id,
         'title': title,
         'artistComposer': artistComposer,
-        'genre': genre,
-        'instrumentation': instrumentation,
-        'difficulty': difficulty,
-        'tags': tags,
+        'tags': jsonEncode(tags),
         'lastAccessed': lastAccessed?.toIso8601String(),
-        'isFavorite': isFavorite,
+        'isFavorite': isFavorite ? 1 : 0,
         'lastPracticeTime': lastPracticeTime?.toIso8601String(),
         'practiceCount': practiceCount,
-        'enablePracticeTracking': enablePracticeTracking,
+        'enablePracticeTracking': enablePracticeTracking ? 1 : 0,
         'googleDriveFileId': googleDriveFileId,
-        'mediaItems': mediaItems.map((item) => item.toJson()).toList(),
+        'mediaItems': jsonEncode(mediaItems.map((item) => item.toJson()).toList()),
+        'groupIds': jsonEncode(groupIds),
+        'orderedTags': jsonEncode(orderedTags.map((e) => e.toJson()).toList()),
       };
 
   factory MusicPiece.fromJson(Map<String, dynamic> json) => MusicPiece(
         id: json['id'],
         title: json['title'],
         artistComposer: json['artistComposer'],
-        genre: List<String>.from(json['genre'] ?? []),
-        instrumentation: json['instrumentation'] ?? '',
-        difficulty: json['difficulty'] ?? '',
-        tags: List<String>.from(json['tags'] ?? []),
+        tags: List<String>.from(jsonDecode(json['tags'] ?? '[]')),
         lastAccessed: json['lastAccessed'] != null
             ? DateTime.parse(json['lastAccessed'])
             : null,
-        isFavorite: json['isFavorite'] ?? false,
+        isFavorite: (json['isFavorite'] as int) == 1,
         lastPracticeTime: json['lastPracticeTime'] != null
             ? DateTime.parse(json['lastPracticeTime'])
             : null,
         practiceCount: json['practiceCount'] ?? 0,
-        enablePracticeTracking: json['enablePracticeTracking'] ?? false,
+        enablePracticeTracking: (json['enablePracticeTracking'] as int) == 1,
         googleDriveFileId: json['googleDriveFileId'],
-        mediaItems: (json['mediaItems'] as List<dynamic>?)
-                ?.map((itemJson) =>
+        mediaItems: (jsonDecode(json['mediaItems'] ?? '[]') as List<dynamic>)
+                .map((itemJson) =>
                     MediaItem.fromJson(itemJson as Map<String, dynamic>))
-                .toList() ??
-            [],
+                .toList(),
+        groupIds: List<String>.from(jsonDecode(json['groupIds'] ?? '[]')),
+        orderedTags: (jsonDecode(json['orderedTags'] ?? '[]') as List<dynamic>)
+            .map((e) => OrderedTag.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
+
+  MusicPiece copyWith({
+    String? id,
+    String? title,
+    String? artistComposer,
+    List<String>? tags,
+    DateTime? lastAccessed,
+    bool? isFavorite,
+    DateTime? lastPracticeTime,
+    int? practiceCount,
+    bool? enablePracticeTracking,
+    String? googleDriveFileId,
+    List<MediaItem>? mediaItems,
+    List<String>? groupIds,
+    List<OrderedTag>? orderedTags,
+  }) {
+    return MusicPiece(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artistComposer: artistComposer ?? this.artistComposer,
+      tags: tags ?? this.tags,
+      lastAccessed: lastAccessed ?? this.lastAccessed,
+      isFavorite: isFavorite ?? this.isFavorite,
+      lastPracticeTime: lastPracticeTime ?? this.lastPracticeTime,
+      practiceCount: practiceCount ?? this.practiceCount,
+      enablePracticeTracking: enablePracticeTracking ?? this.enablePracticeTracking,
+      googleDriveFileId: googleDriveFileId ?? this.googleDriveFileId,
+      mediaItems: mediaItems ?? this.mediaItems,
+      groupIds: groupIds ?? this.groupIds,
+      orderedTags: orderedTags ?? this.orderedTags,
+    );
+  }
 }

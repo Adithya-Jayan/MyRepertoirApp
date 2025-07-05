@@ -2,48 +2,36 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
 import '../models/tag.dart';
-import '../services/google_drive_service.dart';
+import '../models/group.dart'; // Import the new Group model
 import './database_helper.dart';
 
 class MusicPieceRepository {
   final dbHelper = DatabaseHelper.instance;
-  final driveService = GoogleDriveService();
+  final Uuid uuid = Uuid();
 
-  Future<void> insertMusicPiece(MusicPiece piece, {bool syncToDrive = false}) async {
+  Future<void> insertMusicPiece(MusicPiece piece) async {
     await dbHelper.insertMusicPiece(piece);
-    if (syncToDrive) {
-      // In a real app, you'd serialize the piece to JSON and upload it.
-      // For now, this is a placeholder.
-      print('Syncing new piece to Google Drive...');
-      // await driveService.uploadFile(...);
+  }
+
+  Future<List<MusicPiece>> getMusicPieces({String? groupId}) async {
+    final allPieces = await dbHelper.getMusicPieces();
+    if (groupId == null || groupId.isEmpty) {
+      return allPieces;
+    } else {
+      return allPieces.where((piece) => piece.groupIds.contains(groupId)).toList();
     }
   }
 
-  Future<List<MusicPiece>> getMusicPieces({bool syncFromDrive = false}) async {
-    if (syncFromDrive) {
-      print('Syncing from Google Drive...');
-      // Here you would fetch data from Drive, compare with local, and update.
-      // For now, just fetching from local.
-    }
-    return await dbHelper.getMusicPieces();
-  }
-
-  Future<int> updateMusicPiece(MusicPiece piece, {bool syncToDrive = false}) async {
+  Future<int> updateMusicPiece(MusicPiece piece) async {
     final result = await dbHelper.updateMusicPiece(piece);
-    if (syncToDrive) {
-      print('Syncing updated piece to Google Drive...');
-      // await driveService.updateFile(...);
-    }
     return result;
   }
 
-  Future<int> deleteMusicPiece(String id, {bool syncToDrive = false}) async {
+  Future<int> deleteMusicPiece(String id) async {
     final result = await dbHelper.deleteMusicPiece(id);
-    if (syncToDrive) {
-      print('Deleting piece from Google Drive...');
-    }
     return result;
   }
 
@@ -51,24 +39,56 @@ class MusicPieceRepository {
     await dbHelper.deleteAllMusicPieces();
   }
 
-  // Placeholder for a more complex sync operation
-  Future<void> syncWithDrive() async {
-    print('Performing a full sync with Google Drive...');
-    // 1. Fetch all files from Drive app folder
-    // 2. Fetch all pieces from local DB
-    // 3. Compare and resolve conflicts (e.g., based on timestamps)
-    // 4. Upload new/updated local pieces
-    // 5. Download new/updated remote pieces
+  // Group Management Methods
+  Future<void> createGroup(Group group) async {
+    await dbHelper.insertGroup(group);
   }
+
+  Future<List<Group>> getGroups() async {
+    return await dbHelper.getGroups();
+  }
+
+  Future<int> updateGroup(Group group) async {
+    return await dbHelper.updateGroup(group);
+  }
+
+  Future<int> deleteGroup(String id) async {
+    // When a group is deleted, remove its ID from all music pieces
+    final piecesToUpdate = await dbHelper.getMusicPieces();
+    for (var piece in piecesToUpdate) {
+      if (piece.groupIds.contains(id)) {
+        piece.groupIds.remove(id);
+        await dbHelper.updateMusicPiece(piece);
+      }
+    }
+    return await dbHelper.deleteGroup(id);
+  }
+
+  // Tag Management Methods
+  Future<void> insertTag(Tag tag) async {
+    await dbHelper.insertTag(tag);
+  }
+
+  Future<List<Tag>> getTags() async {
+    return await dbHelper.getTags();
+  }
+
+  Future<int> deleteTag(String id) async {
+    return await dbHelper.deleteTag(id);
+  }
+
+  
 
   Future<String?> exportDataToJson() async {
     try {
       final musicPieces = await dbHelper.getMusicPieces();
       final tags = await dbHelper.getTags();
+      final groups = await dbHelper.getGroups();
 
       final data = {
         'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
         'tags': tags.map((e) => e.toJson()).toList(),
+        'groups': groups.map((e) => e.toJson()).toList(),
       };
 
       final jsonString = jsonEncode(data);
@@ -109,6 +129,7 @@ class MusicPieceRepository {
 
         final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
         final List<dynamic> tagsJson = data['tags'] ?? [];
+        final List<dynamic> groupsJson = data['groups'] ?? [];
 
         for (var pieceJson in musicPiecesJson) {
           final piece = MusicPiece.fromJson(pieceJson);
@@ -119,12 +140,31 @@ class MusicPieceRepository {
           final tag = Tag.fromJson(tagJson);
           await dbHelper.insertTag(tag); // Or update if exists
         }
+
+        for (var groupJson in groupsJson) {
+          final group = Group.fromJson(groupJson);
+          await dbHelper.insertGroup(group); // Or update if exists
+        }
         return true;
       }
       return false;
     } catch (e) {
       print('Error importing data: $e');
       return false;
+    }
+  }
+
+  // Helper to ensure a default group exists
+  Future<void> ensureDefaultGroupExists() async {
+    final groups = await getGroups();
+    if (!groups.any((group) => group.isDefault)) {
+      final defaultGroup = Group(
+        id: uuid.v4(),
+        name: 'Default Group',
+        order: 0,
+        isDefault: true,
+      );
+      await createGroup(defaultGroup);
     }
   }
 }
