@@ -3,6 +3,7 @@ import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/models/tag_group.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
 
 final List<MusicPiece> dummyMusicPieces = [
   MusicPiece(
@@ -10,9 +11,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Sonata No. 14 "Moonlight"',
     artistComposer: 'Ludwig van Beethoven',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Romantic']),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano']),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Advanced']),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Romantic'], color: Colors.blue.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Advanced'], color: Colors.orange.value),
     ],
     tags: ['Romantic', 'Sonata'],
     mediaItems: [
@@ -35,9 +36,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Clair de Lune',
     artistComposer: 'Claude Debussy',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Impressionistic']),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano']),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Intermediate']),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Impressionistic'], color: Colors.blue.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Intermediate'], color: Colors.orange.value),
     ],
     tags: ['Impressionistic'],
     mediaItems: [
@@ -54,9 +55,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Für Elise',
     artistComposer: 'Ludwig van Beethoven',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical']),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano']),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Beginner']),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical'], color: Colors.blue.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Beginner'], color: Colors.orange.value),
     ],
     tags: ['Classical'],
     mediaItems: [],

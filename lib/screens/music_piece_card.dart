@@ -45,7 +45,7 @@ class MusicPieceCard extends StatelessWidget {
                 runSpacing: 4.0,
                 children: [
                   if (piece.tagGroups.isNotEmpty)
-                    ...piece.tagGroups.expand((tg) => tg.tags.map((tag) => Chip(label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag))))),
+                    ...piece.tagGroups.expand((tg) => tg.tags.map((tag) => Chip(label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag)), backgroundColor: tg.color != null ? Color(tg.color!) : null))),
                 ],
               ),
               const SizedBox(height: 8.0),

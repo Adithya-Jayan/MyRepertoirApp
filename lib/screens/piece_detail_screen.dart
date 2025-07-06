@@ -184,7 +184,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                               spacing: 8.0,
                               runSpacing: 4.0,
                               children: tagGroup.tags.map((tag) {
-                                return Chip(label: Text(tag));
+                                return Chip(label: Text(tag), backgroundColor: tagGroup.color != null ? Color(tagGroup.color!) : null);
                               }).toList(),
                             ),
                           ),

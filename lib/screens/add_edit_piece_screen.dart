@@ -261,7 +261,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         focusNode: focusNode,
                         decoration: const InputDecoration(labelText: 'Tag Group Name'),
                         onChanged: (value) {
-                          tagGroup.name = value;
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: value));
                         },
                         onFieldSubmitted: (value) {
                           if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
@@ -282,6 +282,41 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       _musicPiece.tagGroups.remove(tagGroup);
                     });
                   },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                const Text('Color:'),
+                const SizedBox(width: 8.0),
+                DropdownButton<int>(
+                  value: tagGroup.color ?? Colors.blue.value, // Default to blue if no color
+                  onChanged: (int? newColor) {
+                    if (newColor != null) {
+                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
+                    }
+                  },
+                  items: <DropdownMenuItem<int>>[
+                    DropdownMenuItem(value: Colors.red.value, child: Text('Red')),
+                    DropdownMenuItem(value: Colors.blue.value, child: Text('Blue')),
+                    DropdownMenuItem(value: Colors.green.value, child: Text('Green')),
+                    DropdownMenuItem(value: Colors.orange.value, child: Text('Orange')),
+                    DropdownMenuItem(value: Colors.purple.value, child: Text('Purple')),
+                  ].map((item) => DropdownMenuItem<int>(
+                    value: item.value,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          color: Color(item.value!),
+                        ),
+                        const SizedBox(width: 8),
+                        Text((item.child as Text).data!),
+                      ],
+                    ),
+                  )).toList(),
                 ),
               ],
             ),
