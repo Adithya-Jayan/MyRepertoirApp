@@ -27,7 +27,7 @@ class AboutScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text('Credits:'),
-            Text('- Developed by Gemini CLI'),
+            Text('- Developed by Adithya Jayan'),
             Text('- Inspired by Mihon app'),
           ],
         ),

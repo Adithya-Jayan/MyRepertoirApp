@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/music_piece_repository.dart';
 import '../models/group.dart'; // Import Group model
 import '../models/music_piece.dart';
-import '../services/file_scanner_service.dart';
+
 import './add_edit_piece_screen.dart';
 import './music_piece_card.dart';
 import './piece_detail_screen.dart';
