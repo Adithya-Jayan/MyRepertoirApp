@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/music_piece.dart';
 import '../models/tag.dart';
 import '../models/group.dart'; // Import the new Group model
-import '../models/ordered_tag.dart'; // Import OrderedTag model
+import '../models/tag_group.dart'; // Import TagGroup model
 import 'package:uuid/uuid.dart'; // Import Uuid for generating IDs
 import '../utils/dummy_data.dart';
 
@@ -29,7 +29,7 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 5, // Increment database version for migration
+      version: 7, // Increment database version for migration
       onCreate: _createDB,
       onUpgrade: _onUpgrade, // Add onUpgrade callback
     );
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS music_pieces (
   googleDriveFileId TEXT,
   mediaItems TEXT, -- Store List<MediaItem> as JSON string
   groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
-  orderedTags TEXT DEFAULT '[]' -- New column for ordered tags, default to empty JSON array
+  tagGroups TEXT DEFAULT '[]' -- New column for tag groups, default to empty JSON array
 )
 ''');
 
@@ -108,46 +108,9 @@ CREATE TABLE groups (
 )
 ''');
     }
-    if (oldVersion < 5) {
-      // Add orderedTags column and migrate data
-      await db.execute("ALTER TABLE music_pieces ADD COLUMN orderedTags TEXT DEFAULT '[]';");
-
-      // Migrate existing data from old columns to orderedTags
-      final List<Map<String, dynamic>> musicPieces = await db.query('music_pieces');
-      for (var piece in musicPieces) {
-        List<OrderedTag> newOrderedTags = [];
-
-        // Migrate genre
-        if (piece['genre'] != null && jsonDecode(piece['genre']).isNotEmpty) {
-          newOrderedTags.add(OrderedTag(id: const Uuid().v4(), name: 'Genre', tags: List<String>.from(jsonDecode(piece['genre']))));
-        }
-        // Migrate instrumentation
-        if (piece['instrumentation'] != null && (piece['instrumentation'] as String).isNotEmpty) {
-          newOrderedTags.add(OrderedTag(id: const Uuid().v4(), name: 'Instrumentation', tags: [piece['instrumentation'] as String]));
-        }
-        // Migrate difficulty
-        if (piece['difficulty'] != null && (piece['difficulty'] as String).isNotEmpty) {
-          newOrderedTags.add(OrderedTag(id: const Uuid().v4(), name: 'Difficulty', tags: [piece['difficulty'] as String]));
-        }
-
-        await db.update(
-          'music_pieces',
-          {
-            'orderedTags': jsonEncode(newOrderedTags.map((e) => e.toJson()).toList()),
-          },
-          where: 'id = ?',
-          whereArgs: [piece['id']],
-        );
-      }
-
-      // Drop old columns (genre, instrumentation, difficulty)
-      // This requires recreating the table as SQLite does not support dropping columns directly.
-      await db.execute("CREATE TEMPORARY TABLE music_pieces_backup(id, title, artistComposer, tags, lastAccessed, isFavorite, lastPracticeTime, practiceCount, enablePracticeTracking, googleDriveFileId, mediaItems, groupIds, orderedTags);");
-      await db.execute("INSERT INTO music_pieces_backup SELECT id, title, artistComposer, tags, lastAccessed, isFavorite, lastPracticeTime, practiceCount, enablePracticeTracking, googleDriveFileId, mediaItems, groupIds, orderedTags FROM music_pieces;");
-      await db.execute("DROP TABLE music_pieces;");
-      await db.execute("CREATE TABLE music_pieces(id TEXT PRIMARY KEY, title TEXT, artistComposer TEXT, tags TEXT, lastAccessed TEXT, isFavorite INTEGER, lastPracticeTime TEXT, practiceCount INTEGER, enablePracticeTracking INTEGER, googleDriveFileId TEXT, mediaItems TEXT, groupIds TEXT, orderedTags TEXT);");
-      await db.execute("INSERT INTO music_pieces SELECT id, title, artistComposer, tags, lastAccessed, isFavorite, lastPracticeTime, practiceCount, enablePracticeTracking, googleDriveFileId, mediaItems, groupIds, orderedTags FROM music_pieces_backup;");
-      await db.execute("DROP TABLE music_pieces_backup;");
+    if (oldVersion < 6) {
+      // Add tagGroups column
+      await db.execute("ALTER TABLE music_pieces ADD COLUMN tagGroups TEXT DEFAULT '[]';");
     }
   }
 

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import './media_item.dart';
-import './ordered_tag.dart';
+import './tag_group.dart';
 
 class MusicPiece {
   String id;  // e.g., Uuid.v4()
@@ -15,7 +15,7 @@ class MusicPiece {
   String? googleDriveFileId;  // nullable, for main piece data sync
   List<MediaItem> mediaItems;  // List of associated media
   List<String> groupIds;
-  List<OrderedTag> orderedTags;
+  List<TagGroup> tagGroups;
 
   MusicPiece({
     required this.id,
@@ -30,7 +30,7 @@ class MusicPiece {
     this.googleDriveFileId,
     this.mediaItems = const [],
     this.groupIds = const [],
-    this.orderedTags = const [],
+    this.tagGroups = const [],
   });
 
   // Add toJson() and fromJson() methods for MusicPiece
@@ -47,7 +47,7 @@ class MusicPiece {
         'googleDriveFileId': googleDriveFileId,
         'mediaItems': jsonEncode(mediaItems.map((item) => item.toJson()).toList()),
         'groupIds': jsonEncode(groupIds),
-        'orderedTags': jsonEncode(orderedTags.map((e) => e.toJson()).toList()),
+        'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()),
       };
 
   factory MusicPiece.fromJson(Map<String, dynamic> json) => MusicPiece(
@@ -70,8 +70,8 @@ class MusicPiece {
                     MediaItem.fromJson(itemJson as Map<String, dynamic>))
                 .toList(),
         groupIds: List<String>.from(jsonDecode(json['groupIds'] ?? '[]')),
-        orderedTags: (jsonDecode(json['orderedTags'] ?? '[]') as List<dynamic>)
-            .map((e) => OrderedTag.fromJson(e as Map<String, dynamic>))
+        tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
+            .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
 
@@ -88,7 +88,7 @@ class MusicPiece {
     String? googleDriveFileId,
     List<MediaItem>? mediaItems,
     List<String>? groupIds,
-    List<OrderedTag>? orderedTags,
+    List<TagGroup>? tagGroups,
   }) {
     return MusicPiece(
       id: id ?? this.id,
@@ -103,7 +103,7 @@ class MusicPiece {
       googleDriveFileId: googleDriveFileId ?? this.googleDriveFileId,
       mediaItems: mediaItems ?? this.mediaItems,
       groupIds: groupIds ?? this.groupIds,
-      orderedTags: orderedTags ?? this.orderedTags,
+      tagGroups: tagGroups ?? this.tagGroups,
     );
   }
 }

@@ -77,7 +77,27 @@ class MusicPieceRepository {
     return await dbHelper.deleteTag(id);
   }
 
-  
+  Future<Map<String, List<String>>> getAllUniqueTagGroups() async {
+    final allPieces = await dbHelper.getMusicPieces();
+    final Map<String, Set<String>> uniqueTags = {};
+
+    for (var piece in allPieces) {
+      for (var tagGroup in piece.tagGroups) {
+        if (!uniqueTags.containsKey(tagGroup.name)) {
+          uniqueTags[tagGroup.name] = {};
+        }
+        uniqueTags[tagGroup.name]!.addAll(tagGroup.tags);
+      }
+    }
+
+    final Map<String, List<String>> result = {};
+    uniqueTags.forEach((key, value) {
+      final sortedTags = value.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      result[key] = sortedTags;
+    });
+
+    return result;
+  }
 
   Future<String?> exportDataToJson() async {
     try {

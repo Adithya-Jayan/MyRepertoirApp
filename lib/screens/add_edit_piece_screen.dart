@@ -1,4 +1,4 @@
-import 'package:repertoire/models/ordered_tag.dart';
+import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:uuid/uuid.dart';
@@ -24,16 +24,30 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   List<Group> _availableGroups = [];
   Set<String> _selectedGroupIds = {};
   final MusicPieceRepository _repository = MusicPieceRepository();
+  List<String> _allTagGroupNames = []; // For tag group name suggestions
 
   @override
   void initState() {
     super.initState();
     _musicPiece = widget.musicPiece != null
-        ? widget.musicPiece!.copyWith(mediaItems: List.from(widget.musicPiece!.mediaItems), orderedTags: List.from(widget.musicPiece!.orderedTags))
-        : MusicPiece(id: const Uuid().v4(), title: '', artistComposer: '', mediaItems: [], orderedTags: []);
+        ? widget.musicPiece!.copyWith(mediaItems: List.from(widget.musicPiece!.mediaItems), tagGroups: List.from(widget.musicPiece!.tagGroups))
+        : MusicPiece(id: const Uuid().v4(), title: '', artistComposer: '', mediaItems: [], tagGroups: []);
 
     _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
     _loadGroups();
+    _loadTagGroupNames();
+  }
+
+  Future<void> _loadTagGroupNames() async {
+    final allUniqueTags = await _repository.getAllUniqueTagGroups(); // This method name needs to be updated to getAllUniqueTagGroups
+    setState(() {
+      _allTagGroupNames = allUniqueTags.keys.toList()..sort();
+    });
+  }
+
+  Future<List<String>> _getAllTagsForTagGroup(String tagGroupName) async {
+    final allUniqueTags = await _repository.getAllUniqueTagGroups();
+    return allUniqueTags[tagGroupName]?.toList() ?? [];
   }
 
   Future<void> _loadGroups() async {
@@ -89,10 +103,21 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     }
   }
 
-  void _addOrderedTag() {
+  void _addTagGroup() {
     setState(() {
-      _musicPiece.orderedTags.add(OrderedTag(id: const Uuid().v4(), name: '', tags: []));
+      _musicPiece.tagGroups.add(TagGroup(id: const Uuid().v4(), name: '', tags: []));
     });
+  }
+
+  void _updateTagGroupInMusicPiece(TagGroup oldTagGroup, TagGroup newTagGroup) {
+    final List<TagGroup> updatedTagGroups = List.from(_musicPiece.tagGroups);
+    final int index = updatedTagGroups.indexWhere((element) => element.id == oldTagGroup.id);
+    if (index != -1) {
+      updatedTagGroups[index] = newTagGroup;
+      setState(() {
+        _musicPiece = _musicPiece.copyWith(tagGroups: updatedTagGroups);
+      });
+    }
   }
 
   @override
@@ -156,8 +181,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 );
               }).toList(),
               const SizedBox(height: 20),
-              const Text('Ordered Tags', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ..._musicPiece.orderedTags.map((tag) => _buildOrderedTagSection(tag)).toList(),
+              const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ..._musicPiece.tagGroups.map((tagGroup) => _buildTagGroupSection(tagGroup)).toList(),
               const SizedBox(height: 20),
               const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ..._musicPiece.mediaItems.map((item) => _buildMediaSection(item)).toList(),
@@ -196,15 +221,16 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           ),
           SpeedDialChild(
             child: const Icon(Icons.label),
-            label: 'Ordered Tag',
-            onTap: _addOrderedTag,
+            label: 'Add Tag Group',
+            onTap: _addTagGroup,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderedTagSection(OrderedTag orderedTag) {
+  Widget _buildTagGroupSection(TagGroup tagGroup) {
+    final TextEditingController tagGroupNameController = TextEditingController(text: tagGroup.name);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
@@ -216,17 +242,44 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: TextFormField(
-                    initialValue: orderedTag.name,
-                    decoration: const InputDecoration(labelText: 'Tag Name'),
-                    onChanged: (value) => orderedTag.name = value,
+                  child: Autocomplete<String>(
+                    initialValue: TextEditingValue(text: tagGroup.name),
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text == '') {
+                        return const Iterable<String>.empty();
+                      }
+                      return _allTagGroupNames.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: selection));
+                    },
+                    fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                      return TextFormField(
+                        controller: tagGroupNameController,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(labelText: 'Tag Group Name'),
+                        onChanged: (value) {
+                          tagGroup.name = value;
+                        },
+                        onFieldSubmitted: (value) {
+                          if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
+                            _allTagGroupNames.add(value);
+                            _allTagGroupNames.sort();
+                          }
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: value));
+                          onFieldSubmitted();
+                        },
+                      );
+                    },
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () {
                     setState(() {
-                      _musicPiece.orderedTags.remove(orderedTag);
+                      _musicPiece.tagGroups.remove(tagGroup);
                     });
                   },
                 ),
@@ -235,26 +288,48 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             const SizedBox(height: 8.0),
             Wrap(
               spacing: 8.0,
-              children: orderedTag.tags.map((tag) {
+              children: tagGroup.tags.map((tag) {
                 return Chip(
                   label: Text(tag),
                   onDeleted: () {
-                    setState(() {
-                      orderedTag.tags.remove(tag);
-                    });
+                    final updatedTags = List<String>.from(tagGroup.tags).where((t) => t != tag).toList();
+                    _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
                   },
                 );
               }).toList(),
             ),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Add new tags (comma-separated)'),
-              onFieldSubmitted: (value) {
-                if (value.isNotEmpty) {
-                  setState(() {
-                    final tags = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                    orderedTag.tags.addAll(tags);
-                  });
+            Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text == '') {
+                  return const Iterable<String>.empty();
                 }
+                return _getAllTagsForTagGroup(tagGroup.name).then((allTags) {
+                  return allTags.where((String option) {
+                    return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                  });
+                });
+              },
+              onSelected: (String selection) {
+                if (!tagGroup.tags.contains(selection)) {
+                  final updatedTags = List<String>.from(tagGroup.tags)..add(selection);
+                  _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                }
+              },
+              fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                return TextFormField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  decoration: const InputDecoration(labelText: 'Add new tag'),
+                  onFieldSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                      final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
+                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                    }
+                    textEditingController.clear();
+                    onFieldSubmitted();
+                  },
+                );
               },
             ),
           ],

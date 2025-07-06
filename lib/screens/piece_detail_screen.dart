@@ -1,4 +1,4 @@
-import 'package:repertoire/models/ordered_tag.dart';
+import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
@@ -162,45 +162,37 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
             ),
 
             // Ordered Tags Section
-            if (_musicPiece.orderedTags.isNotEmpty)
-              Card(
-                margin: const EdgeInsets.only(bottom: 16.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ordered Tags',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8.0),
-                      ..._musicPiece.orderedTags.map((orderedTag) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: 120,
-                                child: Text('${orderedTag.name}:', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 8.0,
-                                  runSpacing: 4.0,
-                                  children: orderedTag.tags.map((tag) {
-                                    return Chip(label: Text(tag));
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ],
+            if (_musicPiece.tagGroups.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tag Groups:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  const SizedBox(height: 8.0),
+                  ..._musicPiece.tagGroups.map((tagGroup) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${tagGroup.name}:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: Wrap(
+                              spacing: 8.0,
+                              runSpacing: 4.0,
+                              children: tagGroup.tags.map((tag) {
+                                return Chip(label: Text(tag));
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
               ),
 
             // Media Section
