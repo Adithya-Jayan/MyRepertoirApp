@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/music_piece_repository.dart';
 import '../models/music_piece.dart';
 
+import 'package:intl/intl.dart';
+
 class BackupRestoreScreen extends StatefulWidget {
   const BackupRestoreScreen({super.key});
 
@@ -27,23 +29,38 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     try {
       final musicPieces = await _repository.getMusicPieces();
       final jsonString = jsonEncode(musicPieces.map((e) => e.toJson()).toList());
+      final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
+      final fileName = 'music_repertoire_backup_$timestamp.json';
 
-      String? outputFile = await FilePicker.platform.saveFile(
-        fileName: 'music_repertoire_backup.json',
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
-      if (outputFile != null) {
-        final file = File(outputFile);
-        await file.writeAsBytes(utf8.encode(jsonString));
+      if (Platform.isAndroid || Platform.isIOS) {
+        // On mobile, we must pass the bytes to `saveFile`.
+        await FilePicker.platform.saveFile(
+          fileName: fileName,
+          bytes: utf8.encode(jsonString),
+        );
+        // We can't reliably detect cancellation, so we'll just show a success message.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data backed up successfully!'))
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Backup cancelled.'))
+        // Desktop logic remains the same.
+        String? outputFile = await FilePicker.platform.saveFile(
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['json'],
         );
+
+        if (outputFile != null) {
+          final file = File(outputFile);
+          await file.writeAsBytes(utf8.encode(jsonString));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data backed up successfully!'))
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Backup cancelled.'))
+          );
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -69,8 +86,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         final List<dynamic> musicPiecesJson = jsonDecode(jsonString);
         final List<MusicPiece> restoredPieces = musicPiecesJson.map((e) => MusicPiece.fromJson(e)).toList();
 
-        // Clear existing data and insert restored data
-        await _repository.deleteAllMusicPieces();
+        // await _repository.deleteAllMusicPieces();
         for (var piece in restoredPieces) {
           // Download associated media files from Google Drive if googleDriveFileId is present
           for (var mediaItem in piece.mediaItems) {

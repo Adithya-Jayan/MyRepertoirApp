@@ -171,9 +171,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2",
+      "rootUri": "file:///C:/Users/adith/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.19.0",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.0"
     },
     {
       "name": "just_audio",
