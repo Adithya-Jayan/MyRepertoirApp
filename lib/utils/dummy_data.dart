@@ -11,9 +11,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Sonata No. 14 "Moonlight"',
     artistComposer: 'Ludwig van Beethoven',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Romantic'], color: Colors.blue.value),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Advanced'], color: Colors.orange.value),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Romantic'], color: Colors.blue[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Advanced'], color: Colors.orange[300]!.value),
     ],
     tags: ['Romantic', 'Sonata'],
     mediaItems: [
@@ -36,9 +36,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Clair de Lune',
     artistComposer: 'Claude Debussy',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Impressionistic'], color: Colors.blue.value),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Intermediate'], color: Colors.orange.value),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical', 'Impressionistic'], color: Colors.blue[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Intermediate'], color: Colors.orange[300]!.value),
     ],
     tags: ['Impressionistic'],
     mediaItems: [
@@ -55,9 +55,9 @@ final List<MusicPiece> dummyMusicPieces = [
     title: 'Für Elise',
     artistComposer: 'Ludwig van Beethoven',
     tagGroups: [
-      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical'], color: Colors.blue.value),
-      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green.value),
-      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Beginner'], color: Colors.orange.value),
+      TagGroup(id: const Uuid().v4(), name: 'Genre', tags: ['Classical'], color: Colors.blue[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Instrumentation', tags: ['Piano'], color: Colors.green[300]!.value),
+      TagGroup(id: const Uuid().v4(), name: 'Difficulty', tags: ['Beginner'], color: Colors.orange[300]!.value),
     ],
     tags: ['Classical'],
     mediaItems: [],

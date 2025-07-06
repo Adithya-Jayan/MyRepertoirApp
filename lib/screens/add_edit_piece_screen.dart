@@ -26,6 +26,19 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   final MusicPieceRepository _repository = MusicPieceRepository();
   List<String> _allTagGroupNames = []; // For tag group name suggestions
 
+  final Map<String, TextEditingController> _tagInputControllers = {};
+
+  final List<Map<String, dynamic>> _colorOptions = [
+    {'name': 'Default', 'value': null},
+    {'name': 'Red', 'value': Colors.red[300]!.value},
+    {'name': 'Blue', 'value': Colors.blue[300]!.value},
+    {'name': 'Green', 'value': Colors.green[300]!.value},
+    {'name': 'Orange', 'value': Colors.orange[300]!.value},
+    {'name': 'Purple', 'value': Colors.purple[300]!.value},
+    {'name': 'Teal', 'value': Colors.teal[300]!.value},
+    {'name': 'Indigo', 'value': Colors.indigo[300]!.value},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -261,7 +274,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         focusNode: focusNode,
                         decoration: const InputDecoration(labelText: 'Tag Group Name'),
                         onChanged: (value) {
-                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: value));
+                          tagGroup.name = value;
                         },
                         onFieldSubmitted: (value) {
                           if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
@@ -290,33 +303,28 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               children: [
                 const Text('Color:'),
                 const SizedBox(width: 8.0),
-                DropdownButton<int>(
-                  value: tagGroup.color ?? Colors.blue.value, // Default to blue if no color
+                DropdownButton<int?>(
+                  value: tagGroup.color, // Use tagGroup.color directly, can be null
                   onChanged: (int? newColor) {
-                    if (newColor != null) {
-                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
-                    }
+                    _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
                   },
-                  items: <DropdownMenuItem<int>>[
-                    DropdownMenuItem(value: Colors.red.value, child: Text('Red')),
-                    DropdownMenuItem(value: Colors.blue.value, child: Text('Blue')),
-                    DropdownMenuItem(value: Colors.green.value, child: Text('Green')),
-                    DropdownMenuItem(value: Colors.orange.value, child: Text('Orange')),
-                    DropdownMenuItem(value: Colors.purple.value, child: Text('Purple')),
-                  ].map((item) => DropdownMenuItem<int>(
-                    value: item.value,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          color: Color(item.value!),
-                        ),
-                        const SizedBox(width: 8),
-                        Text((item.child as Text).data!),
-                      ],
-                    ),
-                  )).toList(),
+                  items: _colorOptions.map((option) {
+                    return DropdownMenuItem<int?>(
+                      value: option['value'] as int?,
+                      child: Row(
+                        children: [
+                          if (option['value'] != null)
+                            Container(
+                              width: 20,
+                              height: 20,
+                              color: Color(option['value'] as int),
+                            ),
+                          if (option['value'] != null) const SizedBox(width: 8),
+                          Text(option['name'] as String),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
             ),
@@ -361,8 +369,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
                       _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
                     }
-                    textEditingController.clear();
-                    onFieldSubmitted();
+                    _tagInputControllers[tagGroup.id]!.clear();
+                    if (onFieldSubmitted != null) {
+                      onFieldSubmitted();
+                    }
                   },
                 );
               },
