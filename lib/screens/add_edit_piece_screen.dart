@@ -247,11 +247,12 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               }).toList(),
             ),
             TextFormField(
-              decoration: const InputDecoration(labelText: 'Add a new tag'),
+              decoration: const InputDecoration(labelText: 'Add new tags (comma-separated)'),
               onFieldSubmitted: (value) {
                 if (value.isNotEmpty) {
                   setState(() {
-                    orderedTag.tags.add(value);
+                    final tags = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                    orderedTag.tags.addAll(tags);
                   });
                 }
               },

@@ -218,7 +218,15 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : ReorderableListView.builder(
+            : _groups.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No groups yet! Add one to organize your pieces :D',
+                      style: TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : ReorderableListView.builder(
                 itemCount: _groups.length,
                 onReorder: _onReorder,
                 itemBuilder: (context, index) {

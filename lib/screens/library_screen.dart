@@ -149,7 +149,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
       final artistComposerMatch = _filterOptions['artistComposer'] == null ||
           piece.artistComposer.toLowerCase().contains(_filterOptions['artistComposer'].toLowerCase());
       final orderedTagsMatch = _filterOptions['orderedTags'] == null ||
-          piece.orderedTags.any((ot) => ot.tags.any((tag) => tag.toLowerCase().contains(_filterOptions['orderedTags'].toLowerCase())));
+          (_filterOptions['orderedTags'] as String).split(',').every((searchTag) => 
+              piece.orderedTags.any((ot) => ot.tags.any((tag) => tag.toLowerCase().contains(searchTag.trim().toLowerCase())))
+          );
       final tagsMatch = _filterOptions['tags'] == null ||
           piece.tags.any((t) => t.toLowerCase().contains(_filterOptions['tags'].toLowerCase()));
 
@@ -183,19 +185,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
       filteredPieces.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     } else if (_sortOption == 'alphabetical_desc') {
       filteredPieces.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
-    } else if (_sortOption == 'oldest_practice_asc') {
+    } else if (_sortOption.startsWith('last_practiced')) {
       filteredPieces.sort((a, b) {
-        if (a.lastPracticeTime == null && b.lastPracticeTime == null) return 0;
-        if (a.lastPracticeTime == null) return -1;
-        if (b.lastPracticeTime == null) return 1;
-        return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
-      });
-    } else if (_sortOption == 'oldest_practice_desc') {
-      filteredPieces.sort((a, b) {
-        if (a.lastPracticeTime == null && b.lastPracticeTime == null) return 0;
-        if (a.lastPracticeTime == null) return 1;
-        if (b.lastPracticeTime == null) return -1;
-        return b.lastPracticeTime!.compareTo(a.lastPracticeTime!);
+        // Handle practice tracking enabled/disabled
+        if (a.enablePracticeTracking && !b.enablePracticeTracking) return -1;
+        if (!a.enablePracticeTracking && b.enablePracticeTracking) return 1;
+        if (!a.enablePracticeTracking && !b.enablePracticeTracking) return 0;
+
+        // Handle never practiced
+        final aNeverPracticed = a.lastPracticeTime == null;
+        final bNeverPracticed = b.lastPracticeTime == null;
+        if (aNeverPracticed && !bNeverPracticed) return 1;
+        if (!aNeverPracticed && bNeverPracticed) return -1;
+        if (aNeverPracticed && bNeverPracticed) return 0;
+
+        // Sort by timestamp
+        if (_sortOption == 'last_practiced_asc') {
+          return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
+        } else {
+          return b.lastPracticeTime!.compareTo(a.lastPracticeTime!);
+        }
       });
     }
 
@@ -243,11 +252,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           decoration: const InputDecoration(labelText: 'Title'),
                           initialValue: _filterOptions['title'],
                           onChanged: (value) => _filterOptions['title'] = value,
-                        ),
-                        TextFormField(
-                          decoration: const InputDecoration(labelText: 'Artist/Composer'),
-                          initialValue: _filterOptions['artistComposer'],
-                          onChanged: (value) => _filterOptions['artistComposer'] = value,
                         ),
                         TextFormField(
                           decoration: const InputDecoration(labelText: 'Ordered Tags'),
@@ -312,7 +316,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
           
           IconButton(
-            icon: const Icon(Icons.sort),
+            icon: const Icon(Icons.swap_vert),
             onPressed: () {
               showDialog(
                 context: context,
@@ -416,16 +420,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             )
           else
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  "No groups yet! Add one to organize your pieces :D",
-                  style: TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
+            const SizedBox.shrink(),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
