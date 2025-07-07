@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # weekly
 
+permissions:
+  contents: write
+
 jobs:
   update-contributors:
     runs-on: ubuntu-latest
