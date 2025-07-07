@@ -5,10 +5,7 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -39,4 +36,17 @@ bin/
 .vscode/
 
 ### Mac OS ###
+
+.dart_tool/
 .DS_Store
+
+# Flutter/Dart specific
+.flutter-plugins-dependencies
+.metadata
+pubspec.lock
+local.properties
+gradlew
+gradlew.bat
+android/local.properties
+android/gradlew
+android/gradlew.bat
