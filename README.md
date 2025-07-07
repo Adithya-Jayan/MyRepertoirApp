@@ -6,13 +6,15 @@ The app helps you keep your sheet music, notes, audio recordings, and practice l
 
 ## Screenshots
 
-![alt text](../screenshots/assets/images/6294161292981814199.jpg?raw=true "Screenshot 1")
-![alt text](../screenshots/assets/images/6294161292981814200.jpg?raw=true "Screenshot 2")
-![alt text](../screenshots/assets/images/6294161292981814201.jpg?raw=true "Screenshot 3")
-![alt text](../screenshots/assets/images/6294161292981814202.jpg?raw=true "Screenshot 4")
-![alt text](../screenshots/assets/images/6294161292981814203.jpg?raw=true "Screenshot 5")
-![alt text](../screenshots/assets/images/6294161292981814205.jpg?raw=true "Screenshot 6")
-![alt text](../screenshots/assets/images/6294161292981814206.jpg?raw=true "Screenshot 7")
+<p align="center">
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814199.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814200.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814201.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814202.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814203.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814205.jpg?raw=true" width="200"/>
+  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814206.jpg?raw=true" width="200"/>
+</p>
 
 ## Features
 
