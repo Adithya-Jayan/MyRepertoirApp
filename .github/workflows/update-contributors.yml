@@ -2,7 +2,8 @@ name: Update Contributors JSON
 
 on:
   push:
-    branches: [main]
+    branches:
+      - '**'
   schedule:
     - cron: '0 0 * * 0'  # weekly
   workflow_dispatch:
