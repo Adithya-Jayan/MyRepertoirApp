@@ -7,7 +7,7 @@ Repertoire is a cross-platform application designed for musicians to manage thei
 The app helps you keep your sheet music, notes, audio recordings, and practice logs neatly organized for every piece in your collection. With optional Google Drive integration, you can back up your data and access it from anywhere.
 </div>
 
-### Screenshots
+### App Screenshots
 
 <p align="center">
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814205.jpg?raw=true" width="110"/>
