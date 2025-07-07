@@ -1,0 +1,39 @@
+name: Update Contributors JSON
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'  # weekly
+
+jobs:
+  update-contributors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Fetch, sort & clean contributor list
+        run: |
+          mkdir -p assets
+          curl -s https://api.github.com/repos/${{ github.repository }}/contributors \
+          | jq '[.[] 
+                | select(.type == "User" and (.login | test("bot") | not)) 
+                | { 
+                    login: .login, 
+                    contributions: .contributions, 
+                    avatar_url: .avatar_url, 
+                    html_url: .html_url 
+                  }] 
+              | sort_by(-.contributions)' > assets/contributors.json
+
+      - name: Commit updated JSON
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add assets/contributors.json
+          git diff --cached --quiet || git commit -m "Update contributors.json in assets"
+          git push
