@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'dart:math'; // Import for pow function
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioPath;
@@ -29,7 +30,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void initState() {
     super.initState();
     _player = AudioPlayer();
+    _loadSettings();
     _initAudio();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _speed = prefs.getDouble('audio_speed') ?? 1.0;
+      _pitch = prefs.getDouble('audio_pitch') ?? 0.0;
+    });
+    _player.setSpeed(_speed);
+    _player.setPitch(pow(2, _pitch / 12.0).toDouble());
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('audio_speed', _speed);
+    prefs.setDouble('audio_pitch', _pitch);
   }
 
   Future<void> _initAudio() async {
@@ -122,6 +140,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       _speed = value;
                       _player.setSpeed(_speed);
                     });
+                    _saveSettings();
                   },
                 ),
               ),
@@ -149,6 +168,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       final pitchMultiplier = pow(2, _pitch / 12.0).toDouble();
                       _player.setPitch(pitchMultiplier);
                     });
+                    _saveSettings();
                   },
                 ),
               ),
