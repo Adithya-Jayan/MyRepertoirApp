@@ -29,9 +29,9 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 7, // Increment database version for migration
+      version: 1, // Initial database version
       onCreate: _createDB,
-      onUpgrade: _onUpgrade, // Add onUpgrade callback
+      onUpgrade: _onUpgrade, // Placeholder for future migrations
     );
 
     // Check if the database is empty and insert dummy data if it is
@@ -93,30 +93,17 @@ CREATE TABLE IF NOT EXISTS groups (
 ''');
   }
 
-  // Database migration handler
-  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute("ALTER TABLE music_pieces ADD COLUMN groupIds TEXT DEFAULT '[]';");
-    }
-    if (oldVersion < 3) {
-      await db.execute('''
-CREATE TABLE groups (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  'order' INTEGER,
-  isDefault INTEGER
-)
-''');
-    }
-    if (oldVersion < 6) {
-      // Add tagGroups column
-      await db.execute("ALTER TABLE music_pieces ADD COLUMN tagGroups TEXT DEFAULT '[]';");
-    }
-  }
-
   Future<void> insertMusicPiece(MusicPiece piece) async {
     final db = await instance.database;
     await db.insert('music_pieces', piece.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // Placeholder for future database migrations
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Example migration:
+    // if (oldVersion < 2) {
+    //   await db.execute("ALTER TABLE music_pieces ADD COLUMN newColumn TEXT;");
+    // }
   }
 
   Future<void> insertTag(Tag tag) async {
