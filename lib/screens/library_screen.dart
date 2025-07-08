@@ -40,12 +40,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String? _errorMessage;
   int _galleryColumns = 1;
   Key _groupListKey = UniqueKey(); // New key for group list
+  late PageController _pageController;
+  late ScrollController _groupScrollController; // New scroll controller for group chips
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
+    _groupScrollController = ScrollController(); // Initialize the scroll controller
     _initSharedPreferences();
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _groupScrollController.dispose(); // Dispose the scroll controller
+    super.dispose();
   }
 
   Future<void> _initSharedPreferences() async {
@@ -210,6 +221,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     return filteredPieces;
+  }
+
+  double _calculateScrollOffset(int index) {
+    // Assuming each chip has a fixed width for simplicity, or calculate dynamically
+    // This is a simplified calculation. You might need to adjust based on actual chip sizes and spacing.
+    // 4.0 (left padding) + 4.0 (right padding) + chip width
+    // For "All" chip (index 0)
+    double offset = 0.0;
+    if (index == 0) {
+      offset = 0.0; // "All" chip is at the beginning
+    } else {
+      // Calculate offset for other chips
+      // Assuming average chip width + padding + spacing
+      // This is a rough estimate. For precise calculation, you'd need to measure widget sizes.
+      // For now, let's assume a fixed width per chip for calculation.
+      // A more robust solution would involve using GlobalKey to get the render box of each chip.
+      const double chipWidth = 100.0; // Approximate width of a chip
+      const double paddingAndSpacing = 8.0; // 4.0 left + 4.0 right padding + 8.0 spacing
+      offset = (index * (chipWidth + paddingAndSpacing));
+    }
+
+    // Ensure the offset doesn't exceed the max scroll extent
+    if (_groupScrollController.hasClients) {
+      return offset.clamp(0.0, _groupScrollController.position.maxScrollExtent);
+    }
+    return offset;
   }
 
   @override
@@ -391,10 +428,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       body: Column(
         children: [
-          // Group Toggling Bar
+          // Group Toggling Bar (now controlled by PageView)
           if (_groups.isNotEmpty)
             SingleChildScrollView(
               key: _groupListKey, // Use the new key
+              controller: _groupScrollController, // Attach the scroll controller
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: Row(
@@ -407,12 +445,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       selected: _selectedGroupId == null,
                       onSelected: (selected) {
                         if (selected) {
-                          setState(() {
-                            _selectedGroupId = null;
-                          });
-                          _loadMusicPieces();
+                          _pageController.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
                         }
                       },
+                      showCheckmark: false,
                     ),
                   ),
                   ..._groups.where((g) => !g.isDefault).map((group) {
@@ -425,12 +461,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         selected: _selectedGroupId == group.id,
                         onSelected: (selected) {
                           if (selected) {
-                            setState(() {
-                              _selectedGroupId = group.id;
-                            });
-                            _loadMusicPieces();
+                            final index = _groups.indexOf(group) + 1;
+                            _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
                           }
                         },
+                        showCheckmark: false,
                       ),
                     );
                   }).toList(),
@@ -440,36 +475,84 @@ class _LibraryScreenState extends State<LibraryScreen> {
           else
             const SizedBox.shrink(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? Center(child: Text(_errorMessage!))
-                    : _musicPieces.isEmpty
-                        ? const Center(child: Text('No music pieces found. Add one!'))
-                        : GridView.builder(
-                            key: ValueKey(_galleryColumns), // Force rebuild when columns change
-                            padding: const EdgeInsets.all(8.0),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: _galleryColumns,
-                              crossAxisSpacing: 4.0,
-                              mainAxisSpacing: 8.0,
-                              childAspectRatio: 1.0, // Adjusted for square items
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _groups.length + 1, // +1 for "All" group
+              onPageChanged: (index) {
+                setState(() {
+                  if (index == 0) {
+                    _selectedGroupId = null; // "All" group
+                  } else {
+                    _selectedGroupId = _groups[index - 1].id;
+                  }
+                });
+
+                // Scroll the selected chip into view
+                _groupScrollController.animateTo(
+                  _calculateScrollOffset(index),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                );
+              },
+              itemBuilder: (context, pageIndex) {
+                if (_isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (_errorMessage != null) {
+                  return Center(child: Text(_errorMessage!));
+                } else if (_musicPieces.isEmpty) {
+                  return const Center(child: Text('No music pieces found. Add one!'));
+                } else {
+                  // Determine the group ID for the current page
+                  String? currentPageGroupId;
+                  if (pageIndex == 0) {
+                    currentPageGroupId = null; // "All" group
+                  } else {
+                    currentPageGroupId = _groups[pageIndex - 1].id;
+                  }
+
+                  // Filter music pieces for the current page
+                  final musicPiecesForPage = _allMusicPieces.where((piece) {
+                    if (currentPageGroupId == null) {
+                      return true; // Show all pieces for "All" group
+                    } else {
+                      return piece.groupIds.contains(currentPageGroupId);
+                    }
+                  }).toList();
+
+                  // Apply search and filter options to the current page's pieces
+                  final filteredAndSortedPieces = _filterMusicPieces(musicPiecesForPage);
+
+                  if (filteredAndSortedPieces.isEmpty) {
+                    return const Center(child: Text('No music pieces found in this group.'));
+                  }
+
+                  return GridView.builder(
+                    key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _galleryColumns,
+                      crossAxisSpacing: 4.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio: 1.0, // Adjusted for square items
+                    ),
+                    itemCount: filteredAndSortedPieces.length,
+                    itemBuilder: (context, index) {
+                      return MusicPieceCard(
+                        piece: filteredAndSortedPieces[index],
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PieceDetailScreen(musicPiece: filteredAndSortedPieces[index]),
                             ),
-                            itemCount: _musicPieces.length,
-                            itemBuilder: (context, index) {
-                              return MusicPieceCard(
-                                piece: _musicPieces[index],
-                                onTap: () async {
-                                  await Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => PieceDetailScreen(musicPiece: _musicPieces[index]),
-                                    ),
-                                  );
-                                  _loadMusicPieces(); // Reload data after returning from detail screen
-                                },
-                              );
-                            },
-                          ),
+                          );
+                          _loadMusicPieces(); // Reload data after returning from detail screen
+                        },
+                      );
+                    },
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),
