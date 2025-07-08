@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:repertoire/widgets/tag_group_filter_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/music_piece_repository.dart';
@@ -68,7 +69,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _loadSettings() async {
     print('LibraryScreen: _loadSettings called');
-    final loadedColumns = _prefs.getInt('galleryColumns') ?? 1;
+    int defaultColumns;
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
+      defaultColumns = 4; // Desktop and web builds
+    } else {
+      defaultColumns = 2; // Mobile builds (Android, iOS)
+    }
+    final loadedColumns = _prefs.getInt('galleryColumns') ?? defaultColumns;
     print('Loaded galleryColumns: $loadedColumns');
     setState(() {
       _galleryColumns = loadedColumns;
