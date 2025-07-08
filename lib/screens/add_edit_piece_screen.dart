@@ -377,7 +377,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               },
               fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                 return TextFormField(
-                  controller: _tagInputControllers[tagGroup.id],
+                  controller: textEditingController,
                   focusNode: focusNode,
                   decoration: const InputDecoration(labelText: 'Add new tag'),
                   onFieldSubmitted: (value) {
@@ -386,7 +386,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
                       _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
                     }
-                    _tagInputControllers[tagGroup.id]!.clear();
+                    textEditingController.clear(); // Clear this specific controller
                     onFieldSubmitted();
                   },
                 );
