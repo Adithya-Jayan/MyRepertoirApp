@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/screens/add_edit_piece_screen.dart';
+import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 
 class PieceDetailScreen extends StatefulWidget {
@@ -54,6 +55,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Brightness brightness = Theme.of(context).brightness;
     return Scaffold(
       appBar: AppBar(
         title: Text(_musicPiece.title),
@@ -184,7 +186,11 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                               spacing: 8.0,
                               runSpacing: 4.0,
                               children: tagGroup.tags.map((tag) {
-                                return Chip(label: Text(tag), backgroundColor: tagGroup.color != null ? Color(tagGroup.color!) : null);
+                                final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
+                                return Chip(
+                                  label: Text(tag),
+                                  backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                                );
                               }).toList(),
                             ),
                           ),

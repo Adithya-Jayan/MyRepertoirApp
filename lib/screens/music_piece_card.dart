@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repertoire/utils/color_utils.dart';
 import '../models/music_piece.dart';
 
 class MusicPieceCard extends StatelessWidget {
@@ -9,6 +10,7 @@ class MusicPieceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Brightness brightness = Theme.of(context).brightness;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       elevation: 2.0,
@@ -45,7 +47,13 @@ class MusicPieceCard extends StatelessWidget {
                 runSpacing: 4.0,
                 children: [
                   if (piece.tagGroups.isNotEmpty)
-                    ...piece.tagGroups.expand((tg) => tg.tags.map((tag) => Chip(label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag)), backgroundColor: tg.color != null ? Color(tg.color!) : null))),
+                    ...piece.tagGroups.expand((tg) => tg.tags.map((tag) {
+                      final color = tg.color != null ? Color(tg.color!) : null;
+                      return Chip(
+                        label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag)),
+                        backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                      );
+                    })),
                 ],
               ),
               const SizedBox(height: 8.0),

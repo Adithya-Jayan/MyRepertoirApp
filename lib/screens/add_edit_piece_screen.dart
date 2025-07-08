@@ -49,6 +49,17 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
     _loadGroups();
     _loadTagGroupNames();
+
+    // Initialize controllers for existing tag groups
+    for (var tagGroup in _musicPiece.tagGroups) {
+      _tagInputControllers[tagGroup.id] = TextEditingController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _tagInputControllers.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 
   Future<void> _loadTagGroupNames() async {
@@ -118,7 +129,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   void _addTagGroup() {
     setState(() {
-      _musicPiece.tagGroups.add(TagGroup(id: const Uuid().v4(), name: '', tags: []));
+      final newTagGroup = TagGroup(id: const Uuid().v4(), name: '', tags: []);
+      _musicPiece.tagGroups.add(newTagGroup);
+      _tagInputControllers[newTagGroup.id] = TextEditingController();
     });
   }
 
@@ -243,7 +256,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   Widget _buildTagGroupSection(TagGroup tagGroup) {
-    final TextEditingController tagGroupNameController = TextEditingController(text: tagGroup.name);
+    _tagInputControllers.putIfAbsent(tagGroup.id, () => TextEditingController());
+    _tagInputControllers[tagGroup.id]!.text = tagGroup.name;
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
@@ -270,7 +285,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     },
                     fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                       return TextFormField(
-                        controller: tagGroupNameController,
+                        controller: _tagInputControllers[tagGroup.id],
                         focusNode: focusNode,
                         decoration: const InputDecoration(labelText: 'Tag Group Name'),
                         onChanged: (value) {
@@ -293,6 +308,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                   onPressed: () {
                     setState(() {
                       _musicPiece.tagGroups.remove(tagGroup);
+                      _tagInputControllers[tagGroup.id]?.dispose();
+                      _tagInputControllers.remove(tagGroup.id);
                     });
                   },
                 ),
@@ -360,7 +377,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               },
               fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                 return TextFormField(
-                  controller: textEditingController,
+                  controller: _tagInputControllers[tagGroup.id],
                   focusNode: focusNode,
                   decoration: const InputDecoration(labelText: 'Add new tag'),
                   onFieldSubmitted: (value) {
@@ -370,9 +387,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
                     }
                     _tagInputControllers[tagGroup.id]!.clear();
-                    if (onFieldSubmitted != null) {
-                      onFieldSubmitted();
-                    }
+                    onFieldSubmitted();
                   },
                 );
               },
