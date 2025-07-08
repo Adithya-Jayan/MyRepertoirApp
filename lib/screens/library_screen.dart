@@ -499,8 +499,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (_errorMessage != null) {
                   return Center(child: Text(_errorMessage!));
-                } else if (_musicPieces.isEmpty) {
-                  return const Center(child: Text('No music pieces found. Add one!'));
                 } else {
                   // Determine the group ID for the current page
                   String? currentPageGroupId;
@@ -526,29 +524,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     return const Center(child: Text('No music pieces found in this group.'));
                   }
 
-                  return GridView.builder(
-                    key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes
-                    padding: const EdgeInsets.all(8.0),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _galleryColumns,
-                      crossAxisSpacing: 4.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 1.0, // Adjusted for square items
-                    ),
-                    itemCount: filteredAndSortedPieces.length,
-                    itemBuilder: (context, index) {
-                      return MusicPieceCard(
-                        piece: filteredAndSortedPieces[index],
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => PieceDetailScreen(musicPiece: filteredAndSortedPieces[index]),
-                            ),
-                          );
-                          _loadMusicPieces(); // Reload data after returning from detail screen
-                        },
-                      );
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await _loadGroups();
+                      await _loadMusicPieces();
                     },
+                    child: GridView.builder(
+                      key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes
+                      padding: const EdgeInsets.all(8.0),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _galleryColumns,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 1.0, // Adjusted for square items
+                      ),
+                      itemCount: filteredAndSortedPieces.length,
+                      itemBuilder: (context, index) {
+                        return MusicPieceCard(
+                          piece: filteredAndSortedPieces[index],
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PieceDetailScreen(musicPiece: filteredAndSortedPieces[index]),
+                              ),
+                            );
+                            _loadMusicPieces(); // Reload data after returning from detail screen
+                          },
+                        );
+                      },
+                    ),
                   );
                 }
               },
