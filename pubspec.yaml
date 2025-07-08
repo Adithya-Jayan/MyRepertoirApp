@@ -41,6 +41,8 @@ dependencies:
   flutter_markdown: ^0.7.7+1 # For rendering markdown
   photo_view: ^0.15.0 # For zoomable images
   just_audio: ^0.10.4 # For audio playback
+  audio_service: ^0.18.12 # For background audio and media controls
+  just_audio_background: ^0.0.1-beta.11 # For simpler audio_service integration
   video_player: ^2.8.1 # For video playback
   url_launcher: ^6.2.2 # For opening URLs
   shared_preferences: ^2.2.2 # For storing simple key-value pairs

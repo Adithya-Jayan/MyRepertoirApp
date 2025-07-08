@@ -214,7 +214,12 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                       itemCount: _musicPiece.mediaItems.length,
                       itemBuilder: (context, index) {
                         final item = _musicPiece.mediaItems[index];
-                        return MediaDisplayWidget(key: ValueKey(item.id), mediaItem: item);
+                        return MediaDisplayWidget(
+                          key: ValueKey(item.id),
+                          mediaItem: item,
+                          musicPieceTitle: _musicPiece.title,
+                          musicPieceArtist: _musicPiece.artistComposer,
+                        );
                       },
                       onReorder: (oldIndex, newIndex) {
                         setState(() {

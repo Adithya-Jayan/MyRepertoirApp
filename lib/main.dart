@@ -8,11 +8,19 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'utils/theme_notifier.dart'; // Import ThemeNotifier
 
-void main() {
+import 'package:just_audio_background/just_audio_background.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
+  );
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeNotifier(ThemeMode.system), // Initial theme mode

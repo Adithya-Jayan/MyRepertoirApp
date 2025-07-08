@@ -12,8 +12,10 @@ import 'dart:io';
 
 class MediaDisplayWidget extends StatelessWidget {
   final MediaItem mediaItem;
+  final String? musicPieceTitle;
+  final String? musicPieceArtist;
 
-  const MediaDisplayWidget({super.key, required this.mediaItem});
+  const MediaDisplayWidget({super.key, required this.mediaItem, this.musicPieceTitle, this.musicPieceArtist});
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,13 @@ class MediaDisplayWidget extends StatelessWidget {
               width: double.infinity,
             ),
           ),
+        );
+        break;
+      case MediaType.audio:
+        content = AudioPlayerWidget(
+          audioPath: mediaItem.pathOrUrl,
+          title: mediaItem.title ?? 'Unknown Title',
+          artist: musicPieceArtist ?? 'Unknown Artist',
         );
         break;
       case MediaType.videoLink:
