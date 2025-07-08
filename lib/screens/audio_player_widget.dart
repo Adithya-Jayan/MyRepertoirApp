@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'dart:math'; // Import for pow function
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioPath;
@@ -22,7 +23,7 @@ class AudioPlayerWidget extends StatefulWidget {
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   late AudioPlayer _player;
   double _speed = 1.0;
-  double _pitch = 1.0; // Represents pitch multiplier, 1.0 is original pitch
+  double _pitch = 0.0; // Represents pitch in half-step units, 0.0 is original pitch
 
   @override
   void initState() {
@@ -136,28 +137,43 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               const Text('Pitch:'),
               Expanded(
                 child: Slider(
-                  min: 0.5,
-                  max: 2.0,
+                  min: -12.0, // One octave down
+                  max: 12.0, // One octave up
                   value: _pitch,
-                  divisions: 30, // 0.5 to 2.0 in 0.05 increments
-                  label: _pitch.toStringAsFixed(2),
+                  divisions: 24,
+                  label: _getPitchDisplayString(_pitch),
                   onChanged: (value) {
                     setState(() {
                       _pitch = value;
-                      // just_audio's setPitch takes a double, where 1.0 is original pitch.
-                      // We can map half-steps to a pitch multiplier.
-                      // A common approximation is 2^(half_steps/12)
-                      // For simplicity, we'll directly use the slider value as pitch multiplier.
-                      _player.setPitch(_pitch);
+                      // Convert half-step units to pitch multiplier
+                      final pitchMultiplier = pow(2, _pitch / 12.0).toDouble();
+                      _player.setPitch(pitchMultiplier);
                     });
                   },
                 ),
               ),
-              Text('${_pitch.toStringAsFixed(2)}'),
+              Text(_getPitchDisplayString(_pitch)),
             ],
           ),
         ),
       ],
     );
+  }
+
+  String _getPitchDisplayString(double pitch) {
+    if (pitch.round() == 0) {
+      return "0";
+    }
+    if (pitch.round() == 12) {
+      return "+1ve";
+    }
+    if (pitch.round() == -12) {
+      return "-1ve";
+    }
+    if (pitch > 0) {
+      return "+${pitch.round()}";
+    } else {
+      return "${pitch.round()}";
+    }
   }
 }
