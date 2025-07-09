@@ -63,27 +63,89 @@ class MediaDisplayWidget extends StatelessWidget {
           artist: musicPieceArtist ?? 'Unknown Artist',
         );
         break;
-      case MediaType.videoLink:
-        content = GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => VideoPlayerWidget(videoPath: mediaItem.pathOrUrl),
-              ),
-            );
-          },
-          child: Container(
-            height: 200,
-            color: Colors.black,
-            child: const Center(
-              child: Icon(
-                Icons.play_circle_fill,
-                color: Colors.white,
-                size: 50.0,
+      case MediaType.mediaLink:
+        final Uri uri = Uri.parse(mediaItem.pathOrUrl);
+        if (uri.host.contains('youtube.com') || uri.host.contains('youtu.be')) {
+          content = GestureDetector(
+            onTap: () async {
+              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                throw 'Could not launch $uri';
+              }
+            },
+            child: Container(
+              height: 200,
+              color: Colors.black,
+              child: const Center(
+                child: Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.red, // YouTube color
+                  size: 50.0,
+                ),
               ),
             ),
-          ),
-        );
+          );
+        } else if (uri.host.contains('spotify.com')) {
+          content = GestureDetector(
+            onTap: () async {
+              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                throw 'Could not launch $uri';
+              }
+            },
+            child: Container(
+              height: 200,
+              color: Colors.black,
+              child: const Center(
+                child: Icon(
+                  Icons.music_note,
+                  color: Colors.green, // Spotify color
+                  size: 50.0,
+                ),
+              ),
+            ),
+          );
+        } else if (uri.path.endsWith('.mp4') || uri.path.endsWith('.mov') || uri.path.endsWith('.avi') || uri.path.endsWith('.mkv')) {
+          // Assume it's a direct video link
+          content = GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerWidget(videoPath: mediaItem.pathOrUrl),
+                ),
+              );
+            },
+            child: Container(
+              height: 200,
+              color: Colors.black,
+              child: const Center(
+                child: Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white,
+                  size: 50.0,
+                ),
+              ),
+            ),
+          );
+        } else {
+          // General web link
+          content = GestureDetector(
+            onTap: () async {
+              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                throw 'Could not launch $uri';
+              }
+            },
+            child: Container(
+              height: 200,
+              color: Colors.blueGrey,
+              child: const Center(
+                child: Icon(
+                  Icons.link,
+                  color: Colors.white,
+                  size: 50.0,
+                ),
+              ),
+            ),
+          );
+        }
         break;
       default:
         content = Text('Unsupported media type: ${mediaItem.type.name}');

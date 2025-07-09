@@ -3,6 +3,6 @@ enum MediaType {
   pdf,
   image,
   audio,
-  videoLink,  // for YouTube/external video links
+  mediaLink,  // for external links (video, audio, web, etc.)
   // Add other types as needed, e.g., 'text' for plain text notes
 }

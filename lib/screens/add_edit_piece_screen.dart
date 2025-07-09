@@ -94,7 +94,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
     } else if (type == MediaType.audio) {
       result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    } else if (type == MediaType.videoLink) {
+    } else if (type == MediaType.mediaLink) {
       // For video links, we don't pick a file, but rather expect a URL input.
       // This case will be handled by a simple text input.
       return;
@@ -114,7 +114,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   void _addMediaItem(MediaType type) {
-    if (type == MediaType.videoLink || type == MediaType.markdown) {
+    if (type == MediaType.mediaLink || type == MediaType.markdown) {
       setState(() {
         _musicPiece.mediaItems.add(MediaItem(
           id: const Uuid().v4(),
@@ -278,8 +278,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           ),
           SpeedDialChild(
             child: const Icon(Icons.video_library),
-            label: 'Video Link',
-            onTap: () => _addMediaItem(MediaType.videoLink),
+            label: 'Media Link',
+            onTap: () => _addMediaItem(MediaType.mediaLink),
           ),
           SpeedDialChild(
             child: const Icon(Icons.label),
