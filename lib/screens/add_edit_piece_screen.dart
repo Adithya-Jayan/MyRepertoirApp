@@ -211,7 +211,25 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               ..._musicPiece.tagGroups.map((tagGroup) => _buildTagGroupSection(tagGroup)).toList(),
               const SizedBox(height: 20),
               const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ..._musicPiece.mediaItems.map((item) => _buildMediaSection(item)).toList(),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _musicPiece.mediaItems.length,
+                buildDefaultDragHandles: false,
+                itemBuilder: (context, index) {
+                  final item = _musicPiece.mediaItems[index];
+                  return _buildMediaSection(item, index);
+                },
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
+                    _musicPiece.mediaItems.insert(newIndex, item);
+                  });
+                },
+              ),
             ],
           ),
         ),
@@ -398,41 +416,55 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     );
   }
 
-  Widget _buildMediaSection(MediaItem item) {
+  Widget _buildMediaSection(MediaItem item, int index) {
     return Card(
+      key: ValueKey(item.id),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(item.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _musicPiece.mediaItems.remove(item);
-                    });
-                  },
-                ),
-              ],
-            ),
-            if (item.type == MediaType.markdown)
-              TextFormField(
-                initialValue: item.pathOrUrl,
-                decoration: const InputDecoration(labelText: 'Markdown Content', border: OutlineInputBorder()),
-                maxLines: 5,
-                onChanged: (value) => item.pathOrUrl = value,
-              )
-            else
-              TextFormField(
-                initialValue: item.pathOrUrl,
-                decoration: const InputDecoration(labelText: 'Path or URL'),
-                onChanged: (value) => item.pathOrUrl = value,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(item.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          setState(() {
+                            _musicPiece.mediaItems.remove(item);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (item.type == MediaType.markdown)
+                    TextFormField(
+                      initialValue: item.pathOrUrl,
+                      decoration: const InputDecoration(labelText: 'Markdown Content', border: OutlineInputBorder()),
+                      maxLines: 5,
+                      onChanged: (value) => item.pathOrUrl = value,
+                    )
+                  else
+                    TextFormField(
+                      initialValue: item.pathOrUrl,
+                      decoration: const InputDecoration(labelText: 'Path or URL'),
+                      onChanged: (value) => item.pathOrUrl = value,
+                    ),
+                ],
               ),
+            ),
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.drag_handle),
+              ),
+            ),
           ],
         ),
       ),

@@ -215,6 +215,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                     ),
                     const SizedBox(height: 8.0),
                     ReorderableListView.builder(
+                      buildDefaultDragHandles: false, // Disable default handles
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(), // to allow SingleChildScrollView to work
                       itemCount: _musicPiece.mediaItems.length,
@@ -225,6 +226,10 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                           mediaItem: item,
                           musicPieceTitle: _musicPiece.title,
                           musicPieceArtist: _musicPiece.artistComposer,
+                          trailing: ReorderableDragStartListener(
+                            index: index,
+                            child: const Icon(Icons.drag_handle),
+                          ),
                         );
                       },
                       onReorder: (oldIndex, newIndex) {

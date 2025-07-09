@@ -14,8 +14,9 @@ class MediaDisplayWidget extends StatelessWidget {
   final MediaItem mediaItem;
   final String? musicPieceTitle;
   final String? musicPieceArtist;
+  final Widget? trailing;
 
-  const MediaDisplayWidget({super.key, required this.mediaItem, this.musicPieceTitle, this.musicPieceArtist});
+  const MediaDisplayWidget({super.key, required this.mediaItem, this.musicPieceTitle, this.musicPieceArtist, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -92,12 +93,19 @@ class MediaDisplayWidget extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(mediaItem.title ?? mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8.0),
-            content,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(mediaItem.title ?? mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  content,
+                ],
+              ),
+            ),
+            if (trailing != null) trailing!,
           ],
         ),
       ),
