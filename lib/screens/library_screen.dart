@@ -361,8 +361,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          _filterOptions = {};
-                          _filterOptions['orderedTags'] = {}; // Clear ordered tags specifically
+                          _filterOptions = {
+                            'orderedTags': <String, List<String>>{},
+                          };
                         });
                         Navigator.pop(context);
                         _loadMusicPieces();
