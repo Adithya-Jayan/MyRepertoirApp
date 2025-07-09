@@ -195,22 +195,27 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               ),
               // Add other core attributes here
               const SizedBox(height: 20),
-              const Text('Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ..._availableGroups.map((group) {
-                return CheckboxListTile(
-                  title: Text(group.name),
-                  value: _selectedGroupIds.contains(group.id),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value == true) {
-                        _selectedGroupIds.add(group.id);
-                      } else {
-                        _selectedGroupIds.remove(group.id);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+              ExpansionTile(
+                title: const Text('Groups'),
+                initiallyExpanded: false,
+                children: [
+                  ..._availableGroups.map((group) {
+                    return CheckboxListTile(
+                      title: Text(group.name),
+                      value: _selectedGroupIds.contains(group.id),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _selectedGroupIds.add(group.id);
+                          } else {
+                            _selectedGroupIds.remove(group.id);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
               const SizedBox(height: 20),
               const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ReorderableListView.builder(
@@ -330,7 +335,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                           },
                           fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                             return TextFormField(
-                              controller: _tagInputControllers[tagGroup.id],
+                              controller: textEditingController,
                               focusNode: focusNode,
                               decoration: const InputDecoration(labelText: 'Tag Group Name'),
                               onChanged: (value) {
