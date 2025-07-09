@@ -44,6 +44,12 @@ class _PersonalizationSettingsScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Personalization'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -92,14 +98,12 @@ class _PersonalizationSettingsScreenState
             Slider(
               value: _galleryColumns,
               min: 1,
-              max: 5,
-              divisions: 4,
+              max: 10,
+              divisions: 9,
               label: _galleryColumns.toInt().toString(),
               onChanged: (value) async {
                 await _saveGalleryColumns(value);
-                if (mounted) {
-                  Navigator.pop(context, true);
-                }
+                
               },
             ),
           ],

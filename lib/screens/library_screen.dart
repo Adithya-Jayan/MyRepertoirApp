@@ -70,8 +70,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _loadSettings() async {
     print('LibraryScreen: _loadSettings called');
     int defaultColumns;
-    if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
-      defaultColumns = 4; // Desktop and web builds
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
+      defaultColumns = 4; // Desktop and web builds (excluding Windows)
+    } else if (defaultTargetPlatform == TargetPlatform.windows) {
+      defaultColumns = 6; // Windows builds
     } else {
       defaultColumns = 2; // Mobile builds (Android, iOS)
     }
@@ -542,8 +544,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       padding: const EdgeInsets.all(8.0),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: _galleryColumns,
-                        crossAxisSpacing: 4.0,
-                        mainAxisSpacing: 8.0,
+                        crossAxisSpacing: 2.0,
+                        mainAxisSpacing: 4.0,
                         childAspectRatio: 1.0, // Adjusted for square items
                       ),
                       itemCount: filteredAndSortedPieces.length,
