@@ -208,7 +208,25 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               }).toList(),
               const SizedBox(height: 20),
               const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ..._musicPiece.tagGroups.map((tagGroup) => _buildTagGroupSection(tagGroup)).toList(),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _musicPiece.tagGroups.length,
+                buildDefaultDragHandles: false,
+                itemBuilder: (context, index) {
+                  final tagGroup = _musicPiece.tagGroups[index];
+                  return _buildTagGroupSection(tagGroup, index);
+                },
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    final tagGroup = _musicPiece.tagGroups.removeAt(oldIndex);
+                    _musicPiece.tagGroups.insert(newIndex, tagGroup);
+                  });
+                },
+              ),
               const SizedBox(height: 20),
               const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ReorderableListView.builder(
@@ -273,142 +291,156 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     );
   }
 
-  Widget _buildTagGroupSection(TagGroup tagGroup) {
+  Widget _buildTagGroupSection(TagGroup tagGroup, int index) {
     _tagInputControllers.putIfAbsent(tagGroup.id, () => TextEditingController());
     _tagInputControllers[tagGroup.id]!.text = tagGroup.name;
 
     return Card(
+      key: ValueKey(tagGroup.id),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Autocomplete<String>(
-                    initialValue: TextEditingValue(text: tagGroup.name),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Autocomplete<String>(
+                          initialValue: TextEditingValue(text: tagGroup.name),
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text == '') {
+                              return const Iterable<String>.empty();
+                            }
+                            return _allTagGroupNames.where((String option) {
+                              return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                            });
+                          },
+                          onSelected: (String selection) {
+                            _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: selection));
+                          },
+                          fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                            return TextFormField(
+                              controller: _tagInputControllers[tagGroup.id],
+                              focusNode: focusNode,
+                              decoration: const InputDecoration(labelText: 'Tag Group Name'),
+                              onChanged: (value) {
+                                tagGroup.name = value;
+                              },
+                              onFieldSubmitted: (value) {
+                                if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
+                                  _allTagGroupNames.add(value);
+                                  _allTagGroupNames.sort();
+                                }
+                                _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: value));
+                                onFieldSubmitted();
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          setState(() {
+                            _musicPiece.tagGroups.remove(tagGroup);
+                            _tagInputControllers[tagGroup.id]?.dispose();
+                            _tagInputControllers.remove(tagGroup.id);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      const Text('Color:'),
+                      const SizedBox(width: 8.0),
+                      DropdownButton<int?>(
+                        value: tagGroup.color, // Use tagGroup.color directly, can be null
+                        onChanged: (int? newColor) {
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
+                        },
+                        items: _colorOptions.map((option) {
+                          return DropdownMenuItem<int?>(
+                            value: option['value'] as int?,
+                            child: Row(
+                              children: [
+                                if (option['value'] != null)
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    color: Color(option['value'] as int),
+                                  ),
+                                if (option['value'] != null) const SizedBox(width: 8),
+                                Text(option['name'] as String),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  Wrap(
+                    spacing: 8.0,
+                    children: tagGroup.tags.map((tag) {
+                      return Chip(
+                        label: Text(tag),
+                        onDeleted: () {
+                          final updatedTags = List<String>.from(tagGroup.tags).where((t) => t != tag).toList();
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  Autocomplete<String>(
                     optionsBuilder: (TextEditingValue textEditingValue) {
                       if (textEditingValue.text == '') {
                         return const Iterable<String>.empty();
                       }
-                      return _allTagGroupNames.where((String option) {
-                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      return _getAllTagsForTagGroup(tagGroup.name).then((allTags) {
+                        return allTags.where((String option) {
+                          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                        });
                       });
                     },
                     onSelected: (String selection) {
-                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: selection));
+                      if (!tagGroup.tags.contains(selection)) {
+                        final updatedTags = List<String>.from(tagGroup.tags)..add(selection);
+                        _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                      }
                     },
                     fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                       return TextFormField(
-                        controller: _tagInputControllers[tagGroup.id],
+                        controller: textEditingController,
                         focusNode: focusNode,
-                        decoration: const InputDecoration(labelText: 'Tag Group Name'),
-                        onChanged: (value) {
-                          tagGroup.name = value;
-                        },
+                        decoration: const InputDecoration(labelText: 'Add new tag'),
                         onFieldSubmitted: (value) {
-                          if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
-                            _allTagGroupNames.add(value);
-                            _allTagGroupNames.sort();
+                          if (value.isNotEmpty) {
+                            final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                            final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
+                            _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
                           }
-                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: value));
+                          textEditingController.clear(); // Clear this specific controller
                           onFieldSubmitted();
                         },
                       );
                     },
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _musicPiece.tagGroups.remove(tagGroup);
-                      _tagInputControllers[tagGroup.id]?.dispose();
-                      _tagInputControllers.remove(tagGroup.id);
-                    });
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Text('Color:'),
-                const SizedBox(width: 8.0),
-                DropdownButton<int?>(
-                  value: tagGroup.color, // Use tagGroup.color directly, can be null
-                  onChanged: (int? newColor) {
-                    _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
-                  },
-                  items: _colorOptions.map((option) {
-                    return DropdownMenuItem<int?>(
-                      value: option['value'] as int?,
-                      child: Row(
-                        children: [
-                          if (option['value'] != null)
-                            Container(
-                              width: 20,
-                              height: 20,
-                              color: Color(option['value'] as int),
-                            ),
-                          if (option['value'] != null) const SizedBox(width: 8),
-                          Text(option['name'] as String),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            Wrap(
-              spacing: 8.0,
-              children: tagGroup.tags.map((tag) {
-                return Chip(
-                  label: Text(tag),
-                  onDeleted: () {
-                    final updatedTags = List<String>.from(tagGroup.tags).where((t) => t != tag).toList();
-                    _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
-                  },
-                );
-              }).toList(),
-            ),
-            Autocomplete<String>(
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text == '') {
-                  return const Iterable<String>.empty();
-                }
-                return _getAllTagsForTagGroup(tagGroup.name).then((allTags) {
-                  return allTags.where((String option) {
-                    return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                  });
-                });
-              },
-              onSelected: (String selection) {
-                if (!tagGroup.tags.contains(selection)) {
-                  final updatedTags = List<String>.from(tagGroup.tags)..add(selection);
-                  _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
-                }
-              },
-              fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                return TextFormField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  decoration: const InputDecoration(labelText: 'Add new tag'),
-                  onFieldSubmitted: (value) {
-                    if (value.isNotEmpty) {
-                      final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                      final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
-                      _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
-                    }
-                    textEditingController.clear(); // Clear this specific controller
-                    onFieldSubmitted();
-                  },
-                );
-              },
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.drag_handle),
+              ),
             ),
           ],
         ),
