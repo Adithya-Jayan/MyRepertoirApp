@@ -226,6 +226,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                           mediaItem: item,
                           musicPieceTitle: _musicPiece.title,
                           musicPieceArtist: _musicPiece.artistComposer,
+                          isEditable: false,
                           trailing: ReorderableDragStartListener(
                             index: index,
                             child: const Icon(Icons.drag_handle),

@@ -10,27 +10,57 @@ import '../screens/audio_player_widget.dart';
 import '../screens/video_player_widget.dart';
 import 'dart:io';
 
-class MediaDisplayWidget extends StatelessWidget {
+class MediaDisplayWidget extends StatefulWidget {
   final MediaItem mediaItem;
   final String? musicPieceTitle;
   final String? musicPieceArtist;
   final Widget? trailing;
+  final Function(String)? onTitleChanged;
+  final bool isEditable; // Added isEditable property
 
-  const MediaDisplayWidget({super.key, required this.mediaItem, this.musicPieceTitle, this.musicPieceArtist, this.trailing});
+  const MediaDisplayWidget({
+    super.key,
+    required this.mediaItem,
+    this.musicPieceTitle,
+    this.musicPieceArtist,
+    this.trailing,
+    this.onTitleChanged,
+    this.isEditable = false, // Default to false
+  });
+
+  @override
+  State<MediaDisplayWidget> createState() => _MediaDisplayWidgetState();
+}
+
+class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
+  late TextEditingController _titleController;
+  bool _isEditingTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.mediaItem.title);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     Widget content;
-    switch (mediaItem.type) {
+    switch (widget.mediaItem.type) {
       case MediaType.markdown:
-        content = MarkdownBody(data: mediaItem.pathOrUrl);
+        content = MarkdownBody(data: widget.mediaItem.pathOrUrl);
         break;
       case MediaType.pdf:
         content = ElevatedButton(
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => PdfViewerScreen(pdfPath: mediaItem.pathOrUrl),
+                builder: (context) => PdfViewerScreen(pdfPath: widget.mediaItem.pathOrUrl),
               ),
             );
           },
@@ -42,14 +72,14 @@ class MediaDisplayWidget extends StatelessWidget {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => ImageViewerScreen(imagePath: mediaItem.pathOrUrl),
+                builder: (context) => ImageViewerScreen(imagePath: widget.mediaItem.pathOrUrl),
               ),
             );
           },
           child: SizedBox(
             height: 200, // Fixed height for consistency
             child: Image.file(
-              File(mediaItem.pathOrUrl),
+              File(widget.mediaItem.pathOrUrl),
               fit: BoxFit.cover,
               width: double.infinity,
             ),
@@ -58,13 +88,13 @@ class MediaDisplayWidget extends StatelessWidget {
         break;
       case MediaType.audio:
         content = AudioPlayerWidget(
-          audioPath: mediaItem.pathOrUrl,
-          title: mediaItem.title ?? 'Unknown Title',
-          artist: musicPieceArtist ?? 'Unknown Artist',
+          audioPath: widget.mediaItem.pathOrUrl,
+          title: widget.mediaItem.title ?? 'Unknown Title',
+          artist: widget.musicPieceArtist ?? 'Unknown Artist',
         );
         break;
       case MediaType.mediaLink:
-        final Uri uri = Uri.parse(mediaItem.pathOrUrl);
+        final Uri uri = Uri.parse(widget.mediaItem.pathOrUrl);
         if (uri.host.contains('youtube.com') || uri.host.contains('youtu.be')) {
           content = GestureDetector(
             onTap: () async {
@@ -109,7 +139,7 @@ class MediaDisplayWidget extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => VideoPlayerWidget(videoPath: mediaItem.pathOrUrl),
+                  builder: (context) => VideoPlayerWidget(videoPath: widget.mediaItem.pathOrUrl),
                 ),
               );
             },
@@ -148,7 +178,7 @@ class MediaDisplayWidget extends StatelessWidget {
         }
         break;
       default:
-        content = Text('Unsupported media type: ${mediaItem.type.name}');
+        content = Text('Unsupported media type: ${widget.mediaItem.type.name}');
     }
 
     return Card(
@@ -161,13 +191,44 @@ class MediaDisplayWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(mediaItem.title ?? mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  _isEditingTitle
+                      ? TextFormField(
+                          controller: _titleController,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                          ),
+                          onFieldSubmitted: (newValue) {
+                            setState(() {
+                              _isEditingTitle = false;
+                              widget.onTitleChanged?.call(newValue);
+                            });
+                          },
+                          onTapOutside: (event) {
+                            setState(() {
+                              _isEditingTitle = false;
+                              widget.onTitleChanged?.call(_titleController.text);
+                            });
+                          },
+                        )
+                      : (widget.isEditable // Use widget.isEditable here
+                          ? GestureDetector(
+                              onDoubleTap: () {
+                                setState(() {
+                                  _isEditingTitle = true;
+                                });
+                              },
+                              child: Text(widget.mediaItem.title ?? widget.mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            )
+                          : Text(widget.mediaItem.title ?? widget.mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold))),
                   const SizedBox(height: 8.0),
                   content,
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            if (widget.trailing != null) widget.trailing!,
           ],
         ),
       ),

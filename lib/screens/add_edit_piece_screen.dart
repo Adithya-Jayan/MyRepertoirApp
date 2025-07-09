@@ -8,6 +8,7 @@ import '../models/media_type.dart';
 import '../models/group.dart'; // Import Group model
 import '../database/music_piece_repository.dart'; // Import repository
 import 'package:file_picker/file_picker.dart';
+import 'package:repertoire/widgets/media_display_widget.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -464,19 +465,14 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(item.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _musicPiece.mediaItems.remove(item);
-                          });
-                        },
-                      ),
-                    ],
+                  MediaDisplayWidget(
+                    mediaItem: item,
+                    onTitleChanged: (newTitle) {
+                      setState(() {
+                        item.title = newTitle;
+                      });
+                    },
+                    isEditable: true,
                   ),
                   if (item.type == MediaType.markdown)
                     TextFormField(
