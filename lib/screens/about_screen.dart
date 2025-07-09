@@ -42,6 +42,12 @@ class AboutScreen extends StatelessWidget {
               },
               child: const Text('View Contributors'),
             ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.code),
+              title: const Text('Source Code on GitHub'),
+              onTap: () => launchUrl(Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp/tree/v1.0.0')),
+            ),
           ],
         ),
       ),
