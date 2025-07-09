@@ -11,8 +11,9 @@ import 'package:file_picker/file_picker.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
+  final String? selectedGroupId;
 
-  const AddEditPieceScreen({super.key, this.musicPiece});
+  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId});
 
   @override
   State<AddEditPieceScreen> createState() => _AddEditPieceScreenState();
@@ -46,7 +47,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         ? widget.musicPiece!.copyWith(mediaItems: List.from(widget.musicPiece!.mediaItems), tagGroups: List.from(widget.musicPiece!.tagGroups))
         : MusicPiece(id: const Uuid().v4(), title: '', artistComposer: '', mediaItems: [], tagGroups: []);
 
-    _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
+        _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
+    if (widget.musicPiece == null && widget.selectedGroupId != null) {
+      _selectedGroupIds.add(widget.selectedGroupId!);
+    }
     _loadGroups();
     _loadTagGroupNames();
 

@@ -573,7 +573,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.of(context).push<bool?>(
-            MaterialPageRoute(builder: (context) => const AddEditPieceScreen()),
+            MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: _selectedGroupId)),
           );
           if (result == true) {
             // Reload data if a piece was added/edited
