@@ -56,6 +56,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _groupScrollController = ScrollController(); // Initialize the scroll controller
     _initSharedPreferences();
     _loadInitialData();
+    // Request focus for keyboard listener
+    _focusNode.requestFocus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ensure focus is maintained when dependencies change (e.g., route changes)
+    FocusScope.of(context).requestFocus(_focusNode);
   }
 
   @override
@@ -423,10 +432,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             final isShiftPressed = _pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
                                 _pressedKeys.contains(LogicalKeyboardKey.shiftRight);
 
-                            if (isShiftPressed || _isMultiSelectMode) {
+                            if (isShiftPressed) {
                               if (!_isMultiSelectMode) {
                                 _toggleMultiSelectMode();
                               }
+                              _onPieceSelected(piece);
+                            } else if (_isMultiSelectMode) {
                               _onPieceSelected(piece);
                             } else {
                               await Navigator.of(context).push(
