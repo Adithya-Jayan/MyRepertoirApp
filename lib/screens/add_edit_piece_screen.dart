@@ -44,14 +44,41 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Always create a deep copy to avoid reference issues with the parent screen
     _musicPiece = widget.musicPiece != null
-        ? widget.musicPiece!.copyWith(mediaItems: List.from(widget.musicPiece!.mediaItems), tagGroups: List.from(widget.musicPiece!.tagGroups))
-        : MusicPiece(id: const Uuid().v4(), title: '', artistComposer: '', mediaItems: [], tagGroups: []);
+        ? widget.musicPiece!.copyWith(
+            mediaItems: widget.musicPiece!.mediaItems.map((item) => 
+              MediaItem(
+                id: item.id,
+                type: item.type,
+                pathOrUrl: item.pathOrUrl,
+                title: item.title,
+              )
+            ).toList(),
+            tagGroups: widget.musicPiece!.tagGroups.map((tagGroup) => 
+              TagGroup(
+                id: tagGroup.id,
+                name: tagGroup.name,
+                tags: List<String>.from(tagGroup.tags),
+                color: tagGroup.color,
+              )
+            ).toList(),
+            groupIds: List<String>.from(widget.musicPiece!.groupIds),
+          )
+        : MusicPiece(
+            id: const Uuid().v4(), 
+            title: '', 
+            artistComposer: '', 
+            mediaItems: [], 
+            tagGroups: []
+          );
 
-        _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
+    _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
     if (widget.musicPiece == null && widget.selectedGroupId != null) {
       _selectedGroupIds.add(widget.selectedGroupId!);
     }
+    
     _loadGroups();
     _loadTagGroupNames();
 
@@ -473,16 +500,19 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                   MediaDisplayWidget(
                     mediaItem: item,
                     onTitleChanged: (newTitle) {
-                      setState(() {
-                        item.title = newTitle;
-                      });
+                      // Update the item directly without calling setState
+                      // This prevents the widget from rebuilding during editing
+                      item.title = newTitle;
                     },
                     isEditable: true,
                   ),
                   if (item.type == MediaType.markdown)
                     TextFormField(
                       initialValue: item.pathOrUrl,
-                      decoration: const InputDecoration(labelText: 'Markdown Content', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Markdown Content', 
+                        border: OutlineInputBorder()
+                      ),
                       maxLines: 5,
                       onChanged: (value) => item.pathOrUrl = value,
                     )
@@ -495,12 +525,24 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 ],
               ),
             ),
-            ReorderableDragStartListener(
-              index: index,
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.drag_handle),
-              ),
+            Column(
+              children: [
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.drag_handle),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _musicPiece.mediaItems.removeAt(index);
+                    });
+                  },
+                ),
+              ],
             ),
           ],
         ),

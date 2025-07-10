@@ -16,7 +16,7 @@ class MediaDisplayWidget extends StatefulWidget {
   final String? musicPieceArtist;
   final Widget? trailing;
   final Function(String)? onTitleChanged;
-  final bool isEditable; // Added isEditable property
+  final bool isEditable;
 
   const MediaDisplayWidget({
     super.key,
@@ -25,7 +25,7 @@ class MediaDisplayWidget extends StatefulWidget {
     this.musicPieceArtist,
     this.trailing,
     this.onTitleChanged,
-    this.isEditable = false, // Default to false
+    this.isEditable = false,
   });
 
   @override
@@ -35,17 +35,70 @@ class MediaDisplayWidget extends StatefulWidget {
 class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   late TextEditingController _titleController;
   bool _isEditingTitle = false;
+  late FocusNode _focusNode;
+  String? _currentTitle;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.mediaItem.title);
+    _currentTitle = widget.mediaItem.title;
+    _titleController = TextEditingController(text: _currentTitle);
+    _focusNode = FocusNode();
+    
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditingTitle) {
+        _saveTitle();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(MediaDisplayWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Only update if we're not currently editing and the title actually changed
+    if (!_isEditingTitle && widget.mediaItem.title != _currentTitle) {
+      _currentTitle = widget.mediaItem.title;
+      _titleController.text = _currentTitle ?? '';
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _saveTitle() {
+    final newTitle = _titleController.text;
+    setState(() {
+      _isEditingTitle = false;
+      _currentTitle = newTitle;
+    });
+    
+    // Only call the callback if the title actually changed
+    if (newTitle != widget.mediaItem.title) {
+      widget.onTitleChanged?.call(newTitle);
+    }
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditingTitle = true;
+    });
+    
+    // Use a post-frame callback to ensure the widget is built before requesting focus
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_focusNode.canRequestFocus) {
+        _focusNode.requestFocus();
+        // Select all text when starting to edit
+        _titleController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _titleController.text.length,
+        );
+      }
+    });
   }
 
   @override
@@ -77,7 +130,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             );
           },
           child: SizedBox(
-            height: 200, // Fixed height for consistency
+            height: 200,
             child: Image.file(
               File(widget.mediaItem.pathOrUrl),
               fit: BoxFit.cover,
@@ -108,7 +161,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               child: const Center(
                 child: Icon(
                   Icons.play_circle_fill,
-                  color: Colors.red, // YouTube color
+                  color: Colors.red,
                   size: 50.0,
                 ),
               ),
@@ -127,14 +180,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               child: const Center(
                 child: Icon(
                   Icons.music_note,
-                  color: Colors.green, // Spotify color
+                  color: Colors.green,
                   size: 50.0,
                 ),
               ),
             ),
           );
         } else if (uri.path.endsWith('.mp4') || uri.path.endsWith('.mov') || uri.path.endsWith('.avi') || uri.path.endsWith('.mkv')) {
-          // Assume it's a direct video link
           content = GestureDetector(
             onTap: () {
               Navigator.of(context).push(
@@ -156,7 +208,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             ),
           );
         } else {
-          // General web link
           content = GestureDetector(
             onTap: () async {
               if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -194,35 +245,32 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   _isEditingTitle
                       ? TextFormField(
                           controller: _titleController,
-                          autofocus: true,
+                          focusNode: _focusNode,
                           decoration: const InputDecoration(
                             isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                            border: OutlineInputBorder(),
                           ),
                           onFieldSubmitted: (newValue) {
-                            setState(() {
-                              _isEditingTitle = false;
-                              widget.onTitleChanged?.call(newValue);
-                            });
-                          },
-                          onTapOutside: (event) {
-                            setState(() {
-                              _isEditingTitle = false;
-                              widget.onTitleChanged?.call(_titleController.text);
-                            });
+                            _saveTitle();
                           },
                         )
-                      : (widget.isEditable // Use widget.isEditable here
+                      : (widget.isEditable
                           ? GestureDetector(
-                              onDoubleTap: () {
-                                setState(() {
-                                  _isEditingTitle = true;
-                                });
-                              },
-                              child: Text(widget.mediaItem.title ?? widget.mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              onDoubleTap: _startEditing,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Text(
+                                  _currentTitle ?? widget.mediaItem.type.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
                             )
-                          : Text(widget.mediaItem.title ?? widget.mediaItem.type.name, style: const TextStyle(fontWeight: FontWeight.bold))),
+                          : Text(
+                              _currentTitle ?? widget.mediaItem.type.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            )),
                   const SizedBox(height: 8.0),
                   content,
                 ],
