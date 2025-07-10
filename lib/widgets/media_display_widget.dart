@@ -41,22 +41,26 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   void initState() {
     super.initState();
-    debugPrint('MediaDisplayWidgetState: initState');
     _currentTitle = widget.mediaItem.title;
     _titleController = TextEditingController(text: _currentTitle);
     _focusNode = FocusNode();
     
-    
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditingTitle) {
+        setState(() {
+          _isEditingTitle = false;
+          _titleController.text = _currentTitle ?? ''; // Revert to original title
+        });
+      }
+    });
   }
 
   @override
   void didUpdateWidget(MediaDisplayWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    debugPrint('MediaDisplayWidgetState: didUpdateWidget');
     
     // Only update if we're not currently editing and the title actually changed
     if (!_isEditingTitle && widget.mediaItem.title != _currentTitle) {
-      debugPrint('MediaDisplayWidgetState: Updating title from widget.mediaItem.title');
       _currentTitle = widget.mediaItem.title;
       _titleController.text = _currentTitle ?? '';
     }
@@ -64,14 +68,12 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
   @override
   void dispose() {
-    debugPrint('MediaDisplayWidgetState: dispose');
     _titleController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   void _saveTitle() {
-    debugPrint('MediaDisplayWidgetState: _saveTitle');
     final newTitle = _titleController.text;
     setState(() {
       _isEditingTitle = false;
@@ -80,13 +82,11 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     
     // Only call the callback if the title actually changed
     if (newTitle != widget.mediaItem.title) {
-      debugPrint('MediaDisplayWidgetState: Title changed, calling onTitleChanged');
       widget.onTitleChanged?.call(newTitle);
     }
   }
 
   void _startEditing() {
-    debugPrint('MediaDisplayWidgetState: _startEditing');
     setState(() {
       _isEditingTitle = true;
     });
@@ -94,7 +94,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     // Use a post-frame callback to ensure the widget is built before requesting focus
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_focusNode.canRequestFocus) {
-        debugPrint('MediaDisplayWidgetState: Requesting focus');
         _focusNode.requestFocus();
         // Select all text when starting to edit
         _titleController.selection = TextSelection(
@@ -107,7 +106,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('MediaDisplayWidgetState: build');
     Widget content;
     switch (widget.mediaItem.type) {
       case MediaType.markdown:

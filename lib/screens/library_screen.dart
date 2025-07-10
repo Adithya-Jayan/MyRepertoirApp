@@ -52,7 +52,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('LibraryScreen: initState');
     _pageController = PageController();
     _groupScrollController = ScrollController(); // Initialize the scroll controller
     _initSharedPreferences();
@@ -64,14 +63,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    debugPrint('LibraryScreen: didChangeDependencies');
     // Ensure focus is maintained when dependencies change (e.g., route changes)
     // FocusScope.of(context).requestFocus(_focusNode);
   }
 
   @override
   void dispose() {
-    debugPrint('LibraryScreen: dispose');
     _pageController.dispose();
     _groupScrollController.dispose(); // Dispose the scroll controller
     super.dispose();
@@ -300,8 +297,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('LibraryScreen: build');
-    print('LibraryScreen: Building with _galleryColumns: $_galleryColumns');
     return RawKeyboardListener(
       focusNode: _focusNode,
       onKey: (event) {
@@ -449,7 +444,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   builder: (context) => PieceDetailScreen(musicPiece: piece),
                                 ),
                               );
-                              _loadMusicPieces(); // Reload data after returning from detail screen
+                              await _loadMusicPieces(); // Reload data after returning from detail screen
                             }
                           },
                           onLongPress: () {
@@ -478,8 +473,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 );
                 if (result == true) {
                   // Reload data if a piece was added/edited
-                  _loadGroups();
-                  _loadMusicPieces();
+                  await _loadGroups();
+                  await _loadMusicPieces();
                 }
               },
               child: const Icon(Icons.add),
@@ -652,10 +647,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
             );
             if (changesMade == true) {
-              _loadGroups();
-              _loadMusicPieces();
-              _loadSettings();
-              setState(() {}); // Force rebuild
+              await _loadGroups();
+              await _loadMusicPieces();
+              await _loadSettings();
             }
           },
         ),
