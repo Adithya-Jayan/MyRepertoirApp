@@ -35,6 +35,10 @@ class MusicPieceRepository {
     return result;
   }
 
+  Future<void> deleteMusicPieces(List<String> ids) async {
+    await dbHelper.deleteMusicPieces(ids);
+  }
+
   Future<void> deleteAllMusicPieces() async {
     await dbHelper.deleteAllMusicPieces();
   }
@@ -62,6 +66,20 @@ class MusicPieceRepository {
       }
     }
     return await dbHelper.deleteGroup(id);
+  }
+
+  Future<void> updateGroupMembershipForPieces(List<String> pieceIds, String groupId, bool shouldBeInGroup) async {
+    final pieces = await dbHelper.getMusicPiecesByIds(pieceIds);
+    for (final piece in pieces) {
+      if (shouldBeInGroup) {
+        if (!piece.groupIds.contains(groupId)) {
+          piece.groupIds.add(groupId);
+        }
+      } else {
+        piece.groupIds.remove(groupId);
+      }
+      await dbHelper.updateMusicPiece(piece);
+    }
   }
 
   // Tag Management Methods

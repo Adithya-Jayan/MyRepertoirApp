@@ -4,19 +4,36 @@ import '../models/music_piece.dart';
 
 class MusicPieceCard extends StatelessWidget {
   final MusicPiece piece;
+  final bool isSelected;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
-  const MusicPieceCard({super.key, required this.piece, this.onTap});
+  const MusicPieceCard({
+    super.key,
+    required this.piece,
+    this.isSelected = false,
+    this.onTap,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
     final Brightness brightness = Theme.of(context).brightness;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
       elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: isSelected
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      color: isSelected ? colorScheme.primary.withOpacity(0.1) : null,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: SingleChildScrollView(
           child: Padding(
           padding: const EdgeInsets.all(8.0),

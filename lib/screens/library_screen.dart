@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:repertoire/widgets/tag_group_filter_dialog.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/music_piece_repository.dart';
@@ -43,6 +44,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Key _groupListKey = UniqueKey(); // New key for group list
   late PageController _pageController;
   late ScrollController _groupScrollController; // New scroll controller for group chips
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedPieceIds = {};
+  final FocusNode _focusNode = FocusNode();
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
 
   @override
   void initState() {
@@ -58,6 +63,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _pageController.dispose();
     _groupScrollController.dispose(); // Dispose the scroll controller
     super.dispose();
+  }
+
+  void _toggleMultiSelectMode() {
+    setState(() {
+      _isMultiSelectMode = !_isMultiSelectMode;
+      if (!_isMultiSelectMode) {
+        _selectedPieceIds.clear();
+      }
+    });
+  }
+
+  void _onPieceSelected(MusicPiece piece) {
+    setState(() {
+      if (_selectedPieceIds.contains(piece.id)) {
+        _selectedPieceIds.remove(piece.id);
+      } else {
+        _selectedPieceIds.add(piece.id);
+      }
+
+      if (_selectedPieceIds.isEmpty) {
+        _isMultiSelectMode = false;
+      }
+    });
   }
 
   Future<void> _initSharedPreferences() async {
@@ -261,183 +289,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     print('LibraryScreen: Building with _galleryColumns: $_galleryColumns');
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search music pieces...',
-            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30.0),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant,
-            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-          ),
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-            _loadMusicPieces(); // Trigger search on every change
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Filter Options'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          decoration: const InputDecoration(labelText: 'Title'),
-                          initialValue: _filterOptions['title'],
-                          onChanged: (value) => _filterOptions['title'] = value,
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final availableTags = await _repository.getAllUniqueTagGroups();
-                            final selectedTags = await showDialog<Map<String, List<String>>>(
-                              context: context,
-                              builder: (context) => TagGroupFilterDialog(
-                                availableTags: availableTags,
-                                initialSelectedTags: _filterOptions['orderedTags'] ?? {},
-                              ),
-                            );
-
-                            if (selectedTags != null) {
-                              setState(() {
-                                _filterOptions['orderedTags'] = selectedTags;
-                              });
-                            }
-                          },
-                          child: const Text('Select Ordered Tags'),
-                        ),
-                        
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'Practice Tracking'),
-                          value: _filterOptions['practiceTracking'],
-                          items: const [
-                            DropdownMenuItem(value: null, child: Text('All')),
-                            DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
-                            DropdownMenuItem(value: 'disabled', child: Text('Disabled')),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _filterOptions['practiceTracking'] = value;
-                            });
-                          },
-                        ),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'Practice Duration'),
-                          value: _filterOptions['practiceDuration'],
-                          items: const [
-                            DropdownMenuItem(value: null, child: Text('Any')),
-                            DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),
-                            DropdownMenuItem(value: 'notIn30Days', child: Text('Not practiced in 30 days')),
-                            DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _filterOptions['practiceDuration'] = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _loadMusicPieces();
-                      },
-                      child: const Text('Apply Filter'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _filterOptions = {
-                            'orderedTags': <String, List<String>>{},
-                          };
-                        });
-                        Navigator.pop(context);
-                        _loadMusicPieces();
-                      },
-                      child: const Text('Clear Filter'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          
-          IconButton(
-            icon: const Icon(Icons.swap_vert),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Sort Options'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        title: const Text('Alphabetical'),
-                        trailing: _sortOption.startsWith('alphabetical') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
-                        onTap: () {
-                          setState(() {
-                            _sortOption = _sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
-                            _prefs.setString('sortOption', _sortOption);
-                          });
-                          _loadMusicPieces();
-                          Navigator.pop(context);
-                        },
-                      ),
-                      ListTile(
-                        title: const Text('Last Practiced'),
-                        trailing: _sortOption.startsWith('last_practiced') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
-                        onTap: () {
-                          setState(() {
-                            _sortOption = _sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
-                            _prefs.setString('sortOption', _sortOption);
-                          });
-                          _loadMusicPieces();
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          
-          IconButton(
-            icon: const Icon(Icons.settings), // Settings button
-            onPressed: () async {
-              final bool? changesMade = await Navigator.of(context).push<bool?>(
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-              if (changesMade == true) {
-                _loadGroups();
-                _loadMusicPieces();
-                _loadSettings();
-                setState(() {}); // Force rebuild
-              }
-            },
-          ),
-          
-        ],
-      ),
-      body: Column(
-        children: [
+    return RawKeyboardListener(
+      focusNode: _focusNode,
+      onKey: (event) {
+        if (event is RawKeyDownEvent) {
+          _pressedKeys.add(event.logicalKey);
+        } else if (event is RawKeyUpEvent) {
+          _pressedKeys.remove(event.logicalKey);
+        }
+      },
+      child: Scaffold(
+        appBar: _isMultiSelectMode ? _buildMultiSelectAppBar() : _buildDefaultAppBar(),
+        body: Column(
+          children: [
           // Group Toggling Bar (now controlled by PageView)
           if (_groups.isNotEmpty)
             SingleChildScrollView(
@@ -550,15 +414,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                       itemCount: filteredAndSortedPieces.length,
                       itemBuilder: (context, index) {
+                        final piece = filteredAndSortedPieces[index];
+                        final isSelected = _selectedPieceIds.contains(piece.id);
                         return MusicPieceCard(
-                          piece: filteredAndSortedPieces[index],
+                          piece: piece,
+                          isSelected: isSelected,
                           onTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => PieceDetailScreen(musicPiece: filteredAndSortedPieces[index]),
-                              ),
-                            );
-                            _loadMusicPieces(); // Reload data after returning from detail screen
+                            final isShiftPressed = _pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
+                                _pressedKeys.contains(LogicalKeyboardKey.shiftRight);
+
+                            if (isShiftPressed || _isMultiSelectMode) {
+                              if (!_isMultiSelectMode) {
+                                _toggleMultiSelectMode();
+                              }
+                              _onPieceSelected(piece);
+                            } else {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => PieceDetailScreen(musicPiece: piece),
+                                ),
+                              );
+                              _loadMusicPieces(); // Reload data after returning from detail screen
+                            }
+                          },
+                          onLongPress: () {
+                            if (!_isMultiSelectMode) {
+                              _toggleMultiSelectMode();
+                            }
+                            _onPieceSelected(piece);
                           },
                         );
                       },
@@ -570,19 +453,379 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.of(context).push<bool?>(
-            MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: _selectedGroupId)),
-          );
-          if (result == true) {
-            // Reload data if a piece was added/edited
-            _loadGroups();
-            _loadMusicPieces();
-          }
+      bottomNavigationBar: _isMultiSelectMode ? _buildMultiSelectBottomAppBar() : null,
+      floatingActionButton: _isMultiSelectMode
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.of(context).push<bool?>(
+                  MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: _selectedGroupId)),
+                );
+                if (result == true) {
+                  // Reload data if a piece was added/edited
+                  _loadGroups();
+                  _loadMusicPieces();
+                }
+              },
+              child: const Icon(Icons.add),
+            ),
+    ));
+  }
+
+  AppBar _buildDefaultAppBar() {
+    return AppBar(
+      title: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search music pieces...',
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30.0),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surfaceVariant,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+        ),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+          _loadMusicPieces(); // Trigger search on every change
         },
-        child: const Icon(Icons.add),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Filter Options'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        decoration: const InputDecoration(labelText: 'Title'),
+                        initialValue: _filterOptions['title'],
+                        onChanged: (value) => _filterOptions['title'] = value,
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final availableTags = await _repository.getAllUniqueTagGroups();
+                          final selectedTags = await showDialog<Map<String, List<String>>>(
+                            context: context,
+                            builder: (context) => TagGroupFilterDialog(
+                              availableTags: availableTags,
+                              initialSelectedTags: _filterOptions['orderedTags'] ?? {},
+                            ),
+                          );
+
+                          if (selectedTags != null) {
+                            setState(() {
+                              _filterOptions['orderedTags'] = selectedTags;
+                            });
+                          }
+                        },
+                        child: const Text('Select Ordered Tags'),
+                      ),
+                      
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(labelText: 'Practice Tracking'),
+                        value: _filterOptions['practiceTracking'],
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('All')),
+                          DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
+                          DropdownMenuItem(value: 'disabled', child: Text('Disabled')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _filterOptions['practiceTracking'] = value;
+                          });
+                        },
+                      ),
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(labelText: 'Practice Duration'),
+                        value: _filterOptions['practiceDuration'],
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('Any')),
+                          DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),
+                          DropdownMenuItem(value: 'notIn30Days', child: Text('Not practiced in 30 days')),
+                          DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _filterOptions['practiceDuration'] = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _loadMusicPieces();
+                    },
+                    child: const Text('Apply Filter'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _filterOptions = {
+                          'orderedTags': <String, List<String>>{},
+                        };
+                      });
+                      Navigator.pop(context);
+                      _loadMusicPieces();
+                    },
+                    child: const Text('Clear Filter'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        
+        IconButton(
+          icon: const Icon(Icons.swap_vert),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Sort Options'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      title: const Text('Alphabetical'),
+                      trailing: _sortOption.startsWith('alphabetical') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      onTap: () {
+                        setState(() {
+                          _sortOption = _sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
+                          _prefs.setString('sortOption', _sortOption);
+                        });
+                        _loadMusicPieces();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Last Practiced'),
+                      trailing: _sortOption.startsWith('last_practiced') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      onTap: () {
+                        setState(() {
+                          _sortOption = _sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
+                          _prefs.setString('sortOption', _sortOption);
+                        });
+                        _loadMusicPieces();
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        
+        IconButton(
+          icon: const Icon(Icons.settings), // Settings button
+          onPressed: () async {
+            final bool? changesMade = await Navigator.of(context).push<bool?>(
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            );
+            if (changesMade == true) {
+              _loadGroups();
+              _loadMusicPieces();
+              _loadSettings();
+              setState(() {}); // Force rebuild
+            }
+          },
+        ),
+        
+      ],
+    );
+  }
+
+  AppBar _buildMultiSelectAppBar() {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: _toggleMultiSelectMode,
+      ),
+      title: Text('${_selectedPieceIds.length} selected'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.select_all),
+          onPressed: () {
+            setState(() {
+              final allPieceIds = _musicPieces.map((p) => p.id).toSet();
+              if (_selectedPieceIds.length == allPieceIds.length) {
+                _selectedPieceIds.clear();
+              } else {
+                _selectedPieceIds.addAll(allPieceIds);
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMultiSelectBottomAppBar() {
+    return BottomAppBar(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          TextButton.icon(
+            icon: const Icon(Icons.delete),
+            label: const Text('Delete'),
+            onPressed: _selectedPieceIds.isEmpty ? null : _deleteSelectedPieces,
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.group_work),
+            label: const Text('Modify Group'),
+            onPressed: _selectedPieceIds.isEmpty ? null : _modifyGroupOfSelectedPieces,
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _deleteSelectedPieces() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Confirmation'),
+        content: Text('Are you sure you want to delete ${_selectedPieceIds.length} selected item(s)?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _repository.deleteMusicPieces(_selectedPieceIds.toList());
+        _toggleMultiSelectMode();
+        _loadMusicPieces();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting pieces: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _modifyGroupOfSelectedPieces() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        // Create a temporary map to hold pending changes
+        final Map<String, bool?> pendingGroupChanges = {}; // Use bool? to represent tristate
+
+        return AlertDialog(
+          title: const Text('Modify Groups'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              // Re-evaluate selectedPieces here on each setState
+              final currentSelectedPiecesInDialog = _allMusicPieces.where((p) => _selectedPieceIds.contains(p.id)).toList();
+
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _groups.map((group) {
+                    // Determine initial state
+                    final isSelectedInAllInitial = currentSelectedPiecesInDialog.every((p) => p.groupIds.contains(group.id));
+                    final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;
+
+                    print('--- Group Debug ---');
+                    print('Group: ${group.name} (ID: ${group.id})');
+                    print('  isSelectedInAllInitial: $isSelectedInAllInitial');
+                    print('  isSelectedInSomeInitial: $isSelectedInSomeInitial');
+
+                    // Determine current checkbox value based on pending changes or initial state
+                    bool? checkboxValue;
+                    if (pendingGroupChanges.containsKey(group.id)) {
+                      checkboxValue = pendingGroupChanges[group.id];
+                    } else {
+                      if (isSelectedInAllInitial) {
+                        checkboxValue = true;
+                      } else if (isSelectedInSomeInitial) {
+                        checkboxValue = null; // Tristate
+                      } else {
+                        checkboxValue = false;
+                      }
+                    }
+                    print('  Calculated checkboxValue: $checkboxValue');
+
+                    return CheckboxListTile(
+                      title: Text(group.name),
+                      value: checkboxValue,
+                      tristate: true, // Always enable tristate
+                      onChanged: (bool? newValueFromCheckbox) {
+                        setState(() {
+                          bool? currentEffectiveValue;
+                          if (pendingGroupChanges.containsKey(group.id)) {
+                            currentEffectiveValue = pendingGroupChanges[group.id];
+                          } else {
+                            // Determine initial state if no pending change
+                            final isSelectedInAllInitial = currentSelectedPiecesInDialog.every((p) => p.groupIds.contains(group.id));
+                            final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;
+                            if (isSelectedInAllInitial) {
+                              currentEffectiveValue = true;
+                            } else if (isSelectedInSomeInitial) {
+                              currentEffectiveValue = null;
+                            } else {
+                              currentEffectiveValue = false;
+                            }
+                          }
+
+                          if (currentEffectiveValue == true) {
+                            // If currently checked, uncheck it
+                            pendingGroupChanges[group.id] = false;
+                          } else {
+                            // If currently unchecked or tristate, check it
+                            pendingGroupChanges[group.id] = true;
+                          }
+                          print('  Pending change for ${group.name}: ${pendingGroupChanges[group.id]}');
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Cancel button
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Apply all pending changes
+                for (final entry in pendingGroupChanges.entries) {
+                  if (entry.value != null) { // Only apply if a definite state (true/false) is chosen
+                    await _repository.updateGroupMembershipForPieces(
+                      _selectedPieceIds.toList(),
+                      entry.key,
+                      entry.value!,
+                    );
+                  }
+                }
+                await _loadMusicPieces(); // Refresh the data after applying changes
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+    _toggleMultiSelectMode(); // Exit multi-select mode after modification
   }
 }

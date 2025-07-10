@@ -124,6 +124,20 @@ CREATE TABLE IF NOT EXISTS groups (
     return result.map((json) => MusicPiece.fromJson(json)).toList();
   }
 
+  Future<List<MusicPiece>> getMusicPiecesByIds(List<String> ids) async {
+    final db = await instance.database;
+    if (ids.isEmpty) {
+      return [];
+    }
+    final result = await db.query(
+      'music_pieces',
+      where: 'id IN (${ids.map((_) => '?').join(',')})',
+      whereArgs: ids,
+    );
+
+    return result.map((json) => MusicPiece.fromJson(json)).toList();
+  }
+
   Future<List<Tag>> getTags() async {
     final db = await instance.database;
     final result = await db.query('tags');
@@ -176,6 +190,18 @@ CREATE TABLE IF NOT EXISTS groups (
       'music_pieces',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteMusicPieces(List<String> ids) async {
+    final db = await instance.database;
+    if (ids.isEmpty) {
+      return 0;
+    }
+    return await db.delete(
+      'music_pieces',
+      where: 'id IN (${ids.map((_) => '?').join(',')})',
+      whereArgs: ids,
     );
   }
 
