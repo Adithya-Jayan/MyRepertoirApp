@@ -52,6 +52,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('LibraryScreen: initState');
     _pageController = PageController();
     _groupScrollController = ScrollController(); // Initialize the scroll controller
     _initSharedPreferences();
@@ -63,12 +64,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    debugPrint('LibraryScreen: didChangeDependencies');
     // Ensure focus is maintained when dependencies change (e.g., route changes)
-    FocusScope.of(context).requestFocus(_focusNode);
+    // FocusScope.of(context).requestFocus(_focusNode);
   }
 
   @override
   void dispose() {
+    debugPrint('LibraryScreen: dispose');
     _pageController.dispose();
     _groupScrollController.dispose(); // Dispose the scroll controller
     super.dispose();
@@ -297,6 +300,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('LibraryScreen: build');
     print('LibraryScreen: Building with _galleryColumns: $_galleryColumns');
     return RawKeyboardListener(
       focusNode: _focusNode,

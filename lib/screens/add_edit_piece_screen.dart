@@ -44,6 +44,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('AddEditPieceScreenState: initState');
     
     // Always create a deep copy to avoid reference issues with the parent screen
     _musicPiece = widget.musicPiece != null
@@ -90,6 +91,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   @override
   void dispose() {
+    debugPrint('AddEditPieceScreenState: dispose');
     _tagInputControllers.forEach((key, value) => value.dispose());
     super.dispose();
   }
@@ -180,6 +182,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('AddEditPieceScreenState: build');
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
