@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -104,6 +106,16 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     });
   }
 
+  Future<String?> _fetchThumbnailUrl(String url) async {
+    try {
+      final metadata = await MetadataFetch.extract(url);
+      return metadata?.image;
+    } catch (e) {
+      print('Error fetching metadata: $e');
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -151,85 +163,59 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         break;
       case MediaType.mediaLink:
         final Uri uri = Uri.parse(widget.mediaItem.pathOrUrl);
-        if (uri.host.contains('youtube.com') || uri.host.contains('youtu.be')) {
-          content = GestureDetector(
-            onTap: () async {
-              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-                throw 'Could not launch $uri';
+        content = GestureDetector(
+          onTap: () async {
+            if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+              throw 'Could not launch $uri';
+            }
+          },
+          child: FutureBuilder<String?>(
+            future: _fetchThumbnailUrl(widget.mediaItem.pathOrUrl),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  height: 200,
+                  color: Colors.grey[300],
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              } else if (snapshot.hasError || snapshot.data == null) {
+                return Container(
+                  height: 200,
+                  color: Colors.blueGrey,
+                  child: const Center(
+                    child: Icon(
+                      Icons.link,
+                      color: Colors.white,
+                      size: 50.0,
+                    ),
+                  ),
+                );
+              } else {
+                return CachedNetworkImage(
+                  imageUrl: snapshot.data!,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Container(
+                    height: 200,
+                    color: Colors.grey[300],
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 200,
+                    color: Colors.blueGrey,
+                    child: const Center(
+                      child: Icon(
+                        Icons.link,
+                        color: Colors.white,
+                        size: 50.0,
+                      ),
+                    ),
+                  ),
+                );
               }
             },
-            child: Container(
-              height: 200,
-              color: Colors.black,
-              child: const Center(
-                child: Icon(
-                  Icons.play_circle_fill,
-                  color: Colors.red,
-                  size: 50.0,
-                ),
-              ),
-            ),
-          );
-        } else if (uri.host.contains('spotify.com')) {
-          content = GestureDetector(
-            onTap: () async {
-              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-                throw 'Could not launch $uri';
-              }
-            },
-            child: Container(
-              height: 200,
-              color: Colors.black,
-              child: const Center(
-                child: Icon(
-                  Icons.music_note,
-                  color: Colors.green,
-                  size: 50.0,
-                ),
-              ),
-            ),
-          );
-        } else if (uri.path.endsWith('.mp4') || uri.path.endsWith('.mov') || uri.path.endsWith('.avi') || uri.path.endsWith('.mkv')) {
-          content = GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => VideoPlayerWidget(videoPath: widget.mediaItem.pathOrUrl),
-                ),
-              );
-            },
-            child: Container(
-              height: 200,
-              color: Colors.black,
-              child: const Center(
-                child: Icon(
-                  Icons.play_circle_fill,
-                  color: Colors.white,
-                  size: 50.0,
-                ),
-              ),
-            ),
-          );
-        } else {
-          content = GestureDetector(
-            onTap: () async {
-              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-                throw 'Could not launch $uri';
-              }
-            },
-            child: Container(
-              height: 200,
-              color: Colors.blueGrey,
-              child: const Center(
-                child: Icon(
-                  Icons.link,
-                  color: Colors.white,
-                  size: 50.0,
-                ),
-              ),
-            ),
-          );
-        }
+          ),
+        );
         break;
       default:
         content = Text('Unsupported media type: ${widget.mediaItem.type.name}');
