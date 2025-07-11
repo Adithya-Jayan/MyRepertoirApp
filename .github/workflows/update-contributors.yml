@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install jq
         run: sudo apt-get install -y jq
@@ -37,8 +37,8 @@ jobs:
 
       - name: Commit updated JSON
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
           git add assets/contributors.json
           git diff --cached --quiet || git commit -m "Update contributors.json in assets"
           git push
