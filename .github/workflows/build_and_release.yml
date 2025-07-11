@@ -18,7 +18,9 @@ jobs:
         run: flutter pub get
 
       - name: Install yq
-        run: sudo snap install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
 
       - name: Get current version and increment build number
         id: get_version
@@ -37,7 +39,7 @@ jobs:
           echo "Current Version: $CURRENT_VERSION"
           echo "New Full Version: $NEW_FULL_VERSION"
           
-          yq -i ".version = "${NEW_FULL_VERSION}"" pubspec.yaml
+          yq -i '.version = "'"${NEW_FULL_VERSION}"'"' pubspec.yaml
           
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "NEW_BUILD_NUMBER=${NEW_BUILD_NUMBER}" >> $GITHUB_OUTPUT
