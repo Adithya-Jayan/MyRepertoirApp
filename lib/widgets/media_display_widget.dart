@@ -119,6 +119,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   Widget build(BuildContext context) {
     Widget content;
+
     switch (widget.mediaItem.type) {
       case MediaType.markdown:
         content = MarkdownBody(data: widget.mediaItem.pathOrUrl);
@@ -148,8 +149,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             height: 200,
             child: Image.file(
               File(widget.mediaItem.pathOrUrl),
-              fit: BoxFit.cover,
-              width: double.infinity,
+              fit: BoxFit.contain, // Maintain aspect ratio within the bounds
             ),
           ),
         );

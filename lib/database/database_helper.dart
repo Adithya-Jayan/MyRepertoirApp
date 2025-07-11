@@ -29,7 +29,7 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 1, // Initial database version
+      version: 2, // Initial database version
       onCreate: _createDB,
       onUpgrade: _onUpgrade, // Placeholder for future migrations
     );
@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS music_pieces (
   googleDriveFileId TEXT,
   mediaItems TEXT, -- Store List<MediaItem> as JSON string
   groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
-  tagGroups TEXT DEFAULT '[]' -- New column for tag groups, default to empty JSON array
+  tagGroups TEXT DEFAULT '[]', -- New column for tag groups, default to empty JSON array
+  thumbnailPath TEXT -- New column for thumbnail path
 )
 ''');
 
@@ -98,12 +99,10 @@ CREATE TABLE IF NOT EXISTS groups (
     await db.insert('music_pieces', piece.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // Placeholder for future database migrations
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Example migration:
-    // if (oldVersion < 2) {
-    //   await db.execute("ALTER TABLE music_pieces ADD COLUMN newColumn TEXT;");
-    // }
+    if (oldVersion < 2) {
+      await db.execute("ALTER TABLE music_pieces ADD COLUMN thumbnailPath TEXT;");
+    }
   }
 
   Future<void> insertTag(Tag tag) async {

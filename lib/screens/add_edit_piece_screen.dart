@@ -506,6 +506,23 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     },
                     isEditable: true,
                   ),
+                  if (item.type == MediaType.image)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Text('Set as thumbnail'),
+                        Switch(
+                          value: _musicPiece.thumbnailPath == item.pathOrUrl,
+                          onChanged: (value) {
+                            setState(() {
+                              _musicPiece = _musicPiece.copyWith(
+                                thumbnailPath: value ? item.pathOrUrl : null,
+                              );
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   if (item.type == MediaType.markdown)
                     TextFormField(
                       initialValue: item.pathOrUrl,

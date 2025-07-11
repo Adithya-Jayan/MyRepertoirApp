@@ -16,6 +16,7 @@ class MusicPiece {
   List<MediaItem> mediaItems;  // List of associated media
   List<String> groupIds;
   List<TagGroup> tagGroups;
+  String? thumbnailPath; // Path to the thumbnail image
 
   MusicPiece({
     required this.id,
@@ -31,6 +32,7 @@ class MusicPiece {
     this.mediaItems = const [],
     this.groupIds = const [],
     this.tagGroups = const [],
+    this.thumbnailPath,
   });
 
   // Add toJson() and fromJson() methods for MusicPiece
@@ -48,6 +50,7 @@ class MusicPiece {
         'mediaItems': jsonEncode(mediaItems.map((item) => item.toJson()).toList()),
         'groupIds': jsonEncode(groupIds),
         'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()),
+        'thumbnailPath': thumbnailPath,
       };
 
   factory MusicPiece.fromJson(Map<String, dynamic> json) => MusicPiece(
@@ -73,6 +76,7 @@ class MusicPiece {
         tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
             .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
             .toList(),
+        thumbnailPath: json['thumbnailPath'],
       );
 
   MusicPiece copyWith({
@@ -89,6 +93,7 @@ class MusicPiece {
     List<MediaItem>? mediaItems,
     List<String>? groupIds,
     List<TagGroup>? tagGroups,
+    String? thumbnailPath,
   }) {
     return MusicPiece(
       id: id ?? this.id,
@@ -104,6 +109,7 @@ class MusicPiece {
       mediaItems: mediaItems ?? this.mediaItems,
       groupIds: groupIds ?? this.groupIds,
       tagGroups: tagGroups ?? this.tagGroups,
+      thumbnailPath: thumbnailPath,
     );
   }
 }
