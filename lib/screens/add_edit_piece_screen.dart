@@ -9,6 +9,7 @@ import '../models/group.dart'; // Import Group model
 import '../database/music_piece_repository.dart'; // Import repository
 import 'package:file_picker/file_picker.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
+import '../services/media_storage_manager.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -135,13 +136,20 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     }
 
     if (result != null && result.files.single.path != null) {
-      setState(() {
-        _musicPiece.mediaItems.add(MediaItem(
-          id: const Uuid().v4(),
-          type: type,
-          pathOrUrl: result!.files.single.path!,
-        ));
-      });
+      try {
+        final newPath = await MediaStorageManager.copyMediaToLocal(result.files.single.path!);
+        setState(() {
+          _musicPiece.mediaItems.add(MediaItem(
+            id: const Uuid().v4(),
+            type: type,
+            pathOrUrl: newPath,
+          ));
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error copying file: $e'))
+        );
+      }
     }
   }
 
@@ -553,7 +561,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () {
+                  onPressed: () async {
+                    await MediaStorageManager.deleteLocalMediaFile(item.pathOrUrl);
                     setState(() {
                       _musicPiece.mediaItems.removeAt(index);
                     });
