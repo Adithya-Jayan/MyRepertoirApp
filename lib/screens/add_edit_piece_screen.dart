@@ -137,7 +137,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
     if (result != null && result.files.single.path != null) {
       try {
-        final newPath = await MediaStorageManager.copyMediaToLocal(result.files.single.path!);
+        final newPath = await MediaStorageManager.copyMediaToLocal(result.files.single.path!, _musicPiece.id, type);
         setState(() {
           _musicPiece.mediaItems.add(MediaItem(
             id: const Uuid().v4(),

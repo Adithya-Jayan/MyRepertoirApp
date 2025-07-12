@@ -7,6 +7,7 @@ import '../models/music_piece.dart';
 import '../models/tag.dart';
 import '../models/group.dart'; // Import the new Group model
 import './database_helper.dart';
+import '../services/media_storage_manager.dart';
 
 class MusicPieceRepository {
   final dbHelper = DatabaseHelper.instance;
@@ -31,15 +32,23 @@ class MusicPieceRepository {
   }
 
   Future<int> deleteMusicPiece(String id) async {
+    await MediaStorageManager.deletePieceMediaDirectory(id);
     final result = await dbHelper.deleteMusicPiece(id);
     return result;
   }
 
   Future<void> deleteMusicPieces(List<String> ids) async {
+    for (final id in ids) {
+      await MediaStorageManager.deletePieceMediaDirectory(id);
+    }
     await dbHelper.deleteMusicPieces(ids);
   }
 
   Future<void> deleteAllMusicPieces() async {
+    final allPieces = await dbHelper.getMusicPieces();
+    for (final piece in allPieces) {
+      await MediaStorageManager.deletePieceMediaDirectory(piece.id);
+    }
     await dbHelper.deleteAllMusicPieces();
   }
 

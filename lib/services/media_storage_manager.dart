@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/media_type.dart';
 
 class MediaStorageManager {
   static const String _storagePathKey = 'appStoragePath';
@@ -10,20 +11,21 @@ class MediaStorageManager {
     return prefs.getString(_storagePathKey);
   }
 
-  static Future<Directory> getMediaDirectory() async {
+  static Future<Directory> getPieceMediaDirectory(String pieceId, MediaType mediaType) async {
     final storagePath = await getStoragePath();
     if (storagePath == null) {
       throw Exception('Storage path not configured');
     }
-    final mediaDir = Directory(path.join(storagePath, 'media'));
-    if (!await mediaDir.exists()) {
-      await mediaDir.create(recursive: true);
+    final mediaTypeString = mediaType.toString().split('.').last;
+    final pieceMediaDir = Directory(path.join(storagePath, 'media', pieceId, mediaTypeString));
+    if (!await pieceMediaDir.exists()) {
+      await pieceMediaDir.create(recursive: true);
     }
-    return mediaDir;
+    return pieceMediaDir;
   }
 
-  static Future<String> copyMediaToLocal(String originalPath) async {
-    final mediaDir = await getMediaDirectory();
+  static Future<String> copyMediaToLocal(String originalPath, String pieceId, MediaType mediaType) async {
+    final pieceMediaDir = await getPieceMediaDirectory(pieceId, mediaType);
     final originalFile = File(originalPath);
     if (!await originalFile.exists()) {
       throw Exception('Original file does not exist: $originalPath');
@@ -35,7 +37,7 @@ class MediaStorageManager {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final newFileName = '${nameWithoutExt}_$timestamp$extension';
 
-    final newPath = path.join(mediaDir.path, newFileName);
+    final newPath = path.join(pieceMediaDir.path, newFileName);
 
     await originalFile.copy(newPath);
 
@@ -58,6 +60,16 @@ class MediaStorageManager {
     final file = File(filePath);
     if (await file.exists()) {
       await file.delete();
+    }
+  }
+
+  static Future<void> deletePieceMediaDirectory(String pieceId) async {
+    final storagePath = await getStoragePath();
+    if (storagePath == null) return;
+
+    final pieceDir = Directory(path.join(storagePath, 'media', pieceId));
+    if (await pieceDir.exists()) {
+        await pieceDir.delete(recursive: true);
     }
   }
 }
