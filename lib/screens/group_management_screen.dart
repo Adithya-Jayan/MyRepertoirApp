@@ -247,13 +247,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
                             icon: const Icon(Icons.delete),
                             onPressed: () => _deleteGroup(group),
                           ),
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Icon(Icons.drag_handle),
-                            ),
-                          ),
+                          
                         ],
                       ),
                     ),
