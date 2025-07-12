@@ -90,10 +90,57 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       encoder.close();
 
       if (manual) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data backed up successfully!'))
-        );
+        String? outputFile;
+        if (Platform.isAndroid || Platform.isIOS) {
+          // On mobile, we must pass the bytes to `saveFile`.
+          outputFile = await FilePicker.platform.saveFile(
+            fileName: fileName,
+            bytes: utf8.encode(jsonString),
+          );
+        } else {
+          // Desktop logic with initial directory.
+          outputFile = await FilePicker.platform.saveFile(
+            fileName: fileName,
+            initialDirectory: backupDirectory.path,
+            type: FileType.custom,
+            allowedExtensions: ['zip'],
+          );
+        }
+
+        if (outputFile != null) {
+          final encoder = ZipFileEncoder();
+          encoder.create(outputFile);
+          final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
+          encoder.addArchiveFile(jsonArchiveFile);
+
+          final mediaDir = Directory(p.join(storagePath, 'media'));
+          if (await mediaDir.exists()) {
+            encoder.addDirectory(mediaDir, includeDirName: false);
+          }
+          encoder.close();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data backed up successfully!'))
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Backup cancelled.'))
+          );
+        }
       } else {
+        // Automatic backup logic
+        final encoder = ZipFileEncoder();
+        final zipPath = p.join(backupDirectory.path, fileName);
+        encoder.create(zipPath);
+        final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
+        encoder.addArchiveFile(jsonArchiveFile);
+
+        final mediaDir = Directory(p.join(storagePath, 'media'));
+        if (await mediaDir.exists()) {
+          encoder.addDirectory(mediaDir, includeDirName: false);
+        }
+        encoder.close();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Autobackup successful!'))
         );
