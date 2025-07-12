@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -55,60 +56,47 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final musicPieces = await _repository.getMusicPieces();
       final jsonString = jsonEncode(musicPieces.map((e) => e.toJson()).toList());
       final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
-      final fileName = 'music_repertoire_backup_$timestamp.json';
+      final fileName = 'music_repertoire_backup_$timestamp.zip';
 
       final prefs = await SharedPreferences.getInstance();
       final storagePath = prefs.getString('appStoragePath');
-      String? backupDir;
-      if (storagePath != null) {
-        final backupSubDir = manual ? p.join('Backups', 'ManualBackups') : p.join('Backups', 'Autobackups');
-        final backupDirectory = Directory(p.join(storagePath, backupSubDir));
-        if (!await backupDirectory.exists()) {
-          await backupDirectory.create(recursive: true);
-        }
-        backupDir = backupDirectory.path;
+      if (storagePath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage path not configured.'))
+        );
+        return;
       }
 
-      if (manual) {
-        if (Platform.isAndroid || Platform.isIOS) {
-          // On mobile, we must pass the bytes to `saveFile`.
-          await FilePicker.platform.saveFile(
-            fileName: fileName,
-            bytes: utf8.encode(jsonString),
-          );
-          // We can't reliably detect cancellation, so we'll just show a success message.
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Data backed up successfully!'))
-          );
-        } else {
-          // Desktop logic with initial directory.
-          String? outputFile = await FilePicker.platform.saveFile(
-            fileName: fileName,
-            initialDirectory: backupDir,
-            type: FileType.custom,
-            allowedExtensions: ['json'],
-          );
+      final backupSubDir = manual ? p.join('Backups', 'ManualBackups') : p.join('Backups', 'Autobackups');
+      final backupDirectory = Directory(p.join(storagePath, backupSubDir));
+      if (!await backupDirectory.exists()) {
+        await backupDirectory.create(recursive: true);
+      }
 
-          if (outputFile != null) {
-            final file = File(outputFile);
-            await file.writeAsBytes(utf8.encode(jsonString));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Data backed up successfully!'))
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup cancelled.'))
-            );
-          }
-        }
+      final encoder = ZipFileEncoder();
+      final zipPath = p.join(backupDirectory.path, fileName);
+      encoder.create(zipPath);
+
+      // Add the JSON data as a file within the zip archive
+      final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
+      encoder.addArchiveFile(jsonArchiveFile);
+
+      final mediaDir = Directory(p.join(storagePath, 'media'));
+      if (await mediaDir.exists()) {
+        // Add the entire media directory to the zip archive
+        encoder.addDirectory(mediaDir, includeDirName: false);
+      }
+
+      encoder.close();
+
+      if (manual) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data backed up successfully!'))
+        );
       } else {
-        if (backupDir != null) {
-          final file = File(p.join(backupDir, fileName));
-          await file.writeAsBytes(utf8.encode(jsonString));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Autobackup successful!'))
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Autobackup successful!'))
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,34 +140,46 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: ['zip'],
         initialDirectory: backupDir,
       );
 
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!); 
-        final jsonBytes = await file.readAsBytes();
-        final jsonString = utf8.decode(jsonBytes);
+        final inputStream = InputFileStream(result.files.single.path!);
+        final archive = ZipDecoder().decodeBuffer(inputStream);
+
+        final jsonFile = archive.findFile('music_repertoire.json');
+        if (jsonFile == null) {
+          throw Exception('Invalid backup file: music_repertoire.json not found.');
+        }
+
+        final jsonString = utf8.decode(jsonFile.content);
         final List<dynamic> musicPiecesJson = jsonDecode(jsonString);
         final List<MusicPiece> restoredPieces = musicPiecesJson.map((e) => MusicPiece.fromJson(e)).toList();
 
-        // await _repository.deleteAllMusicPieces();
+        await _repository.deleteAllMusicPieces();
         for (var piece in restoredPieces) {
-          // Download associated media files from Google Drive if googleDriveFileId is present
-          for (var mediaItem in piece.mediaItems) {
-            if (mediaItem.googleDriveFileId != null && mediaItem.googleDriveFileId!.isNotEmpty) {
-              final appDocDir = await getApplicationDocumentsDirectory();
-              final mediaDir = Directory(p.join(appDocDir.path, 'repertoire_media'));
-              if (!await mediaDir.exists()) {
-                await mediaDir.create(recursive: true);
-              }
-              final localFilePath = p.join(mediaDir.path, p.basename(mediaItem.pathOrUrl));
-              // await _googleDriveService.downloadFileFromDrive(mediaItem.googleDriveFileId!, localFilePath);
-              mediaItem.pathOrUrl = localFilePath; // Update local path
-            }
-          }
           await _repository.insertMusicPiece(piece);
         }
+
+        final mediaDir = Directory(p.join(storagePath!, 'media'));
+        if (await mediaDir.exists()) {
+          await mediaDir.delete(recursive: true);
+        }
+        await mediaDir.create(recursive: true);
+
+        for (final file in archive.files) {
+          if (file.name.startsWith('media/')) {
+            final filePath = p.join(storagePath, file.name);
+            if (file.isFile) {
+              final outputStream = OutputFileStream(filePath);
+              outputStream.writeBytes(file.content);
+              outputStream.close();
+            }
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data restored successfully!'))
         );

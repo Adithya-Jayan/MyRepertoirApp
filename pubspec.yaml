@@ -48,6 +48,7 @@ dependencies:
   package_info_plus: ^8.0.0
   metadata_fetch: ^0.4.1
   cached_network_image: ^3.3.1
+  archive: ^3.4.9
 
 dev_dependencies:
   flutter_test:
