@@ -36,7 +36,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final storagePath = prefs.getString('appStoragePath');
       String? backupDir;
       if (storagePath != null) {
-        final manualBackupDir = Directory(p.join(storagePath, 'ManualBackups'));
+        final manualBackupDir = Directory(p.join(storagePath, 'Backups', 'ManualBackups'));
         if (!await manualBackupDir.exists()) {
           await manualBackupDir.create(recursive: true);
         }
@@ -86,9 +86,20 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       const SnackBar(content: Text('Restoring data...'))
     );
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final storagePath = prefs.getString('appStoragePath');
+      String? backupDir;
+      if (storagePath != null) {
+        final backupsDir = Directory(p.join(storagePath, 'Backups'));
+        if (await backupsDir.exists()) {
+          backupDir = backupsDir.path;
+        }
+      }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        initialDirectory: backupDir,
       );
 
       if (result != null && result.files.single.path != null) {
