@@ -10,6 +10,12 @@ import 'utils/theme_notifier.dart'; // Import ThemeNotifier
 
 import 'package:just_audio_background/just_audio_background.dart';
 
+import 'package:path/path.dart' as p;
+import 'dart:convert';
+import 'database/music_piece_repository.dart';
+import 'models/music_piece.dart';
+import 'package:intl/intl.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -27,6 +33,44 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
+  _triggerAutoBackup();
+}
+
+Future<void> _triggerAutoBackup() async {
+  final prefs = await SharedPreferences.getInstance();
+  final autoBackupEnabled = prefs.getBool('autoBackupEnabled') ?? false;
+  if (autoBackupEnabled) {
+    final lastBackupTimestamp = prefs.getInt('lastAutoBackupTimestamp') ?? 0;
+    final autoBackupFrequency = prefs.getInt('autoBackupFrequency') ?? 7;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastBackupTimestamp > autoBackupFrequency * 24 * 60 * 60 * 1000) {
+      final MusicPieceRepository repository = MusicPieceRepository();
+      final musicPieces = await repository.getMusicPieces();
+      final jsonString = jsonEncode(musicPieces.map((e) => e.toJson()).toList());
+      final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
+      final fileName = 'music_repertoire_backup_$timestamp.json';
+
+      final storagePath = prefs.getString('appStoragePath');
+      if (storagePath != null) {
+        final autoBackupDir = Directory(p.join(storagePath, 'Backups', 'Autobackups'));
+        if (!await autoBackupDir.exists()) {
+          await autoBackupDir.create(recursive: true);
+        }
+        final outputFile = File(p.join(autoBackupDir.path, fileName));
+        await outputFile.writeAsBytes(utf8.encode(jsonString));
+        await prefs.setInt('lastAutoBackupTimestamp', now);
+
+        final autoBackupCount = prefs.getInt('autoBackupCount') ?? 5;
+        final files = await autoBackupDir.list().toList();
+        files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+        if (files.length > autoBackupCount) {
+          for (int i = 0; i < files.length - autoBackupCount; i++) {
+            await files[i].delete();
+          }
+        }
+      }
+    }
+  }
 }
 
 class MyApp extends StatefulWidget {
