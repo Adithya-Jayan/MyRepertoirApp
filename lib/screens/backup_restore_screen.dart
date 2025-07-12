@@ -69,34 +69,44 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         backupDir = backupDirectory.path;
       }
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        // On mobile, we must pass the bytes to `saveFile`.
-        await FilePicker.platform.saveFile(
-          fileName: fileName,
-          bytes: utf8.encode(jsonString),
-        );
-        // We can't reliably detect cancellation, so we'll just show a success message.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data backed up successfully!'))
-        );
-      } else {
-        // Desktop logic with initial directory.
-        String? outputFile = await FilePicker.platform.saveFile(
-          fileName: fileName,
-          initialDirectory: backupDir,
-          type: FileType.custom,
-          allowedExtensions: ['json'],
-        );
-
-        if (outputFile != null) {
-          final file = File(outputFile);
-          await file.writeAsBytes(utf8.encode(jsonString));
+      if (manual) {
+        if (Platform.isAndroid || Platform.isIOS) {
+          // On mobile, we must pass the bytes to `saveFile`.
+          await FilePicker.platform.saveFile(
+            fileName: fileName,
+            bytes: utf8.encode(jsonString),
+          );
+          // We can't reliably detect cancellation, so we'll just show a success message.
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Data backed up successfully!'))
           );
         } else {
+          // Desktop logic with initial directory.
+          String? outputFile = await FilePicker.platform.saveFile(
+            fileName: fileName,
+            initialDirectory: backupDir,
+            type: FileType.custom,
+            allowedExtensions: ['json'],
+          );
+
+          if (outputFile != null) {
+            final file = File(outputFile);
+            await file.writeAsBytes(utf8.encode(jsonString));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Data backed up successfully!'))
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Backup cancelled.'))
+            );
+          }
+        }
+      } else {
+        if (backupDir != null) {
+          final file = File(p.join(backupDir, fileName));
+          await file.writeAsBytes(utf8.encode(jsonString));
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Backup cancelled.'))
+            const SnackBar(content: Text('Autobackup successful!'))
           );
         }
       }
