@@ -32,6 +32,17 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
       final fileName = 'music_repertoire_backup_$timestamp.json';
 
+      final prefs = await SharedPreferences.getInstance();
+      final storagePath = prefs.getString('appStoragePath');
+      String? backupDir;
+      if (storagePath != null) {
+        final manualBackupDir = Directory(p.join(storagePath, 'ManualBackups'));
+        if (!await manualBackupDir.exists()) {
+          await manualBackupDir.create(recursive: true);
+        }
+        backupDir = manualBackupDir.path;
+      }
+
       if (Platform.isAndroid || Platform.isIOS) {
         // On mobile, we must pass the bytes to `saveFile`.
         await FilePicker.platform.saveFile(
@@ -43,9 +54,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           const SnackBar(content: Text('Data backed up successfully!'))
         );
       } else {
-        // Desktop logic remains the same.
+        // Desktop logic with initial directory.
         String? outputFile = await FilePicker.platform.saveFile(
           fileName: fileName,
+          initialDirectory: backupDir,
           type: FileType.custom,
           allowedExtensions: ['json'],
         );
