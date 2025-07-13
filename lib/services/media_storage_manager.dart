@@ -39,7 +39,9 @@ class MediaStorageManager {
 
     final newPath = path.join(pieceMediaDir.path, newFileName);
 
-    await originalFile.copy(newPath);
+    final bytes = await originalFile.readAsBytes();
+    final newFile = File(newPath);
+    await newFile.writeAsBytes(bytes);
 
     return newPath;
   }
