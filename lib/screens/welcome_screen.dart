@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:repertoire/utils/theme_notifier.dart'; // Import ThemeNotifier to access availableAccentColors
 import 'color_scheme_screen.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.
@@ -18,6 +19,7 @@ class WelcomeScreen extends StatefulWidget {
 /// Manages the UI and logic for the initial setup process.
 class _WelcomeScreenState extends State<WelcomeScreen> {
   String? _storagePath; // Stores the selected storage path for app files.
+  Color _selectedAccentColor = Colors.deepPurple; // Default accent color.
 
   /// Opens a directory picker for the user to select a storage folder.
   ///
@@ -57,9 +59,41 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: const Text('Select a folder'),
               ),
               const SizedBox(height: 40),
+              const Text('Choose your accent color:'), // Instruction for accent color selection.
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: ThemeNotifier.availableAccentColors.map((color) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedAccentColor = color;
+                      });
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _selectedAccentColor == color
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Colors.transparent,
+                          width: 3.0,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _storagePath != null
-                    ? () {
+                    ? () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setInt('appAccentColor', _selectedAccentColor.value); // Save selected accent color.
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => const ColorSchemeScreen()), // Navigate to ColorSchemeScreen.

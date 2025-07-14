@@ -98,6 +98,36 @@ class _PersonalizationSettingsScreenState
             ),
             const SizedBox(height: 24),
             Text(
+              'Accent Color',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: ThemeNotifier.availableAccentColors.map((color) {
+                return GestureDetector(
+                  onTap: () {
+                    themeNotifier.setAccentColor(color);
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: themeNotifier.accentColor == color
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Colors.transparent,
+                        width: 3.0,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            Text(
               'Gallery Columns',
               style: Theme.of(context).textTheme.titleLarge,
             ),

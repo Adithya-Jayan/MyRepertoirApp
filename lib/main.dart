@@ -57,8 +57,8 @@ Future<void> main() async {
   // allowing theme changes to be managed and listened to by various widgets.
   runApp(
     ChangeNotifierProvider(
-      // Initializes ThemeNotifier with the system's current theme mode as default.
-      create: (_) => ThemeNotifier(ThemeMode.system),
+      // Initializes ThemeNotifier with the system's current theme mode and a default accent color.
+      create: (_) => ThemeNotifier(ThemeMode.system, Colors.deepPurple),
       child: const MyApp(),
     ),
   );
@@ -192,14 +192,14 @@ class _MyAppState extends State<MyApp> {
               themeMode: themeNotifier.themeMode, // Current theme mode (light, dark, system)
               // Defines the light theme for the application.
               theme: ThemeData(
-                // Generates a color scheme based on a deep purple seed color.
-                colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+                // Generates a color scheme based on the selected accent color.
+                colorScheme: ColorScheme.fromSeed(seedColor: themeNotifier.accentColor),
                 useMaterial3: true, // Enables Material 3 design features
               ),
               // Defines the dark theme for the application.
               darkTheme: ThemeData(
-                // Generates a dark color scheme based on a deep purple seed color.
-                colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
+                // Generates a dark color scheme based on the selected accent color.
+                colorScheme: ColorScheme.fromSeed(seedColor: themeNotifier.accentColor, brightness: Brightness.dark),
                 useMaterial3: true, // Enables Material 3 design features
               ),
               // Sets the home screen based on whether the app has run before.

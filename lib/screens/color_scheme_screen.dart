@@ -19,6 +19,21 @@ class ColorSchemeScreen extends StatefulWidget {
 /// Manages the selected theme mode and applies it to the application.
 class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
   String _selectedTheme = 'System'; // Stores the currently selected theme option (System, Light, Dark).
+  Color _selectedAccentColor = Colors.deepPurple; // Stores the currently selected accent color.
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialAccentColor();
+  }
+
+  Future<void> _loadInitialAccentColor() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.value;
+    setState(() {
+      _selectedAccentColor = Color(accentColorValue);
+    });
+  }
 
   /// Sets the application's theme mode based on the user's selection.
   ///
@@ -68,6 +83,36 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                 },
               ),
               const SizedBox(height: 40),
+              const Text('Choose your accent color:'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: ThemeNotifier.availableAccentColors.map((color) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedAccentColor = color;
+                      });
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _selectedAccentColor == color
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Colors.transparent,
+                          width: 3.0,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () async {
                   final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
@@ -83,6 +128,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                       themeMode = ThemeMode.system;
                   }
                   themeNotifier.setTheme(themeMode);
+                  themeNotifier.setAccentColor(_selectedAccentColor);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('hasRunBefore', true);
                   Navigator.pushReplacement(
