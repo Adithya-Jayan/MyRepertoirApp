@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+/// A widget that provides video playback functionality.
+///
+/// This widget uses the `video_player` package to play videos from a given URL.
 class VideoPlayerWidget extends StatefulWidget {
-  final String videoPath;
+  final String videoPath; // The URL or path of the video to play.
 
   const VideoPlayerWidget({super.key, required this.videoPath});
 

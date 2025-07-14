@@ -5,6 +5,10 @@ import 'package:repertoire/models/tag_group.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 
+/// A list of pre-defined [MusicPiece] objects used for initial data population.
+///
+/// This data is inserted into the database when the application is first launched
+/// or if the music_pieces table is found to be empty.
 final List<MusicPiece> dummyMusicPieces = [
   MusicPiece(
     id: const Uuid().v4(),

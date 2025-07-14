@@ -3,6 +3,9 @@ import '../models/tag.dart';
 import 'package:uuid/uuid.dart';
 import '../database/music_piece_repository.dart';
 
+/// A screen for managing user-defined tags.
+///
+/// This screen allows users to add new tags, view existing tags, and delete tags.
 class TagManagementScreen extends StatefulWidget {
   const TagManagementScreen({super.key});
 
@@ -10,15 +13,17 @@ class TagManagementScreen extends StatefulWidget {
   State<TagManagementScreen> createState() => _TagManagementScreenState();
 }
 
+/// The state class for [TagManagementScreen].
+/// Manages the UI and logic for adding, viewing, and deleting tags.
 class _TagManagementScreenState extends State<TagManagementScreen> {
-  final _tagNameController = TextEditingController();
-  final MusicPieceRepository _repository = MusicPieceRepository();
-  List<Tag> _tags = [];
+  final _tagNameController = TextEditingController(); // Controller for the new tag name input field.
+  final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for tag data operations.
+  List<Tag> _tags = []; // List to hold the currently displayed tags.
 
   @override
   void initState() {
     super.initState();
-    _loadTags();
+    _loadTags(); // Load existing tags when the screen initializes.
   }
 
   Future<void> _loadTags() async {

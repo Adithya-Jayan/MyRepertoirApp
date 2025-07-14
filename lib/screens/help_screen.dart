@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A screen that provides help information and answers to frequently asked questions.
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
 
@@ -7,7 +8,7 @@ class HelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help'),
+        title: const Text('Help'), // Title of the Help screen.
       ),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
