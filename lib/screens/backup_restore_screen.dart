@@ -236,6 +236,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         final List<dynamic> tagsJson = data['tags'] ?? [];
         final List<dynamic> groupsJson = data['groups'] ?? [];
 
+        // --- NEW LOGIC FOR GROUPS ---
+        // 1. Store existing groups before clearing
+        final List<Group> oldGroupsBeforeRestore = await _repository.getGroups();
+
         // Restore Music Pieces
         await _repository.deleteAllMusicPieces(); // Clear existing music pieces.
         for (var pieceJson in musicPiecesJson) {
@@ -250,12 +254,28 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           await _repository.insertTag(tag);
         }
 
-        // Restore Groups
+        // Restore Groups from backup
         await _repository.deleteAllGroups(); // Clear existing groups.
         for (var groupJson in groupsJson) {
           final group = Group.fromJson(groupJson);
-          await _repository.createGroup(group);
+          await _repository.createGroup(group); // Use createGroup which handles insert/replace
         }
+
+        // 2. Re-add old groups that were not in the restored backup
+        final List<Group> currentGroupsAfterRestore = await _repository.getGroups();
+        final Set<String> currentGroupIds = currentGroupsAfterRestore.map((g) => g.id).toSet();
+
+        int nextOrder = currentGroupsAfterRestore.length; // Determine the starting order for new groups
+
+        for (final oldGroup in oldGroupsBeforeRestore) {
+          if (!currentGroupIds.contains(oldGroup.id)) {
+            // This old group was not in the backup, re-add it
+            final newOrder = nextOrder++;
+            final groupToReAdd = oldGroup.copyWith(order: newOrder);
+            await _repository.createGroup(groupToReAdd); // Re-add with updated order
+          }
+        }
+        // --- END NEW LOGIC FOR GROUPS ---
 
         final mediaDir = Directory(p.join(storagePath!, 'media'));
         if (await mediaDir.exists()) {
