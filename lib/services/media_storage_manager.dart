@@ -1,23 +1,17 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/media_type.dart';
 
 class MediaStorageManager {
-  static const String _storagePathKey = 'appStoragePath';
-
-  static Future<String?> getStoragePath() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_storagePathKey);
+  static Future<Directory> get _appDirectory async {
+    return await getApplicationDocumentsDirectory();
   }
 
   static Future<Directory> getPieceMediaDirectory(String pieceId, MediaType mediaType) async {
-    final storagePath = await getStoragePath();
-    if (storagePath == null) {
-      throw Exception('Storage path not configured');
-    }
+    final appDir = await _appDirectory;
     final mediaTypeString = mediaType.toString().split('.').last;
-    final pieceMediaDir = Directory(path.join(storagePath, 'media', pieceId, mediaTypeString));
+    final pieceMediaDir = Directory(path.join(appDir.path, 'media', pieceId, mediaTypeString));
     if (!await pieceMediaDir.exists()) {
       await pieceMediaDir.create(recursive: true);
     }
@@ -39,18 +33,13 @@ class MediaStorageManager {
 
     final newPath = path.join(pieceMediaDir.path, newFileName);
 
-    final bytes = await originalFile.readAsBytes();
-    final newFile = File(newPath);
-    await newFile.writeAsBytes(bytes);
-
-    return newPath;
+    final newFile = await originalFile.copy(newPath);
+    return newFile.path;
   }
 
   static Future<bool> isFileInLocalStorage(String filePath) async {
-    final storagePath = await getStoragePath();
-    if (storagePath == null) return false;
-
-    final mediaDir = path.join(storagePath, 'media');
+    final appDir = await _appDirectory;
+    final mediaDir = path.join(appDir.path, 'media');
     return filePath.startsWith(mediaDir);
   }
 
@@ -66,10 +55,8 @@ class MediaStorageManager {
   }
 
   static Future<void> deletePieceMediaDirectory(String pieceId) async {
-    final storagePath = await getStoragePath();
-    if (storagePath == null) return;
-
-    final pieceDir = Directory(path.join(storagePath, 'media', pieceId));
+    final appDir = await _appDirectory;
+    final pieceDir = Directory(path.join(appDir.path, 'media', pieceId));
     if (await pieceDir.exists()) {
         await pieceDir.delete(recursive: true);
     }
