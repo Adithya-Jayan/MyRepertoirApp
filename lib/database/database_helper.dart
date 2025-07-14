@@ -278,6 +278,18 @@ CREATE TABLE IF NOT EXISTS groups (
     await db.delete('music_pieces');
   }
 
+  /// Deletes all Tag objects from the database.
+  Future<void> deleteAllTags() async {
+    final db = await instance.database;
+    await db.delete('tags');
+  }
+
+  /// Deletes all Group objects from the database.
+  Future<void> deleteAllGroups() async {
+    final db = await instance.database;
+    await db.delete('groups');
+  }
+
   /// Closes the database connection.
   Future close() async {
     final db = await instance.database;

@@ -151,6 +151,16 @@ class MusicPieceRepository {
     return await dbHelper.deleteTag(id);
   }
 
+  /// Deletes all [Tag] objects from the database.
+  Future<void> deleteAllTags() async {
+    await dbHelper.deleteAllTags();
+  }
+
+  /// Deletes all [Group] objects from the database.
+  Future<void> deleteAllGroups() async {
+    await dbHelper.deleteAllGroups();
+  }
+
   /// Retrieves all unique tag groups and their associated tags from all music pieces.
   /// Returns a map where keys are tag group names and values are sorted lists of tags.
   Future<Map<String, List<String>>> getAllUniqueTagGroups() async {

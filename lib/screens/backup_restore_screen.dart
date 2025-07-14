@@ -10,6 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/music_piece_repository.dart';
 import '../models/music_piece.dart';
+import '../models/tag.dart'; // Import Tag model
+import '../models/group.dart'; // Import Group model
+import '../models/tag.dart'; // Import Tag model
+import '../models/group.dart'; // Import Group model
 
 import 'package:intl/intl.dart';
 
@@ -65,7 +69,15 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     );
     try {
       final musicPieces = await _repository.getMusicPieces(); // Fetch all music pieces.
-      final jsonString = jsonEncode(musicPieces.map((e) => e.toJson()).toList()); // Convert music pieces to JSON string.
+      final tags = await _repository.getTags(); // Fetch all tags.
+      final groups = await _repository.getGroups(); // Fetch all groups.
+
+      final data = {
+        'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
+        'tags': tags.map((e) => e.toJson()).toList(),
+        'groups': groups.map((e) => e.toJson()).toList(),
+      };
+      final jsonString = jsonEncode(data); // Convert all data to JSON string.
       final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now()); // Generate a timestamp for the backup file name.
       final fileName = 'music_repertoire_backup_$timestamp.zip'; // Construct the backup file name.
 
@@ -218,12 +230,31 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         }
 
         final jsonString = utf8.decode(jsonFile.content);
-        final List<dynamic> musicPiecesJson = jsonDecode(jsonString);
-        final List<MusicPiece> restoredPieces = musicPiecesJson.map((e) => MusicPiece.fromJson(e)).toList();
+        final Map<String, dynamic> data = jsonDecode(jsonString);
 
-        await _repository.deleteAllMusicPieces();
-        for (var piece in restoredPieces) {
+        final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
+        final List<dynamic> tagsJson = data['tags'] ?? [];
+        final List<dynamic> groupsJson = data['groups'] ?? [];
+
+        // Restore Music Pieces
+        await _repository.deleteAllMusicPieces(); // Clear existing music pieces.
+        for (var pieceJson in musicPiecesJson) {
+          final piece = MusicPiece.fromJson(pieceJson);
           await _repository.insertMusicPiece(piece);
+        }
+
+        // Restore Tags
+        await _repository.deleteAllTags(); // Clear existing tags.
+        for (var tagJson in tagsJson) {
+          final tag = Tag.fromJson(tagJson);
+          await _repository.insertTag(tag);
+        }
+
+        // Restore Groups
+        await _repository.deleteAllGroups(); // Clear existing groups.
+        for (var groupJson in groupsJson) {
+          final group = Group.fromJson(groupJson);
+          await _repository.createGroup(group);
         }
 
         final mediaDir = Directory(p.join(storagePath!, 'media'));
