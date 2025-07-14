@@ -50,6 +50,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// A map storing the currently active filter options.
   Map<String, dynamic> _filterOptions = {};
 
+  /// Returns true if any filter options are currently active.
+  bool get _hasActiveFilters {
+    // Check if any filter option other than 'orderedTags' is non-null or non-empty.
+    final hasNonTagFilters = _filterOptions.entries.any((entry) {
+      if (entry.key == 'orderedTags') {
+        // For 'orderedTags', check if the map is not empty.
+        return (entry.value as Map<String, List<String>>).isNotEmpty;
+      } else {
+        // For other filters, check if the value is not null and not an empty string.
+        return entry.value != null && entry.value != '';
+      }
+    });
+
+    // Also check if the search query is not empty.
+    final hasSearchQuery = _searchQuery.isNotEmpty;
+
+    return hasNonTagFilters || hasSearchQuery;
+  }
+
   /// The currently selected sorting option for music pieces (e.g., alphabetical, last practiced).
   String _sortOption = 'alphabetical_asc';
 
@@ -589,105 +608,112 @@ class _LibraryScreenState extends State<LibraryScreen> {
         },
       ),
       actions: [
-        // Filter button to open the filter options dialog.
-        IconButton(
-          icon: const Icon(Icons.filter_list),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Filter Options'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Text field for filtering by title.
-                      TextFormField(
-                        decoration: const InputDecoration(labelText: 'Title'),
-                        initialValue: _filterOptions['title'],
-                        onChanged: (value) => _filterOptions['title'] = value,
-                      ),
-                      // Button to open tag group filter dialog.
-                      ElevatedButton(
-                        onPressed: () async {
-                          final availableTags = await _repository.getAllUniqueTagGroups();
-                          final selectedTags = await showDialog<Map<String, List<String>>>(
-                            context: context,
-                            builder: (context) => TagGroupFilterDialog(
-                              availableTags: availableTags,
-                              initialSelectedTags: _filterOptions['orderedTags'] ?? {},
-                            ),
-                          );
+        Container(
+          decoration: _hasActiveFilters
+              ? BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2), // Highlight background
+                  borderRadius: BorderRadius.circular(8.0), // Optional: rounded corners
+                )
+              : null,
+          child: IconButton(
+            icon: const Icon(Icons.filter_list), // Icon color will be default now
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Filter Options'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Text field for filtering by title.
+                        TextFormField(
+                          decoration: const InputDecoration(labelText: 'Title'),
+                          initialValue: _filterOptions['title'],
+                          onChanged: (value) => _filterOptions['title'] = value,
+                        ),
+                        // Button to open tag group filter dialog.
+                        ElevatedButton(
+                          onPressed: () async {
+                            final availableTags = await _repository.getAllUniqueTagGroups();
+                            final selectedTags = await showDialog<Map<String, List<String>>>(
+                              context: context,
+                              builder: (context) => TagGroupFilterDialog(
+                                availableTags: availableTags,
+                                initialSelectedTags: _filterOptions['orderedTags'] ?? {},
+                              ),
+                            );
 
-                          if (selectedTags != null) {
+                            if (selectedTags != null) {
+                              setState(() {
+                                _filterOptions['orderedTags'] = selectedTags;
+                              });
+                            }
+                          },
+                          child: const Text('Select Ordered Tags'),
+                        ),
+                        
+                        // Dropdown for practice tracking filter.
+                        DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(labelText: 'Practice Tracking'),
+                          value: _filterOptions['practiceTracking'],
+                          items: const [
+                            DropdownMenuItem(value: null, child: Text('All')),
+                            DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
+                            DropdownMenuItem(value: 'disabled', child: Text('Disabled')),
+                          ],
+                          onChanged: (value) {
                             setState(() {
-                              _filterOptions['orderedTags'] = selectedTags;
+                              _filterOptions['practiceTracking'] = value;
                             });
-                          }
-                        },
-                        child: const Text('Select Ordered Tags'),
-                      ),
-                      
-                      // Dropdown for practice tracking filter.
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Practice Tracking'),
-                        value: _filterOptions['practiceTracking'],
-                        items: const [
-                          DropdownMenuItem(value: null, child: Text('All')),
-                          DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
-                          DropdownMenuItem(value: 'disabled', child: Text('Disabled')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _filterOptions['practiceTracking'] = value;
-                          });
-                        },
-                      ),
-                      // Dropdown for practice duration filter.
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Practice Duration'),
-                        value: _filterOptions['practiceDuration'],
-                        items: const [
-                          DropdownMenuItem(value: null, child: Text('Any')),
-                          DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),
-                          DropdownMenuItem(value: 'notIn30Days', child: Text('Not practiced in 30 days')),
-                          DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _filterOptions['practiceDuration'] = value;
-                          });
-                        },
-                      ),
-                    ],
+                          },
+                        ),
+                        // Dropdown for practice duration filter.
+                        DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(labelText: 'Practice Duration'),
+                          value: _filterOptions['practiceDuration'],
+                          items: const [
+                            DropdownMenuItem(value: null, child: Text('Any')),
+                            DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),
+                            DropdownMenuItem(value: 'notIn30Days', child: Text('Not practiced in 30 days')),
+                            DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _filterOptions['practiceDuration'] = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
+                  actions: [
+                    // Button to apply filters.
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _loadMusicPieces();
+                      },
+                      child: const Text('Apply Filter'),
+                    ),
+                    // Button to clear all filters.
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _filterOptions = {
+                            'orderedTags': <String, List<String>>{},
+                          };
+                        });
+                        Navigator.pop(context);
+                        _loadMusicPieces();
+                      },
+                      child: const Text('Clear Filter'),
+                    ),
+                  ],
                 ),
-                actions: [
-                  // Button to apply filters.
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _loadMusicPieces();
-                    },
-                    child: const Text('Apply Filter'),
-                  ),
-                  // Button to clear all filters.
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _filterOptions = {
-                          'orderedTags': <String, List<String>>{},
-                        };
-                      });
-                      Navigator.pop(context);
-                      _loadMusicPieces();
-                    },
-                    child: const Text('Clear Filter'),
-                  ),
-                ],
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
         
         // Sort button to open the sort options dialog.
