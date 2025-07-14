@@ -415,7 +415,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     key: const ValueKey('all_groups_chip'),
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ChoiceChip(
-                      label: Text('All (${_allMusicPieces.length})'),
+                      label: Text('All (${_musicPieces.length})'), // Use _musicPieces.length for filtered count
                       selected: _selectedGroupId == null,
                       onSelected: (selected) {
                         if (selected) {
@@ -427,7 +427,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                   // Dynamically generated group chips.
                   ..._groups.where((g) => !g.isDefault).map((group) {
-                    final pieceCount = _allMusicPieces.where((piece) => piece.groupIds.contains(group.id)).length;
+                    // Filter _allMusicPieces by current filter options AND group ID
+                    final pieceCount = _filterMusicPieces(_allMusicPieces.where((piece) => piece.groupIds.contains(group.id)).toList()).length;
                     return Padding(
                       key: ValueKey(group.id),
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
