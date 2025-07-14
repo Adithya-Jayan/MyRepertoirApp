@@ -246,6 +246,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data restored successfully!'))
         );
+        if (mounted) {
+          Navigator.of(context).pop(true); // Pop with true to indicate changes for refresh.
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Restore cancelled.'))
