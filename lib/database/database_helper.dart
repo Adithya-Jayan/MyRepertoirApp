@@ -48,26 +48,15 @@ class DatabaseHelper {
     final db = await openDatabase(
       path,
       version: 2, // Current database version
-      onCreate: _createDB, // Callback for creating tables when the database is first created
-      onUpgrade: _onUpgrade, // Callback for handling database schema upgrades
-    );
-
-    // Check if the music_pieces table is empty and insert dummy data if it is.
-    try {
-      final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM music_pieces'));
-      if (count == 0) {
+      onCreate: (db, version) async {
+        await _createDB(db, version);
+        // Insert dummy data only if the database is newly created
         for (final piece in dummyMusicPieces) {
           await db.insert('music_pieces', piece.toJson());
         }
-      }
-    } catch (e) {
-      // If the table doesn't exist (e.g., first run or corrupted DB),
-      // re-create the database and insert initial data.
-      await _createDB(db, 5); // Use the latest version for creation
-      for (final piece in dummyMusicPieces) {
-        await db.insert('music_pieces', piece.toJson());
-      }
-    }
+      },
+      onUpgrade: _onUpgrade, // Callback for handling database schema upgrades
+    );
 
     return db;
   }
