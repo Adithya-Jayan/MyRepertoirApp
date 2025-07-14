@@ -1,21 +1,34 @@
-import 'dart:convert';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path_provider/path_provider.dart';
-import '../models/music_piece.dart';
-import '../models/tag.dart';
-import '../models/group.dart'; // Import the new Group model
-import '../models/tag_group.dart'; // Import TagGroup model
-import 'package:uuid/uuid.dart'; // Import Uuid for generating IDs
-import '../utils/dummy_data.dart';
+// Core Dart and Flutter imports
+import 'dart:convert'; // For JSON encoding and decoding
+import 'package:path/path.dart'; // For joining and normalizing paths
+import 'package:sqflite/sqflite.dart'; // SQLite database plugin for Flutter
+import 'package:path_provider/path_provider.dart'; // For accessing platform-specific file system paths
 
+// Project-specific model imports
+import '../models/music_piece.dart'; // Data model for a music piece
+import '../models/tag.dart'; // Data model for a tag
+import '../models/group.dart'; // Data model for a group
+import '../models/tag_group.dart'; // Data model for a tag group
+
+// Utility imports
+import 'package:uuid/uuid.dart'; // For generating unique IDs
+import '../utils/dummy_data.dart'; // For initial dummy data insertion
+
+/// A singleton helper class for managing the SQLite database.
+/// Provides methods for database initialization, table creation, and CRUD operations
+/// for MusicPiece, Tag, and Group objects.
 class DatabaseHelper {
+  /// Singleton instance of DatabaseHelper.
   static final DatabaseHelper instance = DatabaseHelper._init();
 
-  static Database? _database;
-
+  /// Private constructor for the singleton pattern.
   DatabaseHelper._init();
 
+  /// Static database instance, initialized once.
+  static Database? _database;
+
+  /// Getter for the database instance.
+  /// Initializes the database if it hasn't been initialized yet.
   Future<Database> get database async {
     if (_database != null) return _database!;
 
@@ -23,18 +36,23 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Initializes the database.
+  /// Opens the database, creates tables if they don't exist, and handles upgrades.
   Future<Database> _initDB(String filePath) async {
+    // Get the application's documents directory for storing the database file.
     final dbPath = await getApplicationDocumentsDirectory();
+    // Join the directory path and the database file name.
     final path = join(dbPath.path, filePath);
 
+    // Open the database.
     final db = await openDatabase(
       path,
-      version: 2, // Initial database version
-      onCreate: _createDB,
-      onUpgrade: _onUpgrade, // Placeholder for future migrations
+      version: 2, // Current database version
+      onCreate: _createDB, // Callback for creating tables when the database is first created
+      onUpgrade: _onUpgrade, // Callback for handling database schema upgrades
     );
 
-    // Check if the database is empty and insert dummy data if it is
+    // Check if the music_pieces table is empty and insert dummy data if it is.
     try {
       final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM music_pieces'));
       if (count == 0) {
@@ -43,9 +61,9 @@ class DatabaseHelper {
         }
       }
     } catch (e) {
-      // If the table doesn't exist, it means the database is corrupt or was not created correctly.
-      // Re-create the database and insert initial data.
-      await _createDB(db, 5); // Use the latest version
+      // If the table doesn't exist (e.g., first run or corrupted DB),
+      // re-create the database and insert initial data.
+      await _createDB(db, 5); // Use the latest version for creation
       for (final piece in dummyMusicPieces) {
         await db.insert('music_pieces', piece.toJson());
       }
@@ -54,26 +72,30 @@ class DatabaseHelper {
     return db;
   }
 
+  /// Creates the database tables.
+  /// This method is called when the database is first created.
   Future _createDB(Database db, int version) async {
+    // Create the music_pieces table.
     await db.execute('''
 CREATE TABLE IF NOT EXISTS music_pieces (
   id TEXT PRIMARY KEY,
   title TEXT,
   artistComposer TEXT,
-  tags TEXT, -- Store as JSON string
-  lastAccessed TEXT, -- ISO 8601 string
-  isFavorite INTEGER, -- 0 or 1
-  lastPracticeTime TEXT, -- ISO 8601 string
+  tags TEXT, -- Stored as JSON string
+  lastAccessed TEXT, -- Stored as ISO 8601 string
+  isFavorite INTEGER, -- Stored as 0 for false, 1 for true
+  lastPracticeTime TEXT, -- Stored as ISO 8601 string
   practiceCount INTEGER,
   enablePracticeTracking INTEGER,
   googleDriveFileId TEXT,
-  mediaItems TEXT, -- Store List<MediaItem> as JSON string
+  mediaItems TEXT, -- Stored as JSON string of List<MediaItem>
   groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
   tagGroups TEXT DEFAULT '[]', -- New column for tag groups, default to empty JSON array
   thumbnailPath TEXT -- New column for thumbnail path
 )
 ''');
 
+    // Create the tags table.
     await db.execute('''
 CREATE TABLE IF NOT EXISTS tags (
   id TEXT PRIMARY KEY,
@@ -83,73 +105,88 @@ CREATE TABLE IF NOT EXISTS tags (
 )
 ''');
 
-    // New table for groups
+    // Create the groups table.
     await db.execute('''
 CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
   name TEXT,
-  'order' INTEGER, -- 'order' is a keyword, so quote it
-  isDefault INTEGER -- 0 or 1
+  'order' INTEGER, -- 'order' is a SQL keyword, so it's quoted
+  isDefault INTEGER -- Stored as 0 for false, 1 for true
 )
 ''');
   }
 
+  /// Inserts a new MusicPiece into the database or replaces an existing one if the ID matches.
   Future<void> insertMusicPiece(MusicPiece piece) async {
     final db = await instance.database;
     await db.insert('music_pieces', piece.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// Handles database schema upgrades.
+  /// This method is called when the database version changes.
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Example upgrade: Add 'thumbnailPath' column if upgrading from version < 2.
     if (oldVersion < 2) {
       await db.execute("ALTER TABLE music_pieces ADD COLUMN thumbnailPath TEXT;");
     }
   }
 
+  /// Inserts a new Tag into the database or replaces an existing one if the ID matches.
   Future<void> insertTag(Tag tag) async {
     final db = await instance.database;
     await db.insert('tags', tag.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // CRUD operations for Group
+  /// Inserts a new Group into the database or replaces an existing one if the ID matches.
   Future<void> insertGroup(Group group) async {
     final db = await instance.database;
     await db.insert('groups', group.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// Retrieves all MusicPiece objects from the database.
   Future<List<MusicPiece>> getMusicPieces() async {
     final db = await instance.database;
     final result = await db.query('music_pieces');
 
+    // Convert the query result (List<Map<String, dynamic>>) to List<MusicPiece>.
     return result.map((json) => MusicPiece.fromJson(json)).toList();
   }
 
+  /// Retrieves MusicPiece objects from the database based on a list of IDs.
   Future<List<MusicPiece>> getMusicPiecesByIds(List<String> ids) async {
     final db = await instance.database;
     if (ids.isEmpty) {
-      return [];
+      return []; // Return an empty list if no IDs are provided.
     }
     final result = await db.query(
       'music_pieces',
-      where: 'id IN (${ids.map((_) => '?').join(',')})',
-      whereArgs: ids,
+      where: 'id IN (${ids.map((_) => '?').join(',')})', // SQL IN clause for multiple IDs
+      whereArgs: ids, // Arguments for the WHERE clause
     );
 
+    // Convert the query result to List<MusicPiece>.
     return result.map((json) => MusicPiece.fromJson(json)).toList();
   }
 
+  /// Retrieves all Tag objects from the database.
   Future<List<Tag>> getTags() async {
     final db = await instance.database;
     final result = await db.query('tags');
 
+    // Convert the query result to List<Tag>.
     return result.map((json) => Tag.fromJson(json)).toList();
   }
 
+  /// Retrieves all Group objects from the database.
   Future<List<Group>> getGroups() async {
     final db = await instance.database;
     final result = await db.query('groups');
+    // Convert the query result to List<Group>.
     return result.map((json) => Group.fromJson(json)).toList();
   }
 
+  /// Updates an existing MusicPiece in the database.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateMusicPiece(MusicPiece piece) async {
     final db = await instance.database;
 
@@ -161,6 +198,8 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Updates an existing Tag in the database.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateTag(Tag tag) async {
     final db = await instance.database;
 
@@ -172,6 +211,8 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Updates an existing Group in the database.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateGroup(Group group) async {
     final db = await instance.database;
     return await db.update(
@@ -182,6 +223,8 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Deletes a MusicPiece from the database by its ID.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteMusicPiece(String id) async {
     final db = await instance.database;
 
@@ -192,18 +235,22 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Deletes multiple MusicPiece objects from the database by their IDs.
+  /// Returns the number of rows affected.
   Future<int> deleteMusicPieces(List<String> ids) async {
     final db = await instance.database;
     if (ids.isEmpty) {
-      return 0;
+      return 0; // No pieces to delete if the list is empty.
     }
     return await db.delete(
       'music_pieces',
-      where: 'id IN (${ids.map((_) => '?').join(',')})',
-      whereArgs: ids,
+      where: 'id IN (${ids.map((_) => '?').join(',')})', // SQL IN clause for multiple IDs
+      whereArgs: ids, // Arguments for the WHERE clause
     );
   }
 
+  /// Deletes a Tag from the database by its ID.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteTag(String id) async {
     final db = await instance.database;
 
@@ -214,6 +261,8 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Deletes a Group from the database by its ID.
+  /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteGroup(String id) async {
     final db = await instance.database;
     return await db.delete(
@@ -223,11 +272,13 @@ CREATE TABLE IF NOT EXISTS groups (
     );
   }
 
+  /// Deletes all MusicPiece objects from the database.
   Future<void> deleteAllMusicPieces() async {
     final db = await instance.database;
     await db.delete('music_pieces');
   }
 
+  /// Closes the database connection.
   Future close() async {
     final db = await instance.database;
 

@@ -21,6 +21,10 @@ import './settings_screen.dart';
 import './tag_management_screen.dart';
 import './personalization_settings_screen.dart';
 
+/// The main screen of the application, displaying the user's music repertoire.
+///
+/// This screen allows users to view, search, filter, sort, and manage their
+/// music pieces. It supports single and multi-selection modes for batch operations.
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
@@ -28,103 +32,164 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
+/// The state class for [LibraryScreen].
+/// Manages the data, UI state, and interactions for the music repertoire display.
 class _LibraryScreenState extends State<LibraryScreen> {
+  /// Repository for interacting with music piece data in the database.
   final MusicPieceRepository _repository = MusicPieceRepository();
+
+  /// Stores all music pieces loaded from the database, before any filtering.
   List<MusicPiece> _allMusicPieces = [];
-  List<MusicPiece> _musicPieces = []; // This will hold the filtered and sorted list
+
+  /// The list of music pieces currently displayed in the UI, after applying filters and sorting.
+  List<MusicPiece> _musicPieces = [];
+
+  /// The current search query entered by the user.
   String _searchQuery = '';
+
+  /// A map storing the currently active filter options.
   Map<String, dynamic> _filterOptions = {};
-  String _sortOption = 'alphabetical_asc'; // Default sort option
-  List<Group> _groups = []; // Renamed from _allGroups for consistency
-  String? _selectedGroupId; // To track the currently selected group
+
+  /// The currently selected sorting option for music pieces (e.g., alphabetical, last practiced).
+  String _sortOption = 'alphabetical_asc';
+
+  /// List of all user-defined groups, excluding the default group.
+  List<Group> _groups = [];
+
+  /// The ID of the currently selected group for filtering music pieces.
+  String? _selectedGroupId;
+
+  /// Instance of SharedPreferences for persistent storage of user preferences.
   late SharedPreferences _prefs;
+
+  /// Flag to indicate if data is currently being loaded from the database.
   bool _isLoading = false;
+
+  /// Stores any error messages that occur during data loading or other operations.
   String? _errorMessage;
+
+  /// The number of columns to display in the music piece gallery grid.
   int _galleryColumns = 1;
-  Key _groupListKey = UniqueKey(); // New key for group list
+
+  /// A unique key used to force a rebuild of the group list UI when groups are modified.
+  Key _groupListKey = UniqueKey();
+
+  /// Controller for the PageView widget, used for navigating between different group views.
   late PageController _pageController;
-  late ScrollController _groupScrollController; // New scroll controller for group chips
+
+  /// Controller for the horizontal scrollable list of group chips.
+  late ScrollController _groupScrollController;
+
+  /// Flag indicating whether multi-selection mode is currently active.
   bool _isMultiSelectMode = false;
+
+  /// A set containing the IDs of music pieces currently selected in multi-selection mode.
   final Set<String> _selectedPieceIds = {};
+
+  /// Focus node used to manage keyboard focus for the RawKeyboardListener.
   final FocusNode _focusNode = FocusNode();
+
+  /// A set to keep track of currently pressed logical keyboard keys.
   final Set<LogicalKeyboardKey> _pressedKeys = {};
 
   @override
   void initState() {
     super.initState();
+    // Initialize the PageController for managing page views.
     _pageController = PageController();
-    _groupScrollController = ScrollController(); // Initialize the scroll controller
+    // Initialize the ScrollController for the horizontal group chips.
+    _groupScrollController = ScrollController();
+    // Asynchronously initialize SharedPreferences.
     _initSharedPreferences();
+    // Load initial data for the screen (groups, music pieces, settings).
     _loadInitialData();
-    // Request focus for keyboard listener
+    // Request focus for the keyboard listener to capture key events.
     _focusNode.requestFocus();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Ensure focus is maintained when dependencies change (e.g., route changes)
+    // This line is commented out as it might cause issues with focus management
+    // if not carefully handled with other focus-related widgets.
     // FocusScope.of(context).requestFocus(_focusNode);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _groupScrollController.dispose(); // Dispose the scroll controller
+    _pageController.dispose(); // Dispose the PageController to release resources.
+    _groupScrollController.dispose(); // Dispose the ScrollController for group chips.
+    _focusNode.dispose(); // Dispose the FocusNode.
     super.dispose();
   }
 
+  /// Toggles the multi-selection mode on and off.
+  /// When exiting multi-selection mode, all selected pieces are deselected.
   void _toggleMultiSelectMode() {
     setState(() {
       _isMultiSelectMode = !_isMultiSelectMode;
       if (!_isMultiSelectMode) {
-        _selectedPieceIds.clear();
+        _selectedPieceIds.clear(); // Clear all selected piece IDs when exiting multi-select mode.
       }
     });
   }
 
+  /// Handles the selection or deselection of a music piece in multi-selection mode.
+  ///
+  /// If the piece is already selected, it will be deselected. Otherwise, it will be selected.
+  /// If no pieces remain selected after the operation, multi-selection mode is exited.
   void _onPieceSelected(MusicPiece piece) {
     setState(() {
       if (_selectedPieceIds.contains(piece.id)) {
-        _selectedPieceIds.remove(piece.id);
+        _selectedPieceIds.remove(piece.id); // Deselect the piece if already selected.
       } else {
-        _selectedPieceIds.add(piece.id);
+        _selectedPieceIds.add(piece.id); // Select the piece if not already selected.
       }
 
       if (_selectedPieceIds.isEmpty) {
-        _isMultiSelectMode = false;
+        _isMultiSelectMode = false; // Exit multi-select mode if no pieces are selected.
       }
     });
   }
 
+  /// Initializes [SharedPreferences] and loads the saved sort option.
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
-      _sortOption = _prefs.getString('sortOption') ?? 'alphabetical_asc';
+      _sortOption = _prefs.getString('sortOption') ?? 'alphabetical_asc'; // Load saved sort option or default to alphabetical ascending.
     });
   }
 
+  /// Loads application settings, specifically the number of gallery columns.
+  ///
+  /// Determines a default number of columns based on the platform and loads
+  /// the user's saved preference from SharedPreferences.
   Future<void> _loadSettings() async {
     print('LibraryScreen: _loadSettings called');
     int defaultColumns;
+    // Set default column count based on the platform for optimal display.
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
-      defaultColumns = 4; // Desktop and web builds (excluding Windows)
+      defaultColumns = 4; // Default for web, macOS, and Linux.
     } else if (defaultTargetPlatform == TargetPlatform.windows) {
-      defaultColumns = 6; // Windows builds
+      defaultColumns = 6; // Default for Windows.
     } else {
-      defaultColumns = 2; // Mobile builds (Android, iOS)
+      defaultColumns = 2; // Default for mobile platforms (Android, iOS).
     }
+    // Retrieve the saved gallery column count, or use the platform-specific default.
     final loadedColumns = _prefs.getInt('galleryColumns') ?? defaultColumns;
     print('Loaded galleryColumns: $loadedColumns');
     setState(() {
-      _galleryColumns = loadedColumns;
+      _galleryColumns = loadedColumns; // Update the state with the loaded column count.
     });
   }
 
+  /// Loads initial data for the screen, including groups, music pieces, and settings.
+  ///
+  /// This function is called once when the screen initializes to populate the UI.
   Future<void> _loadInitialData() async {
-    await _loadGroups();
-    await _loadMusicPieces();
-    _loadSettings(); // Load settings after prefs are initialized
+    await _loadGroups(); // Load all available groups from the database.
+    await _loadMusicPieces(); // Load all music pieces and apply initial filters/sorting.
+    _loadSettings(); // Load user-specific settings like gallery column count.
   }
 
   
@@ -133,75 +198,83 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   
 
+  /// Loads all groups from the database and updates the [_groups] list.
+  ///
+  /// Ensures a default group exists and sorts groups for display.
   Future<void> _loadGroups() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isLoading = true; // Set loading state to true.
+      _errorMessage = null; // Clear any previous error messages.
     });
     try {
-      await _repository.ensureDefaultGroupExists();
-      final allGroups = await _repository.getGroups();
-      _groups = allGroups.where((g) => !g.isDefault).toList();
+      await _repository.ensureDefaultGroupExists(); // Ensure the 'Default Group' is present in the database.
+      final allGroups = await _repository.getGroups(); // Fetch all groups from the repository.
+      _groups = allGroups.where((g) => !g.isDefault).toList(); // Filter out the default group for display in the chips.
       _groups.sort((a, b) {
         if (a.order != b.order) {
-          return a.order.compareTo(b.order);
+          return a.order.compareTo(b.order); // Sort by custom order first.
         }
-        return a.name.compareTo(b.name);
+        return a.name.compareTo(b.name); // Then sort alphabetically by name.
       });
-      // If the currently selected group was deleted, reset to 'All'
+      // If the previously selected group was deleted, reset the selection to 'All'.
       if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
         _selectedGroupId = null;
       }
-      _groupListKey = UniqueKey(); // Update key to force rebuild
+      _groupListKey = UniqueKey(); // Update key to force a rebuild of the group list UI.
     } catch (e) {
-      _errorMessage = 'Failed to load groups: $e';
+      _errorMessage = 'Failed to load groups: $e'; // Set error message if loading fails.
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoading = false; // Set loading state to false after operation completes.
       });
     }
   }
 
+  /// Loads all music pieces from the database and applies current filters and sorting.
   Future<void> _loadMusicPieces() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isLoading = true; // Set loading state to true.
+      _errorMessage = null; // Clear any previous error messages.
     });
     try {
-      // Always load all pieces first
-      _allMusicPieces = await _repository.getMusicPieces();
+      _allMusicPieces = await _repository.getMusicPieces(); // Fetch all music pieces from the repository.
 
-      // Then filter based on selected group and search/filter options
-      List<MusicPiece> currentPieces = _allMusicPieces;
+      List<MusicPiece> currentPieces = _allMusicPieces; // Start with all pieces.
 
       if (_selectedGroupId != null) {
-        currentPieces = currentPieces.where((piece) => piece.groupIds.contains(_selectedGroupId)).toList();
+        currentPieces = currentPieces.where((piece) => piece.groupIds.contains(_selectedGroupId)).toList(); // Filter by selected group if any.
       }
 
-      _musicPieces = _filterMusicPieces(currentPieces);
+      _musicPieces = _filterMusicPieces(currentPieces); // Apply search and filter options.
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to load music pieces: $e';
+        _errorMessage = 'Failed to load music pieces: $e'; // Set error message if loading fails.
       });
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoading = false; // Set loading state to false after operation completes.
       });
     }
   }
 
+    /// Filters and sorts a given list of [MusicPiece] objects based on
+  /// the current search query, filter options, and sort option.
   List<MusicPiece> _filterMusicPieces(List<MusicPiece> pieces) {
     List<MusicPiece> filteredPieces = pieces.where((piece) {
       final lowerCaseSearchQuery = _searchQuery.toLowerCase();
+      // Check if the piece matches the search query in title, artist/composer, or tags.
       final matchesSearch = piece.title.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.artistComposer.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.tagGroups.any((tg) => tg.tags.any((tag) => tag.toLowerCase().contains(lowerCaseSearchQuery))) ||
           piece.tags.any((t) => t.toLowerCase().contains(lowerCaseSearchQuery));
 
+      // Check for title match from filter options.
       final titleMatch = _filterOptions['title'] == null ||
           piece.title.toLowerCase().contains(_filterOptions['title'].toLowerCase());
+      // Check for artist/composer match from filter options.
       final artistComposerMatch = _filterOptions['artistComposer'] == null ||
           piece.artistComposer.toLowerCase().contains(_filterOptions['artistComposer'].toLowerCase());
+      // Check for ordered tags match from filter options.
       final orderedTagsMatch = (_filterOptions['orderedTags'] == null || (_filterOptions['orderedTags'] as Map<String, List<String>>).isEmpty) ||
           (_filterOptions['orderedTags'] as Map<String, List<String>>).entries.every((entry) {
             final selectedTagSetName = entry.key;
@@ -210,9 +283,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 pieceTagGroup.name == selectedTagSetName &&
                 selectedTags.every((selectedTag) => pieceTagGroup.tags.contains(selectedTag)));
           });
+      // Check for general tags match from filter options.
       final tagsMatch = _filterOptions['tags'] == null ||
           piece.tags.any((t) => t.toLowerCase().contains(_filterOptions['tags'].toLowerCase()));
 
+      // Apply practice tracking filter.
       final practiceTrackingFilter = _filterOptions['practiceTracking'];
       bool practiceTrackingMatch = true;
       if (practiceTrackingFilter == 'enabled') {
@@ -221,6 +296,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         practiceTrackingMatch = !piece.enablePracticeTracking;
       }
 
+      // Apply practice duration filter.
       final practiceDurationFilter = _filterOptions['practiceDuration'];
       bool practiceDurationMatch = true;
       if (practiceDurationFilter != null) {
@@ -235,29 +311,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
+      // Combine all filter conditions.
       return matchesSearch && titleMatch && artistComposerMatch && orderedTagsMatch && tagsMatch && practiceTrackingMatch && practiceDurationMatch;
     }).toList();
 
-    // Apply sorting based on _sortOption
+    // Apply sorting based on the selected sort option.
     if (_sortOption == 'alphabetical_asc') {
       filteredPieces.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     } else if (_sortOption == 'alphabetical_desc') {
       filteredPieces.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
     } else if (_sortOption.startsWith('last_practiced')) {
       filteredPieces.sort((a, b) {
-        // Handle practice tracking enabled/disabled
+        // Prioritize pieces with practice tracking enabled.
         if (a.enablePracticeTracking && !b.enablePracticeTracking) return -1;
         if (!a.enablePracticeTracking && b.enablePracticeTracking) return 1;
         if (!a.enablePracticeTracking && !b.enablePracticeTracking) return 0;
 
-        // Handle never practiced
+        // Handle pieces that have never been practiced.
         final aNeverPracticed = a.lastPracticeTime == null;
         final bNeverPracticed = b.lastPracticeTime == null;
         if (aNeverPracticed && !bNeverPracticed) return 1;
         if (!aNeverPracticed && bNeverPracticed) return -1;
         if (aNeverPracticed && bNeverPracticed) return 0;
 
-        // Sort by timestamp
+        // Sort by last practice time (ascending or descending).
         if (_sortOption == 'last_practiced_asc') {
           return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
         } else {
@@ -269,26 +346,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return filteredPieces;
   }
 
+  /// Calculates the scroll offset for a given group chip index.
+  ///
+  /// This is used to programmatically scroll the horizontal list of group chips
+  /// into view when a different group page is selected in the PageView.
   double _calculateScrollOffset(int index) {
-    // Assuming each chip has a fixed width for simplicity, or calculate dynamically
-    // This is a simplified calculation. You might need to adjust based on actual chip sizes and spacing.
-    // 4.0 (left padding) + 4.0 (right padding) + chip width
-    // For "All" chip (index 0)
-    double offset = 0.0;
-    if (index == 0) {
-      offset = 0.0; // "All" chip is at the beginning
-    } else {
-      // Calculate offset for other chips
-      // Assuming average chip width + padding + spacing
-      // This is a rough estimate. For precise calculation, you'd need to measure widget sizes.
-      // For now, let's assume a fixed width per chip for calculation.
-      // A more robust solution would involve using GlobalKey to get the render box of each chip.
-      const double chipWidth = 100.0; // Approximate width of a chip
-      const double paddingAndSpacing = 8.0; // 4.0 left + 4.0 right padding + 8.0 spacing
-      offset = (index * (chipWidth + paddingAndSpacing));
-    }
+    // This is a simplified calculation. For precise calculation, you'd need to measure widget sizes.
+    // A more robust solution would involve using GlobalKey to get the render box of each chip.
+    const double chipWidth = 100.0; // Approximate width of a chip.
+    const double paddingAndSpacing = 8.0; // Combined horizontal padding and spacing between chips.
+    double offset = (index * (chipWidth + paddingAndSpacing));
 
-    // Ensure the offset doesn't exceed the max scroll extent
+    // Ensure the calculated offset does not exceed the maximum scroll extent
+    // of the SingleChildScrollView, preventing over-scrolling.
     if (_groupScrollController.hasClients) {
       return offset.clamp(0.0, _groupScrollController.position.maxScrollExtent);
     }
@@ -300,6 +370,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return RawKeyboardListener(
       focusNode: _focusNode,
       onKey: (event) {
+        // Track currently pressed keys for multi-selection with Shift key.
         if (event is RawKeyDownEvent) {
           _pressedKeys.add(event.logicalKey);
         } else if (event is RawKeyUpEvent) {
@@ -307,18 +378,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       },
       child: Scaffold(
+        // Dynamically switch AppBar based on multi-selection mode.
         appBar: _isMultiSelectMode ? _buildMultiSelectAppBar() : _buildDefaultAppBar(),
         body: Column(
           children: [
-          // Group Toggling Bar (now controlled by PageView)
+          // Group Toggling Bar (horizontal scrollable chips).
           if (_groups.isNotEmpty)
             SingleChildScrollView(
-              key: _groupListKey, // Use the new key
-              controller: _groupScrollController, // Attach the scroll controller
+              key: _groupListKey, // Use the new key to force rebuild of the group list.
+              controller: _groupScrollController, // Attach the scroll controller for horizontal scrolling.
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: Row(
                 children: [
+                  // "All" group chip.
                   Padding(
                     key: const ValueKey('all_groups_chip'),
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -333,6 +406,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       showCheckmark: false,
                     ),
                   ),
+                  // Dynamically generated group chips.
                   ..._groups.where((g) => !g.isDefault).map((group) {
                     final pieceCount = _allMusicPieces.where((piece) => piece.groupIds.contains(group.id)).length;
                     return Padding(
@@ -343,7 +417,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         selected: _selectedGroupId == group.id,
                         onSelected: (selected) {
                           if (selected) {
-                            final index = _groups.indexOf(group) + 1;
+                            final index = _groups.indexOf(group) + 1; // +1 because 'All' is at index 0.
                             _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
                           }
                         },
@@ -355,21 +429,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             )
           else
-            const SizedBox.shrink(),
+            const SizedBox.shrink(), // Hide the group bar if no groups are available.
           Expanded(
+            // PageView to display music pieces for each selected group.
             child: PageView.builder(
               controller: _pageController,
-              itemCount: _groups.length + 1, // +1 for "All" group
+              itemCount: _groups.length + 1, // +1 for "All" group page.
               onPageChanged: (index) {
                 setState(() {
                   if (index == 0) {
-                    _selectedGroupId = null; // "All" group
+                    _selectedGroupId = null; // "All" group selected.
                   } else {
-                    _selectedGroupId = _groups[index - 1].id;
+                    _selectedGroupId = _groups[index - 1].id; // Select the corresponding group.
                   }
                 });
 
-                // Scroll the selected chip into view
+                // Scroll the selected group chip into view.
                 _groupScrollController.animateTo(
                   _calculateScrollOffset(index),
                   duration: const Duration(milliseconds: 300),
@@ -382,24 +457,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 } else if (_errorMessage != null) {
                   return Center(child: Text(_errorMessage!));
                 } else {
-                  // Determine the group ID for the current page
+                  // Determine the group ID for the current page.
                   String? currentPageGroupId;
                   if (pageIndex == 0) {
-                    currentPageGroupId = null; // "All" group
+                    currentPageGroupId = null; // "All" group.
                   } else {
                     currentPageGroupId = _groups[pageIndex - 1].id;
                   }
 
-                  // Filter music pieces for the current page
+                  // Filter music pieces for the current page's group.
                   final musicPiecesForPage = _allMusicPieces.where((piece) {
                     if (currentPageGroupId == null) {
-                      return true; // Show all pieces for "All" group
+                      return true; // Show all pieces for "All" group.
                     } else {
                       return piece.groupIds.contains(currentPageGroupId);
                     }
                   }).toList();
 
-                  // Apply search and filter options to the current page's pieces
+                  // Apply search and filter options to the current page's pieces.
                   final filteredAndSortedPieces = _filterMusicPieces(musicPiecesForPage);
 
                   if (filteredAndSortedPieces.isEmpty) {
@@ -408,17 +483,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      await _loadGroups();
-                      await _loadMusicPieces();
+                      await _loadGroups(); // Reload groups on refresh.
+                      await _loadMusicPieces(); // Reload music pieces on refresh.
                     },
                     child: GridView.builder(
-                      key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes
+                      key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes.
                       padding: const EdgeInsets.all(8.0),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _galleryColumns,
+                        crossAxisCount: _galleryColumns, // Number of columns in the grid.
                         crossAxisSpacing: 2.0,
                         mainAxisSpacing: 4.0,
-                        childAspectRatio: 1.0, // Adjusted for square items
+                        childAspectRatio: 1.0, // Aspect ratio for each grid item (square).
                       ),
                       itemCount: filteredAndSortedPieces.length,
                       itemBuilder: (context, index) {
@@ -428,26 +503,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           piece: piece,
                           isSelected: isSelected,
                           onTap: () async {
+                            // Check if Shift key is pressed for multi-selection.
                             final isShiftPressed = _pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
                                 _pressedKeys.contains(LogicalKeyboardKey.shiftRight);
 
                             if (isShiftPressed) {
                               if (!_isMultiSelectMode) {
-                                _toggleMultiSelectMode();
+                                _toggleMultiSelectMode(); // Enter multi-select mode if not already in it.
                               }
-                              _onPieceSelected(piece);
+                              _onPieceSelected(piece); // Select/deselect the piece.
                             } else if (_isMultiSelectMode) {
-                              _onPieceSelected(piece);
+                              _onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
                             } else {
+                              // Navigate to PieceDetailScreen in single-selection mode.
                               await Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => PieceDetailScreen(musicPiece: piece),
                                 ),
                               );
-                              await _loadMusicPieces(); // Reload data after returning from detail screen
+                              await _loadMusicPieces(); // Reload data after returning from detail screen.
                             }
                           },
                           onLongPress: () {
+                            // Enter multi-select mode on long press and select the piece.
                             if (!_isMultiSelectMode) {
                               _toggleMultiSelectMode();
                             }
@@ -463,16 +541,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ],
       ),
+      // Display multi-select bottom app bar if in multi-select mode.
       bottomNavigationBar: _isMultiSelectMode ? _buildMultiSelectBottomAppBar() : null,
+      // Floating action button for adding new music pieces.
       floatingActionButton: _isMultiSelectMode
-          ? null
+          ? null // Hide FAB in multi-select mode.
           : FloatingActionButton(
               onPressed: () async {
+                // Navigate to AddEditPieceScreen to add a new piece.
                 final result = await Navigator.of(context).push<bool?>(
                   MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: _selectedGroupId)),
                 );
                 if (result == true) {
-                  // Reload data if a piece was added/edited
+                  // Reload data if a piece was successfully added/edited.
                   await _loadGroups();
                   await _loadMusicPieces();
                 }
@@ -482,9 +563,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
     ));
   }
 
+  /// Builds the default AppBar for the LibraryScreen.
+  /// Includes a search bar, filter button, sort button, and settings button.
   AppBar _buildDefaultAppBar() {
     return AppBar(
       title: TextField(
+        // Search input field for filtering music pieces.
         decoration: InputDecoration(
           hintText: 'Search music pieces...',
           hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -501,10 +585,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
           setState(() {
             _searchQuery = value;
           });
-          _loadMusicPieces(); // Trigger search on every change
+          _loadMusicPieces(); // Trigger search on every change.
         },
       ),
       actions: [
+        // Filter button to open the filter options dialog.
         IconButton(
           icon: const Icon(Icons.filter_list),
           onPressed: () {
@@ -516,11 +601,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Text field for filtering by title.
                       TextFormField(
                         decoration: const InputDecoration(labelText: 'Title'),
                         initialValue: _filterOptions['title'],
                         onChanged: (value) => _filterOptions['title'] = value,
                       ),
+                      // Button to open tag group filter dialog.
                       ElevatedButton(
                         onPressed: () async {
                           final availableTags = await _repository.getAllUniqueTagGroups();
@@ -541,6 +628,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         child: const Text('Select Ordered Tags'),
                       ),
                       
+                      // Dropdown for practice tracking filter.
                       DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Practice Tracking'),
                         value: _filterOptions['practiceTracking'],
@@ -555,6 +643,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           });
                         },
                       ),
+                      // Dropdown for practice duration filter.
                       DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Practice Duration'),
                         value: _filterOptions['practiceDuration'],
@@ -574,6 +663,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ),
                 actions: [
+                  // Button to apply filters.
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
@@ -581,6 +671,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     },
                     child: const Text('Apply Filter'),
                   ),
+                  // Button to clear all filters.
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -599,6 +690,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           },
         ),
         
+        // Sort button to open the sort options dialog.
         IconButton(
           icon: const Icon(Icons.swap_vert),
           onPressed: () {
@@ -609,6 +701,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Option for alphabetical sorting.
                     ListTile(
                       title: const Text('Alphabetical'),
                       trailing: _sortOption.startsWith('alphabetical') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
@@ -621,6 +714,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         Navigator.pop(context);
                       },
                     ),
+                    // Option for sorting by last practiced date.
                     ListTile(
                       title: const Text('Last Practiced'),
                       trailing: _sortOption.startsWith('last_practiced') ? (_sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
@@ -640,12 +734,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           },
         ),
         
+        // Settings button to navigate to the SettingsScreen.
         IconButton(
-          icon: const Icon(Icons.settings), // Settings button
+          icon: const Icon(Icons.settings),
           onPressed: () async {
+            // Navigate to SettingsScreen and wait for result.
             final bool? changesMade = await Navigator.of(context).push<bool?>(
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
             );
+            // If changes were made in settings, reload data and settings.
             if (changesMade == true) {
               await _loadGroups();
               await _loadMusicPieces();
@@ -658,19 +755,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  /// Builds the AppBar for multi-selection mode.
+  ///
+  /// Displays the number of selected items and provides a close button
+  /// to exit multi-selection mode, and a select all/deselect all button.
   AppBar _buildMultiSelectAppBar() {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.close),
-        onPressed: _toggleMultiSelectMode,
+        onPressed: _toggleMultiSelectMode, // Exit multi-select mode when close button is pressed.
       ),
-      title: Text('${_selectedPieceIds.length} selected'),
+      title: Text('${_selectedPieceIds.length} selected'), // Display the count of currently selected music pieces.
       actions: [
         IconButton(
           icon: const Icon(Icons.select_all),
           onPressed: () {
             setState(() {
               final allPieceIds = _musicPieces.map((p) => p.id).toSet();
+              // If all pieces are already selected, clear the selection; otherwise, select all pieces.
               if (_selectedPieceIds.length == allPieceIds.length) {
                 _selectedPieceIds.clear();
               } else {
@@ -683,26 +785,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  /// Builds the BottomAppBar for multi-selection mode.
+  ///
+  /// Provides options to delete or modify groups of selected music pieces.
   Widget _buildMultiSelectBottomAppBar() {
     return BottomAppBar(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          // Button to delete selected music pieces.
           TextButton.icon(
             icon: const Icon(Icons.delete),
             label: const Text('Delete'),
-            onPressed: _selectedPieceIds.isEmpty ? null : _deleteSelectedPieces,
+            onPressed: _selectedPieceIds.isEmpty ? null : _deleteSelectedPieces, // Disabled if no pieces are selected.
           ),
+          // Button to modify group membership of selected music pieces.
           TextButton.icon(
             icon: const Icon(Icons.group_work),
             label: const Text('Modify Group'),
-            onPressed: _selectedPieceIds.isEmpty ? null : _modifyGroupOfSelectedPieces,
+            onPressed: _selectedPieceIds.isEmpty ? null : _modifyGroupOfSelectedPieces, // Disabled if no pieces are selected.
           ),
         ],
       ),
     );
   }
 
+  /// Deletes all currently selected music pieces after user confirmation.
   Future<void> _deleteSelectedPieces() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -718,9 +826,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     if (confirmed == true) {
       try {
-        await _repository.deleteMusicPieces(_selectedPieceIds.toList());
-        _toggleMultiSelectMode();
-        _loadMusicPieces();
+        await _repository.deleteMusicPieces(_selectedPieceIds.toList()); // Delete the selected music pieces from the database.
+        _toggleMultiSelectMode(); // Exit multi-select mode after deletion.
+        _loadMusicPieces(); // Reload music pieces to update the UI.
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting pieces: $e')),

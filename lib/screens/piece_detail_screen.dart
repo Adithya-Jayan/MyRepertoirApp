@@ -43,14 +43,18 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
     }
   }
 
+  /// Logs a practice session for the current music piece.
+  ///
+  /// Updates the `lastPracticeTime` to the current time and increments the
+  /// `practiceCount`. The updated music piece is then persisted to the database.
   Future<void> _logPractice() async {
     setState(() {
       _musicPiece = _musicPiece.copyWith(
-        lastPracticeTime: DateTime.now(),
-        practiceCount: _musicPiece.practiceCount + 1,
+        lastPracticeTime: DateTime.now(), // Set last practice time to now.
+        practiceCount: _musicPiece.practiceCount + 1, // Increment practice count.
       );
     });
-    await _repository.updateMusicPiece(_musicPiece);
+    await _repository.updateMusicPiece(_musicPiece); // Persist changes to the database.
   }
 
   @override

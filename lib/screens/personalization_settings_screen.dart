@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
 
+/// A screen for managing personalization settings of the application.
+///
+/// This includes options for theme mode (system, light, dark) and the number
+/// of columns to display in the music piece gallery.
 class PersonalizationSettingsScreen extends StatefulWidget {
   const PersonalizationSettingsScreen({super.key});
 
@@ -21,9 +25,11 @@ class _PersonalizationSettingsScreenState
     _loadSettings();
   }
 
+  /// Loads the saved gallery column setting from [SharedPreferences].
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      // Retrieve the saved column count, defaulting to 1 if not found.
       _galleryColumns = (prefs.getInt('galleryColumns') ?? 1).toDouble();
     });
   }

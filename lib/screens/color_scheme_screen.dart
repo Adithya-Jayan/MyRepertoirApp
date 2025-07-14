@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import '../utils/theme_notifier.dart';
 import 'library_screen.dart';
 
+/// A screen for selecting the application's color scheme (theme mode).
+///
+/// This screen is part of the initial setup process and allows users to choose
+/// between System Default, Light, or Dark themes.
 class ColorSchemeScreen extends StatefulWidget {
   const ColorSchemeScreen({super.key});
 
@@ -11,11 +15,16 @@ class ColorSchemeScreen extends StatefulWidget {
   State<ColorSchemeScreen> createState() => _ColorSchemeScreenState();
 }
 
+/// The state class for [ColorSchemeScreen].
+/// Manages the selected theme mode and applies it to the application.
 class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
-  String _selectedTheme = 'System';
+  String _selectedTheme = 'System'; // Stores the currently selected theme option (System, Light, Dark).
 
+  /// Sets the application's theme mode based on the user's selection.
+  ///
+  /// Updates the [ThemeNotifier] and the local state to reflect the new theme.
   void _setTheme(String theme) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+    final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false); // Get the ThemeNotifier instance.
     ThemeMode themeMode;
     switch (theme) {
       case 'Light':
@@ -27,9 +36,9 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
       default:
         themeMode = ThemeMode.system;
     }
-    themeNotifier.setTheme(themeMode);
+    themeNotifier.setTheme(themeMode); // Apply the selected theme mode.
     setState(() {
-      _selectedTheme = theme;
+      _selectedTheme = theme; // Update the local state to reflect the selected theme.
     });
   }
 

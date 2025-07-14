@@ -4,6 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import '../utils/theme_notifier.dart';
 
+/// A screen for managing general application settings.
+///
+/// This includes options for selecting the application's storage folder
+/// and choosing the overall app theme (light, dark, or system default).
 class GeneralSettingsScreen extends StatefulWidget {
   const GeneralSettingsScreen({super.key});
 
@@ -11,14 +15,16 @@ class GeneralSettingsScreen extends StatefulWidget {
   State<GeneralSettingsScreen> createState() => _GeneralSettingsScreenState();
 }
 
+/// The state class for [GeneralSettingsScreen].
+/// Manages the UI and logic for general application settings.
 class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
-  String? _currentStoragePath;
-  ThemeMode? _selectedThemeMode;
+  String? _currentStoragePath; // Stores the currently selected application storage path.
+  ThemeMode? _selectedThemeMode; // Stores the currently selected theme mode.
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadSettings(); // Load initial settings when the screen initializes.
   }
 
   Future<void> _loadSettings() async {
@@ -30,16 +36,20 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     });
   }
 
+  /// Opens a directory picker for the user to select a new storage folder.
+  ///
+  /// If a directory is selected, its path is saved to [SharedPreferences]
+  /// and the UI is updated to reflect the new path.
   Future<void> _selectStorageFolder() async {
-    final result = await FilePicker.platform.getDirectoryPath();
+    final result = await FilePicker.platform.getDirectoryPath(); // Open the directory picker.
     if (result != null) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('appStoragePath', result);
+      await prefs.setString('appStoragePath', result); // Save the newly selected storage path.
       setState(() {
-        _currentStoragePath = result;
+        _currentStoragePath = result; // Update the state to display the new path.
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Storage path updated.')),
+        const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
       );
     }
   }

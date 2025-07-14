@@ -7,6 +7,10 @@ import 'package:repertoire/screens/backup_restore_screen.dart';
 
 import 'package:repertoire/screens/personalization_settings_screen.dart';
 
+/// A screen that displays various settings options for the application.
+///
+/// This screen provides navigation to different sub-settings screens like
+/// Group Management, Personalization, Backup & Restore, About, and Help.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -14,23 +18,27 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
+/// The state class for [SettingsScreen].
+/// Builds the UI for the settings menu and handles navigation to sub-settings screens.
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('Settings'), // Title of the settings screen.
       ),
       body: ListView(
         children: [
           ListTile(
-            leading: const Icon(Icons.folder_open),
-            title: const Text('Groups'),
+            leading: const Icon(Icons.folder_open), // Icon for the Groups setting.
+            title: const Text('Groups'), // Title for the Groups setting.
             onTap: () async {
+              // Navigate to GroupManagementScreen and wait for any changes.
               final bool? changesMade = await Navigator.push<bool?>(
                 context,
                 MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
               );
+              // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
               if (changesMade == true) {
                 print('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
                 if (mounted) {
@@ -40,13 +48,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.palette),
-            title: const Text('Personalization'),
+            leading: const Icon(Icons.palette), // Icon for the Personalization setting.
+            title: const Text('Personalization'), // Title for the Personalization setting.
             onTap: () async {
+              // Navigate to PersonalizationSettingsScreen and wait for any changes.
               final bool? changesMade = await Navigator.push<bool?>(
                 context,
                 MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
               );
+              // If changes were made, pop this screen with true.
               if (changesMade == true) {
                 if (mounted) {
                   Navigator.of(context).pop(true);
@@ -56,13 +66,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           
           ListTile(
-            leading: const Icon(Icons.save),
-            title: const Text('Backup & Restore'),
+            leading: const Icon(Icons.save), // Icon for the Backup & Restore setting.
+            title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
             onTap: () async {
+              // Navigate to BackupRestoreScreen and wait for any changes.
               final bool? changesMade = await Navigator.push<bool?>(
                 context,
                 MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
               );
+              // If changes were made, pop this screen with true.
               if (changesMade == true) {
                 if (mounted) {
                   Navigator.of(context).pop(true);
@@ -71,9 +83,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About'),
+            leading: const Icon(Icons.info), // Icon for the About setting.
+            title: const Text('About'), // Title for the About setting.
             onTap: () {
+              // Navigate to AboutScreen.
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AboutScreen()),
@@ -81,9 +94,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.help),
-            title: const Text('Help'),
+            leading: const Icon(Icons.help), // Icon for the Help setting.
+            title: const Text('Help'), // Title for the Help setting.
             onTap: () {
+              // Navigate to HelpScreen.
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const HelpScreen()),

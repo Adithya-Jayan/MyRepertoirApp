@@ -45,8 +45,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   void initState() {
     super.initState();
-    
-    // Always create a deep copy to avoid reference issues with the parent screen
+    // Initialize _musicPiece. If editing an existing piece, create a deep copy
+    // to avoid modifying the original object directly. Otherwise, create a new empty MusicPiece.
     _musicPiece = widget.musicPiece != null
         ? widget.musicPiece!.copyWith(
             mediaItems: widget.musicPiece!.mediaItems.map((item) => 
@@ -75,15 +75,17 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             tagGroups: []
           );
 
+    // Initialize _selectedGroupIds with the music piece's existing group IDs.
     _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
+    // If adding a new piece and a selectedGroupId is provided, add it to the selected groups.
     if (widget.musicPiece == null && widget.selectedGroupId != null) {
       _selectedGroupIds.add(widget.selectedGroupId!);
     }
     
-    _loadGroups();
-    _loadTagGroupNames();
+    _loadGroups(); // Load available groups for selection.
+    _loadTagGroupNames(); // Load existing tag group names for autocomplete suggestions.
 
-    // Initialize controllers for existing tag groups
+    // Initialize TextEditingControllers for each existing tag group's name field.
     for (var tagGroup in _musicPiece.tagGroups) {
       _tagInputControllers[tagGroup.id] = TextEditingController();
     }
@@ -91,30 +93,40 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   @override
   void dispose() {
+    // Dispose all TextEditingControllers to prevent memory leaks.
     _tagInputControllers.forEach((key, value) => value.dispose());
     super.dispose();
   }
 
+  /// Loads all unique tag group names from the repository.
+  ///
+  /// This is used to provide suggestions for tag group names in the Autocomplete widget.
   Future<void> _loadTagGroupNames() async {
-    final allUniqueTags = await _repository.getAllUniqueTagGroups(); // This method name needs to be updated to getAllUniqueTagGroups
+    final allUniqueTags = await _repository.getAllUniqueTagGroups(); // Fetch all unique tag groups from the repository.
     setState(() {
-      _allTagGroupNames = allUniqueTags.keys.toList()..sort();
+      _allTagGroupNames = allUniqueTags.keys.toList()..sort(); // Extract tag group names and sort them alphabetically.
     });
   }
 
+  /// Retrieves all tags associated with a specific tag group name.
+  ///
+  /// This is used to provide suggestions for tags within a given tag group.
   Future<List<String>> _getAllTagsForTagGroup(String tagGroupName) async {
-    final allUniqueTags = await _repository.getAllUniqueTagGroups();
-    return allUniqueTags[tagGroupName]?.toList() ?? [];
+    final allUniqueTags = await _repository.getAllUniqueTagGroups(); // Fetch all unique tag groups.
+    return allUniqueTags[tagGroupName]?.toList() ?? []; // Return tags for the specified group, or an empty list if not found.
   }
 
+  /// Loads available groups from the repository.
+  ///
+  /// Excludes the default group from the list of available groups for selection.
   Future<void> _loadGroups() async {
     try {
-      final groups = await _repository.getGroups();
+      final groups = await _repository.getGroups(); // Fetch all groups from the repository.
       setState(() {
-        _availableGroups = groups.where((group) => !group.isDefault).toList(); // Exclude default group from selection
+        _availableGroups = groups.where((group) => !group.isDefault).toList(); // Filter out the default group.
       });
     } catch (e) {
-      // Handle error loading groups
+      // Log or display an error if groups fail to load.
       print('Error loading groups: $e');
     }
   }
@@ -153,35 +165,45 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     }
   }
 
+  /// Adds a new media item to the music piece.
+  ///
+  /// For media links and markdown, it directly adds an empty media item.
+  /// For other media types (image, PDF, audio), it triggers the file picker.
   void _addMediaItem(MediaType type) {
     if (type == MediaType.mediaLink || type == MediaType.markdown) {
       setState(() {
         _musicPiece.mediaItems.add(MediaItem(
-          id: const Uuid().v4(),
+          id: const Uuid().v4(), // Generate a unique ID for the new media item.
           type: type,
-          pathOrUrl: '',
+          pathOrUrl: '', // Initialize with an empty path/URL.
         ));
       });
     } else {
-      _pickFile(type);
+      _pickFile(type); // Open file picker for other media types.
     }
   }
 
+  /// Adds a new empty [TagGroup] to the current music piece.
+  ///
+  /// A new [TextEditingController] is also created for the new tag group's name field.
   void _addTagGroup() {
     setState(() {
-      final newTagGroup = TagGroup(id: const Uuid().v4(), name: '', tags: []);
-      _musicPiece.tagGroups.add(newTagGroup);
-      _tagInputControllers[newTagGroup.id] = TextEditingController();
+      final newTagGroup = TagGroup(id: const Uuid().v4(), name: '', tags: []); // Create a new TagGroup with a unique ID.
+      _musicPiece.tagGroups.add(newTagGroup); // Add the new tag group to the music piece.
+      _tagInputControllers[newTagGroup.id] = TextEditingController(); // Create a new TextEditingController for the new tag group.
     });
   }
 
+  /// Updates an existing [TagGroup] within the [_musicPiece]'s list of tag groups.
+  ///
+  /// This method ensures that the UI reflects the changes made to a tag group.
   void _updateTagGroupInMusicPiece(TagGroup oldTagGroup, TagGroup newTagGroup) {
-    final List<TagGroup> updatedTagGroups = List.from(_musicPiece.tagGroups);
-    final int index = updatedTagGroups.indexWhere((element) => element.id == oldTagGroup.id);
+    final List<TagGroup> updatedTagGroups = List.from(_musicPiece.tagGroups); // Create a mutable copy of the tag groups list.
+    final int index = updatedTagGroups.indexWhere((element) => element.id == oldTagGroup.id); // Find the index of the old tag group.
     if (index != -1) {
-      updatedTagGroups[index] = newTagGroup;
+      updatedTagGroups[index] = newTagGroup; // Replace the old tag group with the new one.
       setState(() {
-        _musicPiece = _musicPiece.copyWith(tagGroups: updatedTagGroups);
+        _musicPiece = _musicPiece.copyWith(tagGroups: updatedTagGroups); // Update the music piece with the modified tag groups list.
       });
     }
   }
@@ -190,22 +212,22 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
+        title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'), // Dynamically set app bar title based on whether adding or editing.
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: const Icon(Icons.save), // Save button.
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
-                _formKey.currentState!.save();
-                _musicPiece.groupIds = _selectedGroupIds.toList();
+                _formKey.currentState!.save(); // Save the current state of the form fields.
+                _musicPiece.groupIds = _selectedGroupIds.toList(); // Update the music piece's group IDs from selected groups.
 
                 if (widget.musicPiece == null) {
-                  await _repository.insertMusicPiece(_musicPiece);
+                  await _repository.insertMusicPiece(_musicPiece); // Insert new music piece if adding.
                 } else {
-                  await _repository.updateMusicPiece(_musicPiece);
+                  await _repository.updateMusicPiece(_musicPiece); // Update existing music piece if editing.
                 }
 
-                Navigator.of(context).pop(true); // Return true to indicate success
+                Navigator.of(context).pop(true); // Return true to indicate success and pop the screen.
               }
             },
           ),
@@ -214,19 +236,19 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
+          key: _formKey, // Assign the form key for validation and saving.
           child: ListView(
             children: [
               TextFormField(
                 initialValue: _musicPiece.title,
                 decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
-                onSaved: (value) => _musicPiece.title = value!,
+                validator: (value) => value!.isEmpty ? 'Please enter a title' : null, // Validator for title field.
+                onSaved: (value) => _musicPiece.title = value!, // Save title to music piece object.
               ),
               TextFormField(
                 initialValue: _musicPiece.artistComposer,
                 decoration: const InputDecoration(labelText: 'Artist/Composer'),
-                onSaved: (value) => _musicPiece.artistComposer = value!,
+                onSaved: (value) => _musicPiece.artistComposer = value!, // Save artist/composer to music piece object.
               ),
               // Add other core attributes here
               const SizedBox(height: 20),
@@ -241,9 +263,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       onChanged: (bool? value) {
                         setState(() {
                           if (value == true) {
-                            _selectedGroupIds.add(group.id);
+                            _selectedGroupIds.add(group.id); // Add group to selected if checked.
                           } else {
-                            _selectedGroupIds.remove(group.id);
+                            _selectedGroupIds.remove(group.id); // Remove group from selected if unchecked.
                           }
                         });
                       },
@@ -260,15 +282,15 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 buildDefaultDragHandles: false,
                 itemBuilder: (context, index) {
                   final tagGroup = _musicPiece.tagGroups[index];
-                  return _buildTagGroupSection(tagGroup, index);
+                  return _buildTagGroupSection(tagGroup, index); // Build UI for each tag group.
                 },
                 onReorder: (oldIndex, newIndex) {
                   setState(() {
                     if (newIndex > oldIndex) {
                       newIndex -= 1;
                     }
-                    final tagGroup = _musicPiece.tagGroups.removeAt(oldIndex);
-                    _musicPiece.tagGroups.insert(newIndex, tagGroup);
+                    final tagGroup = _musicPiece.tagGroups.removeAt(oldIndex); // Remove tag group from old position.
+                    _musicPiece.tagGroups.insert(newIndex, tagGroup); // Insert tag group at new position.
                   });
                 },
               ),
@@ -281,15 +303,15 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 buildDefaultDragHandles: false,
                 itemBuilder: (context, index) {
                   final item = _musicPiece.mediaItems[index];
-                  return _buildMediaSection(item, index);
+                  return _buildMediaSection(item, index); // Build UI for each media item.
                 },
                 onReorder: (oldIndex, newIndex) {
                   setState(() {
                     if (newIndex > oldIndex) {
                       newIndex -= 1;
                     }
-                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                    _musicPiece.mediaItems.insert(newIndex, item);
+                    final item = _musicPiece.mediaItems.removeAt(oldIndex); // Remove media item from old position.
+                    _musicPiece.mediaItems.insert(newIndex, item); // Insert media item at new position.
                   });
                 },
               ),
@@ -304,44 +326,46 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           SpeedDialChild(
             child: const Icon(Icons.text_fields),
             label: 'Markdown Text',
-            onTap: () => _addMediaItem(MediaType.markdown),
+            onTap: () => _addMediaItem(MediaType.markdown), // Add markdown media item.
           ),
           SpeedDialChild(
             child: const Icon(Icons.picture_as_pdf),
             label: 'PDF Sheet Music',
-            onTap: () => _addMediaItem(MediaType.pdf),
+            onTap: () => _addMediaItem(MediaType.pdf), // Add PDF media item.
           ),
           SpeedDialChild(
             child: const Icon(Icons.image),
             label: 'Image',
-            onTap: () => _addMediaItem(MediaType.image),
+            onTap: () => _addMediaItem(MediaType.image), // Add image media item.
           ),
           SpeedDialChild(
             child: const Icon(Icons.audiotrack),
             label: 'Audio Recording',
-            onTap: () => _addMediaItem(MediaType.audio),
+            onTap: () => _addMediaItem(MediaType.audio), // Add audio media item.
           ),
           SpeedDialChild(
             child: const Icon(Icons.video_library),
             label: 'Media Link',
-            onTap: () => _addMediaItem(MediaType.mediaLink),
+            onTap: () => _addMediaItem(MediaType.mediaLink), // Add media link item.
           ),
           SpeedDialChild(
             child: const Icon(Icons.label),
             label: 'Add Tag Group',
-            onTap: _addTagGroup,
+            onTap: _addTagGroup, // Add new tag group.
           ),
         ],
       ),
     );
   }
 
+  /// Builds a UI section for a single [TagGroup], allowing editing of its name, color, and tags.
   Widget _buildTagGroupSection(TagGroup tagGroup, int index) {
+    // Ensure a TextEditingController exists for this tag group's name.
     _tagInputControllers.putIfAbsent(tagGroup.id, () => TextEditingController());
     _tagInputControllers[tagGroup.id]!.text = tagGroup.name;
 
     return Card(
-      key: ValueKey(tagGroup.id),
+      key: ValueKey(tagGroup.id), // Unique key for ReorderableListView.
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -361,11 +385,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                             if (textEditingValue.text == '') {
                               return const Iterable<String>.empty();
                             }
+                            // Provide tag group name suggestions based on user input.
                             return _allTagGroupNames.where((String option) {
                               return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                             });
                           },
                           onSelected: (String selection) {
+                            // Update the tag group name when a suggestion is selected.
                             _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(name: selection));
                           },
                           fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
@@ -374,9 +400,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                               focusNode: focusNode,
                               decoration: const InputDecoration(labelText: 'Tag Group Name'),
                               onChanged: (value) {
-                                tagGroup.name = value;
+                                tagGroup.name = value; // Update the tag group name as text changes.
                               },
                               onFieldSubmitted: (value) {
+                                // Add new tag group name to suggestions if it's unique.
                                 if (value.isNotEmpty && !_allTagGroupNames.contains(value)) {
                                   _allTagGroupNames.add(value);
                                   _allTagGroupNames.sort();
@@ -389,11 +416,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete), // Button to delete the tag group.
                         onPressed: () {
                           setState(() {
-                            _musicPiece.tagGroups.remove(tagGroup);
-                            _tagInputControllers[tagGroup.id]?.dispose();
+                            _musicPiece.tagGroups.remove(tagGroup); // Remove the tag group from the music piece.
+                            _tagInputControllers[tagGroup.id]?.dispose(); // Dispose its TextEditingController.
                             _tagInputControllers.remove(tagGroup.id);
                           });
                         },
@@ -406,9 +433,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       const Text('Color:'),
                       const SizedBox(width: 8.0),
                       DropdownButton<int?>(
-                        value: tagGroup.color, // Use tagGroup.color directly, can be null
+                        value: tagGroup.color, // Current color of the tag group.
                         onChanged: (int? newColor) {
-                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor));
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(color: newColor)); // Update tag group color.
                         },
                         items: _colorOptions.map((option) {
                           return DropdownMenuItem<int?>(
@@ -419,7 +446,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                                   Container(
                                     width: 20,
                                     height: 20,
-                                    color: Color(option['value'] as int),
+                                    color: Color(option['value'] as int), // Display color swatch.
                                   ),
                                 if (option['value'] != null) const SizedBox(width: 8),
                                 Text(option['name'] as String),
@@ -437,8 +464,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       return Chip(
                         label: Text(tag),
                         onDeleted: () {
-                          final updatedTags = List<String>.from(tagGroup.tags).where((t) => t != tag).toList();
-                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                          final updatedTags = List<String>.from(tagGroup.tags).where((t) => t != tag).toList(); // Remove tag from the list.
+                          _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags)); // Update tag group with removed tag.
                         },
                       );
                     }).toList(),
@@ -448,6 +475,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       if (textEditingValue.text == '') {
                         return const Iterable<String>.empty();
                       }
+                      // Provide tag suggestions based on the selected tag group.
                       return _getAllTagsForTagGroup(tagGroup.name).then((allTags) {
                         return allTags.where((String option) {
                           return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
@@ -456,8 +484,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     },
                     onSelected: (String selection) {
                       if (!tagGroup.tags.contains(selection)) {
-                        final updatedTags = List<String>.from(tagGroup.tags)..add(selection);
-                        _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                        final updatedTags = List<String>.from(tagGroup.tags)..add(selection); // Add selected tag to the list.
+                        _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags)); // Update tag group with new tag.
                       }
                     },
                     fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
@@ -467,11 +495,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         decoration: const InputDecoration(labelText: 'Add new tag'),
                         onFieldSubmitted: (value) {
                           if (value.isNotEmpty) {
-                            final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                            final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
-                            _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                            final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(); // Split input by comma to add multiple tags.
+                            final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd); // Add new tags to the list.
+                            _updateTagGroupInMusicPiece(tagGroup, tagGroup.copyWith(tags: updatedTags)); // Update tag group with new tags.
                           }
-                          textEditingController.clear(); // Clear this specific controller
+                          textEditingController.clear(); // Clear the text field after submission.
                           onFieldSubmitted();
                         },
                       );
@@ -484,7 +512,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               index: index,
               child: const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.drag_handle),
+                child: Icon(Icons.drag_handle), // Drag handle for reordering.
               ),
             ),
           ],

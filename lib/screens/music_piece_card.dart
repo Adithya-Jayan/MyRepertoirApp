@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/utils/color_utils.dart';
 import '../models/music_piece.dart';
 
+/// A widget that displays a single music piece as a card in a grid or list.
+///
+/// It shows the title, artist/composer, tags, and practice information.
+/// It also supports selection state and tap/long press interactions.
 class MusicPieceCard extends StatelessWidget {
-  final MusicPiece piece;
-  final bool isSelected;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
+  final MusicPiece piece; // The music piece data to display.
+  final bool isSelected; // Whether the card is currently selected.
+  final VoidCallback? onTap; // Callback function when the card is tapped.
+  final VoidCallback? onLongPress; // Callback function when the card is long-pressed.
 
   const MusicPieceCard({
     super.key,
@@ -20,8 +24,8 @@ class MusicPieceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Brightness brightness = Theme.of(context).brightness;
-    final colorScheme = Theme.of(context).colorScheme;
+    final Brightness brightness = Theme.of(context).brightness; // Get current theme brightness.
+    final colorScheme = Theme.of(context).colorScheme; // Get current color scheme.
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
@@ -29,13 +33,13 @@ class MusicPieceCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
         side: isSelected
-            ? BorderSide(color: colorScheme.primary, width: 2)
+            ? BorderSide(color: colorScheme.primary, width: 2) // Highlight border if selected.
             : BorderSide.none,
       ),
-      color: isSelected ? colorScheme.primary.withOpacity(0.1) : null,
+      color: isSelected ? colorScheme.primary.withOpacity(0.1) : null, // Apply a subtle background color if selected.
       child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
+        onTap: onTap, // Handle tap events.
+        onLongPress: onLongPress, // Handle long press events.
         child: Stack(
           children: [
             if (piece.thumbnailPath != null)
@@ -43,7 +47,7 @@ class MusicPieceCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.file(
-                    File(piece.thumbnailPath!),
+                    File(piece.thumbnailPath!), // Display thumbnail image if available.
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -58,9 +62,9 @@ class MusicPieceCard extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         piece.title,
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge, // Apply large title style.
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis, // Handle overflow with ellipsis.
                       ),
                     ),
                     const SizedBox(height: 4.0),
@@ -68,7 +72,7 @@ class MusicPieceCard extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         piece.artistComposer,
-                        style: Theme.of(context).textTheme.titleSmall,
+                        style: Theme.of(context).textTheme.titleSmall, // Apply small title style.
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -83,7 +87,7 @@ class MusicPieceCard extends StatelessWidget {
                             final color = tg.color != null ? Color(tg.color!) : null;
                             return Chip(
                               label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag)),
-                              backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                              backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null, // Adjust chip color based on theme brightness.
                             );
                           })),
                       ],
@@ -93,7 +97,7 @@ class MusicPieceCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          'Last practiced: ${piece.lastPracticeTime!.toLocal().toString().split('.')[0]}',
+                          'Last practiced: ${piece.lastPracticeTime!.toLocal().toString().split('.')[0]}', // Display last practiced time.
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
@@ -101,7 +105,7 @@ class MusicPieceCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          'Practice count: ${piece.practiceCount}',
+                          'Practice count: ${piece.practiceCount}', // Display practice count.
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),

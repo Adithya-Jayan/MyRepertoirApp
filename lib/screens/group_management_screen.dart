@@ -19,40 +19,48 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _loadGroups();
+    _loadGroups(); // Load the list of groups when the screen initializes.
   }
 
+  /// Loads all groups from the database.
+  ///
+  /// This method fetches all groups, ensures a default group exists, sorts them,
+  /// and updates the UI. It also handles loading states and error reporting.
   Future<void> _loadGroups() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = true; // Set loading state to true.
     });
     try {
-      await _repository.ensureDefaultGroupExists();
-      final allGroups = await _repository.getGroups();
+      await _repository.ensureDefaultGroupExists(); // Ensure the default group is present.
+      final allGroups = await _repository.getGroups(); // Fetch all groups.
       allGroups.sort((a, b) {
         if (a.order != b.order) {
-          return a.order.compareTo(b.order);
+          return a.order.compareTo(b.order); // Sort by custom order.
         }
-        return a.name.compareTo(b.name);
+        return a.name.compareTo(b.name); // Then sort alphabetically by name.
       });
       setState(() {
-        _groups = allGroups.where((g) => !g.isDefault).toList();
+        _groups = allGroups.where((g) => !g.isDefault).toList(); // Filter out the default group for display.
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading groups: $e')),
+          SnackBar(content: Text('Error loading groups: $e')), // Show error message if loading fails.
         );
       }
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isLoading = false; // Set loading state to false after operation completes.
         });
       }
     }
   }
 
+  /// Prompts the user to add a new group.
+  ///
+  /// Opens an AlertDialog for the user to enter a new group name.
+  /// If a valid name is provided, a new group is created and added to the database.
   Future<void> _addGroup() async {
     String newGroupName = '';
     final bool? groupAdded = await showDialog<bool>(
@@ -96,6 +104,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     }
   }
 
+  /// Prompts the user to edit an existing group's name.
+  ///
+  /// Opens an AlertDialog with the current group name for editing.
+  /// If a new valid name is provided, the group is updated in the database.
   Future<void> _editGroup(Group group) async {
     String editedGroupName = group.name;
     final bool? groupEdited = await showDialog<bool>(
@@ -136,6 +148,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     }
   }
 
+  /// Prompts the user to confirm deletion of a group.
+  ///
+  /// If confirmed, the group is deleted from the database, and any music pieces
+  /// associated *only* with this group are moved to the "Default Group".
   Future<void> _deleteGroup(Group group) async {
     final confirmDelete = await showDialog<bool>(
       context: context,
@@ -164,6 +180,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     }
   }
 
+  /// Handles the reordering of groups in the list.
+  ///
+  /// Updates the order of groups in the local list and persists the new order
+  /// to the database. It also sets a flag to indicate that changes have been made.
   void _onReorder(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -172,28 +192,28 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     _groups.insert(newIndex, item);
 
     setState(() {
-      _isLoading = true;
+      _isLoading = true; // Set loading state while reordering is processed.
     });
 
     try {
       for (int i = 0; i < _groups.length; i++) {
-        _groups[i] = _groups[i].copyWith(order: i);
-        await _repository.updateGroup(_groups[i]);
+        _groups[i] = _groups[i].copyWith(order: i); // Update the order property of each group.
+        await _repository.updateGroup(_groups[i]); // Persist the updated group order to the database.
       }
       setState(() {
-        _hasChanges = true;
+        _hasChanges = true; // Set flag to indicate changes were made.
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving group order: $e')),
+          SnackBar(content: Text('Error saving group order: $e')), // Show error message if saving fails.
         );
       }
     }
     finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isLoading = false; // Reset loading state after operation completes.
         });
       }
     }

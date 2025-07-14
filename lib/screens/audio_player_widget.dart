@@ -5,10 +5,14 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'dart:math'; // Import for pow function
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// A widget that provides audio playback functionality with speed and pitch control.
+///
+/// It uses `just_audio` for audio playback and `audio_service` for background
+/// playback capabilities. It also saves and loads speed and pitch settings.
 class AudioPlayerWidget extends StatefulWidget {
-  final String audioPath;
-  final String title;
-  final String artist;
+  final String audioPath; // The local path to the audio file.
+  final String title; // The title of the audio track.
+  final String artist; // The artist of the audio track.
 
   const AudioPlayerWidget({
     super.key,
@@ -21,17 +25,19 @@ class AudioPlayerWidget extends StatefulWidget {
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
 }
 
+/// The state class for [AudioPlayerWidget].
+/// Manages the audio player, its state, and the speed/pitch controls.
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer _player;
-  double _speed = 1.0;
-  double _pitch = 0.0; // Represents pitch in half-step units, 0.0 is original pitch
+  late AudioPlayer _player; // The audio player instance.
+  double _speed = 1.0; // Current playback speed.
+  double _pitch = 0.0; // Current pitch in half-step units.
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
-    _loadSettings();
-    _initAudio();
+    _player = AudioPlayer(); // Initialize the audio player.
+    _loadSettings(); // Load saved speed and pitch settings.
+    _initAudio(); // Initialize the audio source.
   }
 
   Future<void> _loadSettings() async {
@@ -44,15 +50,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _player.setPitch(pow(2, _pitch / 12.0).toDouble());
   }
 
+  /// Saves the current speed and pitch settings to [SharedPreferences].
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble('audio_speed', _speed);
-    prefs.setDouble('audio_pitch', _pitch);
+    prefs.setDouble('audio_speed', _speed); // Save current playback speed.
+    prefs.setDouble('audio_pitch', _pitch); // Save current pitch setting.
   }
 
+  /// Initializes the audio player with the provided audio path.
+  ///
+  /// Sets the audio source and provides metadata for background playback.
   Future<void> _initAudio() async {
-    
-
     await _player.setAudioSource(
       AudioSource.uri(
         Uri.parse(widget.audioPath),
@@ -61,7 +69,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           album: "Music Repertoire",
           title: widget.title,
           artist: widget.artist,
-          artUri: Uri.parse('https://example.com/albumart.jpg'), // Placeholder
+          artUri: Uri.parse('https://example.com/albumart.jpg'), // Placeholder album art.
         ),
       ),
     );
