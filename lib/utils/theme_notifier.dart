@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 /// A [ChangeNotifier] that manages the application's theme mode.
 ///
 /// It allows setting and loading the theme preference (System, Light, Dark)

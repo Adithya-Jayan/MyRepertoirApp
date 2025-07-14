@@ -1,3 +1,8 @@
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import '../models/media_type.dart';
+
 /// Manages the storage of media files associated with music pieces.
 ///
 /// This class provides methods for getting application directories, creating
@@ -74,3 +79,4 @@ class MediaStorageManager {
         await pieceDir.delete(recursive: true); // Delete the directory and its contents recursively.
     }
   }
+}
