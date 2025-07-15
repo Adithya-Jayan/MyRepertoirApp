@@ -84,10 +84,12 @@ Future<void> main() async {
 /// It also manages the number of backup files, deleting older ones to
 /// maintain a specified count.
 Future<void> _triggerAutoBackup() async {
+  AppLogger.log('Checking auto-backup conditions.');
   // Obtain an instance of SharedPreferences to access user preferences.
   final prefs = await SharedPreferences.getInstance();
   // Check if auto-backup is enabled by the user (defaults to false if not set).
   final autoBackupEnabled = prefs.getBool('autoBackupEnabled') ?? false;
+  AppLogger.log('Auto-backup enabled: $autoBackupEnabled');
 
   if (autoBackupEnabled) {
     // Retrieve the timestamp of the last auto-backup (defaults to 0 if not set).
@@ -97,9 +99,19 @@ Future<void> _triggerAutoBackup() async {
     // Get the current time in milliseconds since epoch.
     final now = DateTime.now().millisecondsSinceEpoch;
 
+    AppLogger.log('Last backup timestamp: $lastBackupTimestamp');
+    AppLogger.log('Auto-backup frequency (days): $autoBackupFrequency');
+    AppLogger.log('Current time: $now');
+
     // Check if the time elapsed since the last backup exceeds the auto-backup frequency.
     // Frequency is converted from days to milliseconds.
-    if (now - lastBackupTimestamp > autoBackupFrequency * 24 * 60 * 60 * 1000) {
+    final requiredInterval = autoBackupFrequency * 24 * 60 * 60 * 1000;
+    final timeElapsed = now - lastBackupTimestamp;
+    AppLogger.log('Required interval (ms): $requiredInterval');
+    AppLogger.log('Time elapsed since last backup (ms): $timeElapsed');
+
+    if (timeElapsed > requiredInterval) {
+      AppLogger.log('Auto-backup condition met. Triggering backup.');
       // Initialize MusicPieceRepository to fetch music piece data.
       final MusicPieceRepository repository = MusicPieceRepository();
       // Retrieve all music pieces from the database.
@@ -126,6 +138,7 @@ Future<void> _triggerAutoBackup() async {
         await outputFile.writeAsBytes(utf8.encode(jsonString));
         // Update the last auto-backup timestamp in SharedPreferences.
         await prefs.setInt('lastAutoBackupTimestamp', now);
+        AppLogger.log('Updated lastAutoBackupTimestamp to: $now');
 
         // Retrieve the maximum number of auto-backup files to keep (defaults to 5).
         final autoBackupCount = prefs.getInt('autoBackupCount') ?? 5;
@@ -136,12 +149,20 @@ Future<void> _triggerAutoBackup() async {
 
         // If the number of backup files exceeds the allowed count, delete the oldest ones.
         if (files.length > autoBackupCount) {
+          AppLogger.log('Number of auto-backup files (${files.length}) exceeds limit ($autoBackupCount). Deleting oldest.');
           for (int i = 0; i < files.length - autoBackupCount; i++) {
+            AppLogger.log('Deleting old auto-backup file: ${files[i].path}');
             await files[i].delete();
           }
         }
+      } else {
+        AppLogger.log('Storage path is null. Auto-backup skipped.');
       }
+    } else {
+      AppLogger.log('Auto-backup condition not met. Time elapsed: $timeElapsed, Required: $requiredInterval');
     }
+  } else {
+    AppLogger.log('Auto-backup is disabled in settings.');
   }
 }
 
