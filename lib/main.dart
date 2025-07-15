@@ -30,6 +30,7 @@ import 'models/music_piece.dart';
 // For internationalization, specifically date and time formatting
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'utils/app_logger.dart';
 
 /// Main entry point of the application.
 /// Initializes Flutter, sets up platform-specific database factories,
@@ -37,6 +38,9 @@ import 'package:permission_handler/permission_handler.dart';
 Future<void> main() async {
   // Ensures that Flutter widgets are initialized before running the app.
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AppLogger.init(); // Initialize the logger
+  AppLogger.log('App started.');
 
   await _requestPermissions();
 
@@ -150,29 +154,29 @@ Future<void> _requestPermissions() async {
     var status = await Permission.manageExternalStorage.status;
     print("Current Manage External Storage status: $status");
     if (!status.isGranted) {
-      print("Requesting Manage External Storage permission...");
+      AppLogger.log("Requesting Manage External Storage permission...");
       status = await Permission.manageExternalStorage.request();
-      print("New Manage External Storage status after request: $status");
+      AppLogger.log("New Manage External Storage status after request: $status");
       if (!status.isGranted) {
-        print("Manage External Storage permission denied by user.");
+        AppLogger.log("Manage External Storage permission denied by user.");
         // You might want to show a dialog or navigate to app settings
       }
     } else {
-      print("Manage External Storage permission already granted.");
+      AppLogger.log("Manage External Storage permission already granted.");
     }
   } else if (Platform.isIOS) {
-    print("Platform is iOS.");
+    AppLogger.log("Platform is iOS.");
     var status = await Permission.photos.status;
-    print("Current Photos permission status: $status");
+    AppLogger.log("Current Photos permission status: $status");
     if (!status.isGranted) {
-      print("Requesting Photos permission...");
+      AppLogger.log("Requesting Photos permission...");
       status = await Permission.photos.request();
-      print("New Photos permission status after request: $status");
+      AppLogger.log("New Photos permission status after request: $status");
       if (!status.isGranted) {
-        print("Photos permission denied by user.");
+        AppLogger.log("Photos permission denied by user.");
       }
     } else {
-      print("Photos permission already granted.");
+      AppLogger.log("Photos permission already granted.");
     }
   }
 }

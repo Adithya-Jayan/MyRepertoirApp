@@ -4,6 +4,8 @@ import 'package:repertoire/screens/help_screen.dart';
 import 'package:repertoire/screens/general_settings_screen.dart';
 import 'package:repertoire/screens/group_management_screen.dart'; // New import
 import 'package:repertoire/screens/backup_restore_screen.dart';
+import 'package:repertoire/screens/advanced_settings_screen.dart';
+import 'package:repertoire/utils/app_logger.dart';
 
 import 'package:repertoire/screens/personalization_settings_screen.dart';
 
@@ -33,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.folder_open), // Icon for the Groups setting.
             title: const Text('Groups'), // Title for the Groups setting.
             onTap: () async {
+              AppLogger.log('Navigating to Group Management screen.');
               // Navigate to GroupManagementScreen and wait for any changes.
               final bool? changesMade = await Navigator.push<bool?>(
                 context,
@@ -40,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
               // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
               if (changesMade == true) {
-                print('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
+                AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
                 if (mounted) {
                   Navigator.of(context).pop(true);
                 }
@@ -51,6 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.palette), // Icon for the Personalization setting.
             title: const Text('Personalization'), // Title for the Personalization setting.
             onTap: () async {
+              AppLogger.log('Navigating to Personalization Settings screen.');
               // Navigate to PersonalizationSettingsScreen and wait for any changes.
               final bool? changesMade = await Navigator.push<bool?>(
                 context,
@@ -66,26 +70,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           
           ListTile(
-            leading: const Icon(Icons.save), // Icon for the Backup & Restore setting.
+            leading: const Icon(Icons.backup),
             title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
-            onTap: () async {
-              // Navigate to BackupRestoreScreen and wait for any changes.
-              final bool? changesMade = await Navigator.push<bool?>(
+            onTap: () {
+              AppLogger.log('Navigating to Backup & Restore screen.');
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
               );
-              // If changes were made, pop this screen with true.
-              if (changesMade == true) {
-                if (mounted) {
-                  Navigator.of(context).pop(true);
-                }
-              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings_applications),
+            title: const Text('Advanced Settings'),
+            onTap: () {
+              AppLogger.log('Navigating to Advanced Settings screen.');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.info), // Icon for the About setting.
             title: const Text('About'), // Title for the About setting.
             onTap: () {
+              AppLogger.log('Navigating to About screen.');
               // Navigate to AboutScreen.
               Navigator.push(
                 context,
@@ -97,6 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.help), // Icon for the Help setting.
             title: const Text('Help'), // Title for the Help setting.
             onTap: () {
+              AppLogger.log('Navigating to Help screen.');
               // Navigate to HelpScreen.
               Navigator.push(
                 context,

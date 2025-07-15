@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
+import '../utils/app_logger.dart';
 import '../utils/theme_notifier.dart';
 
 /// A screen for managing general application settings.
@@ -31,11 +32,14 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
+    AppLogger.log('Loading general settings.');
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _currentStoragePath = prefs.getString('appStoragePath');
+      AppLogger.log('Loaded appStoragePath: $_currentStoragePath');
       final themePreference = prefs.getString('appThemePreference') ?? 'System';
       _selectedThemeMode = _getThemeModeFromString(themePreference);
+      AppLogger.log('Loaded appThemePreference: $themePreference');
     });
   }
 
@@ -44,10 +48,13 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   /// If a directory is selected, its path is saved to [SharedPreferences]
   /// and the UI is updated to reflect the new path.
   Future<void> _selectStorageFolder() async {
+    AppLogger.log('Attempting to select storage folder.');
     final result = await FilePicker.platform.getDirectoryPath(); // Open the directory picker.
     if (result != null) {
+      AppLogger.log('Selected directory: $result');
       final testDir = Directory(p.join(result, '.test_writable'));
       try {
+        AppLogger.log('Testing writability of selected directory.');
         await testDir.create(recursive: true);
         await testDir.delete(recursive: true); // Clean up
         // If we reach here, the path is writable.
@@ -59,8 +66,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
         );
+        AppLogger.log('Storage path updated successfully to: $result');
       } catch (e) {
         // Path is not writable
+        AppLogger.log('Selected path is not writable: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
         );
@@ -74,7 +83,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Reverted to default app storage path: $defaultPath')),
         );
+        AppLogger.log('Reverted to default app storage path: $defaultPath');
       }
+    } else {
+      AppLogger.log('Storage folder selection cancelled.');
     }
   }
 
