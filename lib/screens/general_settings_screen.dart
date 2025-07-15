@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
 import '../utils/theme_notifier.dart';
 
 /// A screen for managing general application settings.
@@ -43,14 +46,35 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   Future<void> _selectStorageFolder() async {
     final result = await FilePicker.platform.getDirectoryPath(); // Open the directory picker.
     if (result != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('appStoragePath', result); // Save the newly selected storage path.
-      setState(() {
-        _currentStoragePath = result; // Update the state to display the new path.
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
-      );
+      final testDir = Directory(p.join(result, '.test_writable'));
+      try {
+        await testDir.create(recursive: true);
+        await testDir.delete(recursive: true); // Clean up
+        // If we reach here, the path is writable.
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('appStoragePath', result); // Save the newly selected storage path.
+        setState(() {
+          _currentStoragePath = result; // Update the state to display the new path.
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
+        );
+      } catch (e) {
+        // Path is not writable
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
+        );
+        // Revert to a default writable path
+        final defaultPath = (await getApplicationDocumentsDirectory()).path;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('appStoragePath', defaultPath);
+        setState(() {
+          _currentStoragePath = defaultPath;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reverted to default app storage path: $defaultPath')),
+        );
+      }
     }
   }
 

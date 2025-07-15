@@ -29,6 +29,7 @@ import 'database/music_piece_repository.dart';
 import 'models/music_piece.dart';
 // For internationalization, specifically date and time formatting
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Main entry point of the application.
 /// Initializes Flutter, sets up platform-specific database factories,
@@ -36,6 +37,9 @@ import 'package:intl/intl.dart';
 Future<void> main() async {
   // Ensures that Flutter widgets are initialized before running the app.
   WidgetsFlutterBinding.ensureInitialized();
+
+  await _requestPermissions();
+
 
   // Initialize sqflite for desktop platforms (Windows, Linux, macOS).
   // This allows the app to use SQLite databases on these platforms.
@@ -133,6 +137,42 @@ Future<void> _triggerAutoBackup() async {
           }
         }
       }
+    }
+  }
+}
+
+/// Requests necessary permissions for the application.
+/// Handles storage permissions for Android and iOS.
+Future<void> _requestPermissions() async {
+  print("Attempting to request permissions...");
+  if (Platform.isAndroid) {
+    print("Platform is Android.");
+    var status = await Permission.manageExternalStorage.status;
+    print("Current Manage External Storage status: $status");
+    if (!status.isGranted) {
+      print("Requesting Manage External Storage permission...");
+      status = await Permission.manageExternalStorage.request();
+      print("New Manage External Storage status after request: $status");
+      if (!status.isGranted) {
+        print("Manage External Storage permission denied by user.");
+        // You might want to show a dialog or navigate to app settings
+      }
+    } else {
+      print("Manage External Storage permission already granted.");
+    }
+  } else if (Platform.isIOS) {
+    print("Platform is iOS.");
+    var status = await Permission.photos.status;
+    print("Current Photos permission status: $status");
+    if (!status.isGranted) {
+      print("Requesting Photos permission...");
+      status = await Permission.photos.request();
+      print("New Photos permission status after request: $status");
+      if (!status.isGranted) {
+        print("Photos permission denied by user.");
+      }
+    } else {
+      print("Photos permission already granted.");
     }
   }
 }

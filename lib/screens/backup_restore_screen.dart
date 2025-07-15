@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/music_piece_repository.dart';
@@ -96,9 +97,12 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         await backupDirectory.create(recursive: true); // Create backup directory if it doesn't exist.
       }
 
+      // Create a temporary directory for the zip file
+      final tempDir = await getTemporaryDirectory();
+      final tempZipPath = p.join(tempDir.path, fileName);
+
       final encoder = ZipFileEncoder();
-      final zipPath = p.join(backupDirectory.path, fileName);
-      encoder.create(zipPath); // Create the zip file.
+      encoder.create(tempZipPath);
 
       // Add the JSON data as a file within the zip archive.
       final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
@@ -109,65 +113,66 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         // Add the entire media directory to the zip archive.
         encoder.addDirectory(mediaDir, includeDirName: false);
       }
-
       encoder.close(); // Close the zip encoder.
+
+      final zipBytes = await File(tempZipPath).readAsBytes(); // Read the complete zip file bytes
 
       if (manual) {
         String? outputFile;
         if (Platform.isAndroid || Platform.isIOS) {
-          // On mobile, we must pass the bytes to `saveFile`.
+          // On mobile, pass the bytes to `saveFile`. FilePicker handles the actual saving.
           outputFile = await FilePicker.platform.saveFile(
             fileName: fileName,
-            bytes: utf8.encode(jsonString),
+            bytes: zipBytes,
+            initialDirectory: backupDirectory.path, // Still try to set initial directory for mobile
           );
+          // If outputFile is not null, it means the user selected a location and FilePicker saved the bytes.
+          // No need to write again using dart:io.
+          if (outputFile != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Data backed up successfully!')) // Show success message for manual backup.
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Backup cancelled.')) // Show message if backup is cancelled.
+            );
+          }
         } else {
-          // Desktop logic with initial directory.
+          // Desktop logic: FilePicker returns a path, then we write the bytes to it.
           outputFile = await FilePicker.platform.saveFile(
             fileName: fileName,
             initialDirectory: backupDirectory.path,
             type: FileType.custom,
             allowedExtensions: ['zip'],
           );
-        }
-
-        if (outputFile != null) {
-          final encoder = ZipFileEncoder();
-          encoder.create(outputFile);
-          final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
-          encoder.addArchiveFile(jsonArchiveFile);
-
-          final mediaDir = Directory(p.join(storagePath, 'media'));
-          if (await mediaDir.exists()) {
-            encoder.addDirectory(mediaDir, includeDirName: false);
+          if (outputFile != null) {
+            // Ensure the directory exists before writing the file for desktop
+            final outputDirectory = Directory(p.dirname(outputFile));
+            if (!await outputDirectory.exists()) {
+              await outputDirectory.create(recursive: true);
+            }
+            await File(outputFile).writeAsBytes(zipBytes); // Write the zip bytes to the chosen location
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Data backed up successfully!')) // Show success message for manual backup.
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Backup cancelled.')) // Show message if backup is cancelled.
+            );
           }
-          encoder.close();
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Data backed up successfully!')) // Show success message for manual backup.
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Backup cancelled.')) // Show message if backup is cancelled.
-          );
         }
       } else {
         // Automatic backup logic
-        final encoder = ZipFileEncoder();
-        final zipPath = p.join(backupDirectory.path, fileName);
-        encoder.create(zipPath);
-        final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
-        encoder.addArchiveFile(jsonArchiveFile);
-
-        final mediaDir = Directory(p.join(storagePath, 'media'));
-        if (await mediaDir.exists()) {
-          encoder.addDirectory(mediaDir, includeDirName: false);
-        }
-        encoder.close();
+        final zipFile = File(p.join(backupDirectory.path, fileName));
+        await zipFile.writeAsBytes(zipBytes); // Write the zip bytes to the auto-backup location
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Autobackup successful!')) // Show success message for automatic backup.
         );
       }
+
+      // Clean up the temporary zip file
+      await File(tempZipPath).delete();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Backup failed: $e')) // Show error message if backup fails.
