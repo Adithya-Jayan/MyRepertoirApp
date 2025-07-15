@@ -47,7 +47,7 @@ class DatabaseHelper {
     // Open the database.
     final db = await openDatabase(
       path,
-      version: 2, // Current database version
+      version: 3, // Current database version
       onCreate: (db, version) async {
         await _createDB(db, version);
         // Insert dummy data only if the database is newly created
@@ -100,7 +100,8 @@ CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
   name TEXT,
   'order' INTEGER, -- 'order' is a SQL keyword, so it's quoted
-  isDefault INTEGER -- Stored as 0 for false, 1 for true
+  isDefault INTEGER, -- Stored as 0 for false, 1 for true
+  isHidden INTEGER DEFAULT 0 -- New column for hidden status, default to 0 (false)
 )
 ''');
   }
@@ -114,9 +115,11 @@ CREATE TABLE IF NOT EXISTS groups (
   /// Handles database schema upgrades.
   /// This method is called when the database version changes.
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Example upgrade: Add 'thumbnailPath' column if upgrading from version < 2.
     if (oldVersion < 2) {
       await db.execute("ALTER TABLE music_pieces ADD COLUMN thumbnailPath TEXT;");
+    }
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE groups ADD COLUMN isHidden INTEGER DEFAULT 0;");
     }
   }
 

@@ -227,15 +227,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
     });
     try {
       await _repository.ensureDefaultGroupExists(); // Ensure the 'Default Group' is present in the database.
-      final allGroups = await _repository.getGroups(); // Fetch all groups from the repository.
-      _groups = allGroups.where((g) => !g.isDefault).toList(); // Filter out the default group for display in the chips.
-      _groups.sort((a, b) {
+      final allDbGroups = await _repository.getGroups(); // Fetch all groups from the repository (only non-hidden by default).
+
+      // Create the "Ungrouped" group (not stored in DB, represents pieces with no group)
+      final ungroupedGroup = Group(
+        id: 'ungrouped_group',
+        name: 'Ungrouped',
+        order: -1, // A low order to ensure it's near the top, after "All"
+        isDefault: true, // Treat as default for filtering purposes
+        isHidden: false, // Always visible
+      );
+
+      // Combine user-defined groups with the special "Ungrouped" group
+      List<Group> combinedGroups = [ungroupedGroup];
+      combinedGroups.addAll(allDbGroups.where((g) => !g.isDefault)); // Add user-defined groups, excluding the old default
+
+      combinedGroups.sort((a, b) {
         if (a.order != b.order) {
           return a.order.compareTo(b.order); // Sort by custom order first.
         }
         return a.name.compareTo(b.name); // Then sort alphabetically by name.
       });
-      // If the previously selected group was deleted, reset the selection to 'All'.
+      _groups = combinedGroups;
+
+      // If the previously selected group was deleted or hidden, reset the selection to 'All'.
       if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
         _selectedGroupId = null;
       }
@@ -415,7 +430,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     key: const ValueKey('all_groups_chip'),
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ChoiceChip(
-                      label: Text('All (${_musicPieces.length})'), // Use _musicPieces.length for filtered count
+                      label: Text('All (${_allMusicPieces.length})'), // Use _allMusicPieces.length for total count
                       selected: _selectedGroupId == null,
                       onSelected: (selected) {
                         if (selected) {
@@ -426,9 +441,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                   ),
                   // Dynamically generated group chips.
-                  ..._groups.where((g) => !g.isDefault).map((group) {
+                  ..._groups.map((group) {
                     // Filter _allMusicPieces by current filter options AND group ID
-                    final pieceCount = _filterMusicPieces(_allMusicPieces.where((piece) => piece.groupIds.contains(group.id)).toList()).length;
+                    final pieceCount = _filterMusicPieces(_allMusicPieces.where((piece) {
+                      if (group.id == 'ungrouped_group') {
+                        return piece.groupIds.isEmpty; // Pieces with no group
+                      } else {
+                        return piece.groupIds.contains(group.id);
+                      }
+                    }).toList()).length;
                     return Padding(
                       key: ValueKey(group.id),
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -489,6 +510,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   final musicPiecesForPage = _allMusicPieces.where((piece) {
                     if (currentPageGroupId == null) {
                       return true; // Show all pieces for "All" group.
+                    } else if (currentPageGroupId == 'ungrouped_group') {
+                      return piece.groupIds.isEmpty; // Show pieces with no group
                     } else {
                       return piece.groupIds.contains(currentPageGroupId);
                     }

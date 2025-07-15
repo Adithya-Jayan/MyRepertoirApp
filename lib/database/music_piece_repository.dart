@@ -34,10 +34,13 @@ class MusicPieceRepository {
 
   /// Retrieves a list of [MusicPiece] objects from the database.
   /// Optionally filters by a [groupId] to get pieces belonging to a specific group.
+  /// If [groupId] is 'ungrouped_group', it returns pieces not associated with any group.
   Future<List<MusicPiece>> getMusicPieces({String? groupId}) async {
     final allPieces = await dbHelper.getMusicPieces();
-    if (groupId == null || groupId.isEmpty) {
+    if (groupId == null || groupId.isEmpty || groupId == 'all_group') {
       return allPieces;
+    } else if (groupId == 'ungrouped_group') {
+      return allPieces.where((piece) => piece.groupIds.isEmpty).toList();
     } else {
       return allPieces.where((piece) => piece.groupIds.contains(groupId)).toList();
     }
@@ -86,8 +89,14 @@ class MusicPieceRepository {
   }
 
   /// Retrieves a list of all [Group] objects from the database.
-  Future<List<Group>> getGroups() async {
-    return await dbHelper.getGroups();
+  /// Excludes hidden groups unless [includeHidden] is true.
+  Future<List<Group>> getGroups({bool includeHidden = false}) async {
+    final groups = await dbHelper.getGroups();
+    if (includeHidden) {
+      return groups;
+    } else {
+      return groups.where((group) => !group.isHidden).toList();
+    }
   }
 
   /// Updates an existing [Group] in the database.

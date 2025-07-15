@@ -7,6 +7,7 @@ class Group {
   String name; // Name of the group (e.g., 'Classical', 'Jazz')
   int order; // For custom ordering of groups in the UI
   bool isDefault; // Flag to identify the 'Default Group' (e.g., for pieces not assigned to any custom group)
+  bool isHidden; // Flag to indicate if the group is hidden
 
   /// Constructor for the Group class.
   Group({
@@ -14,6 +15,7 @@ class Group {
     required this.name,
     required this.order,
     this.isDefault = false,
+    this.isHidden = false,
   });
 
   /// Converts a [Group] object into a JSON-compatible Map.
@@ -25,6 +27,7 @@ class Group {
         'name': name,
         'order': order,
         'isDefault': isDefault ? 1 : 0, // Convert boolean to integer (0 or 1)
+        'isHidden': isHidden ? 1 : 0, // Convert boolean to integer (0 or 1)
       };
 
   /// Creates a [Group] object from a JSON-compatible Map.
@@ -36,6 +39,7 @@ class Group {
         name: json['name'],
         order: json['order'],
         isDefault: (json['isDefault'] as int) == 1, // Convert integer (0 or 1) to boolean
+        isHidden: (json['isHidden'] as int?) == 1, // Convert integer (0 or 1) to boolean, handle null for old data
       );
 
   /// Creates a copy of this [Group] object with optional new values.
@@ -46,12 +50,14 @@ class Group {
     String? name,
     int? order,
     bool? isDefault,
+    bool? isHidden,
   }) {
     return Group(
       id: id ?? this.id,
       name: name ?? this.name,
       order: order ?? this.order,
       isDefault: isDefault ?? this.isDefault,
+      isHidden: isHidden ?? this.isHidden,
     );
   }
 }
