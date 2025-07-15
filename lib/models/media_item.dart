@@ -11,6 +11,7 @@ class MediaItem {
   String? title; // Optional title for the media item (e.g., 'Verse 1 Notes')
   String? description; // Optional description of the media content
   String? googleDriveFileId; // Google Drive file ID if the media is synced to Drive (nullable)
+  String? thumbnailPath; // Local path to the thumbnail for video links
 
   /// Constructor for the MediaItem class.
   MediaItem({
@@ -20,6 +21,7 @@ class MediaItem {
     this.title,
     this.description,
     this.googleDriveFileId,
+    this.thumbnailPath,
   });
 
   /// Converts a [MediaItem] object into a JSON-compatible Map.
@@ -33,6 +35,7 @@ class MediaItem {
         'title': title,
         'description': description,
         'googleDriveFileId': googleDriveFileId,
+        'thumbnailPath': thumbnailPath,
       };
 
   /// Creates a [MediaItem] object from a JSON-compatible Map.
@@ -46,5 +49,6 @@ class MediaItem {
         title: json['title'],
         description: json['description'],
         googleDriveFileId: json['googleDriveFileId'],
+        thumbnailPath: json['thumbnailPath'],
       );
 }

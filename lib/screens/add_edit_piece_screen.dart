@@ -10,6 +10,11 @@ import '../database/music_piece_repository.dart'; // Import repository
 import 'package:file_picker/file_picker.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 import '../services/media_storage_manager.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -55,6 +60,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 type: item.type,
                 pathOrUrl: item.pathOrUrl,
                 title: item.title,
+                thumbnailPath: item.thumbnailPath,
               )
             ).toList(),
             tagGroups: widget.musicPiece!.tagGroups.map((tagGroup) => 
@@ -208,6 +214,29 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     }
   }
 
+  Future<void> _fetchAndSaveThumbnail(MediaItem item) async {
+    if (item.type == MediaType.mediaLink && item.pathOrUrl.isNotEmpty) {
+      try {
+        final metadata = await MetadataFetch.extract(item.pathOrUrl);
+        final thumbnailUrl = metadata?.image;
+
+        if (thumbnailUrl != null) {
+          final response = await http.get(Uri.parse(thumbnailUrl));
+          final documentsDir = await getApplicationDocumentsDirectory();
+          final thumbnailDir = Directory(p.join(documentsDir.path, _musicPiece.id, 'thumbnails'));
+          if (!await thumbnailDir.exists()) {
+            await thumbnailDir.create(recursive: true);
+          }
+          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
+          await thumbnailFile.writeAsBytes(response.bodyBytes);
+          item.thumbnailPath = thumbnailFile.path;
+        }
+      } catch (e) {
+        print('Error fetching or saving thumbnail: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,6 +248,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 _formKey.currentState!.save(); // Save the current state of the form fields.
+
+                for (var item in _musicPiece.mediaItems) {
+                  await _fetchAndSaveThumbnail(item);
+                }
+
                 _musicPiece.groupIds = _selectedGroupIds.toList(); // Update the music piece's group IDs from selected groups.
 
                 if (widget.musicPiece == null) {
@@ -227,6 +261,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                   await _repository.updateMusicPiece(_musicPiece); // Update existing music piece if editing.
                 }
 
+                if (!mounted) return;
                 Navigator.of(context).pop(true); // Return true to indicate success and pop the screen.
               }
             },
@@ -604,3 +639,6 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     );
   }
 }
+
+
+

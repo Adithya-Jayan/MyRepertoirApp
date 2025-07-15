@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -106,16 +105,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     });
   }
 
-  Future<String?> _fetchThumbnailUrl(String url) async {
-    try {
-      final metadata = await MetadataFetch.extract(url);
-      return metadata?.image;
-    } catch (e) {
-      print('Error fetching metadata: $e');
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -169,17 +158,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               throw 'Could not launch $uri';
             }
           },
-          child: FutureBuilder<String?>(
-            future: _fetchThumbnailUrl(widget.mediaItem.pathOrUrl),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(
+          child: (widget.mediaItem.thumbnailPath != null && widget.mediaItem.thumbnailPath!.isNotEmpty)
+              ? Image.file(
+                  File(widget.mediaItem.thumbnailPath!),
                   height: 200,
-                  color: Colors.grey[300],
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              } else if (snapshot.hasError || snapshot.data == null) {
-                return Container(
+                  fit: BoxFit.contain,
+                )
+              : Container(
                   height: 200,
                   color: Colors.blueGrey,
                   child: const Center(
@@ -189,32 +174,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                       size: 50.0,
                     ),
                   ),
-                );
-              } else {
-                return CachedNetworkImage(
-                  imageUrl: snapshot.data!,
-                  height: 200,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => Container(
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 200,
-                    color: Colors.blueGrey,
-                    child: const Center(
-                      child: Icon(
-                        Icons.link,
-                        color: Colors.white,
-                        size: 50.0,
-                      ),
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
+                ),
         );
         break;
       default:
