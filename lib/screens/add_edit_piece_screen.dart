@@ -577,17 +577,17 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     },
                     isEditable: true,
                   ),
-                  if (item.type == MediaType.image)
+                  if (item.type == MediaType.image || (item.type == MediaType.mediaLink && item.thumbnailPath != null))
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         const Text('Set as thumbnail'),
                         Switch(
-                          value: _musicPiece.thumbnailPath == item.pathOrUrl,
+                          value: _musicPiece.thumbnailPath == (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath),
                           onChanged: (value) {
                             setState(() {
                               _musicPiece = _musicPiece.copyWith(
-                                thumbnailPath: value ? item.pathOrUrl : null,
+                                thumbnailPath: value ? (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath) : null,
                               );
                             });
                           },
