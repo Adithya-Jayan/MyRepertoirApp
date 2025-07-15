@@ -91,6 +91,8 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                 children: ThemeNotifier.availableAccentColors.map((color) {
                   return GestureDetector(
                     onTap: () {
+                      final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+                      themeNotifier.setAccentColor(color);
                       setState(() {
                         _selectedAccentColor = color;
                       });
