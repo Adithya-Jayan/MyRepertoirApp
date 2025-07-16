@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:uuid/uuid.dart';
@@ -19,63 +20,64 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _loadGroups(); // Load the list of groups when the screen initializes.
+    _loadGroups();
   }
 
-  /// Loads all groups from the database.
+  /// Loads all groups from the database and shared preferences.
   ///
-  /// This method fetches all groups, ensures a default group exists, sorts them,
-  /// and updates the UI. It also handles loading states and error reporting.
+  /// This method fetches all user-created groups from the database and
+  /// loads the settings for the special "All" and "Ungrouped" groups from
+  /// shared preferences. It then combines and sorts them for display.
   Future<void> _loadGroups() async {
     setState(() {
-      _isLoading = true; // Set loading state to true.
+      _isLoading = true;
     });
     try {
-      await _repository.ensureDefaultGroupExists(); // Ensure the default group is present.
-      final allDbGroups = await _repository.getGroups(); // Fetch all groups from the database.
+      final prefs = await SharedPreferences.getInstance();
+      final allDbGroups = await _repository.getGroups();
 
-      // Create the "All" group (not stored in DB)
+      // Get stored settings for special groups, with default values
+      final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
+      final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? false;
+      final ungroupedGroupOrder = prefs.getInt('ungrouped_group_order') ?? -1;
+      final ungroupedGroupIsHidden = prefs.getBool('ungrouped_group_isHidden') ?? false;
+
       final allGroup = Group(
         id: 'all_group',
         name: 'All',
-        order: -2, // A very low order to ensure it's always at the top
-        isDefault: false,
-        isHidden: false, // "All" group is always visible
+        order: allGroupOrder,
+        isHidden: allGroupIsHidden,
       );
 
-      // Create the "Ungrouped" group (not stored in DB)
       final ungroupedGroup = Group(
         id: 'ungrouped_group',
         name: 'Ungrouped',
-        order: -1, // A low order to ensure it's near the top, after "All"
-        isDefault: true, // Treat as default for filtering purposes
-        isHidden: false, // Default to visible
+        order: ungroupedGroupOrder,
+        isHidden: ungroupedGroupIsHidden,
       );
 
-      // Combine and sort groups
-      List<Group> combinedGroups = [allGroup, ungroupedGroup];
-      combinedGroups.addAll(allDbGroups.where((g) => !g.isDefault)); // Add user-defined groups, excluding the old default
+      List<Group> combinedGroups = [allGroup, ungroupedGroup, ...allDbGroups];
 
       combinedGroups.sort((a, b) {
         if (a.order != b.order) {
-          return a.order.compareTo(b.order); // Sort by custom order.
+          return a.order.compareTo(b.order);
         }
-        return a.name.compareTo(b.name); // Then sort alphabetically by name.
+        return a.name.compareTo(b.name);
       });
 
       setState(() {
-        _groups = combinedGroups; // Update the list of groups for display.
+        _groups = combinedGroups;
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading groups: $e')), // Show error message if loading fails.
+          SnackBar(content: Text('Error loading groups: $e')),
         );
       }
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false; // Set loading state to false after operation completes.
+          _isLoading = false;
         });
       }
     }
@@ -207,7 +209,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   /// Handles the reordering of groups in the list.
   ///
   /// Updates the order of groups in the local list and persists the new order
-  /// to the database. It also sets a flag to indicate that changes have been made.
+  /// to the database or shared preferences for special groups.
   void _onReorder(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -216,29 +218,60 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     _groups.insert(newIndex, item);
 
     setState(() {
-      _isLoading = true; // Set loading state while reordering is processed.
+      _isLoading = true;
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
       for (int i = 0; i < _groups.length; i++) {
-        _groups[i] = _groups[i].copyWith(order: i); // Update the order property of each group.
-        await _repository.updateGroup(_groups[i]); // Persist the updated group order to the database.
+        final group = _groups[i].copyWith(order: i);
+        _groups[i] = group;
+        if (group.id == 'all_group') {
+          await prefs.setInt('all_group_order', group.order);
+        } else if (group.id == 'ungrouped_group') {
+          await prefs.setInt('ungrouped_group_order', group.order);
+        } else {
+          await _repository.updateGroup(group);
+        }
       }
       setState(() {
-        _hasChanges = true; // Set flag to indicate changes were made.
+        _hasChanges = true;
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving group order: $e')), // Show error message if saving fails.
+          SnackBar(content: Text('Error saving group order: $e')),
         );
       }
-    }
-    finally {
+    } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false; // Reset loading state after operation completes.
+          _isLoading = false;
         });
+      }
+    }
+  }
+
+  /// Toggles the visibility of a group.
+  ///
+  /// Updates the visibility of the group in the local list and persists the
+  /// new visibility to the database or shared preferences for special groups.
+  Future<void> _toggleGroupVisibility(Group group) async {
+    final updatedGroup = group.copyWith(isHidden: !group.isHidden);
+    final index = _groups.indexWhere((g) => g.id == group.id);
+    if (index != -1) {
+      setState(() {
+        _groups[index] = updatedGroup;
+        _hasChanges = true;
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      if (updatedGroup.id == 'all_group') {
+        await prefs.setBool('all_group_isHidden', updatedGroup.isHidden);
+      } else if (updatedGroup.id == 'ungrouped_group') {
+        await prefs.setBool('ungrouped_group_isHidden', updatedGroup.isHidden);
+      } else {
+        await _repository.updateGroup(updatedGroup);
       }
     }
   }
@@ -262,46 +295,35 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : _groups.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No groups yet! Add one to organize your pieces :D',
-                      style: TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : ReorderableListView.builder(
+            : ReorderableListView.builder(
                 itemCount: _groups.length,
                 onReorder: _onReorder,
                 itemBuilder: (context, index) {
                   final group = _groups[index];
                   return ReorderableDragStartListener(
                     index: index,
-                    key: ValueKey(group.id), // Key must be on the widget that is reordered
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                      child: ListTile(
-                        title: Text(group.name),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (group.id != 'all_group' && group.id != 'ungrouped_group')
-                              IconButton(
-                                icon: Icon(group.isHidden ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => _toggleGroupVisibility(group),
-                              ),
-                            if (group.id != 'all_group' && group.id != 'ungrouped_group')
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _editGroup(group),
-                              ),
-                            if (group.id != 'all_group' && group.id != 'ungrouped_group')
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => _deleteGroup(group),
-                              ),
-                          ],
-                        ),
+                    key: ValueKey(group.id),
+                    child: ListTile(
+                      leading: const Icon(Icons.drag_handle),
+                      title: Text(group.name),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(group.isHidden ? Icons.visibility_off : Icons.visibility),
+                            onPressed: () => _toggleGroupVisibility(group),
+                          ),
+                          if (group.id != 'all_group' && group.id != 'ungrouped_group')
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _editGroup(group),
+                            ),
+                          if (group.id != 'all_group' && group.id != 'ungrouped_group')
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => _deleteGroup(group),
+                            ),
+                        ],
                       ),
                     ),
                   );
@@ -313,15 +335,5 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         ),
       ),
     );
-  }
-
-  /// Toggles the visibility of a group.
-  Future<void> _toggleGroupVisibility(Group group) async {
-    final updatedGroup = group.copyWith(isHidden: !group.isHidden);
-    await _repository.updateGroup(updatedGroup);
-    await _loadGroups(); // Reload groups to reflect the change
-    setState(() {
-      _hasChanges = true;
-    });
   }
 }

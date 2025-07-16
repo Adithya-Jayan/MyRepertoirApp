@@ -211,57 +211,76 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _loadSettings(); // Load user-specific settings like gallery column count.
   }
 
-  
-
-  
-
-  
-
-  /// Loads all groups from the database and updates the [_groups] list.
+  /// Loads all groups from the database and shared preferences.
   ///
-  /// Ensures a default group exists and sorts groups for display.
+  /// This method fetches all user-created groups from the database and
+  /// loads the settings for the special "All" and "Ungrouped" groups from
+  /// shared preferences. It then combines and sorts them for display.
   Future<void> _loadGroups() async {
     setState(() {
-      _isLoading = true; // Set loading state to true.
-      _errorMessage = null; // Clear any previous error messages.
+      _isLoading = true;
+      _errorMessage = null;
     });
     try {
-      await _repository.ensureDefaultGroupExists(); // Ensure the 'Default Group' is present in the database.
-      final allDbGroups = await _repository.getGroups(); // Fetch all groups from the repository (only non-hidden by default).
+      final prefs = await SharedPreferences.getInstance();
+      final allDbGroups = await _repository.getGroups();
 
-      // Create the "Ungrouped" group (not stored in DB, represents pieces with no group)
+      // Get stored settings for special groups, with default values
+      final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
+      final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? false;
+      final ungroupedGroupOrder = prefs.getInt('ungrouped_group_order') ?? -1;
+      final ungroupedGroupIsHidden = prefs.getBool('ungrouped_group_isHidden') ?? false;
+
+      final allGroup = Group(
+        id: 'all_group',
+        name: 'All',
+        order: allGroupOrder,
+        isHidden: allGroupIsHidden,
+      );
+
       final ungroupedGroup = Group(
         id: 'ungrouped_group',
         name: 'Ungrouped',
-        order: -1, // A low order to ensure it's near the top, after "All"
-        isDefault: true, // Treat as default for filtering purposes
-        isHidden: false, // Always visible
+        order: ungroupedGroupOrder,
+        isHidden: ungroupedGroupIsHidden,
       );
 
-      // Combine user-defined groups with the special "Ungrouped" group
-      List<Group> combinedGroups = [ungroupedGroup];
-      combinedGroups.addAll(allDbGroups.where((g) => !g.isDefault)); // Add user-defined groups, excluding the old default
+      // Combine user-defined groups with the special groups
+      List<Group> combinedGroups = [allGroup, ungroupedGroup, ...allDbGroups];
 
       combinedGroups.sort((a, b) {
         if (a.order != b.order) {
-          return a.order.compareTo(b.order); // Sort by custom order first.
+          return a.order.compareTo(b.order);
         }
-        return a.name.compareTo(b.name); // Then sort alphabetically by name.
+        return a.name.compareTo(b.name);
       });
-      _groups = combinedGroups;
 
-      // If the previously selected group was deleted or hidden, reset the selection to 'All'.
-      if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
-        _selectedGroupId = null;
-      }
-      _groupListKey = UniqueKey(); // Update key to force a rebuild of the group list UI.
+      setState(() {
+        _groups = combinedGroups;
+        if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
+          _selectedGroupId = null;
+        }
+        _groupListKey = UniqueKey();
+      });
     } catch (e) {
-      _errorMessage = 'Failed to load groups: $e'; // Set error message if loading fails.
+      _errorMessage = 'Failed to load groups: $e';
     } finally {
       setState(() {
-        _isLoading = false; // Set loading state to false after operation completes.
+        _isLoading = false;
       });
     }
+  }
+
+  /// Returns a list of groups that should be visible in the UI.
+  ///
+  /// If there are no user-created groups, this method returns an empty list.
+  /// Otherwise, it returns all groups that are not hidden.
+  List<Group> _getVisibleGroups() {
+    final userGroups = _groups.where((g) => g.id != 'all_group' && g.id != 'ungrouped_group').toList();
+    if (userGroups.isEmpty) {
+      return [];
+    }
+    return _groups.where((g) => !g.isHidden).toList();
   }
 
   /// Loads all music pieces from the database and applies current filters and sorting.
@@ -401,6 +420,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleGroups = _getVisibleGroups();
     return RawKeyboardListener(
       focusNode: _focusNode,
       onKey: (event) {
@@ -417,56 +437,40 @@ class _LibraryScreenState extends State<LibraryScreen> {
         body: Column(
           children: [
           // Group Toggling Bar (horizontal scrollable chips).
-          if (_groups.isNotEmpty)
+          if (visibleGroups.isNotEmpty)
             SingleChildScrollView(
               key: _groupListKey, // Use the new key to force rebuild of the group list.
               controller: _groupScrollController, // Attach the scroll controller for horizontal scrolling.
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: Row(
-                children: [
-                  // "All" group chip.
-                  Padding(
-                    key: const ValueKey('all_groups_chip'),
+                children: visibleGroups.map((group) {
+                  final isSelected = _selectedGroupId == group.id || (_selectedGroupId == null && group.id == 'all_group');
+                  int pieceCount = 0;
+                  if (group.id == 'all_group') {
+                    pieceCount = _allMusicPieces.length;
+                  } else if (group.id == 'ungrouped_group') {
+                    pieceCount = _allMusicPieces.where((p) => p.groupIds.isEmpty).length;
+                  } else {
+                    pieceCount = _allMusicPieces.where((p) => p.groupIds.contains(group.id)).length;
+                  }
+
+                  return Padding(
+                    key: ValueKey(group.id),
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ChoiceChip(
-                      label: Text('All (${_allMusicPieces.length})'), // Use _allMusicPieces.length for total count
-                      selected: _selectedGroupId == null,
+                      label: Text('${group.name} ($pieceCount)'),
+                      selected: isSelected,
                       onSelected: (selected) {
                         if (selected) {
-                          _pageController.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+                          final index = _groups.indexOf(group);
+                          _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
                         }
                       },
                       showCheckmark: false,
                     ),
-                  ),
-                  // Dynamically generated group chips.
-                  ..._groups.map((group) {
-                    // Filter _allMusicPieces by current filter options AND group ID
-                    final pieceCount = _filterMusicPieces(_allMusicPieces.where((piece) {
-                      if (group.id == 'ungrouped_group') {
-                        return piece.groupIds.isEmpty; // Pieces with no group
-                      } else {
-                        return piece.groupIds.contains(group.id);
-                      }
-                    }).toList()).length;
-                    return Padding(
-                      key: ValueKey(group.id),
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ChoiceChip(
-                        label: Text('${group.name} ($pieceCount)'),
-                        selected: _selectedGroupId == group.id,
-                        onSelected: (selected) {
-                          if (selected) {
-                            final index = _groups.indexOf(group) + 1; // +1 because 'All' is at index 0.
-                            _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
-                          }
-                        },
-                        showCheckmark: false,
-                      ),
-                    );
-                  }).toList(),
-                ],
+                  );
+                }).toList(),
               ),
             )
           else
@@ -475,13 +479,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             // PageView to display music pieces for each selected group.
             child: PageView.builder(
               controller: _pageController,
-              itemCount: _groups.length + 1, // +1 for "All" group page.
+              itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
               onPageChanged: (index) {
                 setState(() {
-                  if (index == 0) {
-                    _selectedGroupId = null; // "All" group selected.
+                  if (visibleGroups.isEmpty) {
+                    _selectedGroupId = null;
                   } else {
-                    _selectedGroupId = _groups[index - 1].id; // Select the corresponding group.
+                    _selectedGroupId = visibleGroups[index].id;
                   }
                 });
 
@@ -500,15 +504,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 } else {
                   // Determine the group ID for the current page.
                   String? currentPageGroupId;
-                  if (pageIndex == 0) {
-                    currentPageGroupId = null; // "All" group.
-                  } else {
-                    currentPageGroupId = _groups[pageIndex - 1].id;
+                  if (visibleGroups.isNotEmpty) {
+                    currentPageGroupId = visibleGroups[pageIndex].id;
                   }
 
                   // Filter music pieces for the current page's group.
                   final musicPiecesForPage = _allMusicPieces.where((piece) {
-                    if (currentPageGroupId == null) {
+                    if (currentPageGroupId == null || currentPageGroupId == 'all_group') {
                       return true; // Show all pieces for "All" group.
                     } else if (currentPageGroupId == 'ungrouped_group') {
                       return piece.groupIds.isEmpty; // Show pieces with no group
@@ -603,7 +605,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
               },
               child: const Icon(Icons.add),
             ),
-    ));
+    )
+    );
   }
 
   /// Builds the default AppBar for the LibraryScreen.
@@ -904,7 +907,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               return SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: _groups.map((group) {
+                  children: _groups.where((group) => group.id != 'all_group' && group.id != 'ungrouped_group').map((group) {
                     // Determine initial state
                     final isSelectedInAllInitial = currentSelectedPiecesInDialog.every((p) => p.groupIds.contains(group.id));
                     final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;

@@ -287,19 +287,11 @@ class MusicPieceRepository {
   }
 
   /// Ensures that a default group exists in the database.
-  /// If no default group is found, a new one named 'Default Group' is created.
+  /// This method is now deprecated as the concept of a fixed "Default Group" is being replaced
+  /// by the dynamic "Ungrouped" virtual group.
+  @deprecated
   Future<void> ensureDefaultGroupExists() async {
-    final groups = await getGroups();
-    // Check if any group is marked as default.
-    if (!groups.any((group) => group.isDefault)) {
-      // Create a new default group.
-      final defaultGroup = Group(
-        id: uuid.v4(), // Generate a unique ID for the new group.
-        name: 'Default Group',
-        order: 0,
-        isDefault: true,
-      );
-      await createGroup(defaultGroup);
-    }
+    // This method is no longer needed as the "Ungrouped" group is virtual.
+    // Any existing default group will simply be treated as a regular group.
   }
 }

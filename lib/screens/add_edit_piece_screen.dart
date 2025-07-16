@@ -129,7 +129,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     try {
       final groups = await _repository.getGroups(); // Fetch all groups from the repository.
       setState(() {
-        _availableGroups = groups.where((group) => !group.isDefault).toList(); // Filter out the default group.
+        _availableGroups = groups;
       });
     } catch (e) {
       // Log or display an error if groups fail to load.

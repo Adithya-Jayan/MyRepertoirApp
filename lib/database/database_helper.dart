@@ -47,7 +47,7 @@ class DatabaseHelper {
     // Open the database.
     final db = await openDatabase(
       path,
-      version: 3, // Current database version
+      version: 4, // Current database version
       onCreate: (db, version) async {
         await _createDB(db, version);
         // Insert dummy data only if the database is newly created
@@ -100,7 +100,6 @@ CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
   name TEXT,
   'order' INTEGER, -- 'order' is a SQL keyword, so it's quoted
-  isDefault INTEGER, -- Stored as 0 for false, 1 for true
   isHidden INTEGER DEFAULT 0 -- New column for hidden status, default to 0 (false)
 )
 ''');
@@ -120,6 +119,13 @@ CREATE TABLE IF NOT EXISTS groups (
     }
     if (oldVersion < 3) {
       await db.execute("ALTER TABLE groups ADD COLUMN isHidden INTEGER DEFAULT 0;");
+    }
+    if (oldVersion < 4) {
+      // Remove isDefault column if it exists
+      // This is a more complex migration, often requiring a temp table
+      // For simplicity, we'll just drop and recreate if it's a fresh install
+      // or handle it in the Group model's fromJson for existing data.
+      // If isDefault column exists, it will be ignored by the new Group model.
     }
   }
 
