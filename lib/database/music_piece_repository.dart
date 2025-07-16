@@ -90,13 +90,9 @@ class MusicPieceRepository {
 
   /// Retrieves a list of all [Group] objects from the database.
   /// Excludes hidden groups unless [includeHidden] is true.
-  Future<List<Group>> getGroups({bool includeHidden = false}) async {
+  Future<List<Group>> getGroups({bool includeHidden = true}) async {
     final groups = await dbHelper.getGroups();
-    if (includeHidden) {
-      return groups;
-    } else {
-      return groups.where((group) => !group.isHidden).toList();
-    }
+    return groups;
   }
 
   /// Updates an existing [Group] in the database.

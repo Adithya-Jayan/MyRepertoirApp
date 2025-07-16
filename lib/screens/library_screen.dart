@@ -9,6 +9,7 @@ import 'package:repertoire/widgets/tag_group_filter_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart';
 
 import '../database/music_piece_repository.dart';
 import '../models/group.dart'; // Import Group model
@@ -217,6 +218,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// loads the settings for the special "All" and "Ungrouped" groups from
   /// shared preferences. It then combines and sorts them for display.
   Future<void> _loadGroups() async {
+    AppLogger.log('LibraryScreen: _loadGroups called');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -224,6 +226,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final allDbGroups = await _repository.getGroups();
+      AppLogger.log('LibraryScreen: Loaded ${allDbGroups.length} groups from DB.');
 
       // Get stored settings for special groups, with default values
       final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
@@ -257,6 +260,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       setState(() {
         _groups = combinedGroups;
+        AppLogger.log('LibraryScreen: All groups (including special): ${_groups.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
         if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
           _selectedGroupId = null;
         }
@@ -264,6 +268,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     } catch (e) {
       _errorMessage = 'Failed to load groups: $e';
+      AppLogger.log('LibraryScreen: Error loading groups: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -277,10 +282,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// Otherwise, it returns all groups that are not hidden.
   List<Group> _getVisibleGroups() {
     final userGroups = _groups.where((g) => g.id != 'all_group' && g.id != 'ungrouped_group').toList();
+    List<Group> visibleGroups;
     if (userGroups.isEmpty) {
-      return [];
+      visibleGroups = _groups.where((g) => !g.isHidden && (g.id == 'all_group' || g.id == 'ungrouped_group')).toList();
+    } else {
+      visibleGroups = _groups.where((g) => !g.isHidden).toList();
     }
-    return _groups.where((g) => !g.isHidden).toList();
+    AppLogger.log('LibraryScreen: Visible groups: ${visibleGroups.map((g) => '${g.name} (id: ${g.id}, hidden: ${g.isHidden})').join(', ')}');
+    return visibleGroups;
   }
 
   /// Loads all music pieces from the database and applies current filters and sorting.

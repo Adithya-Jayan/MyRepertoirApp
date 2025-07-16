@@ -50,9 +50,12 @@ class DatabaseHelper {
       version: 4, // Current database version
       onCreate: (db, version) async {
         await _createDB(db, version);
-        // Insert dummy data only if the database is newly created
-        for (final piece in dummyMusicPieces) {
-          await db.insert('music_pieces', piece.toJson());
+        // Insert dummy data only if the database is newly created and the music_pieces table is empty
+        final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM music_pieces'));
+        if (count == 0) {
+          for (final piece in dummyMusicPieces) {
+            await db.insert('music_pieces', piece.toJson());
+          }
         }
       },
       onUpgrade: _onUpgrade, // Callback for handling database schema upgrades

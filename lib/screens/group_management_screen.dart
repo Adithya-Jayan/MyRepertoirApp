@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:uuid/uuid.dart';
+import '../utils/app_logger.dart';
 
 class GroupManagementScreen extends StatefulWidget {
   const GroupManagementScreen({super.key});
@@ -29,12 +30,14 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   /// loads the settings for the special "All" and "Ungrouped" groups from
   /// shared preferences. It then combines and sorts them for display.
   Future<void> _loadGroups() async {
+    AppLogger.log('GroupManagementScreen: _loadGroups called');
     setState(() {
       _isLoading = true;
     });
     try {
       final prefs = await SharedPreferences.getInstance();
       final allDbGroups = await _repository.getGroups();
+      AppLogger.log('GroupManagementScreen: Loaded ${allDbGroups.length} groups from DB.');
 
       // Get stored settings for special groups, with default values
       final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
@@ -67,8 +70,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
       setState(() {
         _groups = combinedGroups;
+        AppLogger.log('GroupManagementScreen: Combined and sorted groups: ${_groups.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
       });
     } catch (e) {
+      AppLogger.log('GroupManagementScreen: Error loading groups: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading groups: $e')),
@@ -122,6 +127,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         name: newGroupName,
         order: _groups.length,
       );
+      AppLogger.log('GroupManagementScreen: Adding new group: ${newGroup.name} (id: ${newGroup.id})');
       await _repository.createGroup(newGroup);
       await _loadGroups();
       setState(() {
@@ -166,6 +172,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
     if (groupEdited == true) {
       final updatedGroup = group.copyWith(name: editedGroupName);
+      AppLogger.log('GroupManagementScreen: Editing group: ${updatedGroup.name} (id: ${updatedGroup.id})');
       await _repository.updateGroup(updatedGroup);
       await _loadGroups();
       setState(() {
@@ -198,6 +205,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     );
 
     if (confirmDelete == true) {
+      AppLogger.log('GroupManagementScreen: Deleting group: ${group.name} (id: ${group.id})');
       await _repository.deleteGroup(group.id);
       await _loadGroups();
       setState(() {
@@ -228,10 +236,13 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         _groups[i] = group;
         if (group.id == 'all_group') {
           await prefs.setInt('all_group_order', group.order);
+          AppLogger.log('GroupManagementScreen: Reordered All group to order: ${group.order}');
         } else if (group.id == 'ungrouped_group') {
           await prefs.setInt('ungrouped_group_order', group.order);
+          AppLogger.log('GroupManagementScreen: Reordered Ungrouped group to order: ${group.order}');
         } else {
           await _repository.updateGroup(group);
+          AppLogger.log('GroupManagementScreen: Reordered group ${group.name} to order: ${group.order}');
         }
       }
       setState(() {
@@ -268,10 +279,13 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       final prefs = await SharedPreferences.getInstance();
       if (updatedGroup.id == 'all_group') {
         await prefs.setBool('all_group_isHidden', updatedGroup.isHidden);
+        AppLogger.log('GroupManagementScreen: Toggled visibility for All group to: ${updatedGroup.isHidden}');
       } else if (updatedGroup.id == 'ungrouped_group') {
         await prefs.setBool('ungrouped_group_isHidden', updatedGroup.isHidden);
+        AppLogger.log('GroupManagementScreen: Toggled visibility for Ungrouped group to: ${updatedGroup.isHidden}');
       } else {
         await _repository.updateGroup(updatedGroup);
+        AppLogger.log('GroupManagementScreen: Toggled visibility for group ${updatedGroup.name} to: ${updatedGroup.isHidden}');
       }
     }
   }
