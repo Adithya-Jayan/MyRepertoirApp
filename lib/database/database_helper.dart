@@ -59,6 +59,10 @@ class DatabaseHelper {
         }
       },
       onUpgrade: _onUpgrade, // Callback for handling database schema upgrades
+      onOpen: (db) async {
+        // One-time cleanup: remove any old 'Default Group' entries
+        await db.delete('groups', where: 'name = ?', whereArgs: ['Default Group']);
+      },
     );
 
     return db;

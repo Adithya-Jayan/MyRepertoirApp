@@ -515,11 +515,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   String? currentPageGroupId;
                   if (visibleGroups.isNotEmpty) {
                     currentPageGroupId = visibleGroups[pageIndex].id;
+                  } else {
+                    // If no groups are visible (meaning no custom groups and All/Ungrouped are hidden),
+                    // default to showing only ungrouped pieces.
+                    currentPageGroupId = 'ungrouped_group';
                   }
 
                   // Filter music pieces for the current page's group.
                   final musicPiecesForPage = _allMusicPieces.where((piece) {
-                    if (currentPageGroupId == null || currentPageGroupId == 'all_group') {
+                    if (currentPageGroupId == 'all_group') {
                       return true; // Show all pieces for "All" group.
                     } else if (currentPageGroupId == 'ungrouped_group') {
                       return piece.groupIds.isEmpty; // Show pieces with no group

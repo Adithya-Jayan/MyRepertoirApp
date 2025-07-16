@@ -282,12 +282,5 @@ class MusicPieceRepository {
     }
   }
 
-  /// Ensures that a default group exists in the database.
-  /// This method is now deprecated as the concept of a fixed "Default Group" is being replaced
-  /// by the dynamic "Ungrouped" virtual group.
-  @deprecated
-  Future<void> ensureDefaultGroupExists() async {
-    // This method is no longer needed as the "Ungrouped" group is virtual.
-    // Any existing default group will simply be treated as a regular group.
-  }
+  
 }
