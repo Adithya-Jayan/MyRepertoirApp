@@ -24,11 +24,6 @@ class TagGroupSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure a TextEditingController exists for this tag group's name.
-    // Note: This approach of managing TextEditingController outside of StatefulWidget
-    // can lead to issues if not handled carefully, especially with reordering.
-    // For simplicity in this example, we assume external management.
-    final TextEditingController textEditingController = TextEditingController(text: tagGroup.name);
 
     return Card(
       key: ValueKey(tagGroup.id), // Unique key for ReorderableListView.

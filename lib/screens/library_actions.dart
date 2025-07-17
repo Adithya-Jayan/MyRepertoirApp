@@ -66,7 +66,7 @@ class LibraryActions {
                     final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;
 
                     AppLogger.log('--- Group Debug ---');
-                    print('Group: ${group.name} (ID: ${group.id})');
+                    AppLogger.log('Group: ${group.name} (ID: ${group.id})');
                     AppLogger.log('  isSelectedInAllInitial: $isSelectedInAllInitial');
                     AppLogger.log('  isSelectedInSomeInitial: $isSelectedInSomeInitial');
 

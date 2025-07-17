@@ -92,10 +92,11 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                   return GestureDetector(
                     onTap: () {
                       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
-                      themeNotifier.setAccentColor(color);
-                      setState(() {
-                        _selectedAccentColor = color;
-                      });
+                  themeNotifier.setAccentColor(color);
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedAccentColor = color;
+                  });
                     },
                     child: Container(
                       width: 40,
@@ -133,6 +134,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                   themeNotifier.setAccentColor(_selectedAccentColor);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('hasRunBefore', true);
+                  if (!mounted) return;
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const LibraryScreen()),

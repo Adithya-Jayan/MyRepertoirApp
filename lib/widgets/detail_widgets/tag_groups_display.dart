@@ -42,7 +42,7 @@ class TagGroupsDisplay extends StatelessWidget {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

@@ -41,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context,
                 MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
               );
+              if (!mounted) return;
               // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
               if (changesMade == true) {
                 AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
@@ -60,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context,
                 MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
               );
+              if (!mounted) return;
               // If changes were made, pop this screen with true.
               if (changesMade == true) {
                 if (mounted) {

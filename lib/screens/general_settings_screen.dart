@@ -70,6 +70,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       } catch (e) {
         // Path is not writable
         AppLogger.log('Selected path is not writable: $e');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
         );
@@ -86,6 +87,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         AppLogger.log('Reverted to default app storage path: $defaultPath');
       }
     } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Folder selection cancelled.')),
+      );
       AppLogger.log('Storage folder selection cancelled.');
     }
   }
@@ -97,7 +102,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       case 'Dark':
         return ThemeMode.dark;
       case 'System':
-      default:
         return ThemeMode.system;
     }
   }
@@ -109,7 +113,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       case ThemeMode.dark:
         return 'Dark';
       case ThemeMode.system:
-      default:
         return 'System';
     }
   }

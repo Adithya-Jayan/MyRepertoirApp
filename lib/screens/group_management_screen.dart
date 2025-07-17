@@ -292,10 +292,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, _hasChanges);
-        return true;
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          Navigator.pop(context, _hasChanges);
+        }
       },
       child: Scaffold(
         appBar: AppBar(

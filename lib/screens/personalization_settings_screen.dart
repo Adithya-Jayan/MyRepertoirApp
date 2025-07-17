@@ -12,11 +12,11 @@ class PersonalizationSettingsScreen extends StatefulWidget {
   const PersonalizationSettingsScreen({super.key});
 
   @override
-  _PersonalizationSettingsScreenState createState() =>
-      _PersonalizationSettingsScreenState();
+  State<PersonalizationSettingsScreen> createState() =>
+      PersonalizationSettingsScreenState();
 }
 
-class _PersonalizationSettingsScreenState
+class PersonalizationSettingsScreenState
     extends State<PersonalizationSettingsScreen> {
   double _galleryColumns = 1;
 

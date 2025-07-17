@@ -427,13 +427,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     final visibleGroups = LibraryUtils.getVisibleGroups(_groups);
-    return RawKeyboardListener(
+    return KeyboardListener(
       focusNode: _focusNode,
-      onKey: (event) {
+      onKeyEvent: (event) {
         // Track currently pressed keys for multi-selection with Shift key.
-        if (event is RawKeyDownEvent) {
+        if (event is KeyDownEvent) {
           _pressedKeys.add(event.logicalKey);
-        } else if (event is RawKeyUpEvent) {
+        } else if (event is KeyUpEvent) {
           _pressedKeys.remove(event.logicalKey);
         }
       },

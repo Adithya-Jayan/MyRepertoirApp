@@ -40,6 +40,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 ),
               );
               if (result == true) {
+                if (!mounted) return;
                 final updatedPiece = (await _repository.getMusicPieces()).firstWhere((piece) => piece.id == _musicPiece.id);
                 setState(() {
                   _musicPiece = updatedPiece;

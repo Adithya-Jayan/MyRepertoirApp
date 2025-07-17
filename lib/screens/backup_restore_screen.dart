@@ -87,6 +87,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final storagePath = prefs.getString('appStoragePath'); // Get the application's storage path.
       if (storagePath == null) {
         AppLogger.log('Backup failed: Storage path not configured.');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Storage path not configured.')) // Show error if storage path is not set.
         );
@@ -143,6 +144,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           // If outputFile is not null, it means the user selected a location and FilePicker saved the bytes.
           // No need to write again using dart:io.
           if (outputFile != null) {
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Data backed up successfully!')) // Show success message for manual backup.
             );
@@ -358,6 +360,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           Navigator.of(context).pop(true); // Pop with true to indicate changes for refresh.
         }
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Restore cancelled.'))
         );
@@ -365,6 +368,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       }
     } catch (e) {
       AppLogger.log('Restore failed: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Restore failed: $e'))
       );
@@ -452,11 +456,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       AppLogger.log('Selected new storage directory: $selectedDirectory');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('appStoragePath', selectedDirectory);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Storage folder updated to: $selectedDirectory')),
       );
       AppLogger.log('Storage folder updated successfully.');
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Folder selection cancelled.')),
       );

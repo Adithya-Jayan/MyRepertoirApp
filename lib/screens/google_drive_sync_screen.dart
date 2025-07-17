@@ -55,10 +55,12 @@ class _GoogleDriveSyncScreenState extends State<GoogleDriveSyncScreen> {
       // This is a placeholder. In a real app, you'd implement full sync logic.
       // For now, we'll just call the placeholder sync method.
       await _googleDriveService.syncData(); // Call the Google Drive sync service.
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sync complete!')), // Show success message.
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sync failed: $e')), // Show error message if sync fails.
       );

@@ -78,9 +78,9 @@ class ThemeNotifier with ChangeNotifier {
       case 'Dark':
         return ThemeMode.dark;
       case 'System':
-      default:
         return ThemeMode.system;
     }
+    return ThemeMode.system; // Add a default return statement
   }
 
   /// Converts a [ThemeMode] enum value to its string representation.
