@@ -51,4 +51,24 @@ class MediaItem {
         googleDriveFileId: json['googleDriveFileId'],
         thumbnailPath: json['thumbnailPath'],
       );
+
+  MediaItem copyWith({
+    String? id,
+    MediaType? type,
+    String? pathOrUrl,
+    String? title,
+    String? description,
+    String? googleDriveFileId,
+    String? thumbnailPath,
+  }) {
+    return MediaItem(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      pathOrUrl: pathOrUrl ?? this.pathOrUrl,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      googleDriveFileId: googleDriveFileId ?? this.googleDriveFileId,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+    );
+  }
 }

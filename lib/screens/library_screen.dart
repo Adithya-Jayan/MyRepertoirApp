@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 
 import '../database/music_piece_repository.dart';
-import '../models/group.dart'; // Import Group model
+import '../models/group.dart';
 import '../models/music_piece.dart';
 
 import './library_app_bar.dart';
@@ -77,7 +77,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   late SharedPreferences _prefs;
 
   /// Flag to indicate if data is currently being loaded from the database.
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   /// Stores any error messages that occur during data loading or other operations.
   String? _errorMessage;
@@ -106,19 +106,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// A set to keep track of currently pressed logical keyboard keys.
   final Set<LogicalKeyboardKey> _pressedKeys = {};
 
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
     // Initialize the PageController for managing page views.
     _pageController = PageController();
     // Initialize the ScrollController for the horizontal group chips.
     _groupScrollController = ScrollController();
     // Asynchronously initialize SharedPreferences.
-    _initSharedPreferences();
+    await _initSharedPreferences();
     // Load initial data for the screen (groups, music pieces, settings).
-    _loadInitialData();
+    await _loadInitialData();
     // Request focus for the keyboard listener to capture key events.
     _focusNode.requestFocus();
+
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -169,9 +182,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// Initializes [SharedPreferences] and loads the saved sort option.
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _sortOption = _prefs.getString('sortOption') ?? 'alphabetical_asc'; // Load saved sort option or default to alphabetical ascending.
-    });
+    _sortOption = _prefs.getString('sortOption') ?? 'alphabetical_asc'; // Load saved sort option or default to alphabetical ascending.
   }
 
   /// Loads application settings, specifically the number of gallery columns.
@@ -179,7 +190,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// Determines a default number of columns based on the platform and loads
   /// the user's saved preference from SharedPreferences.
   Future<void> _loadSettings() async {
-        AppLogger.log('LibraryScreen: _loadSettings called');
+    AppLogger.log('LibraryScreen: _loadSettings called');
     int defaultColumns;
     // Set default column count based on the platform for optimal display.
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
@@ -192,9 +203,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     // Retrieve the saved gallery column count, or use the platform-specific default.
     final loadedColumns = _prefs.getInt('galleryColumns') ?? defaultColumns;
     AppLogger.log('Loaded galleryColumns: $loadedColumns');
-    setState(() {
-      _galleryColumns = loadedColumns; // Update the state with the loaded column count.
-    });
+    if (mounted) {
+      setState(() {
+        _galleryColumns = loadedColumns; // Update the state with the loaded column count.
+      });
+    }
   }
 
   /// Loads initial data for the screen, including groups, music pieces, and settings.
@@ -203,7 +216,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _loadInitialData() async {
     await _loadGroups(); // Load all available groups from the database.
     await _loadMusicPieces(); // Load all music pieces and apply initial filters/sorting.
-    _loadSettings(); // Load user-specific settings like gallery column count.
+    await _loadSettings(); // Load user-specific settings like gallery column count.
   }
 
   /// Loads all groups from the database and shared preferences.
@@ -213,20 +226,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
   /// shared preferences. It then combines and sorts them for display.
   Future<void> _loadGroups() async {
     AppLogger.log('LibraryScreen: _loadGroups called');
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
     try {
-      final prefs = await SharedPreferences.getInstance();
       final allDbGroups = await _repository.getGroups();
       AppLogger.log('LibraryScreen: Loaded ${allDbGroups.length} groups from DB.');
 
       // Get stored settings for special groups, with default values
-      final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
-      final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? false;
-      final ungroupedGroupOrder = prefs.getInt('ungrouped_group_order') ?? -1;
-      final ungroupedGroupIsHidden = prefs.getBool('ungrouped_group_isHidden') ?? false;
+      final allGroupOrder = _prefs.getInt('all_group_order') ?? -2;
+      final allGroupIsHidden = _prefs.getBool('all_group_isHidden') ?? false;
+      final ungroupedGroupOrder = _prefs.getInt('ungrouped_group_order') ?? -1;
+      final ungroupedGroupIsHidden = _prefs.getBool('ungrouped_group_isHidden') ?? false;
 
       final allGroup = Group(
         id: 'all_group',
@@ -252,48 +266,62 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return a.name.compareTo(b.name);
       });
 
-      setState(() {
-        _groups = combinedGroups;
-        AppLogger.log('LibraryScreen: All groups (including special): ${_groups.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
-        if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
-          _selectedGroupId = null;
-        }
-        _groupListKey = UniqueKey();
-      });
+      if (mounted) {
+        setState(() {
+          _groups = combinedGroups;
+          AppLogger.log('LibraryScreen: All groups (including special): ${_groups.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
+          if (_selectedGroupId != null && !_groups.any((g) => g.id == _selectedGroupId)) {
+            _selectedGroupId = null;
+          }
+          _groupListKey = UniqueKey();
+        });
+      }
     } catch (e) {
       _errorMessage = 'Failed to load groups: $e';
       AppLogger.log('LibraryScreen: Error loading groups: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   /// Loads all music pieces from the database and applies current filters and sorting.
   Future<void> _loadMusicPieces() async {
-    setState(() {
-      _isLoading = true; // Set loading state to true.
-      _errorMessage = null; // Clear any previous error messages.
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true; // Set loading state to true.
+        _errorMessage = null; // Clear any previous error messages.
+      });
+    }
     try {
       _allMusicPieces = await _repository.getMusicPieces(); // Fetch all music pieces from the repository.
 
       List<MusicPiece> currentPieces = _allMusicPieces; // Start with all pieces.
 
-      if (_selectedGroupId != null) {
-        currentPieces = currentPieces.where((piece) => piece.groupIds.contains(_selectedGroupId)).toList(); // Filter by selected group if any.
+      if (_selectedGroupId != null && _selectedGroupId != 'all_group') {
+        if (_selectedGroupId == 'ungrouped_group') {
+          currentPieces = currentPieces.where((piece) => piece.groupIds.isEmpty).toList();
+        } else {
+          currentPieces = currentPieces.where((piece) => piece.groupIds.contains(_selectedGroupId)).toList(); // Filter by selected group if any.
+        }
       }
 
       _musicPieces = _filterMusicPieces(currentPieces); // Apply search and filter options.
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load music pieces: $e'; // Set error message if loading fails.
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load music pieces: $e'; // Set error message if loading fails.
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false; // Set loading state to false after operation completes.
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Set loading state to false after operation completes.
+        });
+      }
     }
   }
 
@@ -374,8 +402,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
         // Sort by last practice time (ascending or descending).
         if (_sortOption == 'last_practiced_asc') {
+          if (aNeverPracticed) return 1;
+          if (bNeverPracticed) return -1;
           return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
         } else {
+          if (aNeverPracticed) return 1;
+          if (bNeverPracticed) return -1;
           return b.lastPracticeTime!.compareTo(a.lastPracticeTime!);
         }
       });
@@ -386,6 +418,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final visibleGroups = LibraryUtils.getVisibleGroups(_groups);
     return RawKeyboardListener(
       focusNode: _focusNode,
