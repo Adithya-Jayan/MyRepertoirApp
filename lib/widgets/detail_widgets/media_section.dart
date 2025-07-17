@@ -3,6 +3,9 @@ import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 
+/// A widget for displaying and editing a single MediaItem.
+///
+/// Allows users to modify the media item's title, path/URL, and set it as a thumbnail.
 class MediaSection extends StatelessWidget {
   final MediaItem item;
   final int index;
@@ -41,6 +44,7 @@ class MediaSection extends StatelessWidget {
                     },
                     isEditable: true,
                   ),
+                  // Display thumbnail switch only for images or media links with thumbnails
                   if (item.type == MediaType.image || (item.type == MediaType.mediaLink && item.thumbnailPath != null))
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -54,6 +58,7 @@ class MediaSection extends StatelessWidget {
                         ),
                       ],
                     ),
+                  // Display appropriate input field based on media type
                   if (item.type == MediaType.markdown)
                     TextFormField(
                       initialValue: item.pathOrUrl,
@@ -79,11 +84,11 @@ class MediaSection extends StatelessWidget {
                   index: index,
                   child: const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.drag_handle),
+                    child: Icon(Icons.drag_handle), // Drag handle for reordering.
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete),
+                  icon: const Icon(Icons.delete), // Button to delete the media item.
                   onPressed: () => onDeleteMediaItem(item),
                 ),
               ],

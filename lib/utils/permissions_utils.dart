@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+/// Requests necessary permissions for the application.
+/// Handles storage permissions for Android and iOS.
 Future<void> requestPermissions() async {
   AppLogger.log("Attempting to request permissions...");
   if (Platform.isAndroid) {

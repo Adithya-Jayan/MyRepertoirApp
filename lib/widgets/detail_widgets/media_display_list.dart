@@ -3,6 +3,9 @@ import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 
+/// A widget that displays a reorderable list of media items associated with a music piece.
+///
+/// It allows reordering of media items and persists the new order to the database.
 class MediaDisplayList extends StatefulWidget {
   final MusicPiece musicPiece;
   final Function(MusicPiece) onMusicPieceChanged;
@@ -42,9 +45,9 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
             ),
             const SizedBox(height: 8.0),
             ReorderableListView.builder(
-              buildDefaultDragHandles: false,
+              buildDefaultDragHandles: false, // Disable default handles
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(), // to allow SingleChildScrollView to work
               itemCount: _musicPiece.mediaItems.length,
               itemBuilder: (context, index) {
                 final item = _musicPiece.mediaItems[index];
@@ -67,6 +70,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                   }
                   final item = _musicPiece.mediaItems.removeAt(oldIndex);
                   _musicPiece.mediaItems.insert(newIndex, item);
+                  // Persist the new order to the database
                   _repository.updateMusicPiece(_musicPiece);
                   widget.onMusicPieceChanged(_musicPiece);
                 });

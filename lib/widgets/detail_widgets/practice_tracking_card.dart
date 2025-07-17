@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 
+/// A card widget to display and manage practice tracking for a music piece.
+///
+/// Allows enabling/disabling practice tracking, logging practice sessions,
+/// and viewing last practice time and practice count.
 class PracticeTrackingCard extends StatefulWidget {
   final MusicPiece musicPiece;
   final Function(MusicPiece) onMusicPieceChanged;
@@ -26,6 +30,11 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
     _musicPiece = widget.musicPiece;
   }
 
+  /// Formats the last practice time for display.
+  ///
+  /// Returns 'Never practiced' if [lastPracticeTime] is null.
+  /// Otherwise, returns a human-readable string like 'Today', 'Yesterday',
+  /// 'X days ago', or the date.
   String _formatLastPracticeTime(DateTime? lastPracticeTime) {
     if (lastPracticeTime == null) {
       return 'Never practiced';
@@ -44,15 +53,19 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
     }
   }
 
+  /// Logs a practice session for the current music piece.
+  ///
+  /// Updates the `lastPracticeTime` to the current time and increments the
+  /// `practiceCount`. The updated music piece is then persisted to the database.
   Future<void> _logPractice() async {
     setState(() {
       _musicPiece = _musicPiece.copyWith(
-        lastPracticeTime: DateTime.now(),
-        practiceCount: _musicPiece.practiceCount + 1,
+        lastPracticeTime: DateTime.now(), // Set last practice time to now.
+        practiceCount: _musicPiece.practiceCount + 1, // Increment practice count.
       );
     });
-    await _repository.updateMusicPiece(_musicPiece);
-    widget.onMusicPieceChanged(_musicPiece);
+    await _repository.updateMusicPiece(_musicPiece); // Persist changes to the database.
+    widget.onMusicPieceChanged(_musicPiece); // Notify parent about the change.
   }
 
   @override

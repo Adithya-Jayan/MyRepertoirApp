@@ -16,8 +16,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../utils/app_logger.dart';
-import '../widgets/tag_group_section.dart';
-import '../widgets/media_section.dart';
+import '../widgets/detail_widgets/tag_group_section.dart';
+import '../widgets/detail_widgets/media_section.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -138,6 +138,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           ));
         });
       } catch (e) {
+        if (!mounted) return;
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error copying file: $e'))

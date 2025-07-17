@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/tag_group.dart';
 
+/// A widget for displaying and editing a single TagGroup.
+///
+/// Allows users to modify the tag group's name, color, and associated tags.
 class TagGroupSection extends StatelessWidget {
   final TagGroup tagGroup;
   final int index;
@@ -21,8 +24,14 @@ class TagGroupSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure a TextEditingController exists for this tag group's name.
+    // Note: This approach of managing TextEditingController outside of StatefulWidget
+    // can lead to issues if not handled carefully, especially with reordering.
+    // For simplicity in this example, we assume external management.
+    final TextEditingController textEditingController = TextEditingController(text: tagGroup.name);
+
     return Card(
-      key: ValueKey(tagGroup.id),
+      key: ValueKey(tagGroup.id), // Unique key for ReorderableListView.
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -42,20 +51,24 @@ class TagGroupSection extends StatelessWidget {
                             if (textEditingValue.text == '') {
                               return const Iterable<String>.empty();
                             }
+                            // Provide tag group name suggestions based on user input.
                             return allTagGroupNames.where((String option) {
                               return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                             });
                           },
                           onSelected: (String selection) {
+                            // Update the tag group name when a suggestion is selected.
                             onUpdateTagGroup(tagGroup, tagGroup.copyWith(name: selection));
                           },
-                          fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                          fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                            // Use the provided fieldTextEditingController for the TextFormField.
                             return TextFormField(
-                              controller: textEditingController,
+                              controller: fieldTextEditingController,
                               focusNode: focusNode,
                               decoration: const InputDecoration(labelText: 'Tag Group Name'),
                               onChanged: (value) {
                                 // This is a temporary update, the final update is on submit
+                                // The actual state update happens on onFieldSubmitted or onSelected
                               },
                               onFieldSubmitted: (value) {
                                 onUpdateTagGroup(tagGroup, tagGroup.copyWith(name: value));
@@ -66,17 +79,55 @@ class TagGroupSection extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete), // Button to delete the tag group.
                         onPressed: () => onDeleteTagGroup(tagGroup),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8.0),
+                  // Color selection dropdown (assuming _colorOptions is passed or defined internally)
+                  // For this example, _colorOptions is not passed, so this part is commented out
+                  // or needs to be adapted based on how color options are provided.
+                  // Row(
+                  //   children: [
+                  //     const Text('Color:'),
+                  //     const SizedBox(width: 8.0),
+                  //     DropdownButton<int?>(
+                  //       value: tagGroup.color,
+                  //       onChanged: (int? newColor) {
+                  //         onUpdateTagGroup(tagGroup, tagGroup.copyWith(color: newColor));
+                  //       },
+                  //       items: _colorOptions.map((option) {
+                  //         return DropdownMenuItem<int?>(
+                  //           value: option['value'] as int?,
+                  //           child: Row(
+                  //             children: [
+                  //               if (option['value'] != null)
+                  //                 Container(
+                  //                   width: 20,
+                  //                   height: 20,
+                  //                   color: Color(option['value'] as int),
+                  //                 ),
+                  //               if (option['value'] != null) const SizedBox(width: 8),
+                  //               Text(option['name'] as String),
+                  //             ],
+                  //           ),
+                  //         );
+                  //       }).toList(),
+                  //     ),
+                  //   ],
+                  // ),
+                  const SizedBox(height: 8.0),
                   Wrap(
                     spacing: 8.0,
+                    runSpacing: 4.0,
                     children: tagGroup.tags.map((tag) {
+                      // Color utility function needs to be accessible or passed.
+                      // For now, assuming adjustColorForBrightness is available globally or removed.
+                      // final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
                       return Chip(
                         label: Text(tag),
+                        // backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
                         onDeleted: () {
                           final updatedTags = List<String>.from(tagGroup.tags)..remove(tag);
                           onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
@@ -89,6 +140,7 @@ class TagGroupSection extends StatelessWidget {
                       if (textEditingValue.text == '') {
                         return const Iterable<String>.empty();
                       }
+                      // Provide tag suggestions based on the selected tag group.
                       final tags = await onGetAllTagsForTagGroup(tagGroup.name);
                       return tags.where((String option) {
                         return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
@@ -100,9 +152,10 @@ class TagGroupSection extends StatelessWidget {
                         onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
                       }
                     },
-                    fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                    fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                      // Use the provided fieldTextEditingController for the TextFormField.
                       return TextFormField(
-                        controller: textEditingController,
+                        controller: fieldTextEditingController,
                         focusNode: focusNode,
                         decoration: const InputDecoration(labelText: 'Add new tag'),
                         onFieldSubmitted: (value) {
@@ -111,7 +164,7 @@ class TagGroupSection extends StatelessWidget {
                             final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
                             onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
                           }
-                          textEditingController.clear();
+                          fieldTextEditingController.clear(); // Clear the text field after submission.
                           onFieldSubmitted();
                         },
                       );
@@ -124,7 +177,7 @@ class TagGroupSection extends StatelessWidget {
               index: index,
               child: const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.drag_handle),
+                child: Icon(Icons.drag_handle), // Drag handle for reordering.
               ),
             ),
           ],

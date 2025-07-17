@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/screens/add_edit_piece_screen.dart';
-import 'package:repertoire/widgets/practice_tracking_card.dart';
-import 'package:repertoire/widgets/tag_groups_display.dart';
-import 'package:repertoire/widgets/media_display_list.dart';
+import 'package:repertoire/widgets/detail_widgets/practice_tracking_card.dart';
+import 'package:repertoire/widgets/detail_widgets/tag_groups_display.dart';
+import 'package:repertoire/widgets/detail_widgets/media_display_list.dart';
 
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
