@@ -36,7 +36,7 @@ class MusicPieceCard extends StatelessWidget {
             ? BorderSide(color: colorScheme.primary, width: 2) // Highlight border if selected.
             : BorderSide.none,
       ),
-      color: isSelected ? colorScheme.primary.withOpacity(0.1) : null, // Apply a subtle background color if selected.
+      color: isSelected ? colorScheme.primary.withAlpha(26) : null, // Apply a subtle background color if selected.
       child: InkWell(
         onTap: onTap, // Handle tap events.
         onLongPress: onLongPress, // Handle long press events.

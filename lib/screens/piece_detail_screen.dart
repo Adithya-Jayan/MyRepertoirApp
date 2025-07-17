@@ -1,4 +1,4 @@
-import 'package:repertoire/models/tag_group.dart';
+
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';

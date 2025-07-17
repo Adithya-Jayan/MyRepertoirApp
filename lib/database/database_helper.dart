@@ -1,5 +1,4 @@
 // Core Dart and Flutter imports
-import 'dart:convert'; // For JSON encoding and decoding
 import 'package:path/path.dart'; // For joining and normalizing paths
 import 'package:sqflite/sqflite.dart'; // SQLite database plugin for Flutter
 import 'package:path_provider/path_provider.dart'; // For accessing platform-specific file system paths
@@ -8,10 +7,8 @@ import 'package:path_provider/path_provider.dart'; // For accessing platform-spe
 import '../models/music_piece.dart'; // Data model for a music piece
 import '../models/tag.dart'; // Data model for a tag
 import '../models/group.dart'; // Data model for a group
-import '../models/tag_group.dart'; // Data model for a tag group
 
 // Utility imports
-import 'package:uuid/uuid.dart'; // For generating unique IDs
 import '../utils/dummy_data.dart'; // For initial dummy data insertion
 
 /// A singleton helper class for managing the SQLite database.

@@ -15,6 +15,7 @@ import '../models/group.dart'; // Data model for a group
 // Database and service imports
 import './database_helper.dart'; // Helper for SQLite database operations
 import '../services/media_storage_manager.dart'; // Manages storage of media files
+import '../utils/app_logger.dart'; // For logging
 
 /// A repository class that acts as an abstraction layer for data operations
 /// related to MusicPiece, Tag, and Group objects.
@@ -211,7 +212,7 @@ class MusicPieceRepository {
       // Get the application documents directory as a default save location.
       final directory = await getApplicationDocumentsDirectory();
       // This filePath is not directly used for saving via FilePicker, but can be for reference.
-      final filePath = '${directory.path}/repertoire_backup.json';
+      
 
       // Open a file picker dialog for the user to choose the save location and file name.
       final result = await FilePicker.platform.saveFile(
@@ -229,7 +230,7 @@ class MusicPieceRepository {
       }
       return null;
     } catch (e) {
-      print('Error exporting data: $e');
+      AppLogger.log('Error exporting data: $e');
       return null;
     }
   }
@@ -277,7 +278,7 @@ class MusicPieceRepository {
       }
       return false;
     } catch (e) {
-      print('Error importing data: $e');
+      AppLogger.log('Error importing data: $e');
       return false;
     }
   }

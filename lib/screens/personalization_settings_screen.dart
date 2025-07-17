@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
+import '../utils/app_logger.dart';
 
 /// A screen for managing personalization settings of the application.
 ///
@@ -35,7 +36,7 @@ class _PersonalizationSettingsScreenState
   }
 
   Future<void> _saveGalleryColumns(double value) async {
-    print('PersonalizationSettingsScreen: Saving galleryColumns: ${value.toInt()}');
+    AppLogger.log('PersonalizationSettingsScreen: Saving galleryColumns: ${value.toInt()}');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('galleryColumns', value.toInt());
     setState(() {

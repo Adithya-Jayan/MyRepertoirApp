@@ -52,11 +52,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 class _ControlsOverlay extends StatelessWidget {
   const _ControlsOverlay({required this.controller});
 
-  static const List<Duration> _exampleChapterTimes = <Duration>[
-    Duration(minutes: 5, seconds: 0),
-    Duration(minutes: 10, seconds: 0),
-    Duration(minutes: 15, seconds: 0),
-  ];
+  
 
   final VideoPlayerController controller;
 

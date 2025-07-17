@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:repertoire/utils/theme_notifier.dart'; // Import ThemeNotifier to access availableAccentColors
+
 import 'color_scheme_screen.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.

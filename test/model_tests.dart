@@ -12,7 +12,7 @@ void main() {
         MediaType.pdf,
         MediaType.image,
         MediaType.audio,
-        MediaType.videoLink,
+        MediaType.mediaLink,
       ]);
     });
   });
@@ -59,9 +59,7 @@ void main() {
         'id': 'mp1',
         'title': 'Test Piece',
         'artistComposer': 'Test Artist',
-        'genre': ['Classical', 'Piano'],
-        'instrumentation': 'Piano',
-        'difficulty': 'Easy',
+        
         'tags': ['Study', 'Practice'],
         'lastAccessed': DateTime.now().toIso8601String(),
         'isFavorite': true,
@@ -83,9 +81,9 @@ void main() {
       expect(musicPiece.id, 'mp1');
       expect(musicPiece.title, 'Test Piece');
       expect(musicPiece.artistComposer, 'Test Artist');
-      expect(musicPiece.genre, ['Classical', 'Piano']);
-      expect(musicPiece.instrumentation, 'Piano');
-      expect(musicPiece.difficulty, 'Easy');
+      
+      
+      
       expect(musicPiece.tags, ['Study', 'Practice']);
       expect(musicPiece.lastAccessed, isA<DateTime>());
       expect(musicPiece.isFavorite, true);
@@ -102,9 +100,7 @@ void main() {
         id: 'mp1',
         title: 'Test Piece',
         artistComposer: 'Test Artist',
-        genre: ['Classical', 'Piano'],
-        instrumentation: 'Piano',
-        difficulty: 'Easy',
+        
         tags: ['Study', 'Practice'],
         lastAccessed: DateTime.now(),
         isFavorite: true,

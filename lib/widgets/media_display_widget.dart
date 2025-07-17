@@ -1,14 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
-import '../screens/video_player_widget.dart';
 import 'dart:io';
 
 class MediaDisplayWidget extends StatefulWidget {
@@ -177,8 +174,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ),
         );
         break;
-      default:
-        content = Text('Unsupported media type: ${widget.mediaItem.type.name}');
+      
     }
 
     return Card(

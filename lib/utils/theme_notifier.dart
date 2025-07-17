@@ -91,7 +91,6 @@ class ThemeNotifier with ChangeNotifier {
       case ThemeMode.dark:
         return 'Dark';
       case ThemeMode.system:
-      default:
         return 'System';
     }
   }

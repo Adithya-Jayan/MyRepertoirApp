@@ -26,7 +26,7 @@ import 'dart:convert';
 // Repository for handling CRUD operations related to MusicPiece objects
 import 'database/music_piece_repository.dart';
 // Data model for a single music piece
-import 'models/music_piece.dart';
+
 // For internationalization, specifically date and time formatting
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -169,11 +169,11 @@ Future<void> _triggerAutoBackup() async {
 /// Requests necessary permissions for the application.
 /// Handles storage permissions for Android and iOS.
 Future<void> _requestPermissions() async {
-  print("Attempting to request permissions...");
+  AppLogger.log("Attempting to request permissions...");
   if (Platform.isAndroid) {
-    print("Platform is Android.");
+    AppLogger.log("Platform is Android.");
     var status = await Permission.manageExternalStorage.status;
-    print("Current Manage External Storage status: $status");
+    AppLogger.log("Current Manage External Storage status: $status");
     if (!status.isGranted) {
       AppLogger.log("Requesting Manage External Storage permission...");
       status = await Permission.manageExternalStorage.request();

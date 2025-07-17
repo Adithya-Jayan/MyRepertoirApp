@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import '../utils/app_logger.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -133,7 +134,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       });
     } catch (e) {
       // Log or display an error if groups fail to load.
-      print('Error loading groups: $e');
+      AppLogger.log('Error loading groups: $e');
     }
   }
 
@@ -232,7 +233,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           item.thumbnailPath = thumbnailFile.path;
         }
       } catch (e) {
-        print('Error fetching or saving thumbnail: $e');
+        AppLogger.log('Error fetching or saving thumbnail: $e');
       }
     }
   }

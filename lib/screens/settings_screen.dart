@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/screens/about_screen.dart';
 import 'package:repertoire/screens/help_screen.dart';
-import 'package:repertoire/screens/general_settings_screen.dart';
+
 import 'package:repertoire/screens/group_management_screen.dart'; // New import
 import 'package:repertoire/screens/backup_restore_screen.dart';
 import 'package:repertoire/screens/advanced_settings_screen.dart';

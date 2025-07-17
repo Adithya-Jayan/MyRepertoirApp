@@ -5,10 +5,10 @@ class TagGroupFilterDialog extends StatefulWidget {
   final Map<String, List<String>> initialSelectedTags;
 
   const TagGroupFilterDialog({
-    Key? key,
+    super.key,
     required this.availableTags,
     required this.initialSelectedTags,
-  }) : super(key: key);
+  });
 
   @override
   State<TagGroupFilterDialog> createState() => _TagGroupFilterDialogState();
