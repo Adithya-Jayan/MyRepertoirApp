@@ -8,7 +8,7 @@ class HelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help'), // Title of the Help screen.
+        title: const Text('Help & FAQ'), // Updated title for the Help screen.
       ),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -21,27 +21,43 @@ class HelpScreen extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              'Q: How do I add a new music piece?',
+              'Q: How do I quickly find a specific music piece?',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'A: Tap the floating action button (plus icon) on the main library screen and fill in the details.',
+              'A: Use the search bar at the top of the main library screen. You can search by title, artist/composer, or tags.',
             ),
             SizedBox(height: 10),
             Text(
-              'Q: How can I attach media to a music piece?',
+              'Q: Can I organize my music pieces into custom categories?',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'A: When adding or editing a music piece, use the "Add Media" button to select the type of media you want to attach.',
+              'A: Yes, navigate to Settings > Groups to create, edit, and manage your custom groups. You can assign pieces to multiple groups.',
             ),
             SizedBox(height: 10),
             Text(
-              'Q: How do I track my practice sessions?',
+              'Q: How do I change the app\'s appearance (theme, colors)?',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'A: On the music piece detail screen, enable "Practice Tracking" and then tap "Log Practice" to record a session.',
+              'A: Go to Settings > Personalization. Here you can switch between light/dark/system themes and choose an accent color.',
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Q: Is there a way to backup my data?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'A: Yes, visit Settings > Backup & Restore. You can perform manual backups or set up automatic backups to your local storage.',
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Q: How can I reorder media items or tag groups within a music piece?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'A: On the Add/Edit Piece screen, long-press and drag the media items or tag groups to reorder them.',
             ),
             SizedBox(height: 20),
             Text(
