@@ -23,6 +23,7 @@ class LibraryBody extends StatelessWidget {
   final Function(MusicPiece) onPieceSelected;
   final VoidCallback onReloadData;
   final VoidCallback onToggleMultiSelectMode;
+  final ValueChanged<String> onGroupSelected;
 
   const LibraryBody({
     super.key,
@@ -42,6 +43,7 @@ class LibraryBody extends StatelessWidget {
     required this.onPieceSelected,
     required this.onReloadData,
     required this.onToggleMultiSelectMode,
+    required this.onGroupSelected,
   });
 
   @override
@@ -57,6 +59,9 @@ class LibraryBody extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: Row(
                   children: visibleGroups.map((group) {
+                    if (visibleGroups.length == 1) {
+                      return const SizedBox.shrink();
+                    }
                     final isSelected = selectedGroupId == group.id || (selectedGroupId == null && group.id == 'all_group');
                     int pieceCount = 0;
                     if (group.id == 'all_group') {
@@ -71,12 +76,14 @@ class LibraryBody extends StatelessWidget {
                       key: ValueKey(group.id),
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: ChoiceChip(
-                        label: Text('${group.name} ($pieceCount)'),
+                        label: visibleGroups.length == 1 ? const SizedBox.shrink() : Text('${group.name} ($pieceCount)'),
                         selected: isSelected,
                         onSelected: (selected) {
                           if (selected) {
                             final index = visibleGroups.indexOf(group);
                             pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+                            // Add a callback to notify the parent about the selected group change
+                            onGroupSelected(group.id);
                           }
                         },
                         showCheckmark: false,
@@ -92,14 +99,12 @@ class LibraryBody extends StatelessWidget {
               controller: pageController,
               itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
               onPageChanged: (index) {
-                // This logic needs to be handled in the parent stateful widget
-                // as it involves updating _selectedGroupId and triggering _loadMusicPieces
-                // and _loadGroups.
                 groupScrollController.animateTo(
                   LibraryUtils.calculateScrollOffset(index, groupScrollController),
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.ease,
                 );
+                onGroupSelected(visibleGroups[index].id);
               },
               itemBuilder: (context, pageIndex) {
                 if (isLoading) {
@@ -112,9 +117,8 @@ class LibraryBody extends StatelessWidget {
                   if (visibleGroups.isNotEmpty) {
                     currentPageGroupId = visibleGroups[pageIndex].id;
                   } else {
-                    // If no groups are visible (meaning no custom groups and All/Ungrouped are hidden),
-                    // default to showing only ungrouped pieces.
-                    currentPageGroupId = 'ungrouped_group';
+                    // If no groups are visible, show an empty gallery.
+                    return const Center(child: Text('No visible groups.'));
                   }
 
                   // Filter music pieces for the current page's group.

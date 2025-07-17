@@ -238,7 +238,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       // Get stored settings for special groups, with default values
       final allGroupOrder = _prefs.getInt('all_group_order') ?? -2;
-      final allGroupIsHidden = _prefs.getBool('all_group_isHidden') ?? false;
+      final allGroupIsHidden = _prefs.getBool('all_group_isHidden') ?? true;
       final ungroupedGroupOrder = _prefs.getInt('ungrouped_group_order') ?? -1;
       final ungroupedGroupIsHidden = _prefs.getBool('ungrouped_group_isHidden') ?? false;
 
@@ -510,6 +510,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
             await _loadMusicPieces();
           },
           onToggleMultiSelectMode: _toggleMultiSelectMode,
+          onGroupSelected: (groupId) {
+            setState(() {
+              _selectedGroupId = groupId;
+              final index = _groups.indexWhere((g) => g.id == groupId);
+              if (_pageController.hasClients && index != -1) {
+                _pageController.jumpToPage(index);
+              }
+              _loadMusicPieces();
+            });
+          },
         ),
         // Display multi-select bottom app bar if in multi-select mode.
         bottomNavigationBar: _isMultiSelectMode
