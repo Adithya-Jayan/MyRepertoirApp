@@ -36,13 +36,15 @@ class LibraryActions {
         onToggleMultiSelectMode(); // Exit multi-select mode after deletion.
         onReloadMusicPieces(); // Reload music pieces to update the UI.
       } catch (e) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting pieces: $e')),
+          SnackBar(content: Text('Error deleting music pieces: $e')),
         );
       }
     }
   }
 
+  /// Handles modification of groups for selected music pieces.
   Future<void> modifyGroupOfSelectedPieces(BuildContext context, Set<String> selectedPieceIds, List<dynamic> groups) async {
     AppLogger.log('LibraryActions: modifyGroupOfSelectedPieces called');
     await showDialog(
@@ -142,6 +144,7 @@ class LibraryActions {
                   }
                 }
                 onReloadMusicPieces(); // Refresh the data after applying changes
+                if (!context.mounted) return;
                 Navigator.pop(context); // Close the dialog
               },
               child: const Text('Apply'),
@@ -150,6 +153,6 @@ class LibraryActions {
         );
       },
     );
-    onToggleMultiSelectMode(); // Exit multi-select mode after modification
+    this.onToggleMultiSelectMode(); // Exit multi-select mode after modification
   }
 }

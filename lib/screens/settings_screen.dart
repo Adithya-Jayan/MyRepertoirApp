@@ -69,11 +69,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
               );
               if (!mounted) return;
-              // If changes were made, pop this screen with true.
               if (changesMade == true) {
-                if (mounted) {
-                  Navigator.of(context).pop(true);
-                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Settings saved.')),
+                );
               }
             },
           ),

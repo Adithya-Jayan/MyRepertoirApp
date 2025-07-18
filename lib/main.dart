@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'screens/library_screen.dart';
-import 'screens/welcome_screen.dart';
 import 'dart:io';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'utils/theme_notifier.dart';
+import 'package:repertoire/utils/theme_notifier.dart';
 
 import 'package:just_audio_background/just_audio_background.dart';
 
-import 'utils/app_logger.dart';
-import 'utils/backup_utils.dart';
-import 'utils/permissions_utils.dart';
+import 'package:repertoire/utils/app_logger.dart';
+import 'package:repertoire/utils/backup_utils.dart';
+import 'package:repertoire/utils/permissions_utils.dart';
+import 'package:repertoire/screens/library_screen.dart';
+import 'package:repertoire/screens/welcome_screen.dart';
+
+
 
 /// Main entry point of the application.
 /// Initializes Flutter, sets up platform-specific database factories,
@@ -95,6 +97,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _setInitialDefaults().then((_) {
+      if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
     });
   }
@@ -140,7 +143,12 @@ class _MyAppState extends State<MyApp> {
               ),
               // Sets the home screen based on whether the app has run before.
               // If true, navigate to LibraryScreen; otherwise, navigate to WelcomeScreen.
-              home: snapshot.data == true ? const LibraryScreen() : const WelcomeScreen(),
+              
+            
+            home: (snapshot.data ?? false)
+                  ? const LibraryScreen()
+                  : const WelcomeScreen(),
+              debugShowCheckedModeBanner: false,
             );
           },
         );

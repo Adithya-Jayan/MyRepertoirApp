@@ -4,7 +4,7 @@ import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_card.dart';
 import 'package:repertoire/screens/piece_detail_screen.dart';
-import './library_utils.dart';
+
 import '../utils/app_logger.dart';
 
 class LibraryBody extends StatelessWidget {
@@ -101,11 +101,6 @@ class LibraryBody extends StatelessWidget {
               controller: pageController,
               itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
               onPageChanged: (index) {
-                groupScrollController.animateTo(
-                  LibraryUtils.calculateScrollOffset(index, groupScrollController),
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
                 onGroupSelected(visibleGroups[index].id);
               },
               itemBuilder: (context, pageIndex) {

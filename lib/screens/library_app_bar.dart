@@ -101,6 +101,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
                         ElevatedButton(
                           onPressed: () async {
                             final availableTags = await repository.getAllUniqueTagGroups();
+                            if (!context.mounted) return;
                             final selectedTags = await showDialog<Map<String, List<String>>>(
                               context: context,
                               builder: (context) => TagGroupFilterDialog(
@@ -212,8 +213,12 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
             final bool? changesMade = await Navigator.of(context).push<bool?>(
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
             );
+            if (!context.mounted) return;
             if (changesMade == true) {
               onSettingsChanged();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings saved.')),
+              );
             }
           },
         ),

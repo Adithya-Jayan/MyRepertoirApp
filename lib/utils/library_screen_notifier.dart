@@ -1,0 +1,273 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import '../utils/app_logger.dart';
+
+import '../database/music_piece_repository.dart';
+import '../models/group.dart';
+import '../models/music_piece.dart';
+
+import '../services/library_data_manager.dart';
+
+
+class LibraryScreenNotifier extends ChangeNotifier {
+  final MusicPieceRepository _repository;
+  late SharedPreferences prefs;
+  late LibraryDataManager _libraryDataManager;
+
+  // Notifiers for data and loading states
+  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier(true);
+  final ValueNotifier<String?> errorMessageNotifier = ValueNotifier(null);
+  final ValueNotifier<List<MusicPiece>> allMusicPiecesNotifier = ValueNotifier([]);
+  final ValueNotifier<List<MusicPiece>> musicPiecesNotifier = ValueNotifier([]);
+  final ValueNotifier<List<Group>> groupsNotifier = ValueNotifier([]);
+  final ValueNotifier<int> galleryColumnsNotifier = ValueNotifier(1);
+
+  // UI related state
+  bool _isInitialized = false;
+  bool _isLoading = true;
+  String? _errorMessage;
+  String _searchQuery = '';
+  Map<String, dynamic> _filterOptions = {'orderedTags': <String, List<String>>{}};
+  String _sortOption = 'A-Z (Title)';
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedPieceIds = {};
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
+  Timer? _debounceTimer;
+  final FocusNode _focusNode = FocusNode();
+  late PageController _pageController;
+  late ScrollController _groupScrollController;
+  Key _groupListKey = UniqueKey();
+  String? _selectedGroupId;
+
+  LibraryScreenNotifier(this._repository) {
+    _initialize();
+  }
+
+  bool get isInitialized => _isInitialized;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  String get searchQuery => _searchQuery;
+  Map<String, dynamic> get filterOptions => _filterOptions;
+  String get sortOption => _sortOption;
+  bool get isMultiSelectMode => _isMultiSelectMode;
+  Set<String> get selectedPieceIds => _selectedPieceIds;
+  Set<LogicalKeyboardKey> get pressedKeys => _pressedKeys;
+  FocusNode get focusNode => _focusNode;
+  PageController get pageController => _pageController;
+  ScrollController get groupScrollController => _groupScrollController;
+  Key get groupListKey => _groupListKey;
+  String? get selectedGroupId => _selectedGroupId;
+
+  bool get hasActiveFilters {
+    return _filterOptions.isNotEmpty &&
+        (_filterOptions['genres']?.isNotEmpty == true ||
+            _filterOptions['instrumentations']?.isNotEmpty == true ||
+            _filterOptions['difficulties']?.isNotEmpty == true ||
+            _filterOptions['orderedTags']?.values.any((list) => list.isNotEmpty) == true ||
+            _filterOptions['enablePracticeTracking'] == true ||
+            _filterOptions['minPracticeCount'] != null ||
+            _filterOptions['maxPracticeCount'] != null ||
+            _filterOptions['minPracticeDate'] != null ||
+            _filterOptions['maxPracticeDate'] != null);
+  }
+
+  Future<void> _initialize() async {
+    prefs = await SharedPreferences.getInstance();
+    _pageController = PageController();
+    _groupScrollController = ScrollController();
+    _libraryDataManager = LibraryDataManager(
+      _repository,
+      prefs,
+      isLoadingNotifier,
+      errorMessageNotifier,
+      allMusicPiecesNotifier,
+      musicPiecesNotifier,
+      groupsNotifier,
+      galleryColumnsNotifier,
+    );
+    await _libraryDataManager.loadInitialData();
+    _focusNode.requestFocus();
+
+    _isInitialized = true;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    AppLogger.log('LibraryScreenNotifier: dispose called');
+    _pageController.dispose();
+    _groupScrollController.dispose();
+    _focusNode.dispose();
+    _debounceTimer?.cancel();
+    isLoadingNotifier.dispose();
+    errorMessageNotifier.dispose();
+    allMusicPiecesNotifier.dispose();
+    musicPiecesNotifier.dispose();
+    groupsNotifier.dispose();
+    galleryColumnsNotifier.dispose();
+    super.dispose();
+  }
+
+  void toggleMultiSelectMode() {
+    _isMultiSelectMode = !_isMultiSelectMode;
+    if (!_isMultiSelectMode) {
+      _selectedPieceIds.clear();
+    }
+    notifyListeners();
+  }
+
+  void onPieceSelected(MusicPiece piece) {
+    if (_selectedPieceIds.contains(piece.id)) {
+      _selectedPieceIds.remove(piece.id);
+    } else {
+      _selectedPieceIds.add(piece.id);
+    }
+
+    if (_selectedPieceIds.isEmpty) {
+      _isMultiSelectMode = false;
+    }
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      loadMusicPieces();
+    });
+  }
+
+  void setFilterOptions(Map<String, dynamic> newFilterOptions) {
+    _filterOptions = newFilterOptions;
+    notifyListeners();
+  }
+
+  void clearFilter() {
+    _filterOptions = {'orderedTags': <String, List<String>>{}};
+    notifyListeners();
+    loadMusicPieces();
+  }
+
+  void setSortOption(String newSortOption) {
+    _sortOption = newSortOption;
+    notifyListeners();
+    loadMusicPieces();
+  }
+
+  void selectAllPieces() {
+    final allPieceIds = musicPiecesNotifier.value.map((p) => p.id).toSet();
+    if (_selectedPieceIds.length == allPieceIds.length) {
+      _selectedPieceIds.clear();
+    } else {
+      _selectedPieceIds.addAll(allPieceIds);
+    }
+    notifyListeners();
+  }
+
+  Future<void> loadSettings() async {
+    AppLogger.log('LibraryScreenNotifier: _loadSettings called');
+    int defaultColumns;
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
+      defaultColumns = 4;
+    } else if (defaultTargetPlatform == TargetPlatform.windows) {
+      defaultColumns = 6;
+    } else {
+      defaultColumns = 2;
+    }
+    final loadedColumns = prefs.getInt('galleryColumns') ?? defaultColumns;
+    AppLogger.log('Loaded galleryColumns: $loadedColumns');
+    galleryColumnsNotifier.value = loadedColumns;
+  }
+
+  Future<void> loadGroups() async {
+    AppLogger.log('LibraryScreenNotifier: _loadGroups called');
+    isLoadingNotifier.value = true;
+    errorMessageNotifier.value = null;
+    try {
+      final allDbGroups = await _repository.getGroups();
+      AppLogger.log('LibraryScreenNotifier: Loaded ${allDbGroups.length} groups from DB.');
+
+      final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
+      final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? true;
+      final ungroupedGroupOrder = prefs.getInt('ungrouped_group_order') ?? -1;
+      final ungroupedGroupIsHidden = prefs.getBool('ungrouped_group_isHidden') ?? false;
+
+      final allGroup = Group(
+        id: 'all_group',
+        name: 'All',
+        order: allGroupOrder,
+        isHidden: allGroupIsHidden,
+      );
+
+      final ungroupedGroup = Group(
+        id: 'ungrouped_group',
+        name: 'Ungrouped',
+        order: ungroupedGroupOrder,
+        isHidden: ungroupedGroupIsHidden,
+      );
+
+      List<Group> combinedGroups = [allGroup, ungroupedGroup, ...allDbGroups];
+
+      combinedGroups.sort((a, b) {
+        if (a.order != b.order) {
+          return a.order.compareTo(b.order);
+        }
+        return a.name.compareTo(b.name);
+      });
+
+      groupsNotifier.value = combinedGroups;
+      AppLogger.log('LibraryScreenNotifier: All groups (including special): ${groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
+      if (_selectedGroupId != null && !groupsNotifier.value.any((g) => g.id == _selectedGroupId)) {
+        _selectedGroupId = null;
+      }
+      _groupListKey = UniqueKey();
+    } catch (e) {
+      errorMessageNotifier.value = 'Failed to load groups: $e';
+      AppLogger.log('LibraryScreenNotifier: Error loading groups: $e');
+    } finally {
+      isLoadingNotifier.value = false;
+    }
+  }
+
+  Future<void> loadMusicPieces() async {
+    await _libraryDataManager.loadMusicPieces(
+      selectedGroupId: _selectedGroupId,
+      searchQuery: _searchQuery,
+      filterOptions: _filterOptions,
+      sortOption: _sortOption,
+    );
+    notifyListeners();
+  }
+
+  List<Group> getVisibleGroups() {
+    return groupsNotifier.value.where((group) => !group.isHidden).toList();
+  }
+
+  void onGroupSelected(String? groupId) {
+    _selectedGroupId = groupId;
+    final visibleGroups = getVisibleGroups();
+    final index = visibleGroups.indexWhere((g) => g.id == groupId);
+    if (pageController.hasClients && index != -1) {
+      pageController.jumpToPage(index);
+    }
+    loadMusicPieces();
+    notifyListeners();
+  }
+
+  Future<void> reloadData() async {
+    await _libraryDataManager.loadGroups();
+    await _libraryDataManager.loadMusicPieces(
+      selectedGroupId: _selectedGroupId,
+      searchQuery: _searchQuery,
+      filterOptions: _filterOptions,
+      sortOption: _sortOption,
+    );
+    await _libraryDataManager.loadSettings();
+    notifyListeners();
+  }
+}

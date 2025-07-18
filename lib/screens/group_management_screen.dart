@@ -218,17 +218,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   ///
   /// Updates the order of groups in the local list and persists the new order
   /// to the database or shared preferences for special groups.
-  void _onReorder(int oldIndex, int newIndex) async {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
-    final Group item = _groups.removeAt(oldIndex);
-    _groups.insert(newIndex, item);
-
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _saveGroupOrder() async {
+    AppLogger.log('GroupManagementScreen: _saveGroupOrder called');
     try {
       final prefs = await SharedPreferences.getInstance();
       for (int i = 0; i < _groups.length; i++) {
@@ -236,30 +227,24 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         _groups[i] = group;
         if (group.id == 'all_group') {
           await prefs.setInt('all_group_order', group.order);
-          AppLogger.log('GroupManagementScreen: Reordered All group to order: ${group.order}');
+          AppLogger.log('GroupManagementScreen: Saved All group order: ${group.order}');
         } else if (group.id == 'ungrouped_group') {
           await prefs.setInt('ungrouped_group_order', group.order);
-          AppLogger.log('GroupManagementScreen: Reordered Ungrouped group to order: ${group.order}');
+          AppLogger.log('GroupManagementScreen: Saved Ungrouped group order: ${group.order}');
         } else {
           await _repository.updateGroup(group);
-          AppLogger.log('GroupManagementScreen: Reordered group ${group.name} to order: ${group.order}');
+          AppLogger.log('GroupManagementScreen: Saved group ${group.name} order: ${group.order}');
         }
       }
       setState(() {
         _hasChanges = true;
       });
     } catch (e) {
+      AppLogger.log('GroupManagementScreen: Error saving group order: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving group order: $e')),
         );
-      }
-    }
-    finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -299,10 +284,13 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, _hasChanges);
-        return true;
+    return PopScope(
+      canPop: true, // Allow popping by default
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          // Save group order when leaving the screen
+          await _saveGroupOrder();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -318,7 +306,16 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
             ? const Center(child: CircularProgressIndicator())
             : ReorderableListView.builder(
                 itemCount: _groups.length,
-                onReorder: _onReorder,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    final Group item = _groups.removeAt(oldIndex);
+                    _groups.insert(newIndex, item);
+                    _saveGroupOrder(); // Call _saveGroupOrder here
+                  });
+                },
                 itemBuilder: (context, index) {
                   final group = _groups[index];
                   return ReorderableDragStartListener(

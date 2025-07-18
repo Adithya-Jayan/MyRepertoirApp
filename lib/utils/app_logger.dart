@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -21,7 +22,7 @@ class AppLogger {
         await _logFile!.create(recursive: true);
       }
     } catch (e) {
-      print('Error initializing log file: $e');
+      // print('[ERROR] $message');
       _logFile = null; // Disable file logging if initialization fails
     }
   }
@@ -32,7 +33,7 @@ class AppLogger {
 
     // Always print to console if debug logs are enabled
     if (_debugLogsEnabled) {
-      print(logMessage);
+      debugPrint(logMessage);
     }
 
     // Write to file if debug logs are enabled and log file is available
@@ -40,7 +41,7 @@ class AppLogger {
       try {
         _logFile!.writeAsStringSync('$logMessage\n', mode: FileMode.append);
       } catch (e) {
-        print('Error writing to log file: $e');
+        debugPrint('Error writing to log file: $e');
       }
     }
   }

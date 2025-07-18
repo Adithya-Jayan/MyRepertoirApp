@@ -10,11 +10,7 @@ import '../database/music_piece_repository.dart'; // Import repository
 import 'package:file_picker/file_picker.dart';
 
 import '../services/media_storage_manager.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:http/http.dart' as http;
-import 'dart:io';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:repertoire/services/thumbnail_service.dart';
 import '../utils/app_logger.dart';
 import '../widgets/detail_widgets/tag_group_section.dart';
 import '../widgets/detail_widgets/media_section.dart';
@@ -139,7 +135,6 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         });
       } catch (e) {
         if (!mounted) return;
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error copying file: $e'))
         );
@@ -212,28 +207,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
-  Future<void> _fetchAndSaveThumbnail(MediaItem item) async {
-    if (item.type == MediaType.mediaLink && item.pathOrUrl.isNotEmpty) {
-      try {
-        final metadata = await MetadataFetch.extract(item.pathOrUrl);
-        final thumbnailUrl = metadata?.image;
-
-        if (thumbnailUrl != null) {
-          final response = await http.get(Uri.parse(thumbnailUrl));
-          final documentsDir = await getApplicationDocumentsDirectory();
-          final thumbnailDir = Directory(p.join(documentsDir.path, _musicPiece.id, 'thumbnails'));
-          if (!await thumbnailDir.exists()) {
-            await thumbnailDir.create(recursive: true);
-          }
-          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
-          await thumbnailFile.writeAsBytes(response.bodyBytes);
-          item.thumbnailPath = thumbnailFile.path;
-        }
-      } catch (e) {
-        AppLogger.log('Error fetching or saving thumbnail: $e');
-      }
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +223,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 _formKey.currentState!.save();
 
                 for (var item in _musicPiece.mediaItems) {
-                  await _fetchAndSaveThumbnail(item);
+                  await ThumbnailService.fetchAndSaveThumbnail(item, _musicPiece.id);
                 }
 
                 _musicPiece.groupIds = _selectedGroupIds.toList();

@@ -30,6 +30,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
   Future<void> _loadInitialAccentColor() async {
     final prefs = await SharedPreferences.getInstance();
     final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.value;
+    if (!mounted) return;
     setState(() {
       _selectedAccentColor = Color(accentColorValue);
     });
