@@ -2,9 +2,9 @@
 
 # Repertoire: Music Practice & Sheet Music Organizer
 
-Repertoire is a cross-platform application designed for musicians, dancers, Magicians or performers to help manage their repertoir (Musical pieces/dance routines or even Magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless [Planned for the future] experience on mobile, web, and desktop platforms.
+Repertoire is a cross-platform application designed for musicians, dancers, Magicians or performers to help manage their repertoir (Musical pieces/dance routines or even Magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
 
-The app helps you keep your sheet music, notes, audio recordings, videos, links and practice logs neatly organized for every piece in your collection. With optional Google Drive integration (In the future), you can back up your data and access it from anywhere.
+The app helps you keep your sheet music, notes, audio recordings, videos, links and practice logs neatly organized for every piece in your collection.
 </div>
 
 ### App Screenshots
@@ -40,10 +40,7 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links 
     - Full-text search through titles, composers, and tags.
     - Filter your repertoire by genre, instrumentation, difficulty, and custom tags.
     - Filter by practice history (e.g., "practiced in the last week" or "never practiced").
-- **Data Persistence**:
-    - All data is stored locally in a robust SQLite database.
-    - **Manual Backup & Restore**: Manually export your entire library to a single JSON file for backup. You can specify the backup location and restore from a previously saved file.
-- **Material You Design**: A modern, adaptive UI that uses Material 3 design principles.
+- **Manual Backup & Restore**: Manually export your entire library to a single JSON file for backup. You can specify the backup location and restore from a previously saved file.
 
 ## Technologies & Key Packages
 
