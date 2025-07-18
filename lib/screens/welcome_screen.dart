@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'color_scheme_screen.dart';
+import '../utils/app_logger.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.
 ///
@@ -35,7 +36,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   @override
+  void dispose() {
+    AppLogger.log('WelcomeScreen: dispose called');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AppLogger.log('WelcomeScreen: build called');
     return Scaffold(
       body: Center(
         child: Padding(

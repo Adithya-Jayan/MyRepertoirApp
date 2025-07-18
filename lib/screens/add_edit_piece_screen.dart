@@ -237,6 +237,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('AddEditPieceScreen: build called');
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),

@@ -5,6 +5,7 @@ import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_card.dart';
 import 'package:repertoire/screens/piece_detail_screen.dart';
 import './library_utils.dart';
+import '../utils/app_logger.dart';
 
 class LibraryBody extends StatelessWidget {
   final List<Group> visibleGroups;
@@ -48,6 +49,7 @@ class LibraryBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('LibraryBody: build called');
     return Column(
       children: [
         // Group Toggling Bar (horizontal scrollable chips).

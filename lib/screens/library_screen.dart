@@ -144,6 +144,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   void dispose() {
+    AppLogger.log('LibraryScreen: dispose called');
     _pageController.dispose(); // Dispose the PageController to release resources.
     _groupScrollController.dispose(); // Dispose the ScrollController for group chips.
     _focusNode.dispose(); // Dispose the FocusNode.
@@ -422,6 +423,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('LibraryScreen: build called');
     if (!_isInitialized) {
       return const Scaffold(
         body: Center(

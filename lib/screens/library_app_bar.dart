@@ -3,6 +3,7 @@ import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/widgets/tag_group_filter_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/screens/settings_screen.dart';
+import 'package:repertoire/utils/app_logger.dart';
 
 class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isMultiSelectMode;
@@ -47,6 +48,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('LibraryAppBar: build called');
     return isMultiSelectMode ? _buildMultiSelectAppBar(context) : _buildDefaultAppBar(context);
   }
 

@@ -24,7 +24,14 @@ class SettingsScreen extends StatefulWidget {
 /// Builds the UI for the settings menu and handles navigation to sub-settings screens.
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
+  void dispose() {
+    AppLogger.log('SettingsScreen: dispose called');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AppLogger.log('SettingsScreen: build called');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'), // Title of the settings screen.

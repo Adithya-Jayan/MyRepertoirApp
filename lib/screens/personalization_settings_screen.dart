@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
@@ -29,9 +30,20 @@ class PersonalizationSettingsScreenState
   /// Loads the saved gallery column setting from [SharedPreferences].
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    int defaultColumns;
+    if (kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      defaultColumns = 4;
+    } else if (defaultTargetPlatform == TargetPlatform.windows) {
+      defaultColumns = 6;
+    } else {
+      defaultColumns = 2;
+    }
     setState(() {
       // Retrieve the saved column count, defaulting to 1 if not found.
-      _galleryColumns = (prefs.getInt('galleryColumns') ?? 1).toDouble();
+      _galleryColumns =
+          (prefs.getInt('galleryColumns') ?? defaultColumns).toDouble();
     });
   }
 
@@ -45,7 +57,14 @@ class PersonalizationSettingsScreenState
   }
 
   @override
+  void dispose() {
+    AppLogger.log('PersonalizationSettingsScreen: dispose called');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AppLogger.log('PersonalizationSettingsScreen: build called');
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
     return Scaffold(

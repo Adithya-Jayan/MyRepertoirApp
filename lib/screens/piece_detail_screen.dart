@@ -5,6 +5,7 @@ import 'package:repertoire/screens/add_edit_piece_screen.dart';
 import 'package:repertoire/widgets/detail_widgets/practice_tracking_card.dart';
 import 'package:repertoire/widgets/detail_widgets/tag_groups_display.dart';
 import 'package:repertoire/widgets/detail_widgets/media_display_list.dart';
+import '../utils/app_logger.dart';
 
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -26,7 +27,14 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   }
 
   @override
+  void dispose() {
+    AppLogger.log('PieceDetailScreen: dispose called');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AppLogger.log('PieceDetailScreen: build called');
     return Scaffold(
       appBar: AppBar(
         title: Text(_musicPiece.title),

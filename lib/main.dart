@@ -81,17 +81,33 @@ class _MyAppState extends State<MyApp> {
     return prefs.getBool('hasRunBefore') ?? false;
   }
 
+  Future<void> _setInitialDefaults() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasRunBefore = prefs.getBool('hasRunBefore') ?? false;
+    if (!hasRunBefore) {
+      await prefs.setInt('galleryColumns', 2);
+      await prefs.setBool('all_group_isHidden', true);
+      await prefs.setBool('hasRunBefore', true);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // Load the user's saved theme preference when the app starts.
-    // listen: false is used because we only need to call a method on ThemeNotifier,
-    // not rebuild the widget when ThemeNotifier changes.
-    Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+    _setInitialDefaults().then((_) {
+      Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+    });
+  }
+
+  @override
+  void dispose() {
+    AppLogger.log('MyApp: dispose called');
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('MyApp: build called');
     // FutureBuilder is used to asynchronously determine the initial screen
     // based on whether the app has been run before.
     return FutureBuilder<bool>(

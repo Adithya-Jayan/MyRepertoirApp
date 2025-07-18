@@ -44,6 +44,7 @@ class LibraryActions {
   }
 
   Future<void> modifyGroupOfSelectedPieces(BuildContext context, Set<String> selectedPieceIds, List<dynamic> groups) async {
+    AppLogger.log('LibraryActions: modifyGroupOfSelectedPieces called');
     await showDialog(
       context: context,
       builder: (context) {

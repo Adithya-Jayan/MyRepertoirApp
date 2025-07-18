@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_logger.dart';
 
 class LibraryBottomAppBar extends StatelessWidget {
   final bool isMultiSelectMode;
@@ -16,6 +17,7 @@ class LibraryBottomAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.log('LibraryBottomAppBar: build called');
     return BottomAppBar(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

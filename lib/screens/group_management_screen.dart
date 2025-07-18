@@ -254,7 +254,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
           SnackBar(content: Text('Error saving group order: $e')),
         );
       }
-    } finally {
+    }
+    finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -288,6 +289,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         AppLogger.log('GroupManagementScreen: Toggled visibility for group ${updatedGroup.name} to: ${updatedGroup.isHidden}');
       }
     }
+  }
+
+  @override
+  void dispose() {
+    AppLogger.log('GroupManagementScreen: dispose called');
+    super.dispose();
   }
 
   @override
