@@ -103,6 +103,8 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         return ThemeMode.dark;
       case 'System':
         return ThemeMode.system;
+      default:
+        return ThemeMode.system;
     }
   }
 

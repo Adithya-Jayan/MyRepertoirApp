@@ -12,7 +12,7 @@ import './library_app_bar.dart';
 import './library_bottom_app_bar.dart';
 import './library_actions.dart';
 import './library_body.dart';
-import './library_utils.dart';
+
 import './add_edit_piece_screen.dart';
 
 
@@ -327,6 +327,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     /// Filters and sorts a given list of [MusicPiece] objects based on
   /// the current search query, filter options, and sort option.
+  List<Group> _getVisibleGroups() {
+    return _groups.where((group) => !group.isHidden).toList();
+  }
+
   List<MusicPiece> _filterMusicPieces(List<MusicPiece> pieces) {
     List<MusicPiece> filteredPieces = pieces.where((piece) {
       final lowerCaseSearchQuery = _searchQuery.toLowerCase();
@@ -426,7 +430,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       );
     }
 
-    final visibleGroups = LibraryUtils.getVisibleGroups(_groups);
+    final visibleGroups = _getVisibleGroups();
     return KeyboardListener(
       focusNode: _focusNode,
       onKeyEvent: (event) {
@@ -513,7 +517,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           onGroupSelected: (groupId) {
             setState(() {
               _selectedGroupId = groupId;
-              final index = _groups.indexWhere((g) => g.id == groupId);
+              final visibleGroups = _getVisibleGroups();
+              final index = visibleGroups.indexWhere((g) => g.id == groupId);
               if (_pageController.hasClients && index != -1) {
                 _pageController.jumpToPage(index);
               }
