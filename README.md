@@ -5,6 +5,8 @@
 Repertoire is a cross-platform application designed for musicians, dancers, Magicians or performers to help manage their repertoir (Musical pieces/dance routines or even Magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
 
 The app helps you keep your sheet music, notes, audio recordings, videos, links and practice logs neatly organized for every piece in your collection.
+
+**[📱 Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
 </div>
 
 ### App Screenshots

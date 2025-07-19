@@ -68,10 +68,12 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             leading: const Icon(Icons.restore),
             title: const Text('Restore from Local Backup'),
             onTap: () async {
+              utils.AppLogger.log('BackupRestoreScreen: Starting restore process');
               await _backupRestoreService.restoreData(context: context);
               if (mounted) {
+                utils.AppLogger.log('BackupRestoreScreen: Restore completed, navigating back with refresh flag');
                 final currentContext = context;
-                Navigator.of(currentContext).pop(true);
+                Navigator.of(currentContext).pop(true); // Pass true to indicate data was restored
               }
             },
           ),

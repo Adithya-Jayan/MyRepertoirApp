@@ -44,6 +44,11 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
+      - name: Get build date
+        id: build_date
+        run: |
+          echo "date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_OUTPUT
+
       - name: Get current version and calculate new version
         id: version_calc
         run: |
@@ -198,7 +203,7 @@ jobs:
             
             ### Build Information
             - Flutter Version: 3.32.5
-            - Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            - Build Date: ${{ steps.build_date.outputs.date }}
           draft: false
           prerelease: ${{ steps.version_calc.outputs.IS_ALPHA }}
 

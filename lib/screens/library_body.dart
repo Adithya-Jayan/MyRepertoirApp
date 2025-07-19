@@ -89,7 +89,11 @@ class LibraryBody extends StatelessWidget {
                         onSelected: (selected) {
                           if (selected) {
                             final index = visibleGroups.indexOf(group);
-                            pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+                            pageController.animateToPage(
+                              index, 
+                              duration: const Duration(milliseconds: 300), 
+                              curve: Curves.easeInOut
+                            );
                             // Add a callback to notify the parent about the selected group change
                             onGroupSelected(group.id);
                           }
@@ -106,6 +110,10 @@ class LibraryBody extends StatelessWidget {
             child: PageView.builder(
               controller: pageController,
               itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
+              // Add page caching to reduce flickering
+              allowImplicitScrolling: true,
+              // Cache more pages to reduce flickering
+              padEnds: false,
               onPageChanged: (index) {
                 if (visibleGroups.isNotEmpty && index < visibleGroups.length) {
                   AppLogger.log('LibraryBody: Page changed to index: $index, group: ${visibleGroups[index].name}');
@@ -158,6 +166,7 @@ class LibraryBody extends StatelessWidget {
                   }
 
                   return MusicPieceGridView(
+                    key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}_${searchQuery.hashCode}_${filterOptions.hashCode}_${sortOption.hashCode}'),
                     musicPieces: filteredAndSortedPieces,
                     isLoading: isLoading,
                     errorMessage: errorMessage,

@@ -56,8 +56,8 @@ Future<void> main() async {
     ),
   );
 
-  // Triggers an automatic backup process after the app starts.
-  triggerAutoBackup();
+  // Note: Auto-backup is now triggered in MyApp after initialization
+  // triggerAutoBackup();
 }
 
 /// The root widget of the application.
@@ -100,6 +100,14 @@ class _MyAppState extends State<MyApp> {
     _setInitialDefaults().then((_) {
       if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+      
+      // Trigger auto-backup after app is fully initialized
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppLogger.log('MyApp: Triggering auto-backup after initialization');
+          triggerAutoBackup();
+        }
+      });
     });
   }
 

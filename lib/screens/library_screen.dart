@@ -94,13 +94,21 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
             onPopInvokedWithResult: (didPop, result) async {
               AppLogger.log('LibraryScreen: PopScope triggered - didPop: $didPop, result: $result');
               if (didPop) {
-                // Mark that we've returned from settings
-                _hasReturnedFromSettings = true;
-                // Always refresh data when returning to the library screen
-                // This ensures the gallery updates regardless of how the user navigates back
-                AppLogger.log('LibraryScreen: Reloading data after navigation return');
-                await notifier.reloadData();
-                AppLogger.log('LibraryScreen: Data reload completed');
+                // Check if we're returning from a restore operation
+                if (result == true) {
+                  AppLogger.log('LibraryScreen: Returning from restore operation, triggering full data reload');
+                  _shouldReloadOnNextBuild = true;
+                  // Mark that we've returned from settings to ensure reload
+                  _hasReturnedFromSettings = true;
+                } else {
+                  // Mark that we've returned from settings
+                  _hasReturnedFromSettings = true;
+                  // Always refresh data when returning to the library screen
+                  // This ensures the gallery updates regardless of how the user navigates back
+                  AppLogger.log('LibraryScreen: Reloading data after navigation return');
+                  await notifier.reloadData();
+                  AppLogger.log('LibraryScreen: Data reload completed');
+                }
               }
             },
             child: KeyboardListener(
@@ -135,28 +143,34 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                 valueListenable: notifier.galleryColumnsNotifier,
                 builder: (context, galleryColumns, child) {
                   AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
-                  return LibraryBody(
-                    key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
-                    visibleGroups: visibleGroups,
-                    selectedGroupId: notifier.selectedGroupId,
-                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                    musicPieces: notifier.musicPiecesNotifier.value,
-                    isLoading: notifier.isLoadingNotifier.value,
-                    errorMessage: notifier.errorMessageNotifier.value,
-                    galleryColumns: galleryColumns,
-                    groupListKey: notifier.groupListKey,
-                    pageController: notifier.pageController,
-                    groupScrollController: notifier.groupScrollController,
-                    isMultiSelectMode: notifier.isMultiSelectMode,
-                    selectedPieceIds: notifier.selectedPieceIds,
-                    pressedKeys: notifier.pressedKeys,
-                    onPieceSelected: notifier.onPieceSelected,
-                    onReloadData: notifier.reloadData,
-                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                    onGroupSelected: notifier.onGroupSelected,
-                    searchQuery: notifier.searchQuery,
-                    filterOptions: notifier.filterOptions,
-                    sortOption: notifier.sortOption,
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      AppLogger.log('LibraryScreen: Swipe-to-refresh triggered');
+                      await notifier.reloadData();
+                    },
+                    child: LibraryBody(
+                      key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
+                      visibleGroups: visibleGroups,
+                      selectedGroupId: notifier.selectedGroupId,
+                      allMusicPieces: notifier.allMusicPiecesNotifier.value,
+                      musicPieces: notifier.musicPiecesNotifier.value,
+                      isLoading: notifier.isLoadingNotifier.value,
+                      errorMessage: notifier.errorMessageNotifier.value,
+                      galleryColumns: galleryColumns,
+                      groupListKey: notifier.groupListKey,
+                      pageController: notifier.pageController,
+                      groupScrollController: notifier.groupScrollController,
+                      isMultiSelectMode: notifier.isMultiSelectMode,
+                      selectedPieceIds: notifier.selectedPieceIds,
+                      pressedKeys: notifier.pressedKeys,
+                      onPieceSelected: notifier.onPieceSelected,
+                      onReloadData: notifier.reloadData,
+                      onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                      onGroupSelected: notifier.onGroupSelected,
+                      searchQuery: notifier.searchQuery,
+                      filterOptions: notifier.filterOptions,
+                      sortOption: notifier.sortOption,
+                    ),
                   );
                 },
               ),

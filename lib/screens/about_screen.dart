@@ -3,6 +3,7 @@ import 'package:repertoire/models/contributor.dart';
 import 'package:repertoire/services/contributor_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'dart:io';
 
 /// A screen that displays information about the application.
 ///
@@ -83,41 +84,104 @@ class _AboutScreenState extends State<AboutScreen> {
 }
 
 /// A screen that displays a list of contributors to the project.
-class CreditsScreen extends StatelessWidget {
+class CreditsScreen extends StatefulWidget {
   const CreditsScreen({super.key});
+
+  @override
+  State<CreditsScreen> createState() => _CreditsScreenState();
+}
+
+class _CreditsScreenState extends State<CreditsScreen> {
+  List<Contributor>? _contributors;
+  bool _isPreloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContributorsAndPreloadAvatars();
+  }
+
+  Future<void> _loadContributorsAndPreloadAvatars() async {
+    try {
+      final contributors = await loadContributors();
+      setState(() {
+        _contributors = contributors;
+      });
+      
+      // Preload avatars in the background
+      setState(() {
+        _isPreloading = true;
+      });
+      
+      await ContributorImageCache.preloadAllAvatars(contributors);
+      
+      if (mounted) {
+        setState(() {
+          _isPreloading = false;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contributors'), // Title of the Contributors screen.
+        actions: [
+          if (_isPreloading)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+        ],
       ),
-      body: FutureBuilder<List<Contributor>>(
-        future: loadContributors(), // Asynchronously load contributor data.
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator()); // Show loading indicator.
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}')); // Display error message.
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No contributors found.')); // Message for no contributors.
-          } else {
-            final contributors = snapshot.data!;
-            return ListView.builder(
-              itemCount: contributors.length,
-              itemBuilder: (context, index) {
-                final c = contributors[index];
-                return ListTile(
-                  leading: CircleAvatar(backgroundImage: NetworkImage(c.avatarUrl)), // Contributor's avatar.
-                  title: Text(c.login), // Contributor's login name.
-                  subtitle: Text('${c.contributions} contributions'), // Number of contributions.
-                  onTap: () => launchUrl(Uri.parse(c.htmlUrl)), // Open contributor's GitHub profile.
-                );
-              },
-            );
-          }
-        },
-      ),
+      body: _contributors == null
+          ? const Center(child: CircularProgressIndicator()) // Show loading indicator.
+          : _contributors!.isEmpty
+              ? const Center(child: Text('No contributors found.')) // Message for no contributors.
+              : ListView.builder(
+                  itemCount: _contributors!.length,
+                  itemBuilder: (context, index) {
+                    final c = _contributors![index];
+                    return FutureBuilder<String?>(
+                      future: ContributorImageCache.getCachedAvatarPath(c.login, c.avatarUrl),
+                      builder: (context, snapshot) {
+                        Widget avatar;
+                        if (snapshot.hasData && snapshot.data != null) {
+                          // Use cached image
+                          avatar = CircleAvatar(
+                            backgroundImage: FileImage(File(snapshot.data!)),
+                          );
+                        } else {
+                          // Fallback to network image or placeholder
+                          avatar = CircleAvatar(
+                            backgroundImage: NetworkImage(c.avatarUrl),
+                            onBackgroundImageError: (exception, stackTrace) {
+                              // Handle error by showing a placeholder
+                            },
+                          );
+                        }
+                        
+                        return ListTile(
+                          leading: GestureDetector(
+                            onTap: () => launchUrl(Uri.parse(c.htmlUrl)), // Only avatar is clickable
+                            child: avatar,
+                          ),
+                          title: Text(c.login), // Contributor's login name.
+                          subtitle: Text('${c.contributions} contributions'), // Number of contributions.
+                          // Removed onTap from ListTile to prevent accidental clicks
+                        );
+                      },
+                    );
+                  },
+                ),
     );
   }
 }

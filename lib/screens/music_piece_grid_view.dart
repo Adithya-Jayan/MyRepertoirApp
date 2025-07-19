@@ -47,7 +47,7 @@ class MusicPieceGridView extends StatelessWidget {
         onReloadData();
       },
       child: GridView.builder(
-        key: ValueKey('grid_${galleryColumns}_${currentPageGroupId}'), // Force rebuild when columns change
+        key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}'), // More stable key
         padding: const EdgeInsets.all(8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: galleryColumns, // Number of columns in the grid.
@@ -60,6 +60,7 @@ class MusicPieceGridView extends StatelessWidget {
           final piece = musicPieces[index];
           final isSelected = selectedPieceIds.contains(piece.id);
           return MusicPieceCard(
+            key: ValueKey('card_${piece.id}_$isSelected'), // Add key for better performance
             piece: piece,
             isSelected: isSelected,
             onTap: () async {

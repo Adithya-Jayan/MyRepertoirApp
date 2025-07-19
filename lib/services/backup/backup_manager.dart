@@ -93,30 +93,67 @@ class BackupManager {
     final tempZipPath = p.join(tempDir.path, fileName);
     AppLogger.log('Temporary zip path: $tempZipPath');
 
-    final encoder = ZipFileEncoder();
-    encoder.create(tempZipPath);
-    AppLogger.log('Zip encoder created.');
+    // Create archive using the archive package directly
+    final archive = Archive();
+    
+    // Add JSON data
+    final jsonBytes = utf8.encode(jsonString);
+    final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonBytes.length, jsonBytes);
+    archive.addFile(jsonArchiveFile);
+    AppLogger.log('JSON data added to archive (${jsonBytes.length} bytes)');
 
-    final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonString.length, utf8.encode(jsonString));
-    encoder.addArchiveFile(jsonArchiveFile);
-    AppLogger.log('JSON data added to zip.');
-
+    // Add media files to archive
     final mediaDir = Directory(p.join(storagePath, 'media'));
     if (await mediaDir.exists()) {
-      AppLogger.log('Adding media directory to zip: ${mediaDir.path}');
-      encoder.addDirectory(mediaDir, includeDirName: false);
+      AppLogger.log('Adding media directory to archive: ${mediaDir.path}');
+      await _addMediaFilesToArchive(archive, mediaDir, storagePath);
+    } else {
+      AppLogger.log('Media directory does not exist: ${mediaDir.path}');
     }
 
-    encoder.close();
-    AppLogger.log('Zip encoder closed.');
+    // Encode the archive to zip format
+    final zipBytes = ZipEncoder().encode(archive);
+    AppLogger.log('Archive encoded to zip format (${zipBytes?.length ?? 0} bytes)');
 
-    final zipBytes = await File(tempZipPath).readAsBytes();
-    AppLogger.log('Zip bytes read from temporary file.');
+    if (zipBytes != null) {
+      return Uint8List.fromList(zipBytes);
+    } else {
+      throw Exception('Failed to create zip archive');
+    }
+  }
 
-    // Clean up temp file
-    await File(tempZipPath).delete();
+  /// Recursively adds media files to the archive
+  Future<void> _addMediaFilesToArchive(Archive archive, Directory dir, String basePath) async {
+    AppLogger.log('Scanning directory: ${dir.path}');
     
-    return Uint8List.fromList(zipBytes);
+    try {
+      final entities = await dir.list().toList();
+      int fileCount = 0;
+      
+      for (final entity in entities) {
+        if (entity is File) {
+          final relativePath = p.relative(entity.path, from: basePath);
+          AppLogger.log('Adding file to archive: $relativePath');
+          
+          try {
+            final bytes = await entity.readAsBytes();
+            final archiveFile = ArchiveFile(relativePath, bytes.length, bytes);
+            archive.addFile(archiveFile);
+            fileCount++;
+            AppLogger.log('Successfully added file: $relativePath (${bytes.length} bytes)');
+          } catch (e) {
+            AppLogger.log('Error reading file ${entity.path}: $e');
+          }
+        } else if (entity is Directory) {
+          // Recursively add subdirectories
+          await _addMediaFilesToArchive(archive, entity, basePath);
+        }
+      }
+      
+      AppLogger.log('Added $fileCount files from directory: ${dir.path}');
+    } catch (e) {
+      AppLogger.log('Error scanning directory ${dir.path}: $e');
+    }
   }
 
   /// Saves backup file to the specified location
@@ -128,10 +165,15 @@ class BackupManager {
       AppLogger.log('Handling manual backup save.');
       String? outputFile;
       if (Platform.isAndroid || Platform.isIOS) {
+        // On mobile, we can't control the initial directory, so we'll save to the app's documents directory
+        // and let the user move it if needed
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final defaultPath = p.join(appDocDir.path, fileName);
+        AppLogger.log('Mobile platform detected, using default path: $defaultPath');
+        
         outputFile = await FilePicker.platform.saveFile(
           fileName: fileName,
           bytes: zipBytes,
-          initialDirectory: backupDirectory,
         );
         AppLogger.log('FilePicker.saveFile (mobile) returned: $outputFile');
       } else {
