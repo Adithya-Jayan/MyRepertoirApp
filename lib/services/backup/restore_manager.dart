@@ -136,6 +136,85 @@ class RestoreManager {
     AppLogger.log('Media files extracted.');
   }
 
+  /// Restores app settings from backup data
+  Future<void> _restoreAppSettings(Map<String, dynamic>? appSettingsJson) async {
+    if (appSettingsJson == null) {
+      AppLogger.log('No app settings found in backup, skipping settings restore.');
+      return;
+    }
+
+    AppLogger.log('Restoring app settings from backup...');
+    
+    // Theme and appearance settings
+    if (appSettingsJson['appThemePreference'] != null) {
+      await prefs.setString('appThemePreference', appSettingsJson['appThemePreference']);
+    }
+    if (appSettingsJson['appAccentColor'] != null) {
+      await prefs.setInt('appAccentColor', appSettingsJson['appAccentColor']);
+    }
+    if (appSettingsJson['galleryColumns'] != null) {
+      await prefs.setInt('galleryColumns', appSettingsJson['galleryColumns']);
+    }
+    
+    // Backup settings
+    if (appSettingsJson['autoBackupEnabled'] != null) {
+      await prefs.setBool('autoBackupEnabled', appSettingsJson['autoBackupEnabled']);
+    }
+    if (appSettingsJson['autoBackupFrequency'] != null) {
+      await prefs.setInt('autoBackupFrequency', appSettingsJson['autoBackupFrequency']);
+    }
+    if (appSettingsJson['autoBackupCount'] != null) {
+      await prefs.setInt('autoBackupCount', appSettingsJson['autoBackupCount']);
+    }
+    if (appSettingsJson['lastAutoBackupTimestamp'] != null) {
+      await prefs.setInt('lastAutoBackupTimestamp', appSettingsJson['lastAutoBackupTimestamp']);
+    }
+    
+    // Storage and path settings
+    if (appSettingsJson['appStoragePath'] != null) {
+      await prefs.setString('appStoragePath', appSettingsJson['appStoragePath']);
+    }
+    
+    // Library and sorting settings
+    if (appSettingsJson['sortOption'] != null) {
+      await prefs.setString('sortOption', appSettingsJson['sortOption']);
+    }
+    
+    // Group visibility settings
+    if (appSettingsJson['all_group_isHidden'] != null) {
+      await prefs.setBool('all_group_isHidden', appSettingsJson['all_group_isHidden']);
+    }
+    if (appSettingsJson['ungrouped_group_isHidden'] != null) {
+      await prefs.setBool('ungrouped_group_isHidden', appSettingsJson['ungrouped_group_isHidden']);
+    }
+    if (appSettingsJson['all_group_order'] != null) {
+      await prefs.setInt('all_group_order', appSettingsJson['all_group_order']);
+    }
+    if (appSettingsJson['ungrouped_group_order'] != null) {
+      await prefs.setInt('ungrouped_group_order', appSettingsJson['ungrouped_group_order']);
+    }
+    
+    // Audio settings
+    if (appSettingsJson['audio_speed'] != null) {
+      await prefs.setDouble('audio_speed', appSettingsJson['audio_speed']);
+    }
+    if (appSettingsJson['audio_pitch'] != null) {
+      await prefs.setDouble('audio_pitch', appSettingsJson['audio_pitch']);
+    }
+    
+    // App state settings
+    if (appSettingsJson['hasRunBefore'] != null) {
+      await prefs.setBool('hasRunBefore', appSettingsJson['hasRunBefore']);
+    }
+    
+    // Debug settings
+    if (appSettingsJson['debugLogsEnabled'] != null) {
+      await prefs.setBool('debugLogsEnabled', appSettingsJson['debugLogsEnabled']);
+    }
+    
+    AppLogger.log('App settings restored successfully.');
+  }
+
   /// Performs the complete restore process
   Future<void> performRestore({BuildContext? context}) async {
     AppLogger.log('Initiating data restore.');
@@ -168,10 +247,12 @@ class RestoreManager {
         final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
         final List<dynamic> tagsJson = data['tags'] ?? [];
         final List<dynamic> groupsJson = data['groups'] ?? [];
+        final Map<String, dynamic>? appSettingsJson = data['appSettings'] as Map<String, dynamic>?;
 
         await _restoreMusicPieces(musicPiecesJson);
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
+        await _restoreAppSettings(appSettingsJson);
 
         // Extract media files
         final inputStream = InputFileStream(result.files.single.path!);

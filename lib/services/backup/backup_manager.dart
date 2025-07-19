@@ -29,11 +29,56 @@ class BackupManager {
     final tags = await _repository.getTags();
     final groups = await _repository.getGroups();
 
+    // Collect all app settings from SharedPreferences
+    final appSettings = await _collectAppSettings();
+
     return {
       'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
       'tags': tags.map((e) => e.toJson()).toList(),
       'groups': groups.map((e) => e.toJson()).toList(),
+      'appSettings': appSettings,
     };
+  }
+
+  /// Collects all app settings from SharedPreferences
+  Future<Map<String, dynamic>> _collectAppSettings() async {
+    final settings = <String, dynamic>{};
+    
+    // Theme and appearance settings
+    settings['appThemePreference'] = prefs.getString('appThemePreference');
+    settings['appAccentColor'] = prefs.getInt('appAccentColor');
+    settings['galleryColumns'] = prefs.getInt('galleryColumns');
+    
+    // Backup settings
+    settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
+    settings['autoBackupFrequency'] = prefs.getInt('autoBackupFrequency');
+    settings['autoBackupCount'] = prefs.getInt('autoBackupCount');
+    settings['lastAutoBackupTimestamp'] = prefs.getInt('lastAutoBackupTimestamp');
+    
+    // Storage and path settings
+    settings['appStoragePath'] = prefs.getString('appStoragePath');
+    
+    // Library and sorting settings
+    settings['sortOption'] = prefs.getString('sortOption');
+    
+    // Group visibility settings
+    settings['all_group_isHidden'] = prefs.getBool('all_group_isHidden');
+    settings['ungrouped_group_isHidden'] = prefs.getBool('ungrouped_group_isHidden');
+    settings['all_group_order'] = prefs.getInt('all_group_order');
+    settings['ungrouped_group_order'] = prefs.getInt('ungrouped_group_order');
+    
+    // Audio settings
+    settings['audio_speed'] = prefs.getDouble('audio_speed');
+    settings['audio_pitch'] = prefs.getDouble('audio_pitch');
+    
+    // App state settings
+    settings['hasRunBefore'] = prefs.getBool('hasRunBefore');
+    
+    // Debug settings
+    settings['debugLogsEnabled'] = prefs.getBool('debugLogsEnabled');
+    
+    AppLogger.log('Collected ${settings.length} app settings for backup');
+    return settings;
   }
 
   /// Creates a zip file with backup data
