@@ -11,6 +11,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
+import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
 

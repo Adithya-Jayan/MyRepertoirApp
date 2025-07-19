@@ -28,6 +28,7 @@ class BackupManager {
     final musicPieces = await _repository.getMusicPieces();
     final tags = await _repository.getTags();
     final groups = await _repository.getGroups();
+    final practiceLogs = await _repository.getAllPracticeLogs();
 
     // Collect all app settings from SharedPreferences
     final appSettings = await _collectAppSettings();
@@ -36,6 +37,7 @@ class BackupManager {
       'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
       'tags': tags.map((e) => e.toJson()).toList(),
       'groups': groups.map((e) => e.toJson()).toList(),
+      'practiceLogs': practiceLogs.map((e) => e.toJson()).toList(),
       'appSettings': appSettings,
     };
   }

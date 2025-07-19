@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS groups (
   isHidden INTEGER DEFAULT 0 -- New column for hidden status, default to 0 (false)
 )
 ''');
+
+    // Create the practice_logs table.
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS practice_logs (
+  id TEXT PRIMARY KEY,
+  musicPieceId TEXT NOT NULL,
+  timestamp TEXT NOT NULL, -- Stored as ISO 8601 string
+  notes TEXT, -- Optional notes about the practice session
+  durationMinutes INTEGER DEFAULT 0, -- Duration in minutes
+  FOREIGN KEY (musicPieceId) REFERENCES music_pieces (id) ON DELETE CASCADE
+)
+''');
   }
 
   /// Handles database schema upgrades.
@@ -61,6 +73,19 @@ CREATE TABLE IF NOT EXISTS groups (
       // For simplicity, we'll just drop and recreate if it's a fresh install
       // or handle it in the Group model's fromJson for existing data.
       // If isDefault column exists, it will be ignored by the new Group model.
+    }
+    if (oldVersion < 5) {
+      // Create practice_logs table for detailed practice tracking
+      await db.execute('''
+CREATE TABLE IF NOT EXISTS practice_logs (
+  id TEXT PRIMARY KEY,
+  musicPieceId TEXT NOT NULL,
+  timestamp TEXT NOT NULL,
+  notes TEXT,
+  durationMinutes INTEGER DEFAULT 0,
+  FOREIGN KEY (musicPieceId) REFERENCES music_pieces (id) ON DELETE CASCADE
+)
+''');
     }
   }
 

@@ -12,6 +12,7 @@ import '../../database/music_piece_repository.dart';
 import '../../models/music_piece.dart';
 import '../../models/tag.dart';
 import '../../models/group.dart';
+import '../../models/practice_log.dart';
 
 class RestoreManager {
   final MusicPieceRepository _repository;
@@ -108,6 +109,18 @@ class RestoreManager {
       }
     }
     AppLogger.log('Finished re-adding old groups.');
+  }
+
+  /// Restores practice logs from backup data
+  Future<void> _restorePracticeLogs(List<dynamic> practiceLogsJson) async {
+    await _repository.deleteAllPracticeLogs();
+    AppLogger.log('Deleted all existing practice logs.');
+    
+    for (var logJson in practiceLogsJson) {
+      final log = PracticeLog.fromJson(logJson);
+      await _repository.insertPracticeLog(log);
+    }
+    AppLogger.log('Restored ${practiceLogsJson.length} practice logs from backup.');
   }
 
   /// Restores media files from backup
@@ -247,11 +260,13 @@ class RestoreManager {
         final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
         final List<dynamic> tagsJson = data['tags'] ?? [];
         final List<dynamic> groupsJson = data['groups'] ?? [];
+        final List<dynamic> practiceLogsJson = data['practiceLogs'] ?? [];
         final Map<String, dynamic>? appSettingsJson = data['appSettings'] as Map<String, dynamic>?;
 
         await _restoreMusicPieces(musicPiecesJson);
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
+        await _restorePracticeLogs(practiceLogsJson);
         await _restoreAppSettings(appSettingsJson);
 
         // Extract media files

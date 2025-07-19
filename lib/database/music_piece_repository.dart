@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart'; // For generating unique identifiers
 import '../models/music_piece.dart'; // Data model for a music piece
 import '../models/tag.dart'; // Data model for a tag
 import '../models/group.dart'; // Data model for a group
+import '../models/practice_log.dart'; // Data model for practice logs
 
 // Database and service imports
 import './database_helper.dart'; // Helper for SQLite database operations
@@ -18,7 +19,7 @@ import '../services/media_storage_manager.dart'; // Manages storage of media fil
 import '../utils/app_logger.dart'; // For logging
 
 /// A repository class that acts as an abstraction layer for data operations
-/// related to MusicPiece, Tag, and Group objects.
+/// related to MusicPiece, Tag, Group, and PracticeLog objects.
 /// It interacts with the DatabaseHelper and MediaStorageManager to perform
 /// CRUD operations and manage associated media files.
 class MusicPieceRepository {
@@ -57,6 +58,11 @@ class MusicPieceRepository {
     }
   }
 
+  /// Retrieves [MusicPiece] objects by their IDs.
+  Future<List<MusicPiece>> getMusicPiecesByIds(List<String> ids) async {
+    return await dbHelper.getMusicPiecesByIds(ids);
+  }
+
   /// Updates an existing [MusicPiece] in the database.
   /// Returns the number of rows affected.
   Future<int> updateMusicPiece(MusicPiece piece) async {
@@ -92,41 +98,178 @@ class MusicPieceRepository {
     await dbHelper.deleteAllMusicPieces();
   }
 
-  /// Group Management Methods
+  /// Inserts a new [Tag] into the database.
+  Future<void> insertTag(Tag tag) async {
+    await dbHelper.insertTag(tag);
+  }
 
-  /// Creates a new [Group] in the database.
-  Future<void> createGroup(Group group) async {
+  /// Retrieves all [Tag] objects from the database.
+  Future<List<Tag>> getTags() async {
+    return await dbHelper.getTags();
+  }
+
+  /// Updates an existing [Tag] in the database.
+  Future<void> updateTag(Tag tag) async {
+    await dbHelper.updateTag(tag);
+  }
+
+  /// Deletes a [Tag] from the database by its ID.
+  Future<void> deleteTag(String id) async {
+    await dbHelper.deleteTag(id);
+  }
+
+  /// Deletes all [Tag] objects from the database.
+  Future<void> deleteAllTags() async {
+    await dbHelper.deleteAllTags();
+  }
+
+  /// Inserts a new [Group] into the database.
+  Future<void> insertGroup(Group group) async {
     await dbHelper.insertGroup(group);
   }
 
-  /// Retrieves a list of all [Group] objects from the database.
-  /// Excludes hidden groups unless [includeHidden] is true.
-  Future<List<Group>> getGroups({bool includeHidden = true}) async {
-    final groups = await dbHelper.getGroups();
-    return groups;
+  /// Retrieves all [Group] objects from the database.
+  Future<List<Group>> getGroups() async {
+    return await dbHelper.getGroups();
   }
 
   /// Updates an existing [Group] in the database.
-  /// Returns the number of rows affected.
-  Future<int> updateGroup(Group group) async {
-    return await dbHelper.updateGroup(group);
+  Future<void> updateGroup(Group group) async {
+    await dbHelper.updateGroup(group);
   }
 
-  /// Deletes a [Group] from the database by its [id].
-  /// When a group is deleted, its ID is removed from all music pieces
-  /// that were associated with it.
-  Future<int> deleteGroup(String id) async {
-    // Retrieve all music pieces to update their group memberships.
-    final piecesToUpdate = await dbHelper.getMusicPieces();
-    for (var piece in piecesToUpdate) {
-      // If a piece belongs to the deleted group, remove the group ID.
-      if (piece.groupIds.contains(id)) {
-        piece.groupIds.remove(id);
-        await dbHelper.updateMusicPiece(piece);
-      }
+  /// Deletes a [Group] from the database by its ID.
+  Future<void> deleteGroup(String id) async {
+    await dbHelper.deleteGroup(id);
+  }
+
+  /// Deletes all [Group] objects from the database.
+  Future<void> deleteAllGroups() async {
+    await dbHelper.deleteAllGroups();
+  }
+
+  /// Creates a new group with the given name and order.
+  Future<void> createGroup(Group group) async {
+    await insertGroup(group);
+  }
+
+  // PracticeLog operations
+  /// Inserts a new [PracticeLog] into the database.
+  Future<void> insertPracticeLog(PracticeLog log) async {
+    await dbHelper.insertPracticeLog(log);
+  }
+
+  /// Retrieves all [PracticeLog] objects for a specific music piece.
+  Future<List<PracticeLog>> getPracticeLogsForPiece(String musicPieceId) async {
+    return await dbHelper.getPracticeLogsForPiece(musicPieceId);
+  }
+
+  /// Retrieves all [PracticeLog] objects from the database.
+  Future<List<PracticeLog>> getAllPracticeLogs() async {
+    return await dbHelper.getAllPracticeLogs();
+  }
+
+
+
+  /// Deletes a [PracticeLog] from the database by its ID.
+  /// Also updates the music piece's practice tracking data.
+  Future<void> deletePracticeLog(String id) async {
+    // Get the practice log to find the music piece ID
+    final allLogs = await getAllPracticeLogs();
+    final logToDelete = allLogs.firstWhere((log) => log.id == id);
+    final musicPieceId = logToDelete.musicPieceId;
+    
+    // Delete the practice log
+    await dbHelper.deletePracticeLog(id);
+    
+    // Recalculate and update the music piece's practice tracking
+    await _updateMusicPiecePracticeTracking(musicPieceId);
+  }
+
+  /// Deletes all [PracticeLog] objects for a specific music piece.
+  /// Also updates the music piece's practice tracking data.
+  Future<void> deletePracticeLogsForPiece(String musicPieceId) async {
+    await dbHelper.deletePracticeLogsForPiece(musicPieceId);
+    
+    // Recalculate and update the music piece's practice tracking
+    await _updateMusicPiecePracticeTracking(musicPieceId);
+  }
+
+  /// Deletes all [PracticeLog] objects from the database.
+  /// Also updates all music pieces' practice tracking data.
+  Future<void> deleteAllPracticeLogs() async {
+    await dbHelper.deleteAllPracticeLogs();
+    
+    // Update all music pieces to reset their practice tracking
+    final allPieces = await getMusicPieces();
+    for (final piece in allPieces) {
+      final updatedPiece = piece.copyWith(
+        lastPracticeTime: null,
+        practiceCount: 0,
+      );
+      await updateMusicPiece(updatedPiece);
     }
-    // Finally, delete the group from the database.
-    return await dbHelper.deleteGroup(id);
+  }
+
+  /// Updates a practice log and recalculates the music piece's practice tracking.
+  Future<void> updatePracticeLog(PracticeLog log) async {
+    await dbHelper.updatePracticeLog(log);
+    
+    // Recalculate and update the music piece's practice tracking
+    await _updateMusicPiecePracticeTracking(log.musicPieceId);
+  }
+
+  /// Helper method to recalculate and update a music piece's practice tracking
+  /// based on its remaining practice logs.
+  Future<void> _updateMusicPiecePracticeTracking(String musicPieceId) async {
+    // Get the current practice logs for this piece
+    final practiceLogs = await getPracticeLogsForPiece(musicPieceId);
+    
+    // Get the music piece
+    final piece = (await getMusicPiecesByIds([musicPieceId])).first;
+    
+    if (practiceLogs.isEmpty) {
+      // No practice logs left, reset practice tracking
+      final updatedPiece = piece.copyWith(
+        lastPracticeTime: null,
+        practiceCount: 0,
+      );
+      await updateMusicPiece(updatedPiece);
+    } else {
+      // Calculate new practice count and last practice time
+      final practiceCount = practiceLogs.length;
+      final lastPracticeTime = practiceLogs
+          .map((log) => log.timestamp)
+          .reduce((a, b) => a.isAfter(b) ? a : b);
+      
+      final updatedPiece = piece.copyWith(
+        lastPracticeTime: lastPracticeTime,
+        practiceCount: practiceCount,
+      );
+      await updateMusicPiece(updatedPiece);
+    }
+  }
+
+  /// Logs a practice session for a music piece.
+  /// Creates a new practice log entry and updates the music piece's practice tracking.
+  Future<void> logPracticeSession(String musicPieceId, {String? notes, int durationMinutes = 0}) async {
+    final log = PracticeLog(
+      id: uuid.v4(),
+      musicPieceId: musicPieceId,
+      timestamp: DateTime.now(),
+      notes: notes,
+      durationMinutes: durationMinutes,
+    );
+    
+    await insertPracticeLog(log);
+    
+    // Update the music piece's practice tracking
+    final piece = (await getMusicPiecesByIds([musicPieceId])).first;
+    final updatedPiece = piece.copyWith(
+      lastPracticeTime: log.timestamp,
+      practiceCount: piece.practiceCount + 1,
+    );
+    await updateMusicPiece(updatedPiece);
   }
 
   /// Updates the group membership for a list of [MusicPiece] objects.
@@ -147,34 +290,6 @@ class MusicPieceRepository {
       }
       await dbHelper.updateMusicPiece(piece);
     }
-  }
-
-  /// Tag Management Methods
-
-  /// Inserts a new [Tag] into the database.
-  Future<void> insertTag(Tag tag) async {
-    await dbHelper.insertTag(tag);
-  }
-
-  /// Retrieves a list of all [Tag] objects from the database.
-  Future<List<Tag>> getTags() async {
-    return await dbHelper.getTags();
-  }
-
-  /// Deletes a [Tag] from the database by its [id].
-  /// Returns the number of rows affected.
-  Future<int> deleteTag(String id) async {
-    return await dbHelper.deleteTag(id);
-  }
-
-  /// Deletes all [Tag] objects from the database.
-  Future<void> deleteAllTags() async {
-    await dbHelper.deleteAllTags();
-  }
-
-  /// Deletes all [Group] objects from the database.
-  Future<void> deleteAllGroups() async {
-    await dbHelper.deleteAllGroups();
   }
 
   /// Retrieves all unique tag groups and their associated tags from all music pieces.

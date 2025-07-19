@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/music_piece.dart';
 import '../models/tag.dart';
 import '../models/group.dart';
+import '../models/practice_log.dart';
 import 'database_schema.dart';
 import 'database_operations.dart';
 
@@ -43,7 +44,7 @@ class DatabaseHelper {
     // Open the database.
     final db = await openDatabase(
       path,
-      version: 4, // Current database version
+      version: 5, // Current database version
       onCreate: (db, version) async {
         await DatabaseSchema.createTables(db, version);
         await DatabaseSchema.insertDummyData(db);
@@ -168,6 +169,51 @@ class DatabaseHelper {
   Future<void> deleteAllGroups() async {
     final ops = await operations;
     await ops.deleteAllGroups();
+  }
+
+  // PracticeLog operations
+  /// Inserts a new PracticeLog into the database or replaces an existing one if the ID matches.
+  Future<void> insertPracticeLog(PracticeLog log) async {
+    final ops = await operations;
+    await ops.insertPracticeLog(log);
+  }
+
+  /// Retrieves all PracticeLog objects for a specific music piece.
+  Future<List<PracticeLog>> getPracticeLogsForPiece(String musicPieceId) async {
+    final ops = await operations;
+    return await ops.getPracticeLogsForPiece(musicPieceId);
+  }
+
+  /// Retrieves all PracticeLog objects from the database.
+  Future<List<PracticeLog>> getAllPracticeLogs() async {
+    final ops = await operations;
+    return await ops.getAllPracticeLogs();
+  }
+
+  /// Updates an existing PracticeLog in the database.
+  /// Returns the number of rows affected (should be 1 if successful).
+  Future<int> updatePracticeLog(PracticeLog log) async {
+    final ops = await operations;
+    return await ops.updatePracticeLog(log);
+  }
+
+  /// Deletes a PracticeLog from the database by its ID.
+  /// Returns the number of rows affected (should be 1 if successful).
+  Future<int> deletePracticeLog(String id) async {
+    final ops = await operations;
+    return await ops.deletePracticeLog(id);
+  }
+
+  /// Deletes all PracticeLog objects for a specific music piece.
+  Future<void> deletePracticeLogsForPiece(String musicPieceId) async {
+    final ops = await operations;
+    await ops.deletePracticeLogsForPiece(musicPieceId);
+  }
+
+  /// Deletes all PracticeLog objects from the database.
+  Future<void> deleteAllPracticeLogs() async {
+    final ops = await operations;
+    await ops.deleteAllPracticeLogs();
   }
 
   /// Closes the database connection.

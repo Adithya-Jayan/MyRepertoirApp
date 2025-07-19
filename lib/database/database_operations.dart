@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/music_piece.dart';
 import '../models/tag.dart';
 import '../models/group.dart';
+import '../models/practice_log.dart';
 
 class DatabaseOperations {
   final Database db;
@@ -99,7 +100,7 @@ class DatabaseOperations {
   }
 
   Future<List<Group>> getGroups() async {
-    final result = await db.query('groups');
+    final result = await db.query('groups', orderBy: "'order' ASC");
     return result.map((json) => Group.fromJson(json)).toList();
   }
 
@@ -122,5 +123,54 @@ class DatabaseOperations {
 
   Future<void> deleteAllGroups() async {
     await db.delete('groups');
+  }
+
+  // PracticeLog operations
+  Future<void> insertPracticeLog(PracticeLog log) async {
+    await db.insert('practice_logs', log.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<PracticeLog>> getPracticeLogsForPiece(String musicPieceId) async {
+    final result = await db.query(
+      'practice_logs',
+      where: 'musicPieceId = ?',
+      whereArgs: [musicPieceId],
+      orderBy: 'timestamp DESC',
+    );
+    return result.map((json) => PracticeLog.fromJson(json)).toList();
+  }
+
+  Future<List<PracticeLog>> getAllPracticeLogs() async {
+    final result = await db.query('practice_logs', orderBy: 'timestamp DESC');
+    return result.map((json) => PracticeLog.fromJson(json)).toList();
+  }
+
+  Future<int> updatePracticeLog(PracticeLog log) async {
+    return await db.update(
+      'practice_logs',
+      log.toJson(),
+      where: 'id = ?',
+      whereArgs: [log.id],
+    );
+  }
+
+  Future<int> deletePracticeLog(String id) async {
+    return await db.delete(
+      'practice_logs',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deletePracticeLogsForPiece(String musicPieceId) async {
+    await db.delete(
+      'practice_logs',
+      where: 'musicPieceId = ?',
+      whereArgs: [musicPieceId],
+    );
+  }
+
+  Future<void> deleteAllPracticeLogs() async {
+    await db.delete('practice_logs');
   }
 } 

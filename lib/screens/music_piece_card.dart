@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/utils/app_logger.dart';
+import 'package:repertoire/utils/practice_indicator_utils.dart';
 import '../models/music_piece.dart';
 
 /// A widget that displays a single music piece as a card in a grid or list.
@@ -66,7 +67,7 @@ class MusicPieceCard extends StatelessWidget {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.green, // Green dot for enabled tracking
+                      color: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),

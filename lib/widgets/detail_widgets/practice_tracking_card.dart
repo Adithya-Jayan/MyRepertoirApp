@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
+import '../../screens/practice_logs_screen.dart';
 
 /// A card widget to display and manage practice tracking for a music piece.
 ///
@@ -30,6 +31,29 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
     _musicPiece = widget.musicPiece;
   }
 
+  @override
+  void didUpdateWidget(PracticeTrackingCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.musicPiece.id != widget.musicPiece.id) {
+      _musicPiece = widget.musicPiece;
+    }
+  }
+
+  /// Refreshes the music piece data from the database.
+  Future<void> _refreshMusicPieceData() async {
+    try {
+      final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
+      if (updatedPiece != null && mounted) {
+        setState(() {
+          _musicPiece = updatedPiece;
+        });
+        widget.onMusicPieceChanged(_musicPiece);
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
   /// Formats the last practice time for display.
   ///
   /// Returns 'Never practiced' if [lastPracticeTime] is null.
@@ -55,17 +79,30 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
 
   /// Logs a practice session for the current music piece.
   ///
-  /// Updates the `lastPracticeTime` to the current time and increments the
-  /// `practiceCount`. The updated music piece is then persisted to the database.
+  /// Creates a new practice log entry and updates the music piece's practice tracking.
   Future<void> _logPractice() async {
-    setState(() {
-      _musicPiece = _musicPiece.copyWith(
-        lastPracticeTime: DateTime.now(), // Set last practice time to now.
-        practiceCount: _musicPiece.practiceCount + 1, // Increment practice count.
-      );
-    });
-    await _repository.updateMusicPiece(_musicPiece); // Persist changes to the database.
-    widget.onMusicPieceChanged(_musicPiece); // Notify parent about the change.
+    try {
+      await _repository.logPracticeSession(_musicPiece.id);
+      
+      // Refresh the music piece data
+      final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
+      if (updatedPiece != null) {
+        setState(() {
+          _musicPiece = updatedPiece;
+        });
+        widget.onMusicPieceChanged(_musicPiece);
+      }
+    } catch (e) {
+      // Fallback to old method if practice logs are not available
+      setState(() {
+        _musicPiece = _musicPiece.copyWith(
+          lastPracticeTime: DateTime.now(),
+          practiceCount: _musicPiece.practiceCount + 1,
+        );
+      });
+      await _repository.updateMusicPiece(_musicPiece);
+      widget.onMusicPieceChanged(_musicPiece);
+    }
   }
 
   @override
@@ -98,9 +135,34 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
                 children: [
                   Text(_formatLastPracticeTime(_musicPiece.lastPracticeTime)),
                   Text('Practice Count: ${_musicPiece.practiceCount}'),
-                  ElevatedButton(
-                    onPressed: _logPractice,
-                    child: const Text('Log Practice'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _logPractice,
+                          child: const Text('Log Practice'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PracticeLogsScreen(
+                                  musicPiece: _musicPiece,
+                                ),
+                              ),
+                            );
+                            // Refresh data when returning from practice logs screen
+                            await _refreshMusicPieceData();
+                          },
+                          icon: const Icon(Icons.history),
+                          label: const Text('View Logs'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
