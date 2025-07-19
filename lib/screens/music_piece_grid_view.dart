@@ -47,6 +47,7 @@ class MusicPieceGridView extends StatelessWidget {
         onReloadData();
       },
       child: GridView.builder(
+        key: ValueKey('grid_${galleryColumns}_${currentPageGroupId}'), // Force rebuild when columns change
         padding: const EdgeInsets.all(8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: galleryColumns, // Number of columns in the grid.

@@ -188,8 +188,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
       defaultColumns = 2;
     }
     final loadedColumns = prefs.getInt('galleryColumns') ?? defaultColumns;
-    AppLogger.log('Loaded galleryColumns: $loadedColumns');
+    AppLogger.log('LibraryScreenNotifier: Setting galleryColumns from $galleryColumnsNotifier.value to $loadedColumns');
     galleryColumnsNotifier.value = loadedColumns;
+    AppLogger.log('LibraryScreenNotifier: galleryColumns updated to: ${galleryColumnsNotifier.value}');
   }
 
   Future<void> loadGroups() async {
@@ -305,6 +306,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> reloadData() async {
+    AppLogger.log('LibraryScreenNotifier: reloadData called');
     await _libraryDataManager.loadGroups();
     await _libraryDataManager.loadMusicPieces(
       selectedGroupId: _selectedGroupId,
@@ -313,6 +315,16 @@ class LibraryScreenNotifier extends ChangeNotifier {
       sortOption: _sortOption,
     );
     await loadSettings(); // Call the notifier's loadSettings method
+    AppLogger.log('LibraryScreenNotifier: reloadData completed, notifying listeners');
+    AppLogger.log('LibraryScreenNotifier: Final galleryColumns value: ${galleryColumnsNotifier.value}');
+    notifyListeners();
+  }
+
+  /// Reloads only the settings and forces a UI rebuild
+  Future<void> reloadSettings() async {
+    AppLogger.log('LibraryScreenNotifier: reloadSettings called');
+    await loadSettings();
+    AppLogger.log('LibraryScreenNotifier: reloadSettings completed, notifying listeners');
     notifyListeners();
   }
 }

@@ -55,7 +55,7 @@ class LibraryBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.log('LibraryBody: build called');
+    AppLogger.log('LibraryBody: build called with galleryColumns: $galleryColumns');
     return Column(
       children: [
         // Group Toggling Bar (horizontal scrollable chips).

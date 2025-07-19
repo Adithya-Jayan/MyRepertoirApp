@@ -5,7 +5,7 @@ import 'package:repertoire/utils/color_utils.dart';
 /// A widget for displaying and editing a single TagGroup.
 ///
 /// Allows users to modify the tag group's name, color, and associated tags.
-class TagGroupSection extends StatelessWidget {
+class TagGroupSection extends StatefulWidget {
   final TagGroup tagGroup;
   final int index;
   final List<String> allTagGroupNames;
@@ -22,6 +22,36 @@ class TagGroupSection extends StatelessWidget {
     required this.onDeleteTagGroup,
     required this.onGetAllTagsForTagGroup,
   });
+
+  @override
+  State<TagGroupSection> createState() => _TagGroupSectionState();
+}
+
+class _TagGroupSectionState extends State<TagGroupSection> {
+  late TextEditingController _nameController;
+  late FocusNode _nameFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.tagGroup.name);
+    _nameFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _nameFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(TagGroupSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tagGroup.name != widget.tagGroup.name) {
+      _nameController.text = widget.tagGroup.name;
+    }
+  }
 
   static const List<int?> _colorOptions = [
     null, // No color option
@@ -42,7 +72,7 @@ class TagGroupSection extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
 
     return Card(
-      key: ValueKey(tagGroup.id), // Unique key for ReorderableListView.
+      key: ValueKey(widget.tagGroup.id), // Unique key for ReorderableListView.
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -57,41 +87,41 @@ class TagGroupSection extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Autocomplete<String>(
-                          initialValue: TextEditingValue(text: tagGroup.name),
+                          fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                            // Use our own controller to track the current value
+                            return TextFormField(
+                              controller: _nameController,
+                              focusNode: _nameFocusNode,
+                              decoration: const InputDecoration(labelText: 'Tag Group Name'),
+                              onChanged: (value) {
+                                // Update the tag group name immediately as user types
+                                widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
+                              },
+                              onFieldSubmitted: (value) {
+                                widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
+                                onFieldSubmitted();
+                              },
+                            );
+                          },
                           optionsBuilder: (TextEditingValue textEditingValue) {
                             if (textEditingValue.text == '') {
                               return const Iterable<String>.empty();
                             }
                             // Provide tag group name suggestions based on user input.
-                            return allTagGroupNames.where((String option) {
+                            return widget.allTagGroupNames.where((String option) {
                               return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                             });
                           },
                           onSelected: (String selection) {
                             // Update the tag group name when a suggestion is selected.
-                            onUpdateTagGroup(tagGroup, tagGroup.copyWith(name: selection));
-                          },
-                          fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                            // Use the provided fieldTextEditingController for the TextFormField.
-                            return TextFormField(
-                              controller: fieldTextEditingController,
-                              focusNode: focusNode,
-                              decoration: const InputDecoration(labelText: 'Tag Group Name'),
-                              onChanged: (value) {
-                                // This is a temporary update, the final update is on submit
-                                // The actual state update happens on onFieldSubmitted or onSelected
-                              },
-                              onFieldSubmitted: (value) {
-                                onUpdateTagGroup(tagGroup, tagGroup.copyWith(name: value));
-                                onFieldSubmitted();
-                              },
-                            );
+                            _nameController.text = selection;
+                            widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
                           },
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete), // Button to delete the tag group.
-                        onPressed: () => onDeleteTagGroup(tagGroup),
+                        onPressed: () => widget.onDeleteTagGroup(widget.tagGroup),
                       ),
                     ],
                   ),
@@ -101,11 +131,11 @@ class TagGroupSection extends StatelessWidget {
                       const Text('Color:'),
                       const SizedBox(width: 8.0),
                       DropdownButton<int?>(
-                        value: _colorOptions.contains(tagGroup.color) 
-                            ? tagGroup.color 
+                        value: _colorOptions.contains(widget.tagGroup.color) 
+                            ? widget.tagGroup.color 
                             : null,
                         onChanged: (int? newColor) {
-                          onUpdateTagGroup(tagGroup, tagGroup.copyWith(color: newColor));
+                          widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: newColor));
                         },
                         items: _colorOptions.map((color) {
                           return DropdownMenuItem<int?>(
@@ -146,14 +176,14 @@ class TagGroupSection extends StatelessWidget {
                   Wrap(
                     spacing: 8.0,
                     runSpacing: 4.0,
-                    children: tagGroup.tags.map((tag) {
-                      final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
+                    children: widget.tagGroup.tags.map((tag) {
+                      final color = widget.tagGroup.color != null ? Color(widget.tagGroup.color!) : null;
                       return Chip(
                         label: Text(tag),
                         backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
                         onDeleted: () {
-                          final updatedTags = List<String>.from(tagGroup.tags)..remove(tag);
-                          onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                          final updatedTags = List<String>.from(widget.tagGroup.tags)..remove(tag);
+                          widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                         },
                       );
                     }).toList(),
@@ -164,15 +194,15 @@ class TagGroupSection extends StatelessWidget {
                         return const Iterable<String>.empty();
                       }
                       // Provide tag suggestions based on the selected tag group.
-                      final tags = await onGetAllTagsForTagGroup(tagGroup.name);
+                      final tags = await widget.onGetAllTagsForTagGroup(widget.tagGroup.name);
                       return tags.where((String option) {
                         return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                       });
                     },
                     onSelected: (String selection) {
-                      if (!tagGroup.tags.contains(selection)) {
-                        final updatedTags = List<String>.from(tagGroup.tags)..add(selection);
-                        onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                      if (!widget.tagGroup.tags.contains(selection)) {
+                        final updatedTags = List<String>.from(widget.tagGroup.tags)..add(selection);
+                        widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                       }
                     },
                     fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
@@ -184,8 +214,8 @@ class TagGroupSection extends StatelessWidget {
                         onFieldSubmitted: (value) {
                           if (value.isNotEmpty) {
                             final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                            final updatedTags = List<String>.from(tagGroup.tags)..addAll(tagsToAdd);
-                            onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));
+                            final updatedTags = List<String>.from(widget.tagGroup.tags)..addAll(tagsToAdd);
+                            widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                           }
                           fieldTextEditingController.clear(); // Clear the text field after submission.
                           onFieldSubmitted();
@@ -197,7 +227,7 @@ class TagGroupSection extends StatelessWidget {
               ),
             ),
             ReorderableDragStartListener(
-              index: index,
+              index: widget.index,
               child: const Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Icon(Icons.drag_handle), // Drag handle for reordering.

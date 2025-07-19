@@ -246,6 +246,11 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             );
             if (!context.mounted) return;
             if (changesMade == true) {
+              // Trigger reload when returning from settings with changes
+              AppLogger.log('LibraryAppBar: Settings changed, triggering reload');
+              // Force a rebuild by triggering a state change
+              setState(() {});
+              // Call the settings changed callback
               widget.onSettingsChanged();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Settings saved.')),

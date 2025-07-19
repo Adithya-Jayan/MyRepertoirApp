@@ -74,7 +74,7 @@ class PersonalizationSettingsScreenState
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop(true); // Always return true to indicate potential changes
+            Navigator.of(context).pop(true); // Return true to indicate changes were made
           },
         ),
       ),
