@@ -1,0 +1,252 @@
+name: Consolidated Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type to create'
+        required: true
+        default: 'alpha'
+        type: choice
+        options:
+          - alpha
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          channel: 'stable'
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Get current version and calculate new version
+        id: version_calc
+        run: |
+          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Parse version components (x.y.z+b format)
+          VERSION_NAME=$(echo $CURRENT_VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $CURRENT_VERSION | cut -s -d'+' -f2)
+          
+          if [ -z "$BUILD_NUMBER" ]; then
+            BUILD_NUMBER=0
+          fi
+          
+          # Parse semantic version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
+          
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          
+          case $RELEASE_TYPE in
+            "alpha")
+              # For alpha builds, increment build number only
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$MINOR
+              NEW_PATCH=$PATCH
+              NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+              NEW_FULL_VERSION="${NEW_VERSION_NAME}+${NEW_BUILD_NUMBER}"
+              IS_ALPHA=true
+              ;;
+            "major")
+              # For official releases, increment major and reset others
+              NEW_MAJOR=$((MAJOR + 1))
+              NEW_MINOR=0
+              NEW_PATCH=0
+              NEW_BUILD_NUMBER=1
+              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
+              IS_ALPHA=false
+              ;;
+            "minor")
+              # For official releases, increment minor and reset patch
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$((MINOR + 1))
+              NEW_PATCH=0
+              NEW_BUILD_NUMBER=1
+              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
+              IS_ALPHA=false
+              ;;
+            "patch")
+              # For official releases, increment patch only
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$MINOR
+              NEW_PATCH=$((PATCH + 1))
+              NEW_BUILD_NUMBER=1
+              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
+              IS_ALPHA=false
+              ;;
+          esac
+          
+          echo "Current version: $CURRENT_VERSION"
+          echo "Release type: $RELEASE_TYPE"
+          echo "New version name: $NEW_VERSION_NAME"
+          echo "New build number: $NEW_BUILD_NUMBER"
+          echo "New full version: $NEW_FULL_VERSION"
+          echo "Is alpha: $IS_ALPHA"
+          
+          echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=${NEW_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          echo "NEW_FULL_VERSION=${NEW_FULL_VERSION}" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "IS_ALPHA=${IS_ALPHA}" >> $GITHUB_OUTPUT
+          echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
+
+      - name: Update version in pubspec.yaml
+        run: |
+          NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          yq -i '.version = "'"${NEW_FULL_VERSION}"'"' pubspec.yaml
+          echo "Updated pubspec.yaml to version $NEW_FULL_VERSION"
+
+      - name: Build Android APK
+        run: |
+          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+
+      - name: Build Android App Bundle
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+
+      - name: Build Web
+        run: |
+          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+
+      - name: Create Release Assets
+        run: |
+          mkdir -p release_assets
+          cp build/app/outputs/flutter-apk/app-release.apk release_assets/
+          cp build/app/outputs/bundle/release/app-release.aab release_assets/
+          cp -r build/web release_assets/web_build
+          
+          # Create a zip of web build
+          cd release_assets
+          zip -r web_build.zip web_build/
+          cd ..
+
+      - name: Create Git Tag and Push Changes
+        run: |
+          NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
+          
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add pubspec.yaml
+          
+          if [ "$RELEASE_TYPE" = "alpha" ]; then
+            COMMIT_MSG="Alpha build: $NEW_FULL_VERSION"
+            TAG_NAME="v$NEW_FULL_VERSION-alpha"
+          else
+            COMMIT_MSG="Release version $NEW_FULL_VERSION"
+            TAG_NAME="v$NEW_FULL_VERSION"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
+          git push origin main
+          git push origin "$TAG_NAME"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('v{0}-alpha', steps.version_calc.outputs.NEW_FULL_VERSION) || format('v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+          release_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('Alpha Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+          body: |
+            ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('## Alpha Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('## Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+            
+            **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
+            **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
+            **Build Number:** ${{ steps.version_calc.outputs.BUILD_NUMBER }}
+            **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
+            
+            **Changes:**
+            ${{ github.event.inputs.release_notes }}
+            
+            ### Assets
+            - Android APK
+            - Android App Bundle
+            - Web Build
+            
+            ### Build Information
+            - Flutter Version: 3.32.5
+            - Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          draft: false
+          prerelease: ${{ steps.version_calc.outputs.IS_ALPHA }}
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_assets/app-release.apk
+          asset_name: app-release.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload App Bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_assets/app-release.aab
+          asset_name: app-release.aab
+          asset_content_type: application/octet-stream
+
+      - name: Upload Web Build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_assets/web_build.zip
+          asset_name: web_build.zip
+          asset_content_type: application/zip
+
+      - name: Success Message
+        run: |
+          RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
+          NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          
+          if [ "$RELEASE_TYPE" = "alpha" ]; then
+            echo "🎉 Successfully created alpha build $NEW_FULL_VERSION!"
+            echo "📱 Android APK and App Bundle created"
+            echo "🌐 Web build created"
+            echo "🏷️  Git tag v$NEW_FULL_VERSION-alpha created"
+            echo "📦 Pre-release GitHub release created"
+          else
+            echo "🎉 Successfully released version $NEW_FULL_VERSION!"
+            echo "📱 Android APK and App Bundle created"
+            echo "🌐 Web build created"
+            echo "🏷️  Git tag v$NEW_FULL_VERSION created"
+            echo "📦 Official GitHub release created"
+          fi 
