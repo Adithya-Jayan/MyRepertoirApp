@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_grid_view.dart';
+import 'package:repertoire/utils/music_piece_filter.dart';
 
 import '../utils/app_logger.dart';
 
@@ -24,6 +25,9 @@ class LibraryBody extends StatelessWidget {
   final VoidCallback onReloadData;
   final VoidCallback onToggleMultiSelectMode;
   final ValueChanged<String> onGroupSelected;
+  final String searchQuery;
+  final Map<String, dynamic> filterOptions;
+  final String sortOption;
 
   const LibraryBody({
     super.key,
@@ -44,6 +48,9 @@ class LibraryBody extends StatelessWidget {
     required this.onReloadData,
     required this.onToggleMultiSelectMode,
     required this.onGroupSelected,
+    required this.searchQuery,
+    required this.filterOptions,
+    required this.sortOption,
   });
 
   @override
@@ -100,7 +107,10 @@ class LibraryBody extends StatelessWidget {
               controller: pageController,
               itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
               onPageChanged: (index) {
-                onGroupSelected(visibleGroups[index].id);
+                if (visibleGroups.isNotEmpty && index < visibleGroups.length) {
+                  AppLogger.log('LibraryBody: Page changed to index: $index, group: ${visibleGroups[index].name}');
+                  onGroupSelected(visibleGroups[index].id);
+                }
               },
               itemBuilder: (context, pageIndex) {
                 if (isLoading) {
@@ -129,11 +139,14 @@ class LibraryBody extends StatelessWidget {
                   }).toList();
 
                   // Apply search and filter options to the current page's pieces.
-                  // The musicPieces parameter already contains the search-filtered results.
-                  // We need to intersect the group-filtered pieces with the search-filtered pieces.
-                  final filteredAndSortedPieces = musicPieces.where((piece) => 
-                    musicPiecesForPage.any((pagePiece) => pagePiece.id == piece.id)
-                  ).toList();
+                  // Each page should filter independently based on the search query and current group.
+                  // This ensures smooth transitions during swipes.
+                  final filter = MusicPieceFilter(
+                    searchQuery: searchQuery,
+                    filterOptions: filterOptions,
+                    sortOption: sortOption,
+                  );
+                  final filteredAndSortedPieces = filter.filterAndSort(musicPiecesForPage);
                   
                   AppLogger.log('LibraryBody: Page $pageIndex, group: $currentPageGroupId');
                   AppLogger.log('LibraryBody: musicPiecesForPage count: ${musicPiecesForPage.length}');

@@ -230,9 +230,15 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
       groupsNotifier.value = combinedGroups;
       AppLogger.log('LibraryScreenNotifier: All groups (including special): ${groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
+      
+      // Check if the currently selected group is still valid
       if (_selectedGroupId != null && !groupsNotifier.value.any((g) => g.id == _selectedGroupId)) {
         _selectedGroupId = null;
       }
+      
+      // Reset PageController to ensure smooth transitions when groups change
+      _resetPageController();
+      
       _groupListKey = UniqueKey();
     } catch (e) {
       errorMessageNotifier.value = 'Failed to load groups: $e';
@@ -256,12 +262,43 @@ class LibraryScreenNotifier extends ChangeNotifier {
     return groupsNotifier.value.where((group) => !group.isHidden).toList();
   }
 
+  void _resetPageController() {
+    AppLogger.log('LibraryScreenNotifier: _resetPageController called');
+    final visibleGroups = getVisibleGroups();
+    AppLogger.log('LibraryScreenNotifier: Visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
+    
+    // If the currently selected group is not in visible groups, select the first visible group
+    if (_selectedGroupId != null && !visibleGroups.any((g) => g.id == _selectedGroupId)) {
+      if (visibleGroups.isNotEmpty) {
+        _selectedGroupId = visibleGroups.first.id;
+        AppLogger.log('LibraryScreenNotifier: Selected first visible group: ${visibleGroups.first.name}');
+      } else {
+        _selectedGroupId = null;
+        AppLogger.log('LibraryScreenNotifier: No visible groups, cleared selection');
+      }
+    }
+    
+    // If no group is selected and there are visible groups, select the first one
+    if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
+      _selectedGroupId = visibleGroups.first.id;
+      AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group: ${visibleGroups.first.name}');
+    }
+  }
+
   void onGroupSelected(String? groupId) {
+    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId');
     _selectedGroupId = groupId;
     final visibleGroups = getVisibleGroups();
     final index = visibleGroups.indexWhere((g) => g.id == groupId);
+    AppLogger.log('LibraryScreenNotifier: Found group at index: $index in visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
+    
     if (pageController.hasClients && index != -1) {
-      pageController.jumpToPage(index);
+      // Use animateToPage for smoother transitions instead of jumpToPage
+      pageController.animateToPage(
+        index, 
+        duration: const Duration(milliseconds: 300), 
+        curve: Curves.easeInOut
+      );
     }
     loadMusicPieces();
     notifyListeners();

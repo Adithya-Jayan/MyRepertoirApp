@@ -82,6 +82,9 @@ class LibraryScreen extends StatelessWidget {
                 onReloadData: notifier.reloadData,
                 onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
                 onGroupSelected: notifier.onGroupSelected,
+                searchQuery: notifier.searchQuery,
+                filterOptions: notifier.filterOptions,
+                sortOption: notifier.sortOption,
               ),
               bottomNavigationBar: notifier.isMultiSelectMode
                   ? LibraryBottomAppBar(
