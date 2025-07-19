@@ -62,6 +62,11 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       _currentTitle = widget.mediaItem.title;
       _titleController.text = _currentTitle ?? '';
     }
+    
+    // Force rebuild if thumbnail path changed
+    if (oldWidget.mediaItem.thumbnailPath != widget.mediaItem.thumbnailPath) {
+      setState(() {});
+    }
   }
 
   @override
@@ -155,7 +160,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               throw 'Could not launch $uri';
             }
           },
-          child: (widget.mediaItem.thumbnailPath != null && widget.mediaItem.thumbnailPath!.isNotEmpty)
+          child: (widget.mediaItem.thumbnailPath != null && 
+                  widget.mediaItem.thumbnailPath!.isNotEmpty && 
+                  widget.mediaItem.thumbnailPath != '')
               ? Image.file(
                   File(widget.mediaItem.thumbnailPath!),
                   height: 200,

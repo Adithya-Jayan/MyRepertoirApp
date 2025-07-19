@@ -73,6 +73,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Settings saved.')),
                 );
+                // Return true to indicate changes were made
+                Navigator.of(context).pop(true);
               }
             },
           ),

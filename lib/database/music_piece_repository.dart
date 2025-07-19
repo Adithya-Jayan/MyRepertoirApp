@@ -47,6 +47,16 @@ class MusicPieceRepository {
     }
   }
 
+  /// Retrieves a single [MusicPiece] by its [id].
+  Future<MusicPiece?> getMusicPieceById(String id) async {
+    final allPieces = await dbHelper.getMusicPieces();
+    try {
+      return allPieces.firstWhere((piece) => piece.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Updates an existing [MusicPiece] in the database.
   /// Returns the number of rows affected.
   Future<int> updateMusicPiece(MusicPiece piece) async {

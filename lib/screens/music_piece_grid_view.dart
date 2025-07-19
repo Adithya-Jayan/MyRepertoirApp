@@ -47,7 +47,6 @@ class MusicPieceGridView extends StatelessWidget {
         onReloadData();
       },
       child: GridView.builder(
-        key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes.
         padding: const EdgeInsets.all(8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: galleryColumns, // Number of columns in the grid.

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/screens/settings_screen.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
-class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
+class LibraryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isMultiSelectMode;
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
@@ -47,15 +47,45 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
+  State<LibraryAppBar> createState() => _LibraryAppBarState();
+}
+
+class _LibraryAppBarState extends State<LibraryAppBar> {
+  late TextEditingController _searchController;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.searchQuery);
+  }
+
+  @override
+  void didUpdateWidget(LibraryAppBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery) {
+      _searchController.text = widget.searchQuery;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     AppLogger.log('LibraryAppBar: build called');
-    return isMultiSelectMode ? _buildMultiSelectAppBar(context) : _buildDefaultAppBar(context);
+    return widget.isMultiSelectMode ? _buildMultiSelectAppBar(context) : _buildDefaultAppBar(context);
   }
 
   AppBar _buildDefaultAppBar(BuildContext context) {
     return AppBar(
       title: TextField(
-        controller: TextEditingController(text: searchQuery),
+        controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search music pieces...',
           hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -68,11 +98,12 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
         ),
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        onChanged: onSearchChanged,
+        onChanged: widget.onSearchChanged,
+        onSubmitted: widget.onSearchChanged,
       ),
       actions: [
         Container(
-          decoration: hasActiveFilters
+          decoration: widget.hasActiveFilters
               ? BoxDecoration(
                   color: Theme.of(context).colorScheme.primary.withAlpha(51),
                   borderRadius: BorderRadius.circular(8.0),
@@ -91,50 +122,50 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
                       children: [
                         TextFormField(
                           decoration: const InputDecoration(labelText: 'Title'),
-                          initialValue: filterOptions['title'],
+                          initialValue: widget.filterOptions['title'],
                           onChanged: (value) {
-                            final newFilterOptions = Map<String, dynamic>.from(filterOptions);
+                            final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
                             newFilterOptions['title'] = value;
-                            onFilterOptionsChanged(newFilterOptions);
+                            widget.onFilterOptionsChanged(newFilterOptions);
                           },
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            final availableTags = await repository.getAllUniqueTagGroups();
+                            final availableTags = await widget.repository.getAllUniqueTagGroups();
                             if (!context.mounted) return;
                             final selectedTags = await showDialog<Map<String, List<String>>>(
                               context: context,
                               builder: (context) => TagGroupFilterDialog(
                                 availableTags: availableTags,
-                                initialSelectedTags: filterOptions['orderedTags'] ?? {},
+                                initialSelectedTags: widget.filterOptions['orderedTags'] ?? {},
                               ),
                             );
 
                             if (selectedTags != null) {
-                              final newFilterOptions = Map<String, dynamic>.from(filterOptions);
+                              final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
                               newFilterOptions['orderedTags'] = selectedTags;
-                              onFilterOptionsChanged(newFilterOptions);
+                              widget.onFilterOptionsChanged(newFilterOptions);
                             }
                           },
                           child: const Text('Select Ordered Tags'),
                         ),
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'Practice Tracking'),
-                          value: filterOptions['practiceTracking'],
+                          value: widget.filterOptions['practiceTracking'],
                           items: const [
                             DropdownMenuItem(value: null, child: Text('All')),
                             DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
                             DropdownMenuItem(value: 'disabled', child: Text('Disabled')),
                           ],
                           onChanged: (value) {
-                            final newFilterOptions = Map<String, dynamic>.from(filterOptions);
+                            final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
                             newFilterOptions['practiceTracking'] = value;
-                            onFilterOptionsChanged(newFilterOptions);
+                            widget.onFilterOptionsChanged(newFilterOptions);
                           },
                         ),
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'Practice Duration'),
-                          value: filterOptions['practiceDuration'],
+                          value: widget.filterOptions['practiceDuration'],
                           items: const [
                             DropdownMenuItem(value: null, child: Text('Any')),
                             DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),
@@ -142,9 +173,9 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
                             DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
                           ],
                           onChanged: (value) {
-                            final newFilterOptions = Map<String, dynamic>.from(filterOptions);
+                            final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
                             newFilterOptions['practiceDuration'] = value;
-                            onFilterOptionsChanged(newFilterOptions);
+                            widget.onFilterOptionsChanged(newFilterOptions);
                           },
                         ),
                       ],
@@ -154,13 +185,13 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
                     TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        onApplyFilter();
+                        widget.onApplyFilter();
                       },
                       child: const Text('Apply Filter'),
                     ),
                     TextButton(
                       onPressed: () {
-                        onClearFilter();
+                        widget.onClearFilter();
                         Navigator.pop(context);
                       },
                       child: const Text('Clear Filter'),
@@ -183,21 +214,21 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
                   children: [
                     ListTile(
                       title: const Text('Alphabetical'),
-                      trailing: sortOption.startsWith('alphabetical') ? (sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      trailing: widget.sortOption.startsWith('alphabetical') ? (widget.sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
                       onTap: () {
-                        final newSortOption = sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
-                        onSortOptionChanged(newSortOption);
-                        prefs.setString('sortOption', newSortOption);
+                        final newSortOption = widget.sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
+                        widget.onSortOptionChanged(newSortOption);
+                        widget.prefs.setString('sortOption', newSortOption);
                         Navigator.pop(context);
                       },
                     ),
                     ListTile(
                       title: const Text('Last Practiced'),
-                      trailing: sortOption.startsWith('last_practiced') ? (sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      trailing: widget.sortOption.startsWith('last_practiced') ? (widget.sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
                       onTap: () {
-                        final newSortOption = sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
-                        onSortOptionChanged(newSortOption);
-                        prefs.setString('sortOption', newSortOption);
+                        final newSortOption = widget.sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
+                        widget.onSortOptionChanged(newSortOption);
+                        widget.prefs.setString('sortOption', newSortOption);
                         Navigator.pop(context);
                       },
                     ),
@@ -215,7 +246,7 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
             );
             if (!context.mounted) return;
             if (changesMade == true) {
-              onSettingsChanged();
+              widget.onSettingsChanged();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Settings saved.')),
               );
@@ -230,13 +261,13 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.close),
-        onPressed: onToggleMultiSelectMode,
+        onPressed: widget.onToggleMultiSelectMode,
       ),
-      title: Text('$selectedPieceCount selected'),
+      title: Text('${widget.selectedPieceCount} selected'),
       actions: [
         IconButton(
           icon: const Icon(Icons.select_all),
-          onPressed: onSelectAll,
+          onPressed: widget.onSelectAll,
         ),
       ],
     );

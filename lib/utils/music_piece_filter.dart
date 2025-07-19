@@ -1,4 +1,5 @@
 import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/utils/app_logger.dart';
 
 class MusicPieceFilter {
   final String searchQuery;
@@ -12,13 +13,22 @@ class MusicPieceFilter {
   });
 
   List<MusicPiece> filterAndSort(List<MusicPiece> pieces) {
+    AppLogger.log('MusicPieceFilter: filterAndSort called with searchQuery: "$searchQuery" and ${pieces.length} pieces');
     List<MusicPiece> filteredPieces = pieces.where((piece) {
       final lowerCaseSearchQuery = searchQuery.toLowerCase();
       // Check if the piece matches the search query in title, artist/composer, or tags.
-      final matchesSearch = piece.title.toLowerCase().contains(lowerCaseSearchQuery) ||
+      // Only apply search filter if searchQuery is not empty
+      final matchesSearch = searchQuery.isEmpty || 
+          piece.title.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.artistComposer.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.tagGroups.any((tg) => tg.tags.any((tag) => tag.toLowerCase().contains(lowerCaseSearchQuery))) ||
           piece.tags.any((t) => t.toLowerCase().contains(lowerCaseSearchQuery));
+      
+      AppLogger.log('MusicPieceFilter: Piece "${piece.title}" - searchQuery: "$searchQuery", matchesSearch: $matchesSearch');
+      
+      if (!matchesSearch && searchQuery.isNotEmpty) {
+        AppLogger.log('MusicPieceFilter: Piece "${piece.title}" filtered out by search');
+      }
 
       // Check for title match from filter options.
       final titleMatch = filterOptions['title'] == null ||

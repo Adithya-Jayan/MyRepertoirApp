@@ -173,15 +173,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               const SizedBox(height: 20),
               _buildTagGroupsSection(),
               const SizedBox(height: 20),
-              MediaDisplayList(
-                musicPiece: _musicPiece,
-                onMusicPieceChanged: (updatedPiece) {
-                  setState(() {
-                    _musicPiece = updatedPiece;
-                  });
-                },
-                allowReordering: true,
-              ),
+              _buildMediaSection(),
             ],
           ),
         ),
@@ -218,7 +210,17 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+              tooltip: 'Add Tag Group',
+            ),
+          ],
+        ),
         ReorderableListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -240,6 +242,64 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           },
           onReorder: (oldIndex, newIndex) => 
             _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMediaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8.0),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _musicPiece.mediaItems.length,
+          buildDefaultDragHandles: false,
+          itemBuilder: (context, index) {
+            final item = _musicPiece.mediaItems[index];
+            return MediaSection(
+              key: ValueKey(item.id),
+              item: item,
+              index: index,
+              musicPieceThumbnail: _musicPiece.thumbnailPath ?? '',
+              musicPieceId: _musicPiece.id,
+              onUpdateMediaItem: (updatedItem) {
+                setState(() {
+                  final updatedMediaItems = List<MediaItem>.from(_musicPiece.mediaItems);
+                  final itemIndex = updatedMediaItems.indexWhere((element) => element.id == updatedItem.id);
+                  if (itemIndex != -1) {
+                    updatedMediaItems[itemIndex] = updatedItem;
+                    _musicPiece = _musicPiece.copyWith(mediaItems: updatedMediaItems);
+                  }
+                });
+              },
+              onDeleteMediaItem: (itemToDelete) {
+                setState(() {
+                  final updatedMediaItems = List<MediaItem>.from(_musicPiece.mediaItems);
+                  updatedMediaItems.removeWhere((element) => element.id == itemToDelete.id);
+                  _musicPiece = _musicPiece.copyWith(mediaItems: updatedMediaItems);
+                });
+              },
+              onSetThumbnail: (path) {
+                setState(() {
+                  _musicPiece = _musicPiece.copyWith(thumbnailPath: path);
+                });
+              },
+            );
+          },
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              final item = _musicPiece.mediaItems.removeAt(oldIndex);
+              _musicPiece.mediaItems.insert(newIndex, item);
+              _musicPiece = _musicPiece.copyWith(mediaItems: _musicPiece.mediaItems);
+            });
+          },
         ),
       ],
     );
@@ -276,11 +336,6 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           child: const Icon(Icons.video_library),
           label: 'Media Link',
           onTap: () => _mediaManager.addMediaItem(MediaType.mediaLink, _musicPiece.mediaItems),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.label),
-          label: 'Add Tag Group',
-          onTap: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
         ),
       ],
     );

@@ -33,6 +33,16 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
   }
 
   @override
+  void didUpdateWidget(MediaDisplayList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.musicPiece != widget.musicPiece) {
+      setState(() {
+        _musicPiece = widget.musicPiece;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),

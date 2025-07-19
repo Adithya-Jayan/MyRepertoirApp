@@ -129,9 +129,16 @@ class LibraryBody extends StatelessWidget {
                   }).toList();
 
                   // Apply search and filter options to the current page's pieces.
-                  // This filtering logic should ideally be passed down or handled by a provider.
-                  // For now, we'll assume `musicPieces` already reflects the filtered state.
-                  final filteredAndSortedPieces = musicPiecesForPage; // Placeholder, actual filtering happens in parent
+                  // The musicPieces parameter already contains the search-filtered results.
+                  // We need to intersect the group-filtered pieces with the search-filtered pieces.
+                  final filteredAndSortedPieces = musicPieces.where((piece) => 
+                    musicPiecesForPage.any((pagePiece) => pagePiece.id == piece.id)
+                  ).toList();
+                  
+                  AppLogger.log('LibraryBody: Page $pageIndex, group: $currentPageGroupId');
+                  AppLogger.log('LibraryBody: musicPiecesForPage count: ${musicPiecesForPage.length}');
+                  AppLogger.log('LibraryBody: musicPieces count: ${musicPieces.length}');
+                  AppLogger.log('LibraryBody: filteredAndSortedPieces count: ${filteredAndSortedPieces.length}');
 
                   if (filteredAndSortedPieces.isEmpty) {
                     return const Center(child: Text('No music pieces found in this group.'));

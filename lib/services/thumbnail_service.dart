@@ -30,4 +30,19 @@ class ThumbnailService {
       }
     }
   }
+
+  static Future<String?> getThumbnailPath(MediaItem item, String musicPieceId) async {
+    if (item.type == MediaType.mediaLink && item.pathOrUrl.isNotEmpty) {
+      try {
+        final documentsDir = await getApplicationDocumentsDirectory();
+        final thumbnailFile = File(p.join(documentsDir.path, musicPieceId, 'thumbnails', '${item.id}.jpg'));
+        if (await thumbnailFile.exists()) {
+          return thumbnailFile.path;
+        }
+      } catch (e) {
+        AppLogger.log('Error getting thumbnail path: $e');
+      }
+    }
+    return null;
+  }
 }
