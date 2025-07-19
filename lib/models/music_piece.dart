@@ -127,4 +127,41 @@ class MusicPiece {
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
     );
   }
+
+  /// Creates a copy of this [MusicPiece] object with explicit null values allowed.
+  ///
+  /// This method allows explicitly setting nullable fields to null.
+  MusicPiece copyWithExplicit({
+    String? id,
+    String? title,
+    String? artistComposer,
+    List<String>? tags,
+    DateTime? lastAccessed,
+    bool? isFavorite,
+    DateTime? lastPracticeTime,
+    int? practiceCount,
+    bool? enablePracticeTracking,
+    String? googleDriveFileId,
+    List<MediaItem>? mediaItems,
+    List<String>? groupIds,
+    List<TagGroup>? tagGroups,
+    String? thumbnailPath,
+  }) {
+    return MusicPiece(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artistComposer: artistComposer ?? this.artistComposer,
+      tags: tags ?? this.tags,
+      lastAccessed: lastAccessed ?? this.lastAccessed,
+      isFavorite: isFavorite ?? this.isFavorite,
+      lastPracticeTime: lastPracticeTime, // Allow explicit null
+      practiceCount: practiceCount ?? this.practiceCount,
+      enablePracticeTracking: enablePracticeTracking ?? this.enablePracticeTracking,
+      googleDriveFileId: googleDriveFileId ?? this.googleDriveFileId,
+      mediaItems: mediaItems ?? this.mediaItems,
+      groupIds: groupIds ?? this.groupIds,
+      tagGroups: tagGroups ?? this.tagGroups,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+    );
+  }
 }

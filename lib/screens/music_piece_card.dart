@@ -114,22 +114,22 @@ class MusicPieceCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8.0),
-                      if (piece.lastPracticeTime != null)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Last practiced: ${piece.lastPracticeTime!.toLocal().toString().split('.')[0]}', // Display last practiced time.
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          piece.lastPracticeTime != null 
+                            ? 'Last practiced: ${piece.lastPracticeTime!.toLocal().toString().split('.')[0]}'
+                            : 'Never practiced',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      if (piece.practiceCount > 0)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Practice count: ${piece.practiceCount}', // Display practice count.
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Practice count: ${piece.practiceCount}',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
+                      ),
                     ],
                   ),
                 ),

@@ -4,6 +4,7 @@ import '../models/music_piece.dart';
 import '../models/practice_log.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
+import '../utils/practice_settings.dart';
 
 /// A screen that displays and manages practice logs for a specific music piece.
 ///
@@ -25,12 +26,21 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
   final MusicPieceRepository _repository = MusicPieceRepository();
   List<PracticeLog> _practiceLogs = [];
   bool _isLoading = true;
+  bool _showTimeStats = false;
   MusicPiece? _updatedMusicPiece;
 
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _loadPracticeLogs();
+  }
+
+  Future<void> _loadSettings() async {
+    final showTimeStats = await PracticeSettings.getShowPracticeTimeStats();
+    setState(() {
+      _showTimeStats = showTimeStats;
+    });
   }
 
   Future<void> _loadPracticeLogs() async {
@@ -41,6 +51,9 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
     try {
       final logs = await _repository.getPracticeLogsForPiece(widget.musicPiece.id);
       final updatedPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+      
+      // Sort logs by most recent first
+      logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       
       setState(() {
         _practiceLogs = logs;
@@ -58,7 +71,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
   Future<void> _addPracticeLog() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _PracticeLogDialog(),
+      builder: (context) => _PracticeLogDialog(showTimeStats: _showTimeStats),
     );
 
     if (result != null) {
@@ -67,6 +80,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
           widget.musicPiece.id,
           notes: result['notes'],
           durationMinutes: result['durationMinutes'],
+          timestamp: result['timestamp'],
         );
         await _loadPracticeLogs();
         if (mounted) {
@@ -92,6 +106,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
         initialNotes: log.notes,
         initialDurationMinutes: log.durationMinutes,
         initialTimestamp: log.timestamp,
+        showTimeStats: _showTimeStats,
       ),
     );
 
@@ -200,6 +215,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
                               log: log,
                               onEdit: () => _editPracticeLog(log),
                               onDelete: () => _deletePracticeLog(log),
+                              showTimeStats: _showTimeStats,
                             );
                           },
                         ),
@@ -240,35 +256,37 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
                     icon: Icons.music_note,
                   ),
                 ),
-                Expanded(
-                  child: _SummaryItem(
-                    label: 'Total Time',
-                    value: _formatDuration(totalDuration),
-                    icon: Icons.timer,
+                if (_showTimeStats) ...[
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'Total Time',
+                      value: _formatDuration(totalDuration),
+                      icon: Icons.timer,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _SummaryItem(
-                    label: 'Average Time',
-                    value: _formatDuration(averageDuration.round()),
-                    icon: Icons.av_timer,
+                  Expanded(
+                    child: _SummaryItem(
+                      label: 'Average Time',
+                      value: _formatDuration(averageDuration.round()),
+                      icon: Icons.av_timer,
+                    ),
                   ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.schedule, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  musicPiece.lastPracticeTime != null
+                    ? 'Last practiced: ${musicPiece.lastPracticeTime!.toLocal().toString().split('.')[0]}'
+                    : 'Never practiced',
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),
-            if (musicPiece.lastPracticeTime != null) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.schedule, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Last practiced: ${musicPiece.lastPracticeTime!.toLocal().toString().split('.')[0]}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),
@@ -292,11 +310,13 @@ class _PracticeLogTile extends StatelessWidget {
   final PracticeLog log;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool showTimeStats;
 
   const _PracticeLogTile({
     required this.log,
     required this.onEdit,
     required this.onDelete,
+    required this.showTimeStats,
   });
 
   @override
@@ -311,7 +331,7 @@ class _PracticeLogTile extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(log.formattedDuration),
+            if (showTimeStats) Text(log.formattedDuration),
             if (log.notes != null && log.notes!.isNotEmpty)
               Text(
                 log.notes!,
@@ -397,11 +417,13 @@ class _PracticeLogDialog extends StatefulWidget {
   final String? initialNotes;
   final int? initialDurationMinutes;
   final DateTime? initialTimestamp;
+  final bool showTimeStats;
 
   const _PracticeLogDialog({
     this.initialNotes,
     this.initialDurationMinutes,
     this.initialTimestamp,
+    required this.showTimeStats,
   });
 
   @override
@@ -474,16 +496,18 @@ class _PracticeLogDialogState extends State<_PracticeLogDialog> {
               subtitle: Text(_selectedDateTime.toString().split('.')[0]),
               onTap: _selectDateTime,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _durationController,
-              decoration: const InputDecoration(
-                labelText: 'Duration (minutes)',
-                hintText: 'e.g., 30',
-                border: OutlineInputBorder(),
+            if (widget.showTimeStats) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _durationController,
+                decoration: const InputDecoration(
+                  labelText: 'Duration (minutes)',
+                  hintText: 'e.g., 30',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
               ),
-              keyboardType: TextInputType.number,
-            ),
+            ],
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,

@@ -50,12 +50,11 @@ class MusicPieceRepository {
 
   /// Retrieves a single [MusicPiece] by its [id].
   Future<MusicPiece?> getMusicPieceById(String id) async {
-    final allPieces = await dbHelper.getMusicPieces();
-    try {
-      return allPieces.firstWhere((piece) => piece.id == id);
-    } catch (e) {
-      return null;
-    }
+    AppLogger.log('getMusicPieceById: Retrieving piece $id');
+    final pieces = await dbHelper.getMusicPiecesByIds([id]);
+    final piece = pieces.isNotEmpty ? pieces.first : null;
+    AppLogger.log('getMusicPieceById: Retrieved piece - lastPracticeTime: ${piece?.lastPracticeTime}, practiceCount: ${piece?.practiceCount}');
+    return piece;
   }
 
   /// Retrieves [MusicPiece] objects by their IDs.
@@ -66,7 +65,9 @@ class MusicPieceRepository {
   /// Updates an existing [MusicPiece] in the database.
   /// Returns the number of rows affected.
   Future<int> updateMusicPiece(MusicPiece piece) async {
+    AppLogger.log('updateMusicPiece: Updating piece ${piece.id} - lastPracticeTime: ${piece.lastPracticeTime}, practiceCount: ${piece.practiceCount}');
     final result = await dbHelper.updateMusicPiece(piece);
+    AppLogger.log('updateMusicPiece: Update result: $result rows affected');
     return result;
   }
 
@@ -174,16 +175,22 @@ class MusicPieceRepository {
   /// Deletes a [PracticeLog] from the database by its ID.
   /// Also updates the music piece's practice tracking data.
   Future<void> deletePracticeLog(String id) async {
+    AppLogger.log('deletePracticeLog: Starting deletion of practice log $id');
+    
     // Get the practice log to find the music piece ID
     final allLogs = await getAllPracticeLogs();
     final logToDelete = allLogs.firstWhere((log) => log.id == id);
     final musicPieceId = logToDelete.musicPieceId;
+    AppLogger.log('deletePracticeLog: Found log for music piece $musicPieceId');
     
     // Delete the practice log
     await dbHelper.deletePracticeLog(id);
+    AppLogger.log('deletePracticeLog: Practice log deleted from database');
     
     // Recalculate and update the music piece's practice tracking
+    AppLogger.log('deletePracticeLog: Calling _updateMusicPiecePracticeTracking for piece $musicPieceId');
     await _updateMusicPiecePracticeTracking(musicPieceId);
+    AppLogger.log('deletePracticeLog: Practice tracking updated');
   }
 
   /// Deletes all [PracticeLog] objects for a specific music piece.
@@ -203,7 +210,7 @@ class MusicPieceRepository {
     // Update all music pieces to reset their practice tracking
     final allPieces = await getMusicPieces();
     for (final piece in allPieces) {
-      final updatedPiece = piece.copyWith(
+      final updatedPiece = piece.copyWithExplicit(
         lastPracticeTime: null,
         practiceCount: 0,
       );
@@ -222,19 +229,26 @@ class MusicPieceRepository {
   /// Helper method to recalculate and update a music piece's practice tracking
   /// based on its remaining practice logs.
   Future<void> _updateMusicPiecePracticeTracking(String musicPieceId) async {
+    AppLogger.log('_updateMusicPiecePracticeTracking: Starting for piece $musicPieceId');
+    
     // Get the current practice logs for this piece
     final practiceLogs = await getPracticeLogsForPiece(musicPieceId);
+    AppLogger.log('_updateMusicPiecePracticeTracking: Found ${practiceLogs.length} practice logs');
     
     // Get the music piece
     final piece = (await getMusicPiecesByIds([musicPieceId])).first;
+    AppLogger.log('_updateMusicPiecePracticeTracking: Current piece - lastPracticeTime: ${piece.lastPracticeTime}, practiceCount: ${piece.practiceCount}');
     
     if (practiceLogs.isEmpty) {
       // No practice logs left, reset practice tracking
-      final updatedPiece = piece.copyWith(
+      AppLogger.log('_updateMusicPiecePracticeTracking: No practice logs found, setting to never practiced');
+      final updatedPiece = piece.copyWithExplicit(
         lastPracticeTime: null,
         practiceCount: 0,
       );
+      AppLogger.log('_updateMusicPiecePracticeTracking: Updated piece - lastPracticeTime: ${updatedPiece.lastPracticeTime}, practiceCount: ${updatedPiece.practiceCount}');
       await updateMusicPiece(updatedPiece);
+      AppLogger.log('_updateMusicPiecePracticeTracking: Piece updated in database');
     } else {
       // Calculate new practice count and last practice time
       final practiceCount = practiceLogs.length;
@@ -242,34 +256,31 @@ class MusicPieceRepository {
           .map((log) => log.timestamp)
           .reduce((a, b) => a.isAfter(b) ? a : b);
       
+      AppLogger.log('_updateMusicPiecePracticeTracking: ${practiceCount} practice logs found, last practice time: $lastPracticeTime');
       final updatedPiece = piece.copyWith(
         lastPracticeTime: lastPracticeTime,
         practiceCount: practiceCount,
       );
       await updateMusicPiece(updatedPiece);
+      AppLogger.log('_updateMusicPiecePracticeTracking: Piece updated with new practice data');
     }
   }
 
   /// Logs a practice session for a music piece.
   /// Creates a new practice log entry and updates the music piece's practice tracking.
-  Future<void> logPracticeSession(String musicPieceId, {String? notes, int durationMinutes = 0}) async {
+  Future<void> logPracticeSession(String musicPieceId, {String? notes, int durationMinutes = 0, DateTime? timestamp}) async {
     final log = PracticeLog(
       id: uuid.v4(),
       musicPieceId: musicPieceId,
-      timestamp: DateTime.now(),
+      timestamp: timestamp ?? DateTime.now(),
       notes: notes,
       durationMinutes: durationMinutes,
     );
     
     await insertPracticeLog(log);
     
-    // Update the music piece's practice tracking
-    final piece = (await getMusicPiecesByIds([musicPieceId])).first;
-    final updatedPiece = piece.copyWith(
-      lastPracticeTime: log.timestamp,
-      practiceCount: piece.practiceCount + 1,
-    );
-    await updateMusicPiece(updatedPiece);
+    // Recalculate and update the music piece's practice tracking
+    await _updateMusicPiecePracticeTracking(musicPieceId);
   }
 
   /// Updates the group membership for a list of [MusicPiece] objects.
