@@ -64,10 +64,7 @@ class AddEditPieceFormHandler {
     try {
       formKey.currentState!.save();
 
-      // Fetch thumbnails for all media items
-      for (var item in musicPiece.mediaItems) {
-        await ThumbnailService.fetchAndSaveThumbnail(item, musicPiece.id);
-      }
+      // Thumbnail fetching removed - now manual only
 
       // Update group IDs
       final updatedMusicPiece = musicPiece.copyWith(

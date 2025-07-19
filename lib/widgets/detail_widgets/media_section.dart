@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
+import 'package:repertoire/services/thumbnail_service.dart';
+import 'package:repertoire/utils/app_logger.dart';
 
 /// A widget for displaying and editing a single MediaItem.
 ///
@@ -44,20 +46,61 @@ class MediaSection extends StatelessWidget {
                     },
                     isEditable: true,
                   ),
-                  // Display thumbnail switch only for images or media links with thumbnails
-                  if (item.type == MediaType.image || (item.type == MediaType.mediaLink && item.thumbnailPath != null))
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const Text('Set as thumbnail'),
-                        Switch(
-                          value: musicPieceThumbnail == (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath),
-                          onChanged: (value) {
-                            onSetThumbnail(value ? (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath!) : '');
+                  // Thumbnail controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Get thumbnail button (for media links)
+                      if (item.type == MediaType.mediaLink)
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await ThumbnailService.fetchAndSaveThumbnail(item, 'temp');
+                              AppLogger.log('Thumbnail fetched for media item: ${item.title}');
+                              // Update the item with the new thumbnail path
+                              final updatedItem = item.copyWith(
+                                thumbnailPath: await ThumbnailService.getThumbnailPath(item, 'temp'),
+                              );
+                              onUpdateMediaItem(updatedItem);
+                            } catch (e) {
+                              AppLogger.log('Error fetching thumbnail: $e');
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed to fetch thumbnail: $e')),
+                                );
+                              }
+                            }
                           },
+                          icon: const Icon(Icons.image),
+                          label: const Text('Get Thumbnail'),
                         ),
-                      ],
-                    ),
+                      // Remove thumbnail button (if thumbnail exists)
+                      if (item.thumbnailPath != null)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            onUpdateMediaItem(item.copyWith(thumbnailPath: null));
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text('Remove Thumbnail'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red[100],
+                          ),
+                        ),
+                      // Set as thumbnail switch
+                      if (item.type == MediaType.image || item.thumbnailPath != null)
+                        Row(
+                          children: [
+                            const Text('Set as thumbnail'),
+                            Switch(
+                              value: musicPieceThumbnail == (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath),
+                              onChanged: (value) {
+                                onSetThumbnail(value ? (item.type == MediaType.image ? item.pathOrUrl : item.thumbnailPath!) : '');
+                              },
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                   // Display appropriate input field based on media type
                   if (item.type == MediaType.markdown)
                     TextFormField(

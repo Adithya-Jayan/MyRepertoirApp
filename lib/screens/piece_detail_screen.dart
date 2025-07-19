@@ -49,9 +49,20 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               );
               if (result == true) {
                 if (!mounted) return;
+                // Refresh the music piece data
+                try {
+                  final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
+                  if (updatedPiece != null) {
+                    setState(() {
+                      _musicPiece = updatedPiece;
+                    });
+                  }
+                } catch (e) {
+                  AppLogger.log('Error refreshing music piece: $e');
+                }
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Practice tracking updated.')),
+                  const SnackBar(content: Text('Music piece updated successfully.')),
                 );
               }
             },

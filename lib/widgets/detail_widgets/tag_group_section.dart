@@ -25,16 +25,16 @@ class TagGroupSection extends StatelessWidget {
 
   static const List<Map<String, dynamic>> _colorOptions = [
     {'name': 'None', 'value': null},
-    {'name': 'Red', 'value': 0xFFFF0000},
-    {'name': 'Blue', 'value': 0xFF0000FF},
-    {'name': 'Green', 'value': 0xFF00FF00},
-    {'name': 'Yellow', 'value': 0xFFFFFF00},
-    {'name': 'Purple', 'value': 0xFF800080},
-    {'name': 'Orange', 'value': 0xFFFFA500},
-    {'name': 'Pink', 'value': 0xFFFFC0CB},
-    {'name': 'Cyan', 'value': 0xFF00FFFF},
-    {'name': 'Brown', 'value': 0xFFA52A2A},
-    {'name': 'Gray', 'value': 0xFF808080},
+    {'name': 'Red', 'value': 0xFFFF6B6B},
+    {'name': 'Blue', 'value': 0xFF4ECDC4},
+    {'name': 'Green', 'value': 0xFF45B7D1},
+    {'name': 'Yellow', 'value': 0xFFFFE66D},
+    {'name': 'Purple', 'value': 0xFF96CEB4},
+    {'name': 'Orange', 'value': 0xFFFFA07A},
+    {'name': 'Pink', 'value': 0xFFFFB6C1},
+    {'name': 'Cyan', 'value': 0xFF87CEEB},
+    {'name': 'Brown', 'value': 0xFFD2B48C},
+    {'name': 'Gray', 'value': 0xFFC0C0C0},
   ];
 
   @override

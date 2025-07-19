@@ -275,7 +275,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
       filterOptions: _filterOptions,
       sortOption: _sortOption,
     );
-    await _libraryDataManager.loadSettings();
+    await loadSettings(); // Call the notifier's loadSettings method
     notifyListeners();
   }
 }

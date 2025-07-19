@@ -200,26 +200,30 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         return ReorderableDragStartListener(
           index: index,
           key: ValueKey(group.id),
-          child: ListTile(
-            title: Text(group.name),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(group.isHidden ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () => _toggleGroupVisibility(group),
-                ),
-                if (group.id != 'all_group' && group.id != 'ungrouped_group')
+          child: Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: ListTile(
+              leading: const Icon(Icons.drag_handle, color: Colors.grey),
+              title: Text(group.name),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _editGroup(group),
+                    icon: Icon(group.isHidden ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () => _toggleGroupVisibility(group),
                   ),
-                if (group.id != 'all_group' && group.id != 'ungrouped_group')
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteGroup(group),
-                  ),
-              ],
+                  if (group.id != 'all_group' && group.id != 'ungrouped_group')
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _editGroup(group),
+                    ),
+                  if (group.id != 'all_group' && group.id != 'ungrouped_group')
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteGroup(group),
+                    ),
+                ],
+              ),
             ),
           ),
         );
