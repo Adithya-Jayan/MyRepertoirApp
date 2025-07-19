@@ -102,11 +102,12 @@ class BackupManager {
     archive.addFile(jsonArchiveFile);
     AppLogger.log('JSON data added to archive (${jsonBytes.length} bytes)');
 
-    // Add media files to archive
-    final mediaDir = Directory(p.join(storagePath, 'media'));
+    // Add media files to archive (media files are stored in app documents directory)
+    final appDir = await getApplicationDocumentsDirectory();
+    final mediaDir = Directory(p.join(appDir.path, 'media'));
     if (await mediaDir.exists()) {
       AppLogger.log('Adding media directory to archive: ${mediaDir.path}');
-      await _addMediaFilesToArchive(archive, mediaDir, storagePath);
+      await _addMediaFilesToArchive(archive, mediaDir, appDir.path);
     } else {
       AppLogger.log('Media directory does not exist: ${mediaDir.path}');
     }

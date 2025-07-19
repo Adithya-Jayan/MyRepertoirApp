@@ -148,45 +148,53 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       case MediaType.audio:
         if (widget.isEditable) {
           // In edit mode, show a simple file status instead of full audio player
-          content = Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.audio_file,
-                  color: Colors.blue[600],
-                  size: 32.0,
+          content = FutureBuilder<bool>(
+            future: File(widget.mediaItem.pathOrUrl).exists(),
+            builder: (context, snapshot) {
+              final fileExists = snapshot.data ?? false;
+              return Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: fileExists ? Colors.grey[100] : Colors.red[50],
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
                 ),
-                const SizedBox(width: 12.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Audio File',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.0,
-                        ),
+                child: Row(
+                  children: [
+                    Icon(
+                      fileExists ? Icons.audio_file : Icons.error_outline,
+                      color: fileExists ? Colors.blue[600] : Colors.red[600],
+                      size: 32.0,
+                    ),
+                    const SizedBox(width: 12.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Audio File',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            fileExists 
+                              ? 'File loaded and ready for playback'
+                              : 'Audio file not found',
+                            style: TextStyle(
+                              color: fileExists ? Colors.grey[600] : Colors.red[600],
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4.0),
-                      Text(
-                        'File loaded and ready for playback',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14.0,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           );
         } else {
           // In view mode, use the full audio player

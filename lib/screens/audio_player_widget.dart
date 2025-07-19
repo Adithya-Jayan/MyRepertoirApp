@@ -72,6 +72,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       final file = File(widget.audioPath);
       if (!await file.exists()) {
         AppLogger.log('AudioPlayerWidget: Audio file does not exist: ${widget.audioPath}');
+        setState(() {
+          _hasError = true;
+          _isInitialized = false;
+        });
         return;
       }
       

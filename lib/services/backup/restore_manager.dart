@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
 import '../../utils/app_logger.dart';
@@ -102,6 +103,7 @@ class RestoreManager {
   Future<void> _updateMediaFilePaths(String storagePath) async {
     AppLogger.log('RestoreManager: Starting media file path updates for storage path: $storagePath');
     
+    final appDir = await getApplicationDocumentsDirectory();
     final allPieces = await _repository.getMusicPieces();
     int updatedPieces = 0;
     
@@ -124,7 +126,7 @@ class RestoreManager {
           
           if (mediaIndex != -1 && mediaIndex < pathParts.length - 1) {
             final relativePath = pathParts.sublist(mediaIndex).join(Platform.pathSeparator);
-            final newPath = p.join(storagePath, relativePath);
+            final newPath = p.join(appDir.path, relativePath);
             
             AppLogger.log('RestoreManager: Updating media path for piece ${piece.title}:');
             AppLogger.log('  Old path: $oldPath');
@@ -287,7 +289,7 @@ class RestoreManager {
 
   /// Restores media files from backup
   Future<void> _restoreMediaFiles(Archive archive, String storagePath) async {
-    AppLogger.log('RestoreManager: Starting media files restore to: $storagePath');
+    AppLogger.log('RestoreManager: Starting media files restore');
     AppLogger.log('RestoreManager: Archive contains ${archive.files.length} total files');
     
     // Log all files in the archive for debugging
@@ -296,7 +298,9 @@ class RestoreManager {
       AppLogger.log('RestoreManager: Archive file ${i + 1}: ${file.name} (isFile: ${file.isFile}, size: ${file.content?.length ?? 0})');
     }
     
-    final mediaDir = Directory(p.join(storagePath, 'media'));
+    // Media files should be restored to app documents directory, not user storage path
+    final appDir = await getApplicationDocumentsDirectory();
+    final mediaDir = Directory(p.join(appDir.path, 'media'));
     AppLogger.log('RestoreManager: Media directory for restore: ${mediaDir.path}');
     
     if (await mediaDir.exists()) {
@@ -309,7 +313,7 @@ class RestoreManager {
     int extractedFiles = 0;
     for (final file in archive.files) {
       if (file.name.startsWith('media/')) {
-        final filePath = p.join(storagePath, file.name);
+        final filePath = p.join(appDir.path, file.name);
         AppLogger.log('RestoreManager: Extracting media file: ${file.name} to $filePath');
         if (file.isFile) {
           try {
