@@ -28,29 +28,14 @@ class TagGroupSection extends StatefulWidget {
 }
 
 class _TagGroupSectionState extends State<TagGroupSection> {
-  late TextEditingController _nameController;
-  late FocusNode _nameFocusNode;
-
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.tagGroup.name);
-    _nameFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _nameFocusNode.dispose();
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(TagGroupSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.tagGroup.name != widget.tagGroup.name) {
-      _nameController.text = widget.tagGroup.name;
-    }
   }
 
   static const List<int?> _colorOptions = [
@@ -65,6 +50,20 @@ class _TagGroupSectionState extends State<TagGroupSection> {
     0xFF87CEEB, // Sky Blue
     0xFFD2B48C, // Tan
     0xFFC0C0C0, // Silver
+  ];
+
+  static const List<String> _colorNames = [
+    'No Color',
+    'Coral',
+    'Teal',
+    'Sky Blue',
+    'Yellow',
+    'Mint Green',
+    'Light Salmon',
+    'Light Pink',
+    'Sky Blue',
+    'Tan',
+    'Silver',
   ];
 
   @override
@@ -88,10 +87,15 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       Expanded(
                         child: Autocomplete<String>(
                           fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                            // Use our own controller to track the current value
+                            // Initialize the Autocomplete's controller with the current value
+                            if (fieldTextEditingController.text.isEmpty && widget.tagGroup.name.isNotEmpty) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                fieldTextEditingController.text = widget.tagGroup.name;
+                              });
+                            }
                             return TextFormField(
-                              controller: _nameController,
-                              focusNode: _nameFocusNode,
+                              controller: fieldTextEditingController,
+                              focusNode: focusNode,
                               decoration: const InputDecoration(labelText: 'Tag Group Name'),
                               onChanged: (value) {
                                 // Update the tag group name immediately as user types
@@ -104,7 +108,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                             );
                           },
                           optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text == '') {
+                            if (textEditingValue.text.isEmpty) {
                               return const Iterable<String>.empty();
                             }
                             // Provide tag group name suggestions based on user input.
@@ -114,7 +118,6 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                           },
                           onSelected: (String selection) {
                             // Update the tag group name when a suggestion is selected.
-                            _nameController.text = selection;
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
                           },
                         ),
@@ -131,13 +134,13 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       const Text('Color:'),
                       const SizedBox(width: 8.0),
                       DropdownButton<int?>(
-                        value: _colorOptions.contains(widget.tagGroup.color) 
-                            ? widget.tagGroup.color 
-                            : null,
+                        value: widget.tagGroup.color,
                         onChanged: (int? newColor) {
                           widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: newColor));
                         },
-                        items: _colorOptions.map((color) {
+                        items: _colorOptions.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final color = entry.value;
                           return DropdownMenuItem<int?>(
                             value: color,
                             child: Row(
@@ -164,7 +167,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                     child: const Icon(Icons.clear, size: 12),
                                   ),
                                 const SizedBox(width: 8),
-                                Text(color != null ? 'Color' : 'No Color'),
+                                Text(_colorNames[index]),
                               ],
                             ),
                           );
@@ -188,37 +191,41 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       );
                     }).toList(),
                   ),
-                  Autocomplete<String>(
-                    optionsBuilder: (TextEditingValue textEditingValue) async {
-                      if (textEditingValue.text == '') {
-                        return const Iterable<String>.empty();
-                      }
-                      // Provide tag suggestions based on the selected tag group.
-                      final tags = await widget.onGetAllTagsForTagGroup(widget.tagGroup.name);
-                      return tags.where((String option) {
-                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                      });
-                    },
-                    onSelected: (String selection) {
-                      if (!widget.tagGroup.tags.contains(selection)) {
-                        final updatedTags = List<String>.from(widget.tagGroup.tags)..add(selection);
-                        widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
-                      }
-                    },
-                    fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                      // Use the provided fieldTextEditingController for the TextFormField.
-                      return TextFormField(
-                        controller: fieldTextEditingController,
-                        focusNode: focusNode,
-                        decoration: const InputDecoration(labelText: 'Add new tag'),
-                        onFieldSubmitted: (value) {
-                          if (value.isNotEmpty) {
-                            final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                            final updatedTags = List<String>.from(widget.tagGroup.tags)..addAll(tagsToAdd);
+                  FutureBuilder<List<String>>(
+                    future: widget.onGetAllTagsForTagGroup(widget.tagGroup.name),
+                    builder: (context, snapshot) {
+                      final availableTags = snapshot.data ?? [];
+                      return Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (textEditingValue.text.isEmpty) {
+                            return const Iterable<String>.empty();
+                          }
+                          // Provide tag suggestions based on the selected tag group.
+                          return availableTags.where((String option) {
+                            return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                          });
+                        },
+                        onSelected: (String selection) {
+                          if (!widget.tagGroup.tags.contains(selection)) {
+                            final updatedTags = List<String>.from(widget.tagGroup.tags)..add(selection);
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                           }
-                          fieldTextEditingController.clear(); // Clear the text field after submission.
-                          onFieldSubmitted();
+                        },
+                        fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                          return TextFormField(
+                            controller: fieldTextEditingController,
+                            focusNode: focusNode,
+                            decoration: const InputDecoration(labelText: 'Add new tag'),
+                            onFieldSubmitted: (value) {
+                              if (value.isNotEmpty) {
+                                final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                                final updatedTags = List<String>.from(widget.tagGroup.tags)..addAll(tagsToAdd);
+                                widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
+                              }
+                              fieldTextEditingController.clear(); // Clear the text field after submission.
+                              onFieldSubmitted();
+                            },
+                          );
                         },
                       );
                     },
