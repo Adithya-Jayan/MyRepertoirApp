@@ -23,18 +23,18 @@ class TagGroupSection extends StatelessWidget {
     required this.onGetAllTagsForTagGroup,
   });
 
-  static const List<Map<String, dynamic>> _colorOptions = [
-    {'name': 'None', 'value': null},
-    {'name': 'Red', 'value': 0xFFFF6B6B},
-    {'name': 'Blue', 'value': 0xFF4ECDC4},
-    {'name': 'Green', 'value': 0xFF45B7D1},
-    {'name': 'Yellow', 'value': 0xFFFFE66D},
-    {'name': 'Purple', 'value': 0xFF96CEB4},
-    {'name': 'Orange', 'value': 0xFFFFA07A},
-    {'name': 'Pink', 'value': 0xFFFFB6C1},
-    {'name': 'Cyan', 'value': 0xFF87CEEB},
-    {'name': 'Brown', 'value': 0xFFD2B48C},
-    {'name': 'Gray', 'value': 0xFFC0C0C0},
+  static const List<int?> _colorOptions = [
+    null, // No color option
+    0xFFFF6B6B, // Coral
+    0xFF4ECDC4, // Teal
+    0xFF45B7D1, // Sky Blue
+    0xFFFFE66D, // Yellow
+    0xFF96CEB4, // Mint Green
+    0xFFFFA07A, // Light Salmon
+    0xFFFFB6C1, // Light Pink
+    0xFF87CEEB, // Sky Blue
+    0xFFD2B48C, // Tan
+    0xFFC0C0C0, // Silver
   ];
 
   @override
@@ -101,29 +101,40 @@ class TagGroupSection extends StatelessWidget {
                       const Text('Color:'),
                       const SizedBox(width: 8.0),
                       DropdownButton<int?>(
-                        value: _colorOptions.any((option) => option['value'] == tagGroup.color) 
+                        value: _colorOptions.contains(tagGroup.color) 
                             ? tagGroup.color 
                             : null,
                         onChanged: (int? newColor) {
                           onUpdateTagGroup(tagGroup, tagGroup.copyWith(color: newColor));
                         },
-                        items: _colorOptions.map((option) {
+                        items: _colorOptions.map((color) {
                           return DropdownMenuItem<int?>(
-                            value: option['value'] as int?,
+                            value: color,
                             child: Row(
                               children: [
-                                if (option['value'] != null)
+                                if (color != null)
                                   Container(
                                     width: 20,
                                     height: 20,
                                     decoration: BoxDecoration(
-                                      color: Color(option['value'] as int),
+                                      color: Color(color),
                                       border: Border.all(color: Colors.grey),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
+                                  )
+                                else
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Icon(Icons.clear, size: 12),
                                   ),
-                                if (option['value'] != null) const SizedBox(width: 8),
-                                Text(option['name'] as String),
+                                const SizedBox(width: 8),
+                                Text(color != null ? 'Color' : 'No Color'),
                               ],
                             ),
                           );
