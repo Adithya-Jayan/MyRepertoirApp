@@ -49,7 +49,8 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               );
               if (result == true) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Practice tracking updated.')),
                 );
               }
@@ -79,7 +80,8 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               if (confirmDelete == true) {
                 await _repository.deleteMusicPiece(_musicPiece.id);
                 if (mounted) {
-                  Navigator.of(context).pop();
+                  final currentContext = context;
+                  Navigator.of(currentContext).pop();
                 }
               }
             },

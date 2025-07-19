@@ -29,11 +29,14 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
 
   Future<void> _loadInitialAccentColor() async {
     final prefs = await SharedPreferences.getInstance();
-    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.value;
+    final accentColorValue = prefs.getInt('appAccentColor') ?? _selectedAccentColor.value;
     if (!mounted) return;
-    setState(() {
-      _selectedAccentColor = Color(accentColorValue);
-    });
+    final currentContext = context;
+    if (currentContext.mounted) {
+      setState(() {
+        _selectedAccentColor = Color(accentColorValue);
+      });
+    }
   }
 
   /// Sets the application's theme mode based on the user's selection.
@@ -93,11 +96,14 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                   return GestureDetector(
                     onTap: () {
                       final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
-                  themeNotifier.setAccentColor(color);
-                  if (!mounted) return;
-                  setState(() {
-                    _selectedAccentColor = color;
-                  });
+                      themeNotifier.setAccentColor(color);
+                      if (!mounted) return;
+                      final currentContext = context;
+                      if (currentContext.mounted) {
+                        setState(() {
+                          _selectedAccentColor = color;
+                        });
+                      }
                     },
                     child: Container(
                       width: 40,

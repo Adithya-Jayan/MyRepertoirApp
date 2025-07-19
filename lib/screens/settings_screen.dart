@@ -52,9 +52,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
               if (changesMade == true) {
                 AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
-                if (mounted) {
-                  Navigator.of(context).pop(true);
-                }
+                if (!mounted) return;
+                final currentContext = context;
+                Navigator.of(currentContext).pop(true);
               }
             },
           ),

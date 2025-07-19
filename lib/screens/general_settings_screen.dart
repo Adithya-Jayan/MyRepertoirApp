@@ -63,7 +63,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         setState(() {
           _currentStoragePath = result; // Update the state to display the new path.
         });
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
           const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
         );
         AppLogger.log('Storage path updated successfully to: $result');
@@ -71,7 +73,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         // Path is not writable
         AppLogger.log('Selected path is not writable: $e');
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
           SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
         );
         // Revert to a default writable path
@@ -88,7 +92,8 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       }
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         const SnackBar(content: Text('Folder selection cancelled.')),
       );
       AppLogger.log('Storage folder selection cancelled.');

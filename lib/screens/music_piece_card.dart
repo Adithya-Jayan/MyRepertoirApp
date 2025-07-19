@@ -52,26 +52,26 @@ class MusicPieceCard extends StatelessWidget {
                   ),
                 ),
               ),
+            if (piece.enablePracticeTracking)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.green, // Green dot for enabled tracking
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
             SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (piece.enablePracticeTracking)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.green, // Green dot for enabled tracking
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
-                        ),
-                      ),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(

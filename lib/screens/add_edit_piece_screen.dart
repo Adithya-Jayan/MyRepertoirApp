@@ -1,19 +1,18 @@
 import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
-import '../models/group.dart'; // Import Group model
-import '../database/music_piece_repository.dart'; // Import repository
-import 'package:file_picker/file_picker.dart';
-
-import '../services/media_storage_manager.dart';
-import 'package:repertoire/services/thumbnail_service.dart';
+import '../models/group.dart';
+import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
+import '../widgets/add_edit_piece/basic_details_section.dart';
 import '../widgets/detail_widgets/tag_group_section.dart';
 import '../widgets/detail_widgets/media_section.dart';
+import 'add_edit_piece/add_edit_piece_media_manager.dart';
+import 'add_edit_piece/add_edit_piece_tag_manager.dart';
+import 'add_edit_piece/add_edit_piece_form_handler.dart';
 
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
@@ -30,174 +29,71 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   late MusicPiece _musicPiece;
   List<Group> _availableGroups = [];
   Set<String> _selectedGroupIds = {};
-  final MusicPieceRepository _repository = MusicPieceRepository();
-  List<String> _allTagGroupNames = []; // For tag group name suggestions
-
-  final Map<String, TextEditingController> _tagInputControllers = {};
+  List<String> _allTagGroupNames = [];
+  
+  late final AddEditPieceMediaManager _mediaManager;
+  late final AddEditPieceTagManager _tagManager;
+  late final AddEditPieceFormHandler _formHandler;
 
   @override
   void initState() {
     super.initState();
-    _musicPiece = widget.musicPiece != null
-        ? widget.musicPiece!.copyWith(
-            mediaItems: widget.musicPiece!.mediaItems.map((item) => 
-              MediaItem(
-                id: item.id,
-                type: item.type,
-                pathOrUrl: item.pathOrUrl,
-                title: item.title,
-                thumbnailPath: item.thumbnailPath,
-              )
-            ).toList(),
-            tagGroups: widget.musicPiece!.tagGroups.map((tagGroup) => 
-              TagGroup(
-                id: tagGroup.id,
-                name: tagGroup.name,
-                tags: List<String>.from(tagGroup.tags),
-                color: tagGroup.color,
-              )
-            ).toList(),
-            groupIds: List<String>.from(widget.musicPiece!.groupIds),
-          )
-        : MusicPiece(
-            id: const Uuid().v4(), 
-            title: '', 
-            artistComposer: '', 
-            mediaItems: [], 
-            tagGroups: []
-          );
+    _initializeManagers();
+    _initializeMusicPiece();
+    _loadData();
+  }
 
+  void _initializeManagers() {
+    final repository = MusicPieceRepository();
+    _mediaManager = AddEditPieceMediaManager(
+      musicPieceId: widget.musicPiece?.id ?? '',
+      onMediaItemsChanged: _onMediaItemsChanged,
+    );
+    _tagManager = AddEditPieceTagManager(
+      repository: repository,
+      onTagGroupsChanged: _onTagGroupsChanged,
+    );
+    _formHandler = AddEditPieceFormHandler(
+      repository: repository,
+      originalMusicPiece: widget.musicPiece,
+    );
+  }
+
+  void _initializeMusicPiece() {
+    _musicPiece = _formHandler.createInitialMusicPiece(widget.selectedGroupId);
     _selectedGroupIds = Set<String>.from(_musicPiece.groupIds);
-    if (widget.musicPiece == null && widget.selectedGroupId != null) {
-      _selectedGroupIds.add(widget.selectedGroupId!);
-    }
-    
-    _loadGroups();
-    _loadTagGroupNames();
-
-    for (var tagGroup in _musicPiece.tagGroups) {
-      _tagInputControllers[tagGroup.id] = TextEditingController();
-    }
   }
 
-  @override
-  void dispose() {
-    _tagInputControllers.forEach((key, value) => value.dispose());
-    super.dispose();
-  }
-
-  Future<void> _loadTagGroupNames() async {
-    final allUniqueTags = await _repository.getAllUniqueTagGroups();
-    setState(() {
-      _allTagGroupNames = allUniqueTags.keys.toList()..sort();
-    });
-  }
-
-  Future<List<String>> _getAllTagsForTagGroup(String tagGroupName) async {
-    final allUniqueTags = await _repository.getAllUniqueTagGroups();
-    return allUniqueTags[tagGroupName]?.toList() ?? [];
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadGroups(),
+      _loadTagGroupNames(),
+    ]);
   }
 
   Future<void> _loadGroups() async {
-    try {
-      final groups = await _repository.getGroups();
-      setState(() {
-        _availableGroups = groups;
-      });
-    } catch (e) {
-      AppLogger.log('Error loading groups: $e');
-    }
-  }
-
-  Future<void> _pickFile(MediaType type) async {
-    FilePickerResult? result;
-    if (type == MediaType.image) {
-      result = await FilePicker.platform.pickFiles(type: FileType.image);
-    } else if (type == MediaType.pdf) {
-      result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
-    } else if (type == MediaType.audio) {
-      result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    } else if (type == MediaType.mediaLink) {
-      return;
-    } else if (type == MediaType.markdown) {
-      result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['md', 'txt']);
-    }
-
-    if (result != null && result.files.single.path != null) {
-      try {
-        final newPath = await MediaStorageManager.copyMediaToLocal(result.files.single.path!, _musicPiece.id, type);
-        setState(() {
-          _musicPiece.mediaItems.add(MediaItem(
-            id: const Uuid().v4(),
-            type: type,
-            pathOrUrl: newPath,
-          ));
-        });
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error copying file: $e'))
-        );
-      }
-    }
-  }
-
-  void _addMediaItem(MediaType type) {
-    if (type == MediaType.mediaLink || type == MediaType.markdown) {
-      setState(() {
-        _musicPiece.mediaItems.add(MediaItem(
-          id: const Uuid().v4(),
-          type: type,
-          pathOrUrl: '',
-        ));
-      });
-    } else {
-      _pickFile(type);
-    }
-  }
-
-  void _addTagGroup() {
+    final groups = await _formHandler.loadGroups();
     setState(() {
-      final newTagGroup = TagGroup(id: const Uuid().v4(), name: '', tags: []);
-      _musicPiece.tagGroups.add(newTagGroup);
-      _tagInputControllers[newTagGroup.id] = TextEditingController();
+      _availableGroups = groups;
     });
   }
 
-  void _updateTagGroupInMusicPiece(TagGroup oldTagGroup, TagGroup newTagGroup) {
-    final List<TagGroup> updatedTagGroups = List.from(_musicPiece.tagGroups);
-    final int index = updatedTagGroups.indexWhere((element) => element.id == oldTagGroup.id);
-    if (index != -1) {
-      updatedTagGroups[index] = newTagGroup;
-      setState(() {
-        _musicPiece = _musicPiece.copyWith(tagGroups: updatedTagGroups);
-      });
-    }
-  }
-
-  void _deleteTagGroup(TagGroup tagGroup) {
+  Future<void> _loadTagGroupNames() async {
+    final tagGroupNames = await _tagManager.loadTagGroupNames();
     setState(() {
-      _musicPiece.tagGroups.remove(tagGroup);
-      _tagInputControllers[tagGroup.id]?.dispose();
-      _tagInputControllers.remove(tagGroup.id);
+      _allTagGroupNames = tagGroupNames;
     });
   }
 
-  void _updateMediaItem(MediaItem newItem) {
-    final List<MediaItem> updatedMediaItems = List.from(_musicPiece.mediaItems);
-    final int index = updatedMediaItems.indexWhere((element) => element.id == newItem.id);
-    if (index != -1) {
-      updatedMediaItems[index] = newItem;
-      setState(() {
-        _musicPiece = _musicPiece.copyWith(mediaItems: updatedMediaItems);
-      });
-    }
+  void _onMediaItemsChanged(List<MediaItem> newMediaItems) {
+    setState(() {
+      _musicPiece = _musicPiece.copyWith(mediaItems: newMediaItems);
+    });
   }
 
-  void _deleteMediaItem(MediaItem item) async {
-    await MediaStorageManager.deleteLocalMediaFile(item.pathOrUrl);
+  void _onTagGroupsChanged(List<TagGroup> newTagGroups) {
     setState(() {
-      _musicPiece.mediaItems.remove(item);
+      _musicPiece = _musicPiece.copyWith(tagGroups: newTagGroups);
     });
   }
 
@@ -207,7 +103,19 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
-  
+  Future<void> _savePiece() async {
+    final success = await _formHandler.validateAndSave(
+      _formKey,
+      _musicPiece,
+      _selectedGroupIds,
+    );
+    
+    if (success && mounted) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,26 +126,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                _formKey.currentState!.save();
-
-                for (var item in _musicPiece.mediaItems) {
-                  await ThumbnailService.fetchAndSaveThumbnail(item, _musicPiece.id);
-                }
-
-                _musicPiece.groupIds = _selectedGroupIds.toList();
-
-                if (widget.musicPiece == null) {
-                  await _repository.insertMusicPiece(_musicPiece);
-                } else {
-                  await _repository.updateMusicPiece(_musicPiece);
-                }
-
-                if (!mounted) return;
-                Navigator.of(context).pop(true);
-              }
-            },
+            onPressed: _savePiece,
           ),
         ],
       ),
@@ -247,137 +136,154 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                initialValue: _musicPiece.title,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
-                onSaved: (value) => _musicPiece.title = value!,
-              ),
-              TextFormField(
-                initialValue: _musicPiece.artistComposer,
-                decoration: const InputDecoration(labelText: 'Artist/Composer'),
-                onSaved: (value) => _musicPiece.artistComposer = value!,
+              BasicDetailsSection(
+                musicPiece: _musicPiece,
+                onTitleChanged: (value) => _musicPiece.title = value,
+                onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
               ),
               const SizedBox(height: 20),
-              ExpansionTile(
-                title: const Text('Groups'),
-                initiallyExpanded: false,
-                children: [
-                  ..._availableGroups.map((group) {
-                    return CheckboxListTile(
-                      title: Text(group.name),
-                      value: _selectedGroupIds.contains(group.id),
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedGroupIds.add(group.id);
-                          } else {
-                            _selectedGroupIds.remove(group.id);
-                          }
-                        });
-                      },
-                    );
-                  }),
-                ],
-              ),
+              _buildGroupsSection(),
               const SizedBox(height: 20),
-              const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _musicPiece.tagGroups.length,
-                buildDefaultDragHandles: false,
-                itemBuilder: (context, index) {
-                  final tagGroup = _musicPiece.tagGroups[index];
-                  return TagGroupSection(
-                    key: ValueKey(tagGroup.id),
-                    tagGroup: tagGroup,
-                    index: index,
-                    allTagGroupNames: _allTagGroupNames,
-                    onUpdateTagGroup: _updateTagGroupInMusicPiece,
-                    onDeleteTagGroup: _deleteTagGroup,
-                    onGetAllTagsForTagGroup: _getAllTagsForTagGroup,
-                  );
-                },
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    final tagGroup = _musicPiece.tagGroups.removeAt(oldIndex);
-                    _musicPiece.tagGroups.insert(newIndex, tagGroup);
-                  });
-                },
-              ),
+              _buildTagGroupsSection(),
               const SizedBox(height: 20),
-              const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _musicPiece.mediaItems.length,
-                buildDefaultDragHandles: false,
-                itemBuilder: (context, index) {
-                  final item = _musicPiece.mediaItems[index];
-                  return MediaSection(
-                    key: ValueKey(item.id),
-                    item: item,
-                    index: index,
-                    musicPieceThumbnail: _musicPiece.thumbnailPath ?? '',
-                    onUpdateMediaItem: _updateMediaItem,
-                    onDeleteMediaItem: _deleteMediaItem,
-                    onSetThumbnail: _setThumbnail,
-                  );
-                },
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                    _musicPiece.mediaItems.insert(newIndex, item);
-                  });
-                },
-              ),
+              _buildMediaSection(),
             ],
           ),
         ),
       ),
-      floatingActionButton: SpeedDial(
-        icon: Icons.add,
-        activeIcon: Icons.close,
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.text_fields),
-            label: 'Markdown Text',
-            onTap: () => _addMediaItem(MediaType.markdown),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.picture_as_pdf),
-            label: 'PDF Sheet Music',
-            onTap: () => _addMediaItem(MediaType.pdf),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.image),
-            label: 'Image',
-            onTap: () => _addMediaItem(MediaType.image),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.audiotrack),
-            label: 'Audio Recording',
-            onTap: () => _addMediaItem(MediaType.audio),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.video_library),
-            label: 'Media Link',
-            onTap: () => _addMediaItem(MediaType.mediaLink),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.label),
-            label: 'Add Tag Group',
-            onTap: _addTagGroup,
-          ),
-        ],
-      ),
+      floatingActionButton: _buildSpeedDial(),
+    );
+  }
+
+  Widget _buildGroupsSection() {
+    return ExpansionTile(
+      title: const Text('Groups'),
+      initiallyExpanded: false,
+      children: [
+        ..._availableGroups.map((group) {
+          return CheckboxListTile(
+            title: Text(group.name),
+            value: _selectedGroupIds.contains(group.id),
+            onChanged: (bool? value) {
+              setState(() {
+                if (value == true) {
+                  _selectedGroupIds.add(group.id);
+                } else {
+                  _selectedGroupIds.remove(group.id);
+                }
+              });
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTagGroupsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _musicPiece.tagGroups.length,
+          buildDefaultDragHandles: false,
+          itemBuilder: (context, index) {
+            final tagGroup = _musicPiece.tagGroups[index];
+            return TagGroupSection(
+              key: ValueKey(tagGroup.id),
+              tagGroup: tagGroup,
+              index: index,
+              allTagGroupNames: _allTagGroupNames,
+              onUpdateTagGroup: (oldGroup, newGroup) => 
+                _tagManager.updateTagGroup(oldGroup, newGroup, _musicPiece.tagGroups),
+              onDeleteTagGroup: (tagGroup) => 
+                _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
+              onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
+            );
+          },
+          onReorder: (oldIndex, newIndex) => 
+            _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMediaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _musicPiece.mediaItems.length,
+          buildDefaultDragHandles: false,
+          itemBuilder: (context, index) {
+            final item = _musicPiece.mediaItems[index];
+            return MediaSection(
+              key: ValueKey(item.id),
+              item: item,
+              index: index,
+              musicPieceThumbnail: _musicPiece.thumbnailPath ?? '',
+              onUpdateMediaItem: (newItem) => 
+                _mediaManager.updateMediaItem(newItem, _musicPiece.mediaItems),
+              onDeleteMediaItem: (item) => 
+                _mediaManager.deleteMediaItem(item, _musicPiece.mediaItems),
+              onSetThumbnail: _setThumbnail,
+            );
+          },
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              final item = _musicPiece.mediaItems.removeAt(oldIndex);
+              _musicPiece.mediaItems.insert(newIndex, item);
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpeedDial() {
+    return SpeedDial(
+      icon: Icons.add,
+      activeIcon: Icons.close,
+      children: [
+        SpeedDialChild(
+          child: const Icon(Icons.text_fields),
+          label: 'Markdown Text',
+          onTap: () => _mediaManager.addMediaItem(MediaType.markdown, _musicPiece.mediaItems),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.picture_as_pdf),
+          label: 'PDF Sheet Music',
+          onTap: () => _mediaManager.addMediaItem(MediaType.pdf, _musicPiece.mediaItems),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.image),
+          label: 'Image',
+          onTap: () => _mediaManager.addMediaItem(MediaType.image, _musicPiece.mediaItems),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.audiotrack),
+          label: 'Audio Recording',
+          onTap: () => _mediaManager.addMediaItem(MediaType.audio, _musicPiece.mediaItems),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.video_library),
+          label: 'Media Link',
+          onTap: () => _mediaManager.addMediaItem(MediaType.mediaLink, _musicPiece.mediaItems),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.label),
+          label: 'Add Tag Group',
+          onTap: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+        ),
+      ],
     );
   }
 }

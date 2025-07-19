@@ -51,6 +51,7 @@ class PersonalizationSettingsScreenState
     AppLogger.log('PersonalizationSettingsScreen: Saving galleryColumns: ${value.toInt()}');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('galleryColumns', value.toInt());
+    if (!mounted) return;
     setState(() {
       _galleryColumns = value;
     });

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../database/music_piece_repository.dart';
 
-import '../utils/app_logger.dart';
+
 import '../utils/library_screen_notifier.dart';
 
 import './library_app_bar.dart';
@@ -22,7 +22,7 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.log('LibraryScreen: build called');
+    
     return ChangeNotifierProvider(
       create: (context) => LibraryScreenNotifier(MusicPieceRepository()),
       child: Consumer<LibraryScreenNotifier>(

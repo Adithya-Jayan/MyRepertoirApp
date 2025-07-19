@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/app_logger.dart';
+import '../utils/app_logger.dart' as utils;
 import '../database/music_piece_repository.dart';
 import '../services/backup_restore_service.dart';
 import 'package:file_picker/file_picker.dart';
@@ -70,7 +70,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             onTap: () async {
               await _backupRestoreService.restoreData(context: context);
               if (mounted) {
-                Navigator.of(context).pop(true);
+                final currentContext = context;
+                Navigator.of(currentContext).pop(true);
               }
             },
           ),
@@ -131,22 +132,23 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   }
 
   Future<void> _changeStorageFolder() async {
-    AppLogger.log('Attempting to change storage folder.');
+    utils.AppLogger.log('Attempting to change storage folder.');
     final selectedDirectory = await FilePicker.platform.getDirectoryPath();
     if (selectedDirectory != null) {
-      AppLogger.log('Selected new storage directory: $selectedDirectory');
+      utils.AppLogger.log('Selected new storage directory: $selectedDirectory');
       await _backupRestoreService.prefs.setString('appStoragePath', selectedDirectory);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         SnackBar(content: Text('Storage folder updated to: $selectedDirectory')),
       );
-      AppLogger.log('Storage folder updated successfully.');
+      utils.AppLogger.log('Storage folder updated successfully.');
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Folder selection cancelled.')),
       );
-      AppLogger.log('Storage folder selection cancelled.');
+      utils.AppLogger.log('Storage folder selection cancelled.');
     }
   }
 }

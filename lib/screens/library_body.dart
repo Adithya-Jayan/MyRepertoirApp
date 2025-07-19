@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
-import 'package:repertoire/screens/music_piece_card.dart';
-import 'package:repertoire/screens/piece_detail_screen.dart';
+import 'package:repertoire/screens/music_piece_grid_view.dart';
 
 import '../utils/app_logger.dart';
 
@@ -138,58 +137,18 @@ class LibraryBody extends StatelessWidget {
                     return const Center(child: Text('No music pieces found in this group.'));
                   }
 
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      onReloadData();
-                    },
-                    child: GridView.builder(
-                      key: ValueKey('gallery_page_$currentPageGroupId'), // Force rebuild when group changes.
-                      padding: const EdgeInsets.all(8.0),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: galleryColumns, // Number of columns in the grid.
-                        crossAxisSpacing: 2.0,
-                        mainAxisSpacing: 4.0,
-                        childAspectRatio: 1.0, // Aspect ratio for each grid item (square).
-                      ),
-                      itemCount: filteredAndSortedPieces.length,
-                      itemBuilder: (context, index) {
-                        final piece = filteredAndSortedPieces[index];
-                        final isSelected = selectedPieceIds.contains(piece.id);
-                        return MusicPieceCard(
-                          piece: piece,
-                          isSelected: isSelected,
-                          onTap: () async {
-                            // Check if Shift key is pressed for multi-selection.
-                            final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
-                                pressedKeys.contains(LogicalKeyboardKey.shiftRight);
-
-                            if (isShiftPressed) {
-                              if (!isMultiSelectMode) {
-                                onToggleMultiSelectMode(); // Enter multi-select mode if not already in it.
-                              }
-                              onPieceSelected(piece); // Select/deselect the piece.
-                            } else if (isMultiSelectMode) {
-                              onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
-                            } else {
-                              // Navigate to PieceDetailScreen in single-selection mode.
-                              await Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => PieceDetailScreen(musicPiece: piece),
-                                ),
-                              );
-                              onReloadData(); // Reload data after returning from detail screen.
-                            }
-                          },
-                          onLongPress: () {
-                            // Enter multi-select mode on long press and select the piece.
-                            if (!isMultiSelectMode) {
-                              onToggleMultiSelectMode();
-                            }
-                            onPieceSelected(piece);
-                          },
-                        );
-                      },
-                    ),
+                  return MusicPieceGridView(
+                    musicPieces: filteredAndSortedPieces,
+                    isLoading: isLoading,
+                    errorMessage: errorMessage,
+                    galleryColumns: galleryColumns,
+                    selectedPieceIds: selectedPieceIds,
+                    pressedKeys: pressedKeys,
+                    isMultiSelectMode: isMultiSelectMode,
+                    onPieceSelected: onPieceSelected,
+                    onReloadData: onReloadData,
+                    onToggleMultiSelectMode: onToggleMultiSelectMode,
+                    currentPageGroupId: currentPageGroupId,
                   );
                 }
               },

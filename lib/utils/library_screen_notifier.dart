@@ -66,12 +66,20 @@ class LibraryScreenNotifier extends ChangeNotifier {
         (_filterOptions['genres']?.isNotEmpty == true ||
             _filterOptions['instrumentations']?.isNotEmpty == true ||
             _filterOptions['difficulties']?.isNotEmpty == true ||
-            _filterOptions['orderedTags']?.values.any((list) => list.isNotEmpty) == true ||
+            _hasOrderedTagsFilter() ||
             _filterOptions['enablePracticeTracking'] == true ||
             _filterOptions['minPracticeCount'] != null ||
             _filterOptions['maxPracticeCount'] != null ||
             _filterOptions['minPracticeDate'] != null ||
             _filterOptions['maxPracticeDate'] != null);
+  }
+
+  bool _hasOrderedTagsFilter() {
+    final orderedTags = _filterOptions['orderedTags'];
+    if (orderedTags is Map<String, List<String>>) {
+      return orderedTags.values.any((list) => list.isNotEmpty);
+    }
+    return false;
   }
 
   Future<void> _initialize() async {

@@ -28,6 +28,7 @@ class BackupRestoreService {
   /// it performs an automatic backup to a predefined location.
   Future<void> backupData({bool manual = true, BuildContext? context}) async {
     AppLogger.log('Initiating backup (manual: $manual).');
+    if (context != null && !context.mounted) return;
     if (context != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Backing up data...'))
@@ -47,12 +48,13 @@ class BackupRestoreService {
       final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
       final fileName = 'music_repertoire_backup_$timestamp.zip';
 
-      final storagePath = _prefs.getString('appStoragePath');
+      final storagePath = prefs.getString('appStoragePath');
       if (storagePath == null) {
         AppLogger.log('Backup failed: Storage path not configured.');
         if (context != null) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Storage path not configured.'))
+            const SnackBar(content: Text('Backup failed: Storage path not configured.'))
           );
         }
         return;
@@ -103,6 +105,7 @@ class BackupRestoreService {
           AppLogger.log('FilePicker.saveFile (mobile) returned: $outputFile');
           if (outputFile != null) {
             if (context != null) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Data backed up successfully!'))
               );
@@ -110,6 +113,7 @@ class BackupRestoreService {
             AppLogger.log('Manual backup successful.');
           } else {
             if (context != null) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Backup cancelled.'))
               );
@@ -132,6 +136,7 @@ class BackupRestoreService {
             }
             await File(outputFile).writeAsBytes(zipBytes);
             if (context != null) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Data backed up successfully!'))
               );
@@ -139,6 +144,7 @@ class BackupRestoreService {
             AppLogger.log('Manual backup successful.');
           } else {
             if (context != null) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Backup cancelled.'))
               );
@@ -152,6 +158,7 @@ class BackupRestoreService {
         await zipFile.writeAsBytes(zipBytes);
 
         if (context != null) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Autobackup successful!'))
           );
@@ -164,6 +171,7 @@ class BackupRestoreService {
     } catch (e) {
       AppLogger.log('Backup failed: $e');
       if (context != null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Backup failed: $e'))
         );
@@ -173,7 +181,7 @@ class BackupRestoreService {
 
   /// Triggers an automatic backup process.
   ///
-  /// This function calls `_backupData` with `manual` set to false,
+  /// This function calls `backupData` with `manual` set to false,
   /// and then manages the number of automatic backup files, deleting older ones
   /// if the count exceeds the configured limit.
   Future<void> triggerAutoBackup(int autoBackupCount, {BuildContext? context}) async {
@@ -201,6 +209,7 @@ class BackupRestoreService {
   Future<void> restoreData({BuildContext? context}) async {
     AppLogger.log('Initiating data restore.');
     if (context != null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Restoring data...'))
       );
@@ -224,7 +233,7 @@ class BackupRestoreService {
       AppLogger.log('FilePicker.pickFiles returned: ${result?.files.single.path}');
 
       if (result != null && result.files.single.path != null) {
-        final inputStream = InputFileStream(result.files.single.path!); // Use InputFileStream for reading zip
+        final inputStream = InputFileStream(result.files.single.path!);
         final archive = ZipDecoder().decodeBuffer(inputStream);
         AppLogger.log('Backup file decoded.');
 
@@ -315,6 +324,7 @@ class BackupRestoreService {
         AppLogger.log('Data restored successfully.');
       } else {
         if (context != null) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Restore cancelled.'))
           );
@@ -330,4 +340,4 @@ class BackupRestoreService {
       }
     }
   }
-}
+} 

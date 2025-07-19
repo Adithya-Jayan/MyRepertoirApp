@@ -37,7 +37,8 @@ class LibraryActions {
         onReloadMusicPieces(); // Reload music pieces to update the UI.
       } catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
           SnackBar(content: Text('Error deleting music pieces: $e')),
         );
       }
@@ -153,6 +154,6 @@ class LibraryActions {
         );
       },
     );
-    this.onToggleMultiSelectMode(); // Exit multi-select mode after modification
+    onToggleMultiSelectMode(); // Exit multi-select mode after modification
   }
 }

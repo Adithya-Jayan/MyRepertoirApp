@@ -1,15 +1,14 @@
 // Core Dart and Flutter imports
-import 'package:path/path.dart'; // For joining and normalizing paths
-import 'package:sqflite/sqflite.dart'; // SQLite database plugin for Flutter
-import 'package:path_provider/path_provider.dart'; // For accessing platform-specific file system paths
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 
-// Project-specific model imports
-import '../models/music_piece.dart'; // Data model for a music piece
-import '../models/tag.dart'; // Data model for a tag
-import '../models/group.dart'; // Data model for a group
-
-// Utility imports
-import '../utils/dummy_data.dart'; // For initial dummy data insertion
+// Project-specific imports
+import '../models/music_piece.dart';
+import '../models/tag.dart';
+import '../models/group.dart';
+import 'database_schema.dart';
+import 'database_operations.dart';
 
 /// A singleton helper class for managing the SQLite database.
 /// Provides methods for database initialization, table creation, and CRUD operations
@@ -46,256 +45,134 @@ class DatabaseHelper {
       path,
       version: 4, // Current database version
       onCreate: (db, version) async {
-        await _createDB(db, version);
-        // Insert dummy data only if the database is newly created and the music_pieces table is empty
-        final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM music_pieces'));
-        if (count == 0) {
-          for (final piece in dummyMusicPieces) {
-            await db.insert('music_pieces', piece.toJson());
-          }
-        }
+        await DatabaseSchema.createTables(db, version);
+        await DatabaseSchema.insertDummyData(db);
       },
-      onUpgrade: _onUpgrade, // Callback for handling database schema upgrades
-      onOpen: (db) async {
-        // One-time cleanup: remove any old 'Default Group' entries
-        await db.delete('groups', where: 'name = ?', whereArgs: ['Default Group']);
-      },
+      onUpgrade: DatabaseSchema.upgradeDatabase,
+      onOpen: DatabaseSchema.performCleanup,
     );
 
     return db;
   }
 
-  /// Creates the database tables.
-  /// This method is called when the database is first created.
-  Future _createDB(Database db, int version) async {
-    // Create the music_pieces table.
-    await db.execute('''
-CREATE TABLE IF NOT EXISTS music_pieces (
-  id TEXT PRIMARY KEY,
-  title TEXT,
-  artistComposer TEXT,
-  tags TEXT, -- Stored as JSON string
-  lastAccessed TEXT, -- Stored as ISO 8601 string
-  isFavorite INTEGER, -- Stored as 0 for false, 1 for true
-  lastPracticeTime TEXT, -- Stored as ISO 8601 string
-  practiceCount INTEGER,
-  enablePracticeTracking INTEGER,
-  googleDriveFileId TEXT,
-  mediaItems TEXT, -- Stored as JSON string of List<MediaItem>
-  groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
-  tagGroups TEXT DEFAULT '[]', -- New column for tag groups, default to empty JSON array
-  thumbnailPath TEXT -- New column for thumbnail path
-)
-''');
-
-    // Create the tags table.
-    await db.execute('''
-CREATE TABLE IF NOT EXISTS tags (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  color INTEGER,
-  type TEXT
-)
-''');
-
-    // Create the groups table.
-    await db.execute('''
-CREATE TABLE IF NOT EXISTS groups (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  'order' INTEGER, -- 'order' is a SQL keyword, so it's quoted
-  isHidden INTEGER DEFAULT 0 -- New column for hidden status, default to 0 (false)
-)
-''');
+  /// Gets a DatabaseOperations instance for performing CRUD operations.
+  Future<DatabaseOperations> get operations async {
+    final db = await database;
+    return DatabaseOperations(db);
   }
 
   /// Inserts a new MusicPiece into the database or replaces an existing one if the ID matches.
   Future<void> insertMusicPiece(MusicPiece piece) async {
-    final db = await instance.database;
-    await db.insert('music_pieces', piece.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  /// Handles database schema upgrades.
-  /// This method is called when the database version changes.
-  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute("ALTER TABLE music_pieces ADD COLUMN thumbnailPath TEXT;");
-    }
-    if (oldVersion < 3) {
-      await db.execute("ALTER TABLE groups ADD COLUMN isHidden INTEGER DEFAULT 0;");
-    }
-    if (oldVersion < 4) {
-      // Remove isDefault column if it exists
-      // This is a more complex migration, often requiring a temp table
-      // For simplicity, we'll just drop and recreate if it's a fresh install
-      // or handle it in the Group model's fromJson for existing data.
-      // If isDefault column exists, it will be ignored by the new Group model.
-    }
+    final ops = await operations;
+    await ops.insertMusicPiece(piece);
   }
 
   /// Inserts a new Tag into the database or replaces an existing one if the ID matches.
   Future<void> insertTag(Tag tag) async {
-    final db = await instance.database;
-    await db.insert('tags', tag.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    final ops = await operations;
+    await ops.insertTag(tag);
   }
 
   /// Inserts a new Group into the database or replaces an existing one if the ID matches.
   Future<void> insertGroup(Group group) async {
-    final db = await instance.database;
-    await db.insert('groups', group.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    final ops = await operations;
+    await ops.insertGroup(group);
   }
 
   /// Retrieves all MusicPiece objects from the database.
   Future<List<MusicPiece>> getMusicPieces() async {
-    final db = await instance.database;
-    final result = await db.query('music_pieces');
-
-    // Convert the query result (List<Map<String, dynamic>>) to List<MusicPiece>.
-    return result.map((json) => MusicPiece.fromJson(json)).toList();
+    final ops = await operations;
+    return await ops.getMusicPieces();
   }
 
   /// Retrieves MusicPiece objects from the database based on a list of IDs.
   Future<List<MusicPiece>> getMusicPiecesByIds(List<String> ids) async {
-    final db = await instance.database;
-    if (ids.isEmpty) {
-      return []; // Return an empty list if no IDs are provided.
-    }
-    final result = await db.query(
-      'music_pieces',
-      where: 'id IN (${ids.map((_) => '?').join(',')})', // SQL IN clause for multiple IDs
-      whereArgs: ids, // Arguments for the WHERE clause
-    );
-
-    // Convert the query result to List<MusicPiece>.
-    return result.map((json) => MusicPiece.fromJson(json)).toList();
+    final ops = await operations;
+    return await ops.getMusicPiecesByIds(ids);
   }
 
   /// Retrieves all Tag objects from the database.
   Future<List<Tag>> getTags() async {
-    final db = await instance.database;
-    final result = await db.query('tags');
-
-    // Convert the query result to List<Tag>.
-    return result.map((json) => Tag.fromJson(json)).toList();
+    final ops = await operations;
+    return await ops.getTags();
   }
 
   /// Retrieves all Group objects from the database.
   Future<List<Group>> getGroups() async {
-    final db = await instance.database;
-    final result = await db.query('groups');
-    // Convert the query result to List<Group>.
-    return result.map((json) => Group.fromJson(json)).toList();
+    final ops = await operations;
+    return await ops.getGroups();
   }
 
   /// Updates an existing MusicPiece in the database.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateMusicPiece(MusicPiece piece) async {
-    final db = await instance.database;
-
-    return await db.update(
-      'music_pieces',
-      piece.toJson(),
-      where: 'id = ?',
-      whereArgs: [piece.id],
-    );
+    final ops = await operations;
+    return await ops.updateMusicPiece(piece);
   }
 
   /// Updates an existing Tag in the database.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateTag(Tag tag) async {
-    final db = await instance.database;
-
-    return await db.update(
-      'tags',
-      tag.toJson(),
-      where: 'id = ?',
-      whereArgs: [tag.id],
-    );
+    final ops = await operations;
+    return await ops.updateTag(tag);
   }
 
   /// Updates an existing Group in the database.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> updateGroup(Group group) async {
-    final db = await instance.database;
-    return await db.update(
-      'groups',
-      group.toJson(),
-      where: 'id = ?',
-      whereArgs: [group.id],
-    );
+    final ops = await operations;
+    return await ops.updateGroup(group);
   }
 
   /// Deletes a MusicPiece from the database by its ID.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteMusicPiece(String id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      'music_pieces',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final ops = await operations;
+    return await ops.deleteMusicPiece(id);
   }
 
   /// Deletes multiple MusicPiece objects from the database by their IDs.
   /// Returns the number of rows affected.
   Future<int> deleteMusicPieces(List<String> ids) async {
-    final db = await instance.database;
-    if (ids.isEmpty) {
-      return 0; // No pieces to delete if the list is empty.
-    }
-    return await db.delete(
-      'music_pieces',
-      where: 'id IN (${ids.map((_) => '?').join(',')})', // SQL IN clause for multiple IDs
-      whereArgs: ids, // Arguments for the WHERE clause
-    );
+    final ops = await operations;
+    return await ops.deleteMusicPieces(ids);
   }
 
   /// Deletes a Tag from the database by its ID.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteTag(String id) async {
-    final db = await instance.database;
-
-    return await db.delete(
-      'tags',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final ops = await operations;
+    return await ops.deleteTag(id);
   }
 
   /// Deletes a Group from the database by its ID.
   /// Returns the number of rows affected (should be 1 if successful).
   Future<int> deleteGroup(String id) async {
-    final db = await instance.database;
-    return await db.delete(
-      'groups',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final ops = await operations;
+    return await ops.deleteGroup(id);
   }
 
   /// Deletes all MusicPiece objects from the database.
   Future<void> deleteAllMusicPieces() async {
-    final db = await instance.database;
-    await db.delete('music_pieces');
+    final ops = await operations;
+    await ops.deleteAllMusicPieces();
   }
 
   /// Deletes all Tag objects from the database.
   Future<void> deleteAllTags() async {
-    final db = await instance.database;
-    await db.delete('tags');
+    final ops = await operations;
+    await ops.deleteAllTags();
   }
 
   /// Deletes all Group objects from the database.
   Future<void> deleteAllGroups() async {
-    final db = await instance.database;
-    await db.delete('groups');
+    final ops = await operations;
+    await ops.deleteAllGroups();
   }
 
   /// Closes the database connection.
   Future close() async {
-    final db = await instance.database;
-
+    final db = await database;
     db.close();
   }
 }
