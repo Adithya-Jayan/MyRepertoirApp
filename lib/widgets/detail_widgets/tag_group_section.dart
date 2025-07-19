@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/tag_group.dart';
+import 'package:repertoire/utils/color_utils.dart';
 
 /// A widget for displaying and editing a single TagGroup.
 ///
@@ -22,8 +23,23 @@ class TagGroupSection extends StatelessWidget {
     required this.onGetAllTagsForTagGroup,
   });
 
+  static const List<Map<String, dynamic>> _colorOptions = [
+    {'name': 'None', 'value': null},
+    {'name': 'Red', 'value': 0xFFFF0000},
+    {'name': 'Blue', 'value': 0xFF0000FF},
+    {'name': 'Green', 'value': 0xFF00FF00},
+    {'name': 'Yellow', 'value': 0xFFFFFF00},
+    {'name': 'Purple', 'value': 0xFF800080},
+    {'name': 'Orange', 'value': 0xFFFFA500},
+    {'name': 'Pink', 'value': 0xFFFFC0CB},
+    {'name': 'Cyan', 'value': 0xFF00FFFF},
+    {'name': 'Brown', 'value': 0xFFA52A2A},
+    {'name': 'Gray', 'value': 0xFF808080},
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
 
     return Card(
       key: ValueKey(tagGroup.id), // Unique key for ReorderableListView.
@@ -80,49 +96,50 @@ class TagGroupSection extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8.0),
-                  // Color selection dropdown (assuming _colorOptions is passed or defined internally)
-                  // For this example, _colorOptions is not passed, so this part is commented out
-                  // or needs to be adapted based on how color options are provided.
-                  // Row(
-                  //   children: [
-                  //     const Text('Color:'),
-                  //     const SizedBox(width: 8.0),
-                  //     DropdownButton<int?>(
-                  //       value: tagGroup.color,
-                  //       onChanged: (int? newColor) {
-                  //         onUpdateTagGroup(tagGroup, tagGroup.copyWith(color: newColor));
-                  //       },
-                  //       items: _colorOptions.map((option) {
-                  //         return DropdownMenuItem<int?>(
-                  //           value: option['value'] as int?,
-                  //           child: Row(
-                  //             children: [
-                  //               if (option['value'] != null)
-                  //                 Container(
-                  //                   width: 20,
-                  //                   height: 20,
-                  //                   color: Color(option['value'] as int),
-                  //                 ),
-                  //               if (option['value'] != null) const SizedBox(width: 8),
-                  //               Text(option['name'] as String),
-                  //             ],
-                  //           ),
-                  //         );
-                  //       }).toList(),
-                  //     ),
-                  //   ],
-                  // ),
+                  Row(
+                    children: [
+                      const Text('Color:'),
+                      const SizedBox(width: 8.0),
+                      DropdownButton<int?>(
+                        value: _colorOptions.any((option) => option['value'] == tagGroup.color) 
+                            ? tagGroup.color 
+                            : null,
+                        onChanged: (int? newColor) {
+                          onUpdateTagGroup(tagGroup, tagGroup.copyWith(color: newColor));
+                        },
+                        items: _colorOptions.map((option) {
+                          return DropdownMenuItem<int?>(
+                            value: option['value'] as int?,
+                            child: Row(
+                              children: [
+                                if (option['value'] != null)
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Color(option['value'] as int),
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                if (option['value'] != null) const SizedBox(width: 8),
+                                Text(option['name'] as String),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8.0),
                   Wrap(
                     spacing: 8.0,
                     runSpacing: 4.0,
                     children: tagGroup.tags.map((tag) {
-                      // Color utility function needs to be accessible or passed.
-                      // For now, assuming adjustColorForBrightness is available globally or removed.
-                      // final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
+                      final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
                       return Chip(
                         label: Text(tag),
-                        // backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                        backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
                         onDeleted: () {
                           final updatedTags = List<String>.from(tagGroup.tags)..remove(tag);
                           onUpdateTagGroup(tagGroup, tagGroup.copyWith(tags: updatedTags));

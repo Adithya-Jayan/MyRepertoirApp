@@ -9,11 +9,13 @@ import 'package:repertoire/database/music_piece_repository.dart';
 class MediaDisplayList extends StatefulWidget {
   final MusicPiece musicPiece;
   final Function(MusicPiece) onMusicPieceChanged;
+  final bool allowReordering;
 
   const MediaDisplayList({
     super.key,
     required this.musicPiece,
     required this.onMusicPieceChanged,
+    this.allowReordering = false,
   });
 
   @override
@@ -44,38 +46,54 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8.0),
-            ReorderableListView.builder(
-              buildDefaultDragHandles: false, // Disable default handles
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(), // to allow SingleChildScrollView to work
-              itemCount: _musicPiece.mediaItems.length,
-              itemBuilder: (context, index) {
-                final item = _musicPiece.mediaItems[index];
-                return MediaDisplayWidget(
-                  key: ValueKey(item.id),
-                  mediaItem: item,
-                  musicPieceTitle: _musicPiece.title,
-                  musicPieceArtist: _musicPiece.artistComposer,
-                  isEditable: false,
-                  trailing: ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle),
+            widget.allowReordering
+                ? ReorderableListView.builder(
+                    buildDefaultDragHandles: false, // Disable default handles
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(), // to allow SingleChildScrollView to work
+                    itemCount: _musicPiece.mediaItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _musicPiece.mediaItems[index];
+                      return MediaDisplayWidget(
+                        key: ValueKey(item.id),
+                        mediaItem: item,
+                        musicPieceTitle: _musicPiece.title,
+                        musicPieceArtist: _musicPiece.artistComposer,
+                        isEditable: false,
+                        trailing: ReorderableDragStartListener(
+                          index: index,
+                          child: const Icon(Icons.drag_handle),
+                        ),
+                      );
+                    },
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) {
+                          newIndex -= 1;
+                        }
+                        final item = _musicPiece.mediaItems.removeAt(oldIndex);
+                        _musicPiece.mediaItems.insert(newIndex, item);
+                        // Persist the new order to the database
+                        _repository.updateMusicPiece(_musicPiece);
+                        widget.onMusicPieceChanged(_musicPiece);
+                      });
+                    },
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _musicPiece.mediaItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _musicPiece.mediaItems[index];
+                      return MediaDisplayWidget(
+                        key: ValueKey(item.id),
+                        mediaItem: item,
+                        musicPieceTitle: _musicPiece.title,
+                        musicPieceArtist: _musicPiece.artistComposer,
+                        isEditable: false,
+                      );
+                    },
                   ),
-                );
-              },
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) {
-                    newIndex -= 1;
-                  }
-                  final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                  _musicPiece.mediaItems.insert(newIndex, item);
-                  // Persist the new order to the database
-                  _repository.updateMusicPiece(_musicPiece);
-                  widget.onMusicPieceChanged(_musicPiece);
-                });
-              },
-            ),
           ],
         ),
       ),

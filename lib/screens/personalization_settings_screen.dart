@@ -74,7 +74,7 @@ class PersonalizationSettingsScreenState
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(true); // Always return true to indicate potential changes
           },
         ),
       ),
@@ -160,7 +160,6 @@ class PersonalizationSettingsScreenState
               label: _galleryColumns.toInt().toString(),
               onChanged: (value) async {
                 await _saveGalleryColumns(value);
-                
               },
             ),
           ],

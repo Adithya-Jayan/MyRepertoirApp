@@ -10,6 +10,7 @@ import '../utils/app_logger.dart';
 import '../widgets/add_edit_piece/basic_details_section.dart';
 import '../widgets/detail_widgets/tag_group_section.dart';
 import '../widgets/detail_widgets/media_section.dart';
+import '../widgets/detail_widgets/media_display_list.dart';
 import 'add_edit_piece/add_edit_piece_media_manager.dart';
 import 'add_edit_piece/add_edit_piece_tag_manager.dart';
 import 'add_edit_piece/add_edit_piece_form_handler.dart';
@@ -103,16 +104,32 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
+  bool _isSaving = false;
+
   Future<void> _savePiece() async {
-    final success = await _formHandler.validateAndSave(
-      _formKey,
-      _musicPiece,
-      _selectedGroupIds,
-    );
+    if (_isSaving) return; // Prevent multiple saves
     
-    if (success && mounted) {
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(true);
+    setState(() {
+      _isSaving = true;
+    });
+    
+    try {
+      final success = await _formHandler.validateAndSave(
+        _formKey,
+        _musicPiece,
+        _selectedGroupIds,
+      );
+      
+      if (success && mounted) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(true);
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }
@@ -124,10 +141,20 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       appBar: AppBar(
         title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _savePiece,
-          ),
+          if (_isSaving)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _savePiece,
+            ),
         ],
       ),
       body: Padding(
@@ -146,7 +173,15 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               const SizedBox(height: 20),
               _buildTagGroupsSection(),
               const SizedBox(height: 20),
-              _buildMediaSection(),
+              MediaDisplayList(
+                musicPiece: _musicPiece,
+                onMusicPieceChanged: (updatedPiece) {
+                  setState(() {
+                    _musicPiece = updatedPiece;
+                  });
+                },
+                allowReordering: true,
+              ),
             ],
           ),
         ),
@@ -210,43 +245,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     );
   }
 
-  Widget _buildMediaSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _musicPiece.mediaItems.length,
-          buildDefaultDragHandles: false,
-          itemBuilder: (context, index) {
-            final item = _musicPiece.mediaItems[index];
-            return MediaSection(
-              key: ValueKey(item.id),
-              item: item,
-              index: index,
-              musicPieceThumbnail: _musicPiece.thumbnailPath ?? '',
-              onUpdateMediaItem: (newItem) => 
-                _mediaManager.updateMediaItem(newItem, _musicPiece.mediaItems),
-              onDeleteMediaItem: (item) => 
-                _mediaManager.deleteMediaItem(item, _musicPiece.mediaItems),
-              onSetThumbnail: _setThumbnail,
-            );
-          },
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              final item = _musicPiece.mediaItems.removeAt(oldIndex);
-              _musicPiece.mediaItems.insert(newIndex, item);
-            });
-          },
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildSpeedDial() {
     return SpeedDial(
