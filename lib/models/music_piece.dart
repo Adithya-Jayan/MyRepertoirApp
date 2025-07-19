@@ -17,7 +17,7 @@ class MusicPiece {
   int practiceCount; // Number of practice sessions recorded
   bool enablePracticeTracking; // Flag to enable/disable practice tracking for this piece
   String? googleDriveFileId; // Google Drive file ID for main piece data sync (nullable)
-  List<MediaItem> mediaItems; // List of associated media items (sheet music, audio, etc.)
+  List<MediaItem> mediaItems; // List of associated media items (PDFs, audio, etc.)
   List<String> groupIds; // List of group IDs this music piece belongs to
   List<TagGroup> tagGroups; // List of TagGroup objects associated with the piece
   String? thumbnailPath; // Path to the thumbnail image for the piece (nullable)

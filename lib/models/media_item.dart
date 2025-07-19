@@ -3,7 +3,7 @@ import './media_type.dart'; // Import for MediaType enum
 /// Represents a single media attachment associated with a music piece.
 ///
 /// This class defines the structure for various types of media,
-/// such as PDF sheet music, audio recordings, video links, or markdown notes.
+/// such as PDF files, audio files, video links, or markdown notes.
 class MediaItem {
   String id; // Unique ID for this media item
   MediaType type; // The type of media (e.g., PDF, Audio, VideoLink)

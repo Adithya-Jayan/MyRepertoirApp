@@ -320,7 +320,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         ),
         SpeedDialChild(
           child: const Icon(Icons.picture_as_pdf),
-          label: 'PDF Sheet Music',
+          label: 'PDF',
           onTap: () => _mediaManager.addMediaItem(MediaType.pdf, _musicPiece.mediaItems),
         ),
         SpeedDialChild(
@@ -330,12 +330,12 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         ),
         SpeedDialChild(
           child: const Icon(Icons.audiotrack),
-          label: 'Audio Recording',
+          label: 'Audio',
           onTap: () => _mediaManager.addMediaItem(MediaType.audio, _musicPiece.mediaItems),
         ),
         SpeedDialChild(
           child: const Icon(Icons.video_library),
-          label: 'Media Link',
+          label: 'Link',
           onTap: () => _mediaManager.addMediaItem(MediaType.mediaLink, _musicPiece.mediaItems),
         ),
       ],
