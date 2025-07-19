@@ -288,8 +288,32 @@ class LibraryScreenNotifier extends ChangeNotifier {
         curve: Curves.easeInOut
       );
     }
+    
+    // Auto-scroll the group title into view
+    _scrollGroupIntoView(index);
+    
     loadMusicPieces();
     notifyListeners();
+  }
+
+  /// Scrolls the selected group chip into view in the horizontal scroll view
+  void _scrollGroupIntoView(int groupIndex) {
+    if (groupIndex == -1 || !_groupScrollController.hasClients) return;
+    
+    // Calculate the approximate position of the group chip
+    // Each chip has padding and we need to account for the chip width
+    final chipWidth = 120.0; // Approximate width of a group chip
+    final chipPadding = 8.0; // Padding between chips
+    final targetOffset = groupIndex * (chipWidth + chipPadding);
+    
+    // Animate to the target position
+    _groupScrollController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    
+    AppLogger.log('LibraryScreenNotifier: Scrolling group at index $groupIndex to offset $targetOffset');
   }
 
   Future<void> reloadData() async {
