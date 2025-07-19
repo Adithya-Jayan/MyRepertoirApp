@@ -29,6 +29,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (result != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('appStoragePath', result); // Save the selected path.
+      
+      // Reinitialize the logger with the new storage path
+      await AppLogger.reinitialize();
+      
       setState(() {
         _storagePath = result; // Update the UI with the selected path.
       });

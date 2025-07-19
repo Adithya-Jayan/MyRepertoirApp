@@ -139,6 +139,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     if (selectedDirectory != null) {
       utils.AppLogger.log('Selected new storage directory: $selectedDirectory');
       await _backupRestoreService.prefs.setString('appStoragePath', selectedDirectory);
+      
+      // Reinitialize the logger with the new storage path
+      await utils.AppLogger.reinitialize();
+      
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.showSnackBar(

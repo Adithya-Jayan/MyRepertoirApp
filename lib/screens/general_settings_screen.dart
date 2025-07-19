@@ -60,6 +60,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         // If we reach here, the path is writable.
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('appStoragePath', result); // Save the newly selected storage path.
+        
+        // Reinitialize the logger with the new storage path
+        await AppLogger.reinitialize();
+        
         setState(() {
           _currentStoragePath = result; // Update the state to display the new path.
         });
@@ -82,6 +86,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         final defaultPath = (await getApplicationDocumentsDirectory()).path;
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('appStoragePath', defaultPath);
+        
+        // Reinitialize the logger with the default path
+        await AppLogger.reinitialize();
+        
         setState(() {
           _currentStoragePath = defaultPath;
         });

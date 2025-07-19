@@ -15,14 +15,28 @@ class AppLogger {
     _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? true; // Enable by default for testing
 
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      _logFile = File(p.join(directory.path, _logFileName));
+      // Try to use the user-selected storage path first
+      final appStoragePath = prefs.getString('appStoragePath');
+      if (appStoragePath != null && appStoragePath.isNotEmpty) {
+        final logsDirectory = Directory(p.join(appStoragePath, 'logs'));
+        if (!await logsDirectory.exists()) {
+          await logsDirectory.create(recursive: true);
+        }
+        _logFile = File(p.join(logsDirectory.path, _logFileName));
+        debugPrint('AppLogger: Using user storage path for logs: ${_logFile!.path}');
+      } else {
+        // Fallback to application documents directory if no storage path is set
+        final directory = await getApplicationDocumentsDirectory();
+        _logFile = File(p.join(directory.path, _logFileName));
+        debugPrint('AppLogger: Using fallback path for logs: ${_logFile!.path}');
+      }
+      
       // Ensure the log file exists
       if (!await _logFile!.exists()) {
         await _logFile!.create(recursive: true);
       }
     } catch (e) {
-      // print('[ERROR] $message');
+      debugPrint('AppLogger: Error initializing log file: $e');
       _logFile = null; // Disable file logging if initialization fails
     }
   }
@@ -54,4 +68,11 @@ class AppLogger {
   }
 
   static bool get debugLogsEnabled => _debugLogsEnabled;
+
+  /// Reinitializes the logger with the current storage path
+  /// This should be called when the app storage path changes
+  static Future<void> reinitialize() async {
+    log('Reinitializing logger with new storage path');
+    await init();
+  }
 }

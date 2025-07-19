@@ -219,7 +219,8 @@ class BackupManager {
     AppLogger.log('Initiating backup (manual: $manual).');
     if (context != null && !context.mounted) return;
     
-    _showBackupMessage(context, true, 'Backing up data...');
+    // Show progress message for both manual and auto-backup
+    _showBackupMessage(context, true, manual ? 'Backing up data...' : 'Creating auto-backup...');
     
     try {
       final storagePath = prefs.getString('appStoragePath');

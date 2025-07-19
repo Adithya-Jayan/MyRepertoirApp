@@ -380,6 +380,10 @@ class RestoreManager {
     if (appSettingsJson['appStoragePath'] != null) {
       await prefs.setString('appStoragePath', appSettingsJson['appStoragePath']);
       AppLogger.log('RestoreManager: Restored appStoragePath: ${appSettingsJson['appStoragePath']}');
+      
+      // Reinitialize the logger with the restored storage path
+      await AppLogger.reinitialize();
+      AppLogger.log('RestoreManager: Logger reinitialized with restored storage path');
     }
     
     // Library and sorting settings

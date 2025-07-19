@@ -3,7 +3,9 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'dart:math'; // Import for pow function
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart';
 
 /// A widget that provides audio playback functionality with speed and pitch control.
 ///
@@ -31,6 +33,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   late AudioPlayer _player; // The audio player instance.
   double _speed = 1.0; // Current playback speed.
   double _pitch = 0.0; // Current pitch in half-step units.
+  bool _isInitialized = false; // Whether the audio source was successfully initialized.
+  bool _hasError = false; // Whether there was an error initializing the audio.
 
   @override
   void initState() {
@@ -61,28 +65,116 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   ///
   /// Sets the audio source and provides metadata for background playback.
   Future<void> _initAudio() async {
-    await _player.setAudioSource(
-      AudioSource.uri(
-        Uri.parse(widget.audioPath),
-        tag: MediaItem(
-          id: widget.audioPath,
-          album: "Music Repertoire",
-          title: widget.title,
-          artist: widget.artist,
-          artUri: Uri.parse('https://example.com/albumart.jpg'), // Placeholder album art.
+    try {
+      AppLogger.log('AudioPlayerWidget: Initializing audio with path: ${widget.audioPath}');
+      
+      // Check if file exists
+      final file = File(widget.audioPath);
+      if (!await file.exists()) {
+        AppLogger.log('AudioPlayerWidget: Audio file does not exist: ${widget.audioPath}');
+        return;
+      }
+      
+      AppLogger.log('AudioPlayerWidget: Audio file exists, size: ${await file.length()} bytes');
+      
+      await _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(widget.audioPath),
+          tag: MediaItem(
+            id: widget.audioPath,
+            album: "Music Repertoire",
+            title: widget.title,
+            artist: widget.artist,
+            artUri: Uri.parse('https://example.com/albumart.jpg'), // Placeholder album art.
+          ),
         ),
-      ),
-    );
+      );
+      
+      AppLogger.log('AudioPlayerWidget: Audio source set successfully');
+      setState(() {
+        _isInitialized = true;
+        _hasError = false;
+      });
+    } catch (e) {
+      AppLogger.log('AudioPlayerWidget: Error initializing audio: $e');
+      
+      // Check if it's a background service conflict
+      if (e.toString().contains('just_audio_background supports only a single player instance')) {
+        AppLogger.log('AudioPlayerWidget: Background service conflict detected, retrying without background service');
+        // Try again without background service
+        try {
+          await _player.setAudioSource(
+            AudioSource.uri(Uri.parse(widget.audioPath)),
+          );
+          AppLogger.log('AudioPlayerWidget: Audio source set successfully (without background service)');
+          setState(() {
+            _isInitialized = true;
+            _hasError = false;
+          });
+        } catch (retryError) {
+          AppLogger.log('AudioPlayerWidget: Retry also failed: $retryError');
+          setState(() {
+            _hasError = true;
+            _isInitialized = false;
+          });
+        }
+      } else {
+        setState(() {
+          _hasError = true;
+          _isInitialized = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _player.dispose();
+    try {
+      _player.stop();
+      _player.dispose();
+    } catch (e) {
+      AppLogger.log('AudioPlayerWidget: Error disposing player: $e');
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show error state if audio failed to initialize
+    if (_hasError) {
+      return Column(
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 64.0,
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            'Audio file not found',
+            style: TextStyle(color: Colors.red),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            'Path: ${widget.audioPath}',
+            style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
+
+    // Show loading state if not initialized yet
+    if (!_isInitialized) {
+      return const Column(
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 8.0),
+          Text('Loading audio...'),
+        ],
+      );
+    }
+
     return Column(
       children: [
         StreamBuilder<PlayerState>(
