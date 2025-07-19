@@ -10,15 +10,15 @@ class HelpScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Help & FAQ'), // Updated title for the Help screen.
       ),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Frequently Asked Questions',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+                  child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Frequently Asked Questions',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             SizedBox(height: 10),
             Text(
               'Q: How do I quickly find a specific music piece?',
@@ -61,8 +61,23 @@ class HelpScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              'Need more help? Contact support at support@example.com',
+              'Need more help? Visit our GitHub repository for issues and support:',
               style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                // Open GitHub repository in browser
+                // Note: You'll need to add url_launcher package for this to work
+                // For now, this is a placeholder
+              },
+              child: Text(
+                'https://github.com/yourusername/MyRepertoirApp',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ],
         ),

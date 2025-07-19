@@ -8,14 +8,14 @@ import '../utils/app_logger.dart';
 import '../database/music_piece_repository.dart';
 import '../models/group.dart';
 import '../models/music_piece.dart';
-
 import '../services/library_data_manager.dart';
+import 'settings_manager.dart';
 
 
 class LibraryScreenNotifier extends ChangeNotifier {
   final MusicPieceRepository _repository;
-  late SharedPreferences prefs;
   late LibraryDataManager _libraryDataManager;
+  late SettingsManager _settingsManager;
 
   // Notifiers for data and loading states
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier(true);
@@ -60,6 +60,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   ScrollController get groupScrollController => _groupScrollController;
   Key get groupListKey => _groupListKey;
   String? get selectedGroupId => _selectedGroupId;
+  SharedPreferences get prefs => _settingsManager.prefs;
 
   bool get hasActiveFilters {
     return _filterOptions.isNotEmpty &&
@@ -83,12 +84,13 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    prefs = await SharedPreferences.getInstance();
     _pageController = PageController();
     _groupScrollController = ScrollController();
+    _settingsManager = SettingsManager(galleryColumnsNotifier);
+    await _settingsManager.initialize();
     _libraryDataManager = LibraryDataManager(
       _repository,
-      prefs,
+      _settingsManager.prefs,
       isLoadingNotifier,
       errorMessageNotifier,
       allMusicPiecesNotifier,
@@ -178,46 +180,31 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> loadSettings() async {
-    AppLogger.log('LibraryScreenNotifier: _loadSettings called');
-    int defaultColumns;
-    if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
-      defaultColumns = 4;
-    } else if (defaultTargetPlatform == TargetPlatform.windows) {
-      defaultColumns = 6;
-    } else {
-      defaultColumns = 2;
-    }
-    final loadedColumns = prefs.getInt('galleryColumns') ?? defaultColumns;
-    AppLogger.log('LibraryScreenNotifier: Setting galleryColumns from $galleryColumnsNotifier.value to $loadedColumns');
-    galleryColumnsNotifier.value = loadedColumns;
-    AppLogger.log('LibraryScreenNotifier: galleryColumns updated to: ${galleryColumnsNotifier.value}');
+    AppLogger.log('LibraryScreenNotifier: loadSettings called');
+    await _settingsManager.loadGalleryColumns();
   }
 
   Future<void> loadGroups() async {
-    AppLogger.log('LibraryScreenNotifier: _loadGroups called');
+    AppLogger.log('LibraryScreenNotifier: loadGroups called');
     isLoadingNotifier.value = true;
     errorMessageNotifier.value = null;
     try {
       final allDbGroups = await _repository.getGroups();
       AppLogger.log('LibraryScreenNotifier: Loaded ${allDbGroups.length} groups from DB.');
 
-      final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
-      final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? true;
-      final ungroupedGroupOrder = prefs.getInt('ungrouped_group_order') ?? -1;
-      final ungroupedGroupIsHidden = prefs.getBool('ungrouped_group_isHidden') ?? false;
-
+      final groupSettings = _settingsManager.loadGroupOrderSettings();
       final allGroup = Group(
         id: 'all_group',
         name: 'All',
-        order: allGroupOrder,
-        isHidden: allGroupIsHidden,
+        order: groupSettings['allGroupOrder'],
+        isHidden: groupSettings['allGroupIsHidden'],
       );
 
       final ungroupedGroup = Group(
         id: 'ungrouped_group',
         name: 'Ungrouped',
-        order: ungroupedGroupOrder,
-        isHidden: ungroupedGroupIsHidden,
+        order: groupSettings['ungroupedGroupOrder'],
+        isHidden: groupSettings['ungroupedGroupIsHidden'],
       );
 
       List<Group> combinedGroups = [allGroup, ungroupedGroup, ...allDbGroups];

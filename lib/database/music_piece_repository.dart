@@ -3,8 +3,6 @@ import 'dart:convert'; // For JSON encoding and decoding
 import 'dart:io'; // For file system operations
 
 // Package imports
-import 'package:file_picker/file_picker.dart'; // For picking files from local storage
-import 'package:path_provider/path_provider.dart'; // For accessing platform-specific file system paths
 import 'package:uuid/uuid.dart'; // For generating unique identifiers
 
 // Project-specific model imports
@@ -17,6 +15,8 @@ import '../models/practice_log.dart'; // Data model for practice logs
 import './database_helper.dart'; // Helper for SQLite database operations
 import '../services/media_storage_manager.dart'; // Manages storage of media files
 import '../utils/app_logger.dart'; // For logging
+import './practice_log_repository.dart'; // Practice log operations
+import './data_export_import_repository.dart'; // Data export/import operations
 
 /// A repository class that acts as an abstraction layer for data operations
 /// related to MusicPiece, Tag, Group, and PracticeLog objects.
@@ -28,6 +28,16 @@ class MusicPieceRepository {
 
   /// UUID generator for creating unique IDs.
   final Uuid uuid = Uuid();
+
+  /// Practice log repository for practice log operations.
+  late final PracticeLogRepository _practiceLogRepository;
+
+  /// Data export/import repository for data operations.
+  final DataExportImportRepository _dataExportImportRepository = DataExportImportRepository();
+
+  MusicPieceRepository() {
+    _practiceLogRepository = PracticeLogRepository(this);
+  }
 
   /// Inserts a new [MusicPiece] into the database.
   Future<void> insertMusicPiece(MusicPiece piece) async {
@@ -154,133 +164,49 @@ class MusicPieceRepository {
     await insertGroup(group);
   }
 
-  // PracticeLog operations
+  // PracticeLog operations - delegated to PracticeLogRepository
   /// Inserts a new [PracticeLog] into the database.
   Future<void> insertPracticeLog(PracticeLog log) async {
-    await dbHelper.insertPracticeLog(log);
+    await _practiceLogRepository.insertPracticeLog(log);
   }
 
   /// Retrieves all [PracticeLog] objects for a specific music piece.
   Future<List<PracticeLog>> getPracticeLogsForPiece(String musicPieceId) async {
-    return await dbHelper.getPracticeLogsForPiece(musicPieceId);
+    return await _practiceLogRepository.getPracticeLogsForPiece(musicPieceId);
   }
 
   /// Retrieves all [PracticeLog] objects from the database.
   Future<List<PracticeLog>> getAllPracticeLogs() async {
-    return await dbHelper.getAllPracticeLogs();
+    return await _practiceLogRepository.getAllPracticeLogs();
   }
-
-
 
   /// Deletes a [PracticeLog] from the database by its ID.
   /// Also updates the music piece's practice tracking data.
   Future<void> deletePracticeLog(String id) async {
-    AppLogger.log('deletePracticeLog: Starting deletion of practice log $id');
-    
-    // Get the practice log to find the music piece ID
-    final allLogs = await getAllPracticeLogs();
-    final logToDelete = allLogs.firstWhere((log) => log.id == id);
-    final musicPieceId = logToDelete.musicPieceId;
-    AppLogger.log('deletePracticeLog: Found log for music piece $musicPieceId');
-    
-    // Delete the practice log
-    await dbHelper.deletePracticeLog(id);
-    AppLogger.log('deletePracticeLog: Practice log deleted from database');
-    
-    // Recalculate and update the music piece's practice tracking
-    AppLogger.log('deletePracticeLog: Calling _updateMusicPiecePracticeTracking for piece $musicPieceId');
-    await _updateMusicPiecePracticeTracking(musicPieceId);
-    AppLogger.log('deletePracticeLog: Practice tracking updated');
+    await _practiceLogRepository.deletePracticeLog(id);
   }
 
   /// Deletes all [PracticeLog] objects for a specific music piece.
   /// Also updates the music piece's practice tracking data.
   Future<void> deletePracticeLogsForPiece(String musicPieceId) async {
-    await dbHelper.deletePracticeLogsForPiece(musicPieceId);
-    
-    // Recalculate and update the music piece's practice tracking
-    await _updateMusicPiecePracticeTracking(musicPieceId);
+    await _practiceLogRepository.deletePracticeLogsForPiece(musicPieceId);
   }
 
   /// Deletes all [PracticeLog] objects from the database.
   /// Also updates all music pieces' practice tracking data.
   Future<void> deleteAllPracticeLogs() async {
-    await dbHelper.deleteAllPracticeLogs();
-    
-    // Update all music pieces to reset their practice tracking
-    final allPieces = await getMusicPieces();
-    for (final piece in allPieces) {
-      final updatedPiece = piece.copyWithExplicit(
-        lastPracticeTime: null,
-        practiceCount: 0,
-      );
-      await updateMusicPiece(updatedPiece);
-    }
+    await _practiceLogRepository.deleteAllPracticeLogs();
   }
 
   /// Updates a practice log and recalculates the music piece's practice tracking.
   Future<void> updatePracticeLog(PracticeLog log) async {
-    await dbHelper.updatePracticeLog(log);
-    
-    // Recalculate and update the music piece's practice tracking
-    await _updateMusicPiecePracticeTracking(log.musicPieceId);
-  }
-
-  /// Helper method to recalculate and update a music piece's practice tracking
-  /// based on its remaining practice logs.
-  Future<void> _updateMusicPiecePracticeTracking(String musicPieceId) async {
-    AppLogger.log('_updateMusicPiecePracticeTracking: Starting for piece $musicPieceId');
-    
-    // Get the current practice logs for this piece
-    final practiceLogs = await getPracticeLogsForPiece(musicPieceId);
-    AppLogger.log('_updateMusicPiecePracticeTracking: Found ${practiceLogs.length} practice logs');
-    
-    // Get the music piece
-    final piece = (await getMusicPiecesByIds([musicPieceId])).first;
-    AppLogger.log('_updateMusicPiecePracticeTracking: Current piece - lastPracticeTime: ${piece.lastPracticeTime}, practiceCount: ${piece.practiceCount}');
-    
-    if (practiceLogs.isEmpty) {
-      // No practice logs left, reset practice tracking
-      AppLogger.log('_updateMusicPiecePracticeTracking: No practice logs found, setting to never practiced');
-      final updatedPiece = piece.copyWithExplicit(
-        lastPracticeTime: null,
-        practiceCount: 0,
-      );
-      AppLogger.log('_updateMusicPiecePracticeTracking: Updated piece - lastPracticeTime: ${updatedPiece.lastPracticeTime}, practiceCount: ${updatedPiece.practiceCount}');
-      await updateMusicPiece(updatedPiece);
-      AppLogger.log('_updateMusicPiecePracticeTracking: Piece updated in database');
-    } else {
-      // Calculate new practice count and last practice time
-      final practiceCount = practiceLogs.length;
-      final lastPracticeTime = practiceLogs
-          .map((log) => log.timestamp)
-          .reduce((a, b) => a.isAfter(b) ? a : b);
-      
-      AppLogger.log('_updateMusicPiecePracticeTracking: ${practiceCount} practice logs found, last practice time: $lastPracticeTime');
-      final updatedPiece = piece.copyWith(
-        lastPracticeTime: lastPracticeTime,
-        practiceCount: practiceCount,
-      );
-      await updateMusicPiece(updatedPiece);
-      AppLogger.log('_updateMusicPiecePracticeTracking: Piece updated with new practice data');
-    }
+    await _practiceLogRepository.updatePracticeLog(log);
   }
 
   /// Logs a practice session for a music piece.
   /// Creates a new practice log entry and updates the music piece's practice tracking.
   Future<void> logPracticeSession(String musicPieceId, {String? notes, int durationMinutes = 0, DateTime? timestamp}) async {
-    final log = PracticeLog(
-      id: uuid.v4(),
-      musicPieceId: musicPieceId,
-      timestamp: timestamp ?? DateTime.now(),
-      notes: notes,
-      durationMinutes: durationMinutes,
-    );
-    
-    await insertPracticeLog(log);
-    
-    // Recalculate and update the music piece's practice tracking
-    await _updateMusicPiecePracticeTracking(musicPieceId);
+    await _practiceLogRepository.logPracticeSession(musicPieceId, notes: notes, durationMinutes: durationMinutes, timestamp: timestamp);
   }
 
   /// Updates the group membership for a list of [MusicPiece] objects.
@@ -331,92 +257,14 @@ class MusicPieceRepository {
   /// Allows the user to choose the save location.
   /// Returns the path of the saved file if successful, otherwise null.
   Future<String?> exportDataToJson() async {
-    try {
-      final musicPieces = await dbHelper.getMusicPieces();
-      final tags = await dbHelper.getTags();
-      final groups = await dbHelper.getGroups();
-
-      // Combine all data into a single map.
-      final data = {
-        'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
-        'tags': tags.map((e) => e.toJson()).toList(),
-        'groups': groups.map((e) => e.toJson()).toList(),
-      };
-
-      final jsonString = jsonEncode(data);
-
-      // Get the application documents directory as a default save location.
-      final directory = await getApplicationDocumentsDirectory();
-      // This filePath is not directly used for saving via FilePicker, but can be for reference.
-      
-
-      // Open a file picker dialog for the user to choose the save location and file name.
-      final result = await FilePicker.platform.saveFile(
-        fileName: 'repertoire_backup.json',
-        initialDirectory: directory.path,
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
-      // If the user selected a file path, write the JSON string to it.
-      if (result != null) {
-        final file = File(result);
-        await file.writeAsString(jsonString);
-        return result;
-      }
-      return null;
-    } catch (e) {
-      AppLogger.log('Error exporting data: $e');
-      return null;
-    }
+    return await _dataExportImportRepository.exportDataToJson();
   }
 
   /// Imports music piece, tag, and group data from a selected JSON file.
   /// Allows the user to pick a JSON file.
   /// Returns true if the import is successful, otherwise false.
   Future<bool> importDataFromJson() async {
-    try {
-      // Open a file picker dialog for the user to select a JSON file.
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
-      // If a file was selected and its path is valid.
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final jsonString = await file.readAsString();
-        final Map<String, dynamic> data = jsonDecode(jsonString);
-
-        // Extract data for music pieces, tags, and groups from the JSON.
-        final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
-        final List<dynamic> tagsJson = data['tags'] ?? [];
-        final List<dynamic> groupsJson = data['groups'] ?? [];
-
-        // Insert or update music pieces in the database.
-        for (var pieceJson in musicPiecesJson) {
-          final piece = MusicPiece.fromJson(pieceJson);
-          await dbHelper.insertMusicPiece(piece);
-        }
-
-        // Insert or update tags in the database.
-        for (var tagJson in tagsJson) {
-          final tag = Tag.fromJson(tagJson);
-          await dbHelper.insertTag(tag);
-        }
-
-        // Insert or update groups in the database.
-        for (var groupJson in groupsJson) {
-          final group = Group.fromJson(groupJson);
-          await dbHelper.insertGroup(group);
-        }
-        return true;
-      }
-      return false;
-    } catch (e) {
-      AppLogger.log('Error importing data: $e');
-      return false;
-    }
+    return await _dataExportImportRepository.importDataFromJson();
   }
 
   
