@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/tag_group.dart';
 import 'package:repertoire/utils/color_utils.dart';
+import 'package:repertoire/utils/app_logger.dart';
 
 /// A widget for displaying and editing a single TagGroup.
 ///
@@ -39,7 +40,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
   }
 
   static const List<int?> _colorOptions = [
-    null, // No color option
+    null, // Default (no color)
     0xFFFF6B6B, // Coral
     0xFF4ECDC4, // Teal
     0xFF45B7D1, // Sky Blue
@@ -53,7 +54,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
   ];
 
   static const List<String> _colorNames = [
-    'No Color',
+    'Default',
     'Coral',
     'Teal',
     'Sky Blue',
@@ -65,6 +66,78 @@ class _TagGroupSectionState extends State<TagGroupSection> {
     'Tan',
     'Silver',
   ];
+
+  Widget _buildColorDropdown() {
+    // Get the current color options, ensuring the current color is included
+    final currentColor = widget.tagGroup.color;
+    final colorOptions = List<int?>.from(_colorOptions);
+    
+    // If the current color is not null and not in our predefined list, add it
+    if (currentColor != null && !colorOptions.contains(currentColor)) {
+      colorOptions.add(currentColor);
+    }
+    
+    // Use the current color directly (null is handled by the dropdown)
+    final dropdownValue = currentColor;
+    
+    return DropdownButton<int?>(
+      value: dropdownValue,
+      onChanged: (int? newColor) {
+        AppLogger.log('TagGroupSection: Color dropdown changed from ${widget.tagGroup.color} to $newColor');
+        
+        // Use different copyWith methods based on whether we're setting to null or a color
+        final updatedTagGroup = newColor == null 
+            ? widget.tagGroup.copyWithColorNull()
+            : widget.tagGroup.copyWith(color: newColor);
+            
+        widget.onUpdateTagGroup(widget.tagGroup, updatedTagGroup);
+      },
+      items: colorOptions.asMap().entries.map((entry) {
+        final index = entry.key;
+        final color = entry.value;
+        String colorName;
+        
+        // Find the name for this color
+        if (color == null) {
+          colorName = 'Default';
+        } else {
+          final predefinedIndex = _colorOptions.indexOf(color);
+          colorName = predefinedIndex >= 0 ? _colorNames[predefinedIndex] : 'Custom Color';
+        }
+        
+        return DropdownMenuItem<int?>(
+          value: color,
+          child: Row(
+            children: [
+              if (color != null)
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Color(color),
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )
+              else
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(Icons.clear, size: 12),
+                ),
+              const SizedBox(width: 8),
+              Text(colorName),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,46 +206,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                     children: [
                       const Text('Color:'),
                       const SizedBox(width: 8.0),
-                      DropdownButton<int?>(
-                        value: widget.tagGroup.color,
-                        onChanged: (int? newColor) {
-                          widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: newColor));
-                        },
-                        items: _colorOptions.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final color = entry.value;
-                          return DropdownMenuItem<int?>(
-                            value: color,
-                            child: Row(
-                              children: [
-                                if (color != null)
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: Color(color),
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: Colors.transparent,
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Icon(Icons.clear, size: 12),
-                                  ),
-                                const SizedBox(width: 8),
-                                Text(_colorNames[index]),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                      _buildColorDropdown(),
                     ],
                   ),
                   const SizedBox(height: 8.0),
@@ -183,9 +217,14 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       final color = widget.tagGroup.color != null ? Color(widget.tagGroup.color!) : null;
                       return Chip(
                         label: Text(tag),
-                        backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                        backgroundColor: () {
+                          final color = widget.tagGroup.color != null ? Color(widget.tagGroup.color!) : null;
+                          return color != null ? adjustColorForBrightness(color, brightness) : null;
+                        }(),
+                        deleteIcon: const Icon(Icons.close, size: 18),
                         onDeleted: () {
-                          final updatedTags = List<String>.from(widget.tagGroup.tags)..remove(tag);
+                          final updatedTags = List<String>.from(widget.tagGroup.tags);
+                          updatedTags.remove(tag);
                           widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                         },
                       );

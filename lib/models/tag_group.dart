@@ -49,4 +49,14 @@ class TagGroup {
       color: color ?? this.color,
     );
   }
+
+  /// Creates a copy of this [TagGroup] object with the color explicitly set to null.
+  TagGroup copyWithColorNull() {
+    return TagGroup(
+      id: id,
+      name: name,
+      tags: tags,
+      color: null,
+    );
+  }
 }

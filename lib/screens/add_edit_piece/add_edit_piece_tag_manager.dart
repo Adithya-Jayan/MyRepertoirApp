@@ -40,6 +40,7 @@ class AddEditPieceTagManager {
   }
 
   void updateTagGroup(TagGroup oldTagGroup, TagGroup newTagGroup, List<TagGroup> currentTagGroups) {
+    AppLogger.log('AddEditPieceTagManager: Updating tag group "${oldTagGroup.name}" color from ${oldTagGroup.color} to ${newTagGroup.color}');
     final updatedTagGroups = List<TagGroup>.from(currentTagGroups);
     final index = updatedTagGroups.indexWhere((element) => element.id == oldTagGroup.id);
     if (index != -1) {

@@ -12,7 +12,7 @@ class AppLogger {
 
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? false;
+    _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? true; // Enable by default for testing
 
     try {
       final directory = await getApplicationDocumentsDirectory();

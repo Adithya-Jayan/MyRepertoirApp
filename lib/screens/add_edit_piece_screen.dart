@@ -93,6 +93,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   void _onTagGroupsChanged(List<TagGroup> newTagGroups) {
+    AppLogger.log('AddEditPieceScreen: Tag groups updated - ${newTagGroups.length} groups');
     setState(() {
       _musicPiece = _musicPiece.copyWith(tagGroups: newTagGroups);
     });
