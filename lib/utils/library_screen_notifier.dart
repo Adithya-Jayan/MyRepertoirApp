@@ -99,6 +99,14 @@ class LibraryScreenNotifier extends ChangeNotifier {
       galleryColumnsNotifier,
     );
     await _libraryDataManager.loadInitialData();
+    
+    // Set the first visible group as active if no group is selected
+    final visibleGroups = getVisibleGroups();
+    if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
+      _selectedGroupId = visibleGroups.first.id;
+      AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}');
+    }
+    
     _focusNode.requestFocus();
 
     _isInitialized = true;

@@ -11,11 +11,30 @@ import 'package:repertoire/utils/app_logger.dart';
 /// Loads contributor data from the `assets/contributors.json` file.
 ///
 /// This function reads the JSON file, decodes it, and maps the data
-/// to a list of [Contributor] objects.
+/// to a list of [Contributor] objects, filtering out bots and action agents.
 Future<List<Contributor>> loadContributors() async {
   final jsonString = await rootBundle.loadString('assets/contributors.json'); // Load the JSON string from assets.
   final List<dynamic> jsonData = jsonDecode(jsonString); // Decode the JSON string into a list of dynamic objects.
-  return jsonData.map((item) => Contributor.fromJson(item)).toList(); // Convert each JSON object to a Contributor object.
+  
+  // Filter out bots and action agents
+  final filteredData = jsonData.where((item) {
+    final login = item['login'] as String;
+    // Filter out common bot and action agent patterns
+    return !login.toLowerCase().contains('bot') &&
+           !login.toLowerCase().contains('action') &&
+           !login.toLowerCase().contains('github-actions') &&
+           !login.toLowerCase().contains('dependabot') &&
+           !login.toLowerCase().contains('renovate') &&
+           !login.toLowerCase().contains('actions-user') &&
+           !login.toLowerCase().contains('web-flow') &&
+           !login.toLowerCase().contains('greenkeeper') &&
+           !login.toLowerCase().contains('snyk') &&
+           !login.toLowerCase().contains('codecov');
+  }).toList();
+  
+  AppLogger.log('ContributorService: Loaded ${jsonData.length} contributors, filtered to ${filteredData.length} after removing bots');
+  
+  return filteredData.map((item) => Contributor.fromJson(item)).toList(); // Convert each JSON object to a Contributor object.
 }
 
 /// Downloads and caches contributor profile pictures for faster loading

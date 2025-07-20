@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/services/backup_restore_service.dart';
+import 'package:flutter/material.dart';
 
 /// Initiates an automatic backup of music piece data if enabled by the user
 /// and if the defined backup frequency interval has passed.
@@ -14,7 +15,7 @@ import 'package:repertoire/services/backup_restore_service.dart';
 /// is due, and uses the BackupRestoreService to perform the backup.
 /// It also manages the number of backup files, deleting older ones to
 /// maintain a specified count.
-Future<void> triggerAutoBackup() async {
+Future<void> triggerAutoBackup({BuildContext? context}) async {
   AppLogger.log('BackupUtils: Checking auto-backup conditions.');
   // Obtain an instance of SharedPreferences to access user preferences.
   final prefs = await SharedPreferences.getInstance();
@@ -44,20 +45,56 @@ Future<void> triggerAutoBackup() async {
     if (timeElapsed > requiredInterval) {
       AppLogger.log('BackupUtils: Auto-backup condition met. Triggering backup.');
       
+      // Show backup started banner
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Auto-backup starting in a few seconds...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      
+      // Delay backup creation by a few seconds to give app time to load
+      await Future.delayed(const Duration(seconds: 3));
+      
       try {
         // Use the BackupRestoreService for consistent backup format
         final backupService = BackupRestoreService(MusicPieceRepository(), prefs);
         final autoBackupCount = prefs.getInt('autoBackupCount') ?? 5;
         
         // Trigger the automatic backup
-        await backupService.triggerAutoBackup(autoBackupCount);
+        await backupService.triggerAutoBackup(autoBackupCount, context: context);
         
         // Update the last auto-backup timestamp in SharedPreferences.
         await prefs.setInt('lastAutoBackupTimestamp', now);
         AppLogger.log('BackupUtils: Updated lastAutoBackupTimestamp to: $now');
         AppLogger.log('BackupUtils: Auto-backup completed successfully.');
+        
+        // Show backup completed banner
+        if (context != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Auto-backup completed successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       } catch (e) {
         AppLogger.log('BackupUtils: Auto-backup failed: $e');
+        
+        // Show backup failed banner
+        if (context != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Auto-backup failed: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     } else {
       AppLogger.log('BackupUtils: Auto-backup condition not met. Time elapsed: $timeElapsed, Required: $requiredInterval');

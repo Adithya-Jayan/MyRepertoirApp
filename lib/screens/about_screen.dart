@@ -4,6 +4,7 @@ import 'package:repertoire/services/contributor_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
+import 'package:repertoire/utils/app_logger.dart';
 
 /// A screen that displays information about the application.
 ///
@@ -113,15 +114,31 @@ class _CreditsScreenState extends State<CreditsScreen> {
         _isPreloading = true;
       });
       
-      await ContributorImageCache.preloadAllAvatars(contributors);
+      // Download all avatars and refresh the page
+      for (final contributor in contributors) {
+        try {
+          await ContributorImageCache.getCachedAvatarPath(contributor.login, contributor.avatarUrl);
+          // Add a small delay to avoid overwhelming the network
+          await Future.delayed(const Duration(milliseconds: 100));
+        } catch (e) {
+          AppLogger.log('Error downloading avatar for ${contributor.login}: $e');
+        }
+      }
       
       if (mounted) {
         setState(() {
           _isPreloading = false;
         });
+        // Force a rebuild to show the downloaded avatars
+        setState(() {});
       }
     } catch (e) {
-      // Handle error
+      AppLogger.log('Error loading contributors: $e');
+      if (mounted) {
+        setState(() {
+          _isPreloading = false;
+        });
+      }
     }
   }
 

@@ -158,7 +158,6 @@ class LibraryBody extends StatelessWidget {
                   
                   AppLogger.log('LibraryBody: Page $pageIndex, group: $currentPageGroupId');
                   AppLogger.log('LibraryBody: musicPiecesForPage count: ${musicPiecesForPage.length}');
-                  AppLogger.log('LibraryBody: musicPieces count: ${musicPieces.length}');
                   AppLogger.log('LibraryBody: filteredAndSortedPieces count: ${filteredAndSortedPieces.length}');
 
                   if (filteredAndSortedPieces.isEmpty) {
@@ -166,7 +165,7 @@ class LibraryBody extends StatelessWidget {
                   }
 
                   return MusicPieceGridView(
-                    key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}_${searchQuery.hashCode}_${filterOptions.hashCode}_${sortOption.hashCode}'),
+                    key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}_${searchQuery.hashCode}_${filterOptions.hashCode}_${sortOption.hashCode}_$pageIndex'),
                     musicPieces: filteredAndSortedPieces,
                     isLoading: isLoading,
                     errorMessage: errorMessage,

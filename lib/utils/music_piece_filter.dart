@@ -89,19 +89,22 @@ class MusicPieceFilter {
         if (!a.enablePracticeTracking && b.enablePracticeTracking) return 1;
         if (!a.enablePracticeTracking && !b.enablePracticeTracking) return 0;
 
-        // Handle pieces that have never been practiced.
-        final aNeverPracticed = a.lastPracticeTime == null;
-        final bNeverPracticed = b.lastPracticeTime == null;
-        if (aNeverPracticed && bNeverPracticed) return 0;
-
+        // For pieces with practice tracking enabled, handle never practiced ones
+        final aNeverPracticed = a.enablePracticeTracking && a.lastPracticeTime == null;
+        final bNeverPracticed = b.enablePracticeTracking && b.lastPracticeTime == null;
+        
         // Sort by last practice time (ascending or descending).
         if (sortOption == 'last_practiced_asc') {
-          if (aNeverPracticed) return 1;
-          if (bNeverPracticed) return -1;
+          // For ascending (oldest first), never practiced should be at the end (infinite time)
+          if (aNeverPracticed && !bNeverPracticed) return 1;
+          if (!aNeverPracticed && bNeverPracticed) return -1;
+          if (aNeverPracticed && bNeverPracticed) return 0;
           return a.lastPracticeTime!.compareTo(b.lastPracticeTime!);
         } else {
-          if (aNeverPracticed) return 1;
-          if (bNeverPracticed) return -1;
+          // For descending (newest first), never practiced should be at the beginning (infinite time)
+          if (aNeverPracticed && !bNeverPracticed) return -1;
+          if (!aNeverPracticed && bNeverPracticed) return 1;
+          if (aNeverPracticed && bNeverPracticed) return 0;
           return b.lastPracticeTime!.compareTo(a.lastPracticeTime!);
         }
       });

@@ -105,7 +105,7 @@ class _MyAppState extends State<MyApp> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           AppLogger.log('MyApp: Triggering auto-backup after initialization');
-          triggerAutoBackup();
+          triggerAutoBackup(context: context);
         }
       });
     });

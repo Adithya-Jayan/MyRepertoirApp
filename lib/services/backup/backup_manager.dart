@@ -102,6 +102,13 @@ class BackupManager {
     archive.addFile(jsonArchiveFile);
     AppLogger.log('JSON data added to archive (${jsonBytes.length} bytes)');
 
+    // Create and add README file
+    final readmeContent = await _createReadmeContent(data);
+    final readmeBytes = utf8.encode(readmeContent);
+    final readmeArchiveFile = ArchiveFile('README.txt', readmeBytes.length, readmeBytes);
+    archive.addFile(readmeArchiveFile);
+    AppLogger.log('README file added to archive (${readmeBytes.length} bytes)');
+
     // Add media files to archive (media files are stored in app documents directory)
     final appDir = await getApplicationDocumentsDirectory();
     final mediaDir = Directory(p.join(appDir.path, 'media'));
@@ -121,6 +128,34 @@ class BackupManager {
     } else {
       throw Exception('Failed to create zip archive');
     }
+  }
+
+  /// Creates README content explaining the backup structure
+  Future<String> _createReadmeContent(Map<String, dynamic> data) async {
+    final musicPieces = data['musicPieces'] as List<dynamic>;
+    
+    final buffer = StringBuffer();
+    buffer.writeln('Hi there! Looks like you\'ve decided to explore the backup file manually :D');
+    buffer.writeln('This is how the backup files are structured:');
+    buffer.writeln('  music_repertoire.json - Contains all your music pieces, tags, groups, and settings');
+    buffer.writeln('  media/ - Contains all your media files (sheet music, audio, images, etc.)');
+    buffer.writeln('');
+    buffer.writeln('The mapping for the pieces are as follows:');
+    buffer.writeln('  <piece_id> : piece_title');
+    
+    for (final piece in musicPieces) {
+      final pieceId = piece['id'] as String;
+      final pieceTitle = piece['title'] as String;
+      buffer.writeln('  $pieceId : $pieceTitle');
+    }
+    
+    buffer.writeln('');
+    buffer.writeln('Each piece_id in the media folder corresponds to a folder containing all media files for that piece.');
+    buffer.writeln('The music_repertoire.json file contains all the metadata and relationships between pieces, tags, and groups.');
+    buffer.writeln('');
+    buffer.writeln('Happy exploring! 🎵');
+    
+    return buffer.toString();
   }
 
   /// Recursively adds media files to the archive
