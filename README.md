@@ -1,6 +1,11 @@
 <div align="center">
+  
+<a href="https://github.com/Adithya-Jayan/MyRepertoirApp">
+  <img src="./web/icons/Icon.png" alt="Repertoir logo" title="Repertoir logo" width="80"/>
+</a>
 
 # Repertoire: Music Practice & Sheet Music Organizer
+
 
 Repertoire is a cross-platform application designed for musicians, dancers, Magicians or performers to help manage their repertoir (Musical pieces/dance routines or even Magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
 
@@ -19,11 +24,6 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links 
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814203.jpg?raw=true" width="110"/>
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814199.jpg?raw=true" width="110"/>
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814200.jpg?raw=true" width="110"/>
-</p>
-
-<p align="center">
-  <img src="web/icons/Icon.png" alt="App Icon" width="128"/>
-  <img src="web/icons/Icon.ico" alt="App Icon (ICO)" width="64"/>
 </p>
 
 # MyRepertoirApp
