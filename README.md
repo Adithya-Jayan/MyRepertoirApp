@@ -21,6 +21,16 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links 
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814200.jpg?raw=true" width="110"/>
 </p>
 
+<p align="center">
+  <img src="web/icons/Icon.png" alt="App Icon" width="128"/>
+  <img src="web/icons/Icon.ico" alt="App Icon (ICO)" width="64"/>
+</p>
+
+# MyRepertoirApp
+
+This project uses custom icons for branding and PWA support:
+- **Icon.png**: Main app icon for web and PWA (512x512, PNG)
+- **Icon.ico**: Favicon and desktop shortcut icon (ICO format)
 
 ## Features
 

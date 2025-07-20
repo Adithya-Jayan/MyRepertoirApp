@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
 import '../utils/app_logger.dart';
+import '../utils/settings_manager.dart';
 
 /// A screen for managing personalization settings of the application.
 ///

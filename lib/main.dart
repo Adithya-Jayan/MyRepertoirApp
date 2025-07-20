@@ -14,6 +14,7 @@ import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Global navigator key for accessing context from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
