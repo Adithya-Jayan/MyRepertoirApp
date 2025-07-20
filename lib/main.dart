@@ -15,7 +15,8 @@ import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
 
-
+// Global navigator key for accessing context from anywhere
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 /// Main entry point of the application.
 /// Initializes Flutter, sets up platform-specific database factories,
@@ -105,7 +106,10 @@ class _MyAppState extends State<MyApp> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           AppLogger.log('MyApp: Triggering auto-backup after initialization');
-          triggerAutoBackup(context: context);
+          // Use a delay to ensure the app is fully loaded before checking auto-backup
+          Future.delayed(const Duration(seconds: 2), () {
+            triggerAutoBackup(context: navigatorKey.currentContext);
+          });
         }
       });
     });
@@ -136,6 +140,7 @@ class _MyAppState extends State<MyApp> {
         return Consumer<ThemeNotifier>(
           builder: (context, themeNotifier, child) {
             return MaterialApp(
+              navigatorKey: navigatorKey, // Use global navigator key
               title: 'Music Repertoire', // Title of the application
               themeMode: themeNotifier.themeMode, // Current theme mode (light, dark, system)
               // Defines the light theme for the application.

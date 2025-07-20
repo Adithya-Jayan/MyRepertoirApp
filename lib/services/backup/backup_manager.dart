@@ -84,10 +84,10 @@ class BackupManager {
   }
 
   /// Creates a zip file with backup data
-  Future<Uint8List> _createBackupZip(Map<String, dynamic> data, String storagePath) async {
+  Future<Uint8List> _createBackupZip(Map<String, dynamic> data, String storagePath, bool manual) async {
     final jsonString = jsonEncode(data);
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
-    final fileName = 'music_repertoire_backup_$timestamp.zip';
+    final fileName = manual ? 'music_repertoire_backup_$timestamp.zip' : 'auto_backup_$timestamp.zip';
 
     final tempDir = await getTemporaryDirectory();
     final tempZipPath = p.join(tempDir.path, fileName);
@@ -195,7 +195,7 @@ class BackupManager {
   /// Saves backup file to the specified location
   Future<String?> _saveBackupFile(Uint8List zipBytes, String backupDirectory, bool manual, BuildContext? context) async {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
-    final fileName = 'music_repertoire_backup_$timestamp.zip';
+    final fileName = manual ? 'music_repertoire_backup_$timestamp.zip' : 'auto_backup_$timestamp.zip';
 
     if (manual) {
       AppLogger.log('Handling manual backup save.');
@@ -276,11 +276,14 @@ class BackupManager {
       }
 
       final data = await _createBackupData();
-      final zipBytes = await _createBackupZip(data, storagePath);
+      final zipBytes = await _createBackupZip(data, storagePath, manual);
       final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual, context);
 
       if (outputFile != null) {
-        _showBackupMessage(context, true, manual ? 'Data backed up successfully!' : 'Autobackup successful!');
+        // Only show success banner for manual backup, not for auto-backup (handled in backup_utils)
+        if (manual) {
+          _showBackupMessage(context, true, 'Data backed up successfully!');
+        }
         AppLogger.log(manual ? 'Manual backup successful.' : 'Autobackup successful.');
       } else {
         _showBackupMessage(context, false, 'Backup cancelled.');

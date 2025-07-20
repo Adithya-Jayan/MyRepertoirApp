@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart' as utils;
 import '../database/music_piece_repository.dart';
 import '../services/backup_restore_service.dart';
+import '../utils/backup_utils.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// A screen for managing backup and restore operations of the application data.
@@ -121,6 +122,32 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   },
                 ),
               ),
+            ),
+            FutureBuilder<Duration?>(
+              future: getTimeSinceLastAutoBackup(),
+              builder: (context, snapshot) {
+                String timeSinceLastBackup = 'Unknown';
+                if (snapshot.hasData && snapshot.data != null) {
+                  final duration = snapshot.data!;
+                  if (duration.inDays > 0) {
+                    timeSinceLastBackup = '${duration.inDays} days ago';
+                  } else if (duration.inHours > 0) {
+                    timeSinceLastBackup = '${duration.inHours} hours ago';
+                  } else if (duration.inMinutes > 0) {
+                    timeSinceLastBackup = '${duration.inMinutes} minutes ago';
+                  } else {
+                    timeSinceLastBackup = 'Just now';
+                  }
+                } else if (snapshot.hasError) {
+                  timeSinceLastBackup = 'Error loading';
+                }
+                
+                return ListTile(
+                  title: const Text('Time Since Last Auto-Backup'),
+                  subtitle: Text(timeSinceLastBackup),
+                  leading: const Icon(Icons.access_time),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.update),

@@ -66,7 +66,8 @@ class MusicPieceFilter {
           practiceDurationMatch = piece.lastPracticeTime != null &&
               DateTime.now().difference(piece.lastPracticeTime!).inDays <= 7;
         } else if (practiceDurationFilter == 'notIn30Days') {
-          practiceDurationMatch = piece.lastPracticeTime != null &&
+          // Include pieces that haven't been practiced in 30+ days OR never practiced (infinite time)
+          practiceDurationMatch = piece.lastPracticeTime == null || // Never practiced (infinite time)
               DateTime.now().difference(piece.lastPracticeTime!).inDays > 30;
         } else if (practiceDurationFilter == 'neverPracticed') {
           practiceDurationMatch = piece.lastPracticeTime == null;

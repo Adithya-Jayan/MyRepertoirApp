@@ -107,6 +107,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
     );
     await _libraryDataManager.loadInitialData();
     
+    // Load saved sort option
+    _sortOption = _settingsManager.loadSortOption();
+    AppLogger.log('LibraryScreenNotifier: Loaded saved sort option: $_sortOption');
+    
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
     if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
@@ -186,6 +190,8 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   void setSortOption(String newSortOption) {
     _sortOption = newSortOption;
+    // Save sort option to persistent storage
+    _settingsManager.saveSortOption(newSortOption);
     notifyListeners();
     _updateFilteredResultsCache();
     loadMusicPieces();

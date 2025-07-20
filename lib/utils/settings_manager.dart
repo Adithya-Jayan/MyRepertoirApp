@@ -63,4 +63,15 @@ class SettingsManager {
     await prefs.setBool('ungrouped_group_isHidden', settings['ungroupedGroupIsHidden']);
     AppLogger.log('SettingsManager: Group order settings saved');
   }
+
+  /// Loads sort option setting from SharedPreferences.
+  String loadSortOption() {
+    return prefs.getString('sortOption') ?? 'alphabetical_asc';
+  }
+
+  /// Saves sort option setting to SharedPreferences.
+  Future<void> saveSortOption(String sortOption) async {
+    await prefs.setString('sortOption', sortOption);
+    AppLogger.log('SettingsManager: Sort option saved: $sortOption');
+  }
 } 
