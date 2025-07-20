@@ -6,15 +6,15 @@
 
 # Repertoire: Music Practice & Sheet Music Organizer
 
-
 Repertoire is a cross-platform application designed for musicians, dancers, Magicians or performers to help manage their repertoir (Musical pieces/dance routines or even Magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
 
 The app helps you keep your sheet music, notes, audio recordings, videos, links and practice logs neatly organized for every piece in your collection.
 
-**[📱 Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
+**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
 </div>
 
-### App Screenshots
+## Screenshots 
+(Slightly outdated)
 
 <p align="center">
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814205.jpg?raw=true" width="110"/>
@@ -26,19 +26,17 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links 
   <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814200.jpg?raw=true" width="110"/>
 </p>
 
-# MyRepertoirApp
-
 ## Features
 
 - **Repertoire Library**: View your entire collection of music pieces in a clean, organized list or grid format.
 - **Detailed Piece View**: Each piece has a dedicated page showing:
-    - Title, composer, genre, and instrumentation.
+    - Title and Artist/composer
     - User-assigned tags for easy filtering.
 - **Flexible Media Attachments**: Add multiple media types to each piece:
     - **PDFs**: For sheet music (viewable directly in the app).
     - **Markdown Notes**: For text-based annotations, lyrics, or practice notes.
     - **Images**: For reference photos or alternative scores.
-    - **Audio Files**: For backing tracks or recordings.
+    - **Audio Files**: For backing tracks or recordings, with built-in support for speed control and pitch shifting.
     - **Video Links**: To link to YouTube or other external video resources.
 - **Practice Tracking**:
     - Log practice sessions for each piece.
@@ -48,24 +46,7 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links 
     - Full-text search through titles, composers, and tags.
     - Filter your repertoire by genre, instrumentation, difficulty, and custom tags.
     - Filter by practice history (e.g., "practiced in the last week" or "never practiced").
-- **Manual Backup & Restore**: Manually export your entire library to a single JSON file for backup. You can specify the backup location and restore from a previously saved file.
-
-## Technologies & Key Packages
-
-This project is built with Flutter and leverages a number of high-quality packages from the ecosystem:
-
-- **State Management**: `provider`
-- **Database**: `sqflite` for local persistence.
-- **File & Path**: `file_picker` and `path_provider` for local file handling.
-- **Media Viewers**:
-    - `syncfusion_flutter_pdfviewer` for in-app PDF viewing.
-    - `flutter_markdown` for rendering notes.
-    - `photo_view` for zoomable images.
-- **Media Playback**:
-    - `just_audio` for background audio playback.
-    - `video_player` for local video files.
-- **Networking**: `http` for network requests and `url_launcher` to open external links.
-- **UI**: `flutter_speed_dial` for enhanced floating action buttons and `intl` for date/time formatting.
+- **Manual Backup & Restore**: Manually export your entire library to a single JSON file for backup. You can specify the backup location and restore from a previously saved file. The app also support automatic periodic backups.
 
 ## Getting Started
 
