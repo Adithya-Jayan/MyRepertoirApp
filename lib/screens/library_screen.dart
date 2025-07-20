@@ -170,6 +170,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       searchQuery: notifier.searchQuery,
                       filterOptions: notifier.filterOptions,
                       sortOption: notifier.sortOption,
+                      getFilteredPiecesForGroup: notifier.getFilteredPiecesForGroup,
                     ),
                   );
                 },

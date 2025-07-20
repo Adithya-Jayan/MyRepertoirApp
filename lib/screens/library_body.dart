@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_grid_view.dart';
-import 'package:repertoire/utils/music_piece_filter.dart';
 
 import '../utils/app_logger.dart';
 
@@ -28,6 +27,7 @@ class LibraryBody extends StatelessWidget {
   final String searchQuery;
   final Map<String, dynamic> filterOptions;
   final String sortOption;
+  final List<MusicPiece> Function(String) getFilteredPiecesForGroup;
 
   const LibraryBody({
     super.key,
@@ -51,6 +51,7 @@ class LibraryBody extends StatelessWidget {
     required this.searchQuery,
     required this.filterOptions,
     required this.sortOption,
+    required this.getFilteredPiecesForGroup,
   });
 
   @override
@@ -135,33 +136,17 @@ class LibraryBody extends StatelessWidget {
                     return const Center(child: Text('No visible groups.'));
                   }
 
-                  // Filter music pieces for the current page's group.
-                  final musicPiecesForPage = allMusicPieces.where((piece) {
-                    if (currentPageGroupId == 'all_group') {
-                      return true; // Show all pieces for "All" group.
-                    } else if (currentPageGroupId == 'ungrouped_group') {
-                      return piece.groupIds.isEmpty; // Show pieces with no group
-                    } else {
-                      return piece.groupIds.contains(currentPageGroupId);
-                    }
-                  }).toList();
-
-                  // Apply search and filter options to the current page's pieces.
-                  // Each page should filter independently based on the search query and current group.
-                  // This ensures smooth transitions during swipes.
-                  final filter = MusicPieceFilter(
-                    searchQuery: searchQuery,
-                    filterOptions: filterOptions,
-                    sortOption: sortOption,
-                  );
-                  final filteredAndSortedPieces = filter.filterAndSort(musicPiecesForPage);
+                  // Get filtered pieces from cache instead of filtering on every build
+                  final filteredAndSortedPieces = getFilteredPiecesForGroup(currentPageGroupId);
                   
                   AppLogger.log('LibraryBody: Page $pageIndex, group: $currentPageGroupId');
-                  AppLogger.log('LibraryBody: musicPiecesForPage count: ${musicPiecesForPage.length}');
                   AppLogger.log('LibraryBody: filteredAndSortedPieces count: ${filteredAndSortedPieces.length}');
 
                   if (filteredAndSortedPieces.isEmpty) {
-                    return const Center(child: Text('No music pieces found in this group.'));
+                    return Container(
+                      height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
+                      child: const Center(child: Text('No music pieces found in this group.')),
+                    );
                   }
 
                   return MusicPieceGridView(

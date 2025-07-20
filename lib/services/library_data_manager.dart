@@ -29,7 +29,8 @@ class LibraryDataManager {
 
   Future<void> loadInitialData() async {
     await loadGroups();
-    await loadMusicPieces();
+    // Load all music pieces without filtering (LibraryScreenNotifier will handle filtering and caching)
+    _allMusicPiecesNotifier.value = await _repository.getMusicPieces();
     await loadSettings();
   }
 

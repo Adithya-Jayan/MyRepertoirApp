@@ -9,7 +9,8 @@ import '../database/music_piece_repository.dart';
 import '../models/group.dart';
 import '../models/music_piece.dart';
 import '../services/library_data_manager.dart';
-import 'settings_manager.dart';
+import '../utils/settings_manager.dart';
+import '../utils/music_piece_filter.dart';
 
 
 class LibraryScreenNotifier extends ChangeNotifier {
@@ -24,6 +25,12 @@ class LibraryScreenNotifier extends ChangeNotifier {
   final ValueNotifier<List<MusicPiece>> musicPiecesNotifier = ValueNotifier([]);
   final ValueNotifier<List<Group>> groupsNotifier = ValueNotifier([]);
   final ValueNotifier<int> galleryColumnsNotifier = ValueNotifier(1);
+
+  // Cache for filtered results per group
+  final Map<String, List<MusicPiece>> _filteredResultsCache = {};
+  String _lastSearchQuery = '';
+  Map<String, dynamic> _lastFilterOptions = {};
+  String _lastSortOption = '';
 
   // UI related state
   bool _isInitialized = false;
@@ -107,6 +114,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
       AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}');
     }
     
+    // Update the cache with initial data and load music pieces
+    _updateFilteredResultsCache();
+    await loadMusicPieces();
+    
     _focusNode.requestFocus();
 
     _isInitialized = true;
@@ -156,6 +167,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
     notifyListeners();
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _updateFilteredResultsCache();
       loadMusicPieces();
     });
   }
@@ -168,12 +180,14 @@ class LibraryScreenNotifier extends ChangeNotifier {
   void clearFilter() {
     _filterOptions = {'orderedTags': <String, List<String>>{}};
     notifyListeners();
+    _updateFilteredResultsCache();
     loadMusicPieces();
   }
 
   void setSortOption(String newSortOption) {
     _sortOption = newSortOption;
     notifyListeners();
+    _updateFilteredResultsCache();
     loadMusicPieces();
   }
 
@@ -245,17 +259,84 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> loadMusicPieces() async {
-    await _libraryDataManager.loadMusicPieces(
-      selectedGroupId: _selectedGroupId,
-      searchQuery: _searchQuery,
-      filterOptions: _filterOptions,
-      sortOption: _sortOption,
-    );
+    // Check if cache needs to be updated
+    if (_needsCacheUpdate()) {
+      _updateFilteredResultsCache();
+    }
+    
+    // Use cached results for the selected group
+    if (_selectedGroupId != null) {
+      final cachedPieces = getFilteredPiecesForGroup(_selectedGroupId!);
+      musicPiecesNotifier.value = cachedPieces;
+      AppLogger.log('LibraryScreenNotifier: Loaded ${cachedPieces.length} cached pieces for group $_selectedGroupId');
+    } else {
+      musicPiecesNotifier.value = [];
+    }
+    
     notifyListeners();
   }
 
   List<Group> getVisibleGroups() {
     return groupsNotifier.value.where((group) => !group.isHidden).toList();
+  }
+
+  /// Gets filtered and sorted pieces for a specific group from cache
+  List<MusicPiece> getFilteredPiecesForGroup(String groupId) {
+    return _filteredResultsCache[groupId] ?? [];
+  }
+
+  /// Checks if the cache needs to be updated based on current search/filter criteria
+  bool _needsCacheUpdate() {
+    return _searchQuery != _lastSearchQuery ||
+           _sortOption != _lastSortOption ||
+           !_areFilterOptionsEqual(_filterOptions, _lastFilterOptions);
+  }
+
+  /// Compares two filter option maps for equality
+  bool _areFilterOptionsEqual(Map<String, dynamic> a, Map<String, dynamic> b) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key)) return false;
+      if (a[key] != b[key]) return false;
+    }
+    return true;
+  }
+
+  /// Updates the filtered results cache for all groups
+  void _updateFilteredResultsCache() {
+    AppLogger.log('LibraryScreenNotifier: Updating filtered results cache');
+    _filteredResultsCache.clear();
+    
+    final allPieces = allMusicPiecesNotifier.value;
+    final visibleGroups = getVisibleGroups();
+    
+    for (final group in visibleGroups) {
+      // Filter pieces for this group
+      List<MusicPiece> piecesForGroup;
+      if (group.id == 'all_group') {
+        piecesForGroup = List.from(allPieces);
+      } else if (group.id == 'ungrouped_group') {
+        piecesForGroup = allPieces.where((piece) => piece.groupIds.isEmpty).toList();
+      } else {
+        piecesForGroup = allPieces.where((piece) => piece.groupIds.contains(group.id)).toList();
+      }
+      
+      // Apply search and filter
+      final filter = MusicPieceFilter(
+        searchQuery: _searchQuery,
+        filterOptions: _filterOptions,
+        sortOption: _sortOption,
+      );
+      final filteredAndSortedPieces = filter.filterAndSort(piecesForGroup);
+      
+      _filteredResultsCache[group.id] = filteredAndSortedPieces;
+      AppLogger.log('LibraryScreenNotifier: Cached ${filteredAndSortedPieces.length} pieces for group ${group.name}');
+    }
+    
+    // Update last known criteria
+    _lastSearchQuery = _searchQuery;
+    _lastFilterOptions = Map.from(_filterOptions);
+    _lastSortOption = _sortOption;
   }
 
   void _resetPageController() {
@@ -300,7 +381,15 @@ class LibraryScreenNotifier extends ChangeNotifier {
     // Auto-scroll the group title into view
     _scrollGroupIntoView(index);
     
-    loadMusicPieces();
+    // Update music pieces from cache instead of re-filtering
+    if (groupId != null) {
+      final cachedPieces = getFilteredPiecesForGroup(groupId);
+      musicPiecesNotifier.value = cachedPieces;
+      AppLogger.log('LibraryScreenNotifier: Updated music pieces from cache for group $groupId: ${cachedPieces.length} pieces');
+    } else {
+      musicPiecesNotifier.value = [];
+    }
+    
     notifyListeners();
   }
 
@@ -333,6 +422,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
       filterOptions: _filterOptions,
       sortOption: _sortOption,
     );
+    
+    // Update the cache with new data
+    _updateFilteredResultsCache();
+    
     await loadSettings(); // Call the notifier's loadSettings method
     AppLogger.log('LibraryScreenNotifier: reloadData completed, notifying listeners');
     AppLogger.log('LibraryScreenNotifier: Final galleryColumns value: ${galleryColumnsNotifier.value}');
