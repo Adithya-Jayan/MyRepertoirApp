@@ -64,8 +64,8 @@ class AddEditPieceMediaManager {
   }
 
   void addMediaItem(MediaType type, List<MediaItem> currentMediaItems) {
+    final newMediaItems = List<MediaItem>.from(currentMediaItems);
     if (type == MediaType.mediaLink || type == MediaType.markdown) {
-      final newMediaItems = List<MediaItem>.from(currentMediaItems);
       newMediaItems.add(MediaItem(
         id: const Uuid().v4(),
         type: type,
@@ -73,7 +73,7 @@ class AddEditPieceMediaManager {
       ));
       onMediaItemsChanged(newMediaItems);
     } else {
-      pickFile(type, currentMediaItems);
+      pickFile(type, newMediaItems);
     }
   }
 
