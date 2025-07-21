@@ -206,6 +206,7 @@ jobs:
             - Build Date: ${{ steps.build_date.outputs.date }}
           draft: false
           prerelease: ${{ steps.version_calc.outputs.IS_INCREMENTAL }}
+          generate_release_notes: true
 
       - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
