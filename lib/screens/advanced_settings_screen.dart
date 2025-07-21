@@ -6,6 +6,10 @@ import '../services/media_cleanup_service.dart';
 import '../widgets/advanced_settings/cleanup_warning_dialog.dart';
 import '../widgets/advanced_settings/cleanup_details_dialog.dart';
 import '../widgets/advanced_settings/scan_results_widget.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io' as io;
+import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 class AdvancedSettingsScreen extends StatefulWidget {
   const AdvancedSettingsScreen({super.key});
@@ -164,13 +168,187 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
             title: const Text('Enable Debug Logs'),
             subtitle: const Text('Log detailed information for debugging'),
             value: _debugLogsEnabled,
-            onChanged: (bool value) {
+            onChanged: (bool value) async {
+              if (!value) {
+                // If disabling, ask if user wants to delete the log file
+                final shouldDelete = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Log File?'),
+                    content: const Text('Would you like to delete the debug log file created so far?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('No'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Yes, delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (shouldDelete == true) {
+                  // Delete the log file
+                  try {
+                    final prefs = await SharedPreferences.getInstance();
+                    final appStoragePath = prefs.getString('appStoragePath');
+                    String? logFilePath;
+                    if (appStoragePath != null && appStoragePath.isNotEmpty) {
+                      logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                    } else {
+                      final directory = await getApplicationDocumentsDirectory();
+                      logFilePath = p.join(directory.path, 'app_debug.log');
+                    }
+                    final logFile = io.File(logFilePath);
+                    if (await logFile.exists()) {
+                      await logFile.delete();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Log file deleted.')),
+                        );
+                      }
+                    } else {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('No log file found to delete.')),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error deleting log file: $e')),
+                      );
+                    }
+                  }
+                }
+              }
               setState(() {
                 _debugLogsEnabled = value;
               });
               AppLogger.setDebugLogsEnabled(value);
             },
           ),
+          if (_debugLogsEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text('Open Log File'),
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final appStoragePath = prefs.getString('appStoragePath');
+                        String? logFilePath;
+                        if (appStoragePath != null && appStoragePath.isNotEmpty) {
+                          logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                        } else {
+                          final directory = await getApplicationDocumentsDirectory();
+                          logFilePath = p.join(directory.path, 'app_debug.log');
+                        }
+                        final logFile = io.File(logFilePath);
+                        if (await logFile.exists()) {
+                          try {
+                            final uri = Uri.file(logFile.path);
+                            final canLaunch = await canLaunchUrl(uri);
+                            if (canLaunch) {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                                webViewConfiguration: const WebViewConfiguration(),
+                                // Provide a mime type hint for text files
+                                // (This is supported on Android/iOS, ignored on web/desktop)
+                                // See: https://pub.dev/documentation/url_launcher/latest/url_launcher/launchUrl.html
+                                // For best compatibility, use LaunchMode.externalApplication
+                              );
+                            } else {
+                              throw Exception('No app found to open the log file.');
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Could not open log file: $e\nYou may need to install a text editor app.')),
+                              );
+                            }
+                          }
+                        } else {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No log file found to open.')),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Delete Log File'),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () async {
+                        final shouldDelete = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Log File?'),
+                            content: const Text('Are you sure you want to delete the debug log file?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('Yes, delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (shouldDelete == true) {
+                          try {
+                            final prefs = await SharedPreferences.getInstance();
+                            final appStoragePath = prefs.getString('appStoragePath');
+                            String? logFilePath;
+                            if (appStoragePath != null && appStoragePath.isNotEmpty) {
+                              logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                            } else {
+                              final directory = await getApplicationDocumentsDirectory();
+                              logFilePath = p.join(directory.path, 'app_debug.log');
+                            }
+                            final logFile = io.File(logFilePath);
+                            if (await logFile.exists()) {
+                              await logFile.delete();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Log file deleted.')),
+                                );
+                              }
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('No log file found to delete.')),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error deleting log file: $e')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           SwitchListTile(
             title: const Text('Show Practice Time Statistics'),
             subtitle: const Text('Display duration and time-based statistics in practice logs'),
