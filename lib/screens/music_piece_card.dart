@@ -117,9 +117,7 @@ class MusicPieceCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          piece.lastPracticeTime != null 
-                            ? 'Last practiced: ${piece.lastPracticeTime!.toLocal().toString().split('.')[0]}'
-                            : 'Never practiced',
+                          PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),

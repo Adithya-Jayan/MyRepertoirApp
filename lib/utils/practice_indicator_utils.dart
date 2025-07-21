@@ -114,5 +114,27 @@ class PracticeIndicatorUtils {
     }
   }
 
+  /// Formats the last practice time for display.
+  ///
+  /// Returns 'Never practiced' if [lastPracticeTime] is null.
+  /// Otherwise, returns a human-readable string like 'Today', 'Yesterday',
+  /// 'X days ago', or the date.
+  static String formatLastPracticeTime(DateTime? lastPracticeTime) {
+    if (lastPracticeTime == null) {
+      return 'Never practiced';
+    }
+    final now = DateTime.now();
+    final difference = now.difference(lastPracticeTime);
+
+    if (difference.inDays == 0) {
+      return 'Last practiced: Today';
+    } else if (difference.inDays == 1) {
+      return 'Last practiced: Yesterday';
+    } else if (difference.inDays < 30) {
+      return 'Last practiced: ${difference.inDays} days ago';
+    } else {
+      return 'Last practiced: ${lastPracticeTime.toLocal().toString().split(' ')[0]}';
+    }
+  }
 
 } 
