@@ -216,10 +216,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           builder: (context, snapshot) {
             final position = snapshot.data ?? Duration.zero;
             final duration = _player.duration ?? Duration.zero;
+            final min = 0.0;
+            final max = duration.inMilliseconds.toDouble();
+            // Clamp the value to be within min and max
+            final value = position.inMilliseconds.clamp(min, max).toDouble();
             return Slider(
-              min: 0.0,
-              max: duration.inMilliseconds.toDouble(),
-              value: position.inMilliseconds.toDouble(),
+              min: min,
+              max: max,
+              value: value,
               onChanged: (value) {
                 _player.seek(Duration(milliseconds: value.toInt()));
               },
