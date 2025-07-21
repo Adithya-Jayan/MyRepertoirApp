@@ -49,13 +49,26 @@ class MusicPieceCard extends StatelessWidget {
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
-                    child: Image.file(
-                      File(piece.thumbnailPath!), // Display thumbnail image if available.
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
-                        return Container(); // Return empty container on error
-                      },
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(
+                          File(piece.thumbnailPath!), // Display thumbnail image if available.
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
+                            return Container(); // Return empty container on error
+                          },
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: brightness == Brightness.dark
+                                ? Colors.black.withOpacity(0.65)
+                                : Colors.white.withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
