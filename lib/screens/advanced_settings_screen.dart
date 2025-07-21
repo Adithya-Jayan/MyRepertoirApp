@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AdvancedSettingsScreen extends StatefulWidget {
   const AdvancedSettingsScreen({super.key});
@@ -269,8 +270,25 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             }
                           } catch (e) {
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Could not open log file: $e\nYou may need to install a text editor app.')),
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Could not open log file'),
+                                  content: const Text('No app was found to open the log file. You may need to install a text editor app.\n\nWould you like to share the log file instead?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        Navigator.of(context).pop();
+                                        await Share.shareXFiles([XFile(logFile.path)], text: 'Repertoire app debug log');
+                                      },
+                                      child: const Text('Share Log File'),
+                                    ),
+                                  ],
+                                ),
                               );
                             }
                           }
