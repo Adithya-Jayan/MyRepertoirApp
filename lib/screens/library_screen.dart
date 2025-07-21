@@ -181,7 +181,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       onDeleteSelectedPieces: () {
                         LibraryActions(
                           repository: MusicPieceRepository(),
-                          onReloadMusicPieces: notifier.loadMusicPieces,
+                          onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
                           onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
                           allMusicPieces: notifier.allMusicPiecesNotifier.value,
                         ).deleteSelectedPieces(context, notifier.selectedPieceIds);
@@ -189,7 +189,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       onModifyGroupOfSelectedPieces: () {
                         LibraryActions(
                           repository: MusicPieceRepository(),
-                          onReloadMusicPieces: notifier.loadMusicPieces,
+                          onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
                           onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
                           allMusicPieces: notifier.allMusicPiecesNotifier.value,
                         ).modifyGroupOfSelectedPieces(context, notifier.selectedPieceIds, notifier.groupsNotifier.value);
