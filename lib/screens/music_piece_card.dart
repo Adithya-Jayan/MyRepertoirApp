@@ -99,19 +99,43 @@ class MusicPieceCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8.0),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: [
-                          if (piece.tagGroups.isNotEmpty)
-                            ...piece.tagGroups.expand((tg) => tg.tags.map((tag) {
-                              final color = tg.color != null ? Color(tg.color!) : null;
-                              return Chip(
-                                label: FittedBox(fit: BoxFit.scaleDown, child: Text(tag)),
-                                backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null, // Adjust chip color based on theme brightness.
-                              );
-                            })),
-                        ],
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final minChips = 2;
+                          final spacing = 8.0;
+                          final maxChipWidth = (constraints.maxWidth - (minChips - 1) * spacing) / minChips;
+                          final tagWidgets = <Widget>[];
+                          if (piece.tagGroups.isNotEmpty) {
+                            for (final tg in piece.tagGroups) {
+                              for (final tag in tg.tags) {
+                                final color = tg.color != null ? Color(tg.color!) : null;
+                                tagWidgets.add(
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(maxWidth: maxChipWidth),
+                                    child: Chip(
+                                      label: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(fontSize: 13),
+                                        ),
+                                      ),
+                                      backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                          return Wrap(
+                            spacing: spacing,
+                            runSpacing: 4.0,
+                            children: tagWidgets,
+                          );
+                        },
                       ),
                       const SizedBox(height: 8.0),
                       FittedBox(
