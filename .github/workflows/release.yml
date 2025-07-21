@@ -1,4 +1,4 @@
-name: Consolidated Release
+name: Create Release
 
 on:
   workflow_dispatch:
@@ -6,10 +6,10 @@ on:
       release_type:
         description: 'Release type to create'
         required: true
-        default: 'alpha'
+        default: 'incremental'
         type: choice
         options:
-          - alpha
+          - incremental
           - patch
           - minor
           - major
@@ -69,15 +69,15 @@ jobs:
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
           case $RELEASE_TYPE in
-            "alpha")
-              # For alpha builds, increment build number only
+            "incremental")
+              # For incremental builds, increment build number only
               NEW_MAJOR=$MAJOR
               NEW_MINOR=$MINOR
               NEW_PATCH=$PATCH
               NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
               NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
               NEW_FULL_VERSION="${NEW_VERSION_NAME}+${NEW_BUILD_NUMBER}"
-              IS_ALPHA=true
+              IS_INCREMENTAL=true
               ;;
             "major")
               # For official releases, increment major and reset others
@@ -87,7 +87,7 @@ jobs:
               NEW_BUILD_NUMBER=1
               NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
               NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_ALPHA=false
+              IS_INCREMENTAL=false
               ;;
             "minor")
               # For official releases, increment minor and reset patch
@@ -97,7 +97,7 @@ jobs:
               NEW_BUILD_NUMBER=1
               NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
               NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_ALPHA=false
+              IS_INCREMENTAL=false
               ;;
             "patch")
               # For official releases, increment patch only
@@ -107,7 +107,7 @@ jobs:
               NEW_BUILD_NUMBER=1
               NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
               NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_ALPHA=false
+              IS_INCREMENTAL=false
               ;;
           esac
           
@@ -116,13 +116,13 @@ jobs:
           echo "New version name: $NEW_VERSION_NAME"
           echo "New build number: $NEW_BUILD_NUMBER"
           echo "New full version: $NEW_FULL_VERSION"
-          echo "Is alpha: $IS_ALPHA"
+          echo "Is incremental: $IS_INCREMENTAL"
           
           echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "BUILD_NUMBER=${NEW_BUILD_NUMBER}" >> $GITHUB_OUTPUT
           echo "NEW_FULL_VERSION=${NEW_FULL_VERSION}" >> $GITHUB_OUTPUT
           echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "IS_ALPHA=${IS_ALPHA}" >> $GITHUB_OUTPUT
+          echo "IS_INCREMENTAL=${IS_INCREMENTAL}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
 
       - name: Update version in pubspec.yaml
@@ -164,9 +164,9 @@ jobs:
           git config --local user.name "GitHub Action"
           git add pubspec.yaml
           
-          if [ "$RELEASE_TYPE" = "alpha" ]; then
-            COMMIT_MSG="Alpha build: $NEW_FULL_VERSION"
-            TAG_NAME="v$NEW_FULL_VERSION-alpha"
+          if [ "$RELEASE_TYPE" = "incremental" ]; then
+            COMMIT_MSG="Incremental build: $NEW_FULL_VERSION"
+            TAG_NAME="v$NEW_FULL_VERSION-incremental"
           else
             COMMIT_MSG="Release version $NEW_FULL_VERSION"
             TAG_NAME="v$NEW_FULL_VERSION"
@@ -183,10 +183,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('v{0}-alpha', steps.version_calc.outputs.NEW_FULL_VERSION) || format('v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
-          release_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('Alpha Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+          tag_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('v{0}-incremental', steps.version_calc.outputs.NEW_FULL_VERSION) || format('v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+          release_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('Incremental Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
           body: |
-            ${{ steps.version_calc.outputs.RELEASE_TYPE == 'alpha' && format('## Alpha Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('## Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+            ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('## Incremental Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('## Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
@@ -205,7 +205,7 @@ jobs:
             - Flutter Version: 3.32.5
             - Build Date: ${{ steps.build_date.outputs.date }}
           draft: false
-          prerelease: ${{ steps.version_calc.outputs.IS_ALPHA }}
+          prerelease: ${{ steps.version_calc.outputs.IS_INCREMENTAL }}
 
       - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
@@ -242,11 +242,11 @@ jobs:
           RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
           
-          if [ "$RELEASE_TYPE" = "alpha" ]; then
-            echo "🎉 Successfully created alpha build $NEW_FULL_VERSION!"
+          if [ "$RELEASE_TYPE" = "incremental" ]; then
+            echo "🎉 Successfully created incremental build $NEW_FULL_VERSION!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag v$NEW_FULL_VERSION-alpha created"
+            echo "🏷️  Git tag v$NEW_FULL_VERSION-incremental created"
             echo "📦 Pre-release GitHub release created"
           else
             echo "🎉 Successfully released version $NEW_FULL_VERSION!"
