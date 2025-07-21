@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// A screen that provides help information and answers to frequently asked questions.
 class HelpScreen extends StatelessWidget {
@@ -66,13 +67,18 @@ class HelpScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             GestureDetector(
-              onTap: () {
-                // Open GitHub repository in browser
-                // Note: You'll need to add url_launcher package for this to work
-                // For now, this is a placeholder
+              onTap: () async {
+                final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not open the link.')),
+                  );
+                }
               },
               child: Text(
-                'https://github.com/yourusername/MyRepertoirApp',
+                'https://github.com/Adithya-Jayan/MyRepertoirApp',
                 style: TextStyle(
                   color: Colors.blue,
                   decoration: TextDecoration.underline,
