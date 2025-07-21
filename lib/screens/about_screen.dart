@@ -72,10 +72,21 @@ class _AboutScreenState extends State<AboutScreen> {
               child: const Text('View Contributors'),
             ),
             const SizedBox(height: 20),
+            // Replace the old ListTile with a nicer one
             ListTile(
-              leading: const Icon(Icons.code),
-              title: const Text('Source Code on GitHub'),
-              onTap: () => launchUrl(Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp/tree/v1.0.0')), // Launch GitHub URL.
+              leading: Icon(Icons.code, color: Colors.blue),
+              title: Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');
+                try {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not open the link.')),
+                  );
+                }
+              },
             ),
           ],
         ),

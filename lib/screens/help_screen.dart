@@ -66,24 +66,21 @@ class HelpScreen extends StatelessWidget {
               style: TextStyle(fontStyle: FontStyle.italic),
             ),
             SizedBox(height: 8),
-            GestureDetector(
+            // Replace GestureDetector with ListTile for better UX and consistency
+            ListTile(
+              leading: Icon(Icons.code, color: Colors.blue),
+              title: Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
               onTap: () async {
                 final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');
-                if (await canLaunchUrl(url)) {
+                try {
                   await launchUrl(url, mode: LaunchMode.externalApplication);
-                } else {
+                } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Could not open the link.')),
                   );
                 }
               },
-              child: Text(
-                'https://github.com/Adithya-Jayan/MyRepertoirApp',
-                style: TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
             ),
           ],
         ),
