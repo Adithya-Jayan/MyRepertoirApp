@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import '../utils/app_logger.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';
+import '../services/media_storage_manager.dart';
 
 class ThumbnailService {
   static Future<void> fetchAndSaveThumbnail(MediaItem item, String musicPieceId) async {
@@ -16,8 +17,7 @@ class ThumbnailService {
 
         if (thumbnailUrl != null) {
           final response = await http.get(Uri.parse(thumbnailUrl));
-          final documentsDir = await getApplicationDocumentsDirectory();
-          final thumbnailDir = Directory(p.join(documentsDir.path, musicPieceId, 'thumbnails'));
+          final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
           if (!await thumbnailDir.exists()) {
             await thumbnailDir.create(recursive: true);
           }
@@ -34,8 +34,8 @@ class ThumbnailService {
   static Future<String?> getThumbnailPath(MediaItem item, String musicPieceId) async {
     if (item.type == MediaType.mediaLink && item.pathOrUrl.isNotEmpty) {
       try {
-        final documentsDir = await getApplicationDocumentsDirectory();
-        final thumbnailFile = File(p.join(documentsDir.path, musicPieceId, 'thumbnails', '${item.id}.jpg'));
+        final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+        final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
         if (await thumbnailFile.exists()) {
           return thumbnailFile.path;
         }

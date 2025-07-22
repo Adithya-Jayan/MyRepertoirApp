@@ -17,6 +17,8 @@ class MediaStorageManager {
   /// Returns the specific directory for a music piece's media items of a given type.
   ///
   /// Creates the directory if it doesn't already exist.
+  ///
+  /// If [mediaType] is MediaType.thumbnails, this returns the hierarchical thumbnail directory for the piece.
   static Future<Directory> getPieceMediaDirectory(String pieceId, MediaType mediaType) async {
     final appDir = await _appDirectory;
     final mediaTypeString = mediaType.toString().split('.').last; // Extract media type string (e.g., 'image', 'pdf').

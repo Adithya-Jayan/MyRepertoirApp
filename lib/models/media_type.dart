@@ -13,5 +13,7 @@ enum MediaType {
   audio,
   /// Represents an external link (e.g., YouTube video, external audio stream, website).
   mediaLink,
+  /// Represents a thumbnail image (for hierarchical storage of thumbnails)
+  thumbnails,
   // Add other types as needed, e.g., 'text' for plain text notes
 }

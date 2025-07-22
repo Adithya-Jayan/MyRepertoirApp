@@ -234,7 +234,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ),
         );
         break;
-      
+      case MediaType.thumbnails:
+        content = const SizedBox.shrink(); // Thumbnails are not displayed directly
+        break;
     }
 
     return Card(

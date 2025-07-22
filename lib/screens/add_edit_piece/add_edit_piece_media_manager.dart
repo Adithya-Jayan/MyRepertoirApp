@@ -38,6 +38,8 @@ class AddEditPieceMediaManager {
         break;
       case MediaType.mediaLink:
         return; // Handled separately
+      case MediaType.thumbnails:
+        return; // Thumbnails are not picked by user
     }
 
     if (result != null && result.files.single.path != null) {
