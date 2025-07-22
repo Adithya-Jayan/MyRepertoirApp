@@ -1,8 +1,12 @@
 <div align="center">
   
 [//]: # (Badges go here)
-<!-- Example badges: build, license, release -->
-<!-- ![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg) -->
+
+<!-- Build Status Badge -->
+[![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml)
+
+<!-- License Badge -->
+[![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
 
 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp">
   <img src="./web/icons/Icon.png" alt="Repertoir logo" title="Repertoir logo" width="80"/>
