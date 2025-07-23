@@ -128,6 +128,16 @@ class GroupOperationsManager {
   /// Deletes a group from the database.
   Future<void> deleteGroup(String groupId) async {
     AppLogger.log('GroupOperationsManager: Deleting group with id: $groupId');
+    // Remove groupId from all music pieces
+    final allPieces = await repository.getMusicPieces();
+    for (final piece in allPieces) {
+      if (piece.groupIds.contains(groupId)) {
+        final updatedGroupIds = List<String>.from(piece.groupIds)..remove(groupId);
+        final updatedPiece = piece.copyWith(groupIds: updatedGroupIds);
+        await repository.updateMusicPiece(updatedPiece);
+      }
+    }
+    // Now delete the group itself
     await repository.deleteGroup(groupId);
   }
 } 
