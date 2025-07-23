@@ -289,42 +289,31 @@ class RestoreManager {
 
   /// Restores media files from backup
   Future<void> _restoreMediaFiles(Archive archive, String storagePath) async {
-    AppLogger.log('RestoreManager: Starting media files restore');
-    AppLogger.log('RestoreManager: Archive contains ${archive.files.length} total files');
-    
-    // Log all files in the archive for debugging
-    for (int i = 0; i < archive.files.length; i++) {
-      final file = archive.files[i];
-      AppLogger.log('RestoreManager: Archive file ${i + 1}: ${file.name} (isFile: ${file.isFile}, size: ${file.content?.length ?? 0})');
-    }
-    
-    // Media files should be restored to app documents directory, not user storage path
+    AppLogger.log('RestoreManager: Starting media files restore (with temp directory)');
+    AppLogger.log('RestoreManager: Archive contains  [archive.files.length] total files');
+
     final appDir = await getApplicationDocumentsDirectory();
     final mediaDir = Directory(p.join(appDir.path, 'media'));
-    AppLogger.log('RestoreManager: Media directory for restore: ${mediaDir.path}');
-    
-    if (await mediaDir.exists()) {
-      AppLogger.log('RestoreManager: Deleting existing media directory');
-      await mediaDir.delete(recursive: true);
+    final tempMediaDir = Directory(p.join(appDir.path, 'media_temp'));
+
+    // Clean up temp directory if it exists
+    if (await tempMediaDir.exists()) {
+      await tempMediaDir.delete(recursive: true);
     }
-    AppLogger.log('RestoreManager: Creating new media directory');
-    await mediaDir.create(recursive: true);
+    await tempMediaDir.create(recursive: true);
 
     int extractedFiles = 0;
     for (final file in archive.files) {
       if (file.name.startsWith('media/')) {
-        final filePath = p.join(appDir.path, file.name);
-        AppLogger.log('RestoreManager: Extracting media file: ${file.name} to $filePath');
+        final tempFilePath = p.join(tempMediaDir.path, file.name.substring('media/'.length));
+        AppLogger.log('RestoreManager: Extracting media file: ${file.name} to $tempFilePath');
         if (file.isFile) {
           try {
-            // Ensure the directory exists before creating the file
-            final fileDir = Directory(p.dirname(filePath));
+            final fileDir = Directory(p.dirname(tempFilePath));
             if (!await fileDir.exists()) {
-              AppLogger.log('RestoreManager: Creating directory: ${fileDir.path}');
               await fileDir.create(recursive: true);
             }
-            
-            final outputStream = OutputFileStream(filePath);
+            final outputStream = OutputFileStream(tempFilePath);
             outputStream.writeBytes(file.content);
             outputStream.close();
             extractedFiles++;
@@ -335,7 +324,42 @@ class RestoreManager {
         }
       }
     }
-    AppLogger.log('RestoreManager: Media files extraction completed. Extracted: $extractedFiles files');
+    AppLogger.log('RestoreManager: Media files extraction to temp completed. Extracted: $extractedFiles files');
+
+    // Now copy files from tempMediaDir to mediaDir, overwriting only files that exist in tempMediaDir
+    final tempPieceDirs = tempMediaDir.listSync(recursive: false).whereType<Directory>();
+    for (final tempPieceDir in tempPieceDirs) {
+      final pieceId = p.basename(tempPieceDir.path);
+      final destPieceDir = Directory(p.join(mediaDir.path, pieceId));
+      if (!await destPieceDir.exists()) {
+        await destPieceDir.create(recursive: true);
+      }
+      // Copy all files and subdirectories from tempPieceDir to destPieceDir
+      await _copyDirectory(tempPieceDir, destPieceDir);
+    }
+
+    // Clean up temp directory
+    await tempMediaDir.delete(recursive: true);
+    AppLogger.log('RestoreManager: Temp media directory deleted after restore');
+  }
+
+  /// Helper to copy directory contents
+  Future<void> _copyDirectory(Directory src, Directory dest) async {
+    await for (var entity in src.list(recursive: true)) {
+      if (entity is File) {
+        final relativePath = p.relative(entity.path, from: src.path);
+        final newFile = File(p.join(dest.path, relativePath));
+        if (!await newFile.parent.exists()) {
+          await newFile.parent.create(recursive: true);
+        }
+        await entity.copy(newFile.path);
+      } else if (entity is Directory) {
+        final newDir = Directory(p.join(dest.path, p.relative(entity.path, from: src.path)));
+        if (!await newDir.exists()) {
+          await newDir.create(recursive: true);
+        }
+      }
+    }
   }
 
   /// Restores app settings from backup data
@@ -369,7 +393,7 @@ class RestoreManager {
     }
     if (appSettingsJson['autoBackupFrequency'] != null) {
       await prefs.setDouble('autoBackupFrequency', (appSettingsJson['autoBackupFrequency'] as num).toDouble());
-      AppLogger.log('RestoreManager: Restored autoBackupFrequency:  [appSettingsJson['autoBackupFrequency']]');
+      AppLogger.log('RestoreManager: Restored autoBackupFrequency: ${appSettingsJson['autoBackupFrequency']}');
     }
     if (appSettingsJson['autoBackupCount'] != null) {
       await prefs.setInt('autoBackupCount', appSettingsJson['autoBackupCount']);
