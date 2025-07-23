@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppLogger {
   static bool _debugLogsEnabled = false;
   static File? _logFile;
-  static const String _logFileName = 'app_debug.log';
+  static const String _logFileName = 'repertoir_logs.txt';
   static const String _debugLogsEnabledKey = 'debugLogsEnabled';
 
   static Future<void> init() async {

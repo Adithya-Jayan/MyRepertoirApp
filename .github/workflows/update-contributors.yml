@@ -28,12 +28,12 @@ jobs:
           if echo "$RESPONSE" | jq 'type' | grep -q '"array"'; then
             echo "$RESPONSE" | jq '[.[] 
               | select((.login | test("bot") | not) and (.login != "actions-user")) 
-              | { 
-                  login: .login, 
-                  contributions: .contributions, 
-                  avatar_url: .avatar_url, 
-                  html_url: .html_url 
-                }] 
+                | { 
+                    login: .login, 
+                    contributions: .contributions, 
+                    avatar_url: .avatar_url, 
+                    html_url: .html_url 
+                  }] 
               | sort_by(-.contributions)' > assets/contributors.json
           else
             echo "$RESPONSE" > assets/contributors.json
