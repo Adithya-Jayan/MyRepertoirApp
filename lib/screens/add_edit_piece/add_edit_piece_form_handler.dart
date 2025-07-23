@@ -40,7 +40,9 @@ class AddEditPieceFormHandler {
         groupIds: List<String>.from(originalMusicPiece!.groupIds),
       );
     } else {
-      final groupIds = selectedGroupId != null ? [selectedGroupId] : <String>[];
+      final groupIds = (selectedGroupId != null && selectedGroupId != 'all_group' && selectedGroupId != 'ungrouped_group')
+          ? [selectedGroupId]
+          : <String>[];
       return MusicPiece(
         id: const Uuid().v4(), 
         title: '', 
