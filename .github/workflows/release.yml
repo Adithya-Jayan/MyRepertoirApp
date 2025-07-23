@@ -6,13 +6,17 @@ on:
       release_type:
         description: 'Release type to create'
         required: true
-        default: 'incremental'
+        default: 'patch'
         type: choice
         options:
-          - incremental
           - patch
           - minor
           - major
+      pre_release:
+        description: 'Mark as pre-release?'
+        required: false
+        type: boolean
+        default: false
       release_notes:
         description: 'Release notes (optional)'
         required: false
@@ -47,82 +51,72 @@ jobs:
       - name: Get build date
         id: build_date
         run: |
-          echo "date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_OUTPUT
+          echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
       - name: Get current version and calculate new version
         id: version_calc
         run: |
-          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
-          echo "Current version: $CURRENT_VERSION"
+          # Fetch all tags
+          git fetch --tags
           
-          # Parse version components (x.y.z+b format)
-          VERSION_NAME=$(echo $CURRENT_VERSION | cut -d'+' -f1)
-          BUILD_NUMBER=$(echo $CURRENT_VERSION | cut -s -d'+' -f2)
+          # Find the latest official release tag (vX.Y.Z)
+          LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          LATEST_OFFICIAL_VERSION=${LATEST_OFFICIAL_TAG#v}
           
-          if [ -z "$BUILD_NUMBER" ]; then
-            BUILD_NUMBER=0
+          # Find the latest pre-release tag for the next version (vX.Y.Z-pre_release.N)
+          LATEST_PRERELEASE_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-pre_release\.[0-9]+$' | head -n1)
+          LATEST_PRERELEASE_VERSION=${LATEST_PRERELEASE_TAG#v}
+          
+          # Parse dropdown and pre_release input
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          PRE_RELEASE="${{ github.event.inputs.pre_release }}"
+          
+          # Helper to bump version
+          bump_version() {
+            local version=$1
+            local type=$2
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
+            case $type in
+              major)
+                MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor)
+                MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch)
+                PATCH=$((PATCH + 1)) ;;
+            esac
+            echo "$MAJOR.$MINOR.$PATCH"
+          }
+          
+          if [ "$PRE_RELEASE" = "true" ]; then
+            # Pre-release logic
+            BASE_VERSION=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
+            # Find the highest pre_release number for this base version
+            EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-pre_release.*" | grep -E "^v${BASE_VERSION}-pre_release\\.[0-9]+$" | sort -V | tail -n1)
+            if [ -n "$EXISTING_PRERELEASE" ]; then
+              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-pre_release\.([0-9]+)$/\1/')
+              PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
+            else
+              PRERELEASE_NUM=1
+            fi
+            NEW_VERSION_NAME="$BASE_VERSION-pre_release.$PRERELEASE_NUM"
+            NEW_FULL_VERSION="$NEW_VERSION_NAME"
+          else
+            # Official release logic
+            # If the latest tag is a pre-release for this version, strip the suffix
+            if [[ "$LATEST_PRERELEASE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-pre_release\.[0-9]+$ ]]; then
+              BASE_VERSION="${BASH_REMATCH[1]}"
+              NEW_VERSION_NAME="$BASE_VERSION"
+              NEW_FULL_VERSION="$BASE_VERSION"
+            else
+              # Otherwise, bump from latest official
+              NEW_VERSION_NAME=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
+              NEW_FULL_VERSION="$NEW_VERSION_NAME"
+            fi
           fi
           
-          # Parse semantic version components
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
-          
-          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          
-          case $RELEASE_TYPE in
-            "incremental")
-              # For incremental builds, increment build number only
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$MINOR
-              NEW_PATCH=$PATCH
-              NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
-              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
-              NEW_FULL_VERSION="${NEW_VERSION_NAME}+${NEW_BUILD_NUMBER}"
-              IS_INCREMENTAL=true
-              ;;
-            "major")
-              # For official releases, increment major and reset others
-              NEW_MAJOR=$((MAJOR + 1))
-              NEW_MINOR=0
-              NEW_PATCH=0
-              NEW_BUILD_NUMBER=1
-              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
-              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_INCREMENTAL=false
-              ;;
-            "minor")
-              # For official releases, increment minor and reset patch
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$((MINOR + 1))
-              NEW_PATCH=0
-              NEW_BUILD_NUMBER=1
-              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
-              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_INCREMENTAL=false
-              ;;
-            "patch")
-              # For official releases, increment patch only
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$MINOR
-              NEW_PATCH=$((PATCH + 1))
-              NEW_BUILD_NUMBER=1
-              NEW_VERSION_NAME="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
-              NEW_FULL_VERSION="${NEW_VERSION_NAME}"
-              IS_INCREMENTAL=false
-              ;;
-          esac
-          
-          echo "Current version: $CURRENT_VERSION"
-          echo "Release type: $RELEASE_TYPE"
-          echo "New version name: $NEW_VERSION_NAME"
-          echo "New build number: $NEW_BUILD_NUMBER"
-          echo "New full version: $NEW_FULL_VERSION"
-          echo "Is incremental: $IS_INCREMENTAL"
-          
-          echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
-          echo "BUILD_NUMBER=${NEW_BUILD_NUMBER}" >> $GITHUB_OUTPUT
           echo "NEW_FULL_VERSION=${NEW_FULL_VERSION}" >> $GITHUB_OUTPUT
-          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "IS_INCREMENTAL=${IS_INCREMENTAL}" >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=${LATEST_OFFICIAL_VERSION}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
 
       - name: Update version in pubspec.yaml
@@ -158,20 +152,11 @@ jobs:
       - name: Create Git Tag and Push Changes
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
-          
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add pubspec.yaml
-          
-          if [ "$RELEASE_TYPE" = "incremental" ]; then
-            COMMIT_MSG="Incremental build: $NEW_FULL_VERSION"
-            TAG_NAME="v$NEW_FULL_VERSION-incremental"
-          else
-            COMMIT_MSG="Release version $NEW_FULL_VERSION"
-            TAG_NAME="v$NEW_FULL_VERSION"
-          fi
-          
+          COMMIT_MSG="Release version $NEW_FULL_VERSION"
+          TAG_NAME="v$NEW_FULL_VERSION"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
           git push origin main
@@ -183,10 +168,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('v{0}-incremental', steps.version_calc.outputs.NEW_FULL_VERSION) || format('v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
-          release_name: ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('Incremental Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+          tag_name: v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
+          release_name: Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
           body: |
-            ${{ steps.version_calc.outputs.RELEASE_TYPE == 'incremental' && format('## Incremental Build v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) || format('## Release v{0}', steps.version_calc.outputs.NEW_FULL_VERSION) }}
+            ## Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
@@ -205,7 +190,7 @@ jobs:
             - Flutter Version: 3.32.5
             - Build Date: ${{ steps.build_date.outputs.date }}
           draft: false
-          prerelease: ${{ steps.version_calc.outputs.IS_INCREMENTAL }}
+          prerelease: ${{ github.event.inputs.pre_release }}
           generate_release_notes: true
 
       - name: Upload Release Assets
@@ -242,12 +227,11 @@ jobs:
         run: |
           RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          
-          if [ "$RELEASE_TYPE" = "incremental" ]; then
-            echo "🎉 Successfully created incremental build $NEW_FULL_VERSION!"
+          if [ "${{ github.event.inputs.pre_release }}" = "true" ]; then
+            echo "🎉 Successfully created pre-release $NEW_FULL_VERSION!"
             echo "📱 Android APK and App Bundle created"
-            echo "🌐 Web build created"
-            echo "🏷️  Git tag v$NEW_FULL_VERSION-incremental created"
+            echo "�� Web build created"
+            echo "🏷️  Git tag v$NEW_FULL_VERSION created"
             echo "📦 Pre-release GitHub release created"
           else
             echo "🎉 Successfully released version $NEW_FULL_VERSION!"
