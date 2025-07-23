@@ -53,7 +53,7 @@ class BackupManager {
     
     // Backup settings
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
-    settings['autoBackupFrequency'] = prefs.getInt('autoBackupFrequency');
+    settings['autoBackupFrequency'] = prefs.getDouble('autoBackupFrequency');
     settings['autoBackupCount'] = prefs.getInt('autoBackupCount');
     settings['lastAutoBackupTimestamp'] = prefs.getInt('lastAutoBackupTimestamp');
     

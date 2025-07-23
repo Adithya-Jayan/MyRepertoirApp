@@ -21,7 +21,7 @@ class BackupRestoreScreen extends StatefulWidget {
 class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   late BackupRestoreService _backupRestoreService;
   bool _autoBackupEnabled = false;
-  int _autoBackupFrequency = 7;
+  double _autoBackupFrequency = 7.0;
   int _autoBackupCount = 5;
 
   @override
@@ -40,7 +40,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   void _loadAutoBackupSettings() {
     setState(() {
       _autoBackupEnabled = _backupRestoreService.prefs.getBool('autoBackupEnabled') ?? false;
-      _autoBackupFrequency = _backupRestoreService.prefs.getInt('autoBackupFrequency') ?? 7;
+      _autoBackupFrequency = _backupRestoreService.prefs.getDouble('autoBackupFrequency') ?? 7.0;
       _autoBackupCount = _backupRestoreService.prefs.getInt('autoBackupCount') ?? 5;
     });
   }
@@ -48,7 +48,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   /// Saves the current automatic backup settings to [SharedPreferences].
   Future<void> _saveAutoBackupSettings() async {
     await _backupRestoreService.prefs.setBool('autoBackupEnabled', _autoBackupEnabled);
-    await _backupRestoreService.prefs.setInt('autoBackupFrequency', _autoBackupFrequency);
+    await _backupRestoreService.prefs.setDouble('autoBackupFrequency', _autoBackupFrequency);
     await _backupRestoreService.prefs.setInt('autoBackupCount', _autoBackupCount);
   }
 
@@ -98,12 +98,12 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             ListTile(
               title: const Text('Backup Frequency (days)'),
               trailing: SizedBox(
-                width: 50,
+                width: 70,
                 child: TextField(
                   controller: TextEditingController(text: _autoBackupFrequency.toString()),
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (value) {
-                    _autoBackupFrequency = int.tryParse(value) ?? 7;
+                    _autoBackupFrequency = double.tryParse(value) ?? 7.0;
                     _saveAutoBackupSettings();
                   },
                 ),

@@ -89,9 +89,10 @@ Future<void> triggerAutoBackup({BuildContext? context}) async {
       noBackupFiles = true;
     }
 
-    final autoBackupFrequency = prefs.getInt('autoBackupFrequency') ?? 7;
+    final autoBackupFrequency = prefs.getDouble('autoBackupFrequency') ?? 7.0;
     final now = DateTime.now();
-    final requiredInterval = Duration(days: autoBackupFrequency);
+    // Support fractional days by converting to hours
+    final requiredInterval = Duration(minutes: (autoBackupFrequency * 24 * 60).round());
     Duration? timeElapsed;
     if (lastBackupTime != null) {
       timeElapsed = now.difference(lastBackupTime);

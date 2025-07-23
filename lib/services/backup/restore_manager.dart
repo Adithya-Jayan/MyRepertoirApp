@@ -368,8 +368,8 @@ class RestoreManager {
       AppLogger.log('RestoreManager: Restored autoBackupEnabled: ${appSettingsJson['autoBackupEnabled']}');
     }
     if (appSettingsJson['autoBackupFrequency'] != null) {
-      await prefs.setInt('autoBackupFrequency', appSettingsJson['autoBackupFrequency']);
-      AppLogger.log('RestoreManager: Restored autoBackupFrequency: ${appSettingsJson['autoBackupFrequency']}');
+      await prefs.setDouble('autoBackupFrequency', (appSettingsJson['autoBackupFrequency'] as num).toDouble());
+      AppLogger.log('RestoreManager: Restored autoBackupFrequency:  [appSettingsJson['autoBackupFrequency']]');
     }
     if (appSettingsJson['autoBackupCount'] != null) {
       await prefs.setInt('autoBackupCount', appSettingsJson['autoBackupCount']);
