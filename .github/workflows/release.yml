@@ -12,8 +12,8 @@ on:
           - patch
           - minor
           - major
-      pre_release:
-        description: 'Mark as pre-release?'
+      prerelease:
+        description: 'Mark as prerelease?'
         required: false
         type: boolean
         default: false
@@ -63,13 +63,13 @@ jobs:
           LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
           LATEST_OFFICIAL_VERSION=${LATEST_OFFICIAL_TAG#v}
           
-          # Find the latest pre-release tag for the next version (vX.Y.Z-pre_release.N)
-          LATEST_PRERELEASE_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-pre_release\.[0-9]+$' | head -n1)
+          # Find the latest prerelease tag for the next version (vX.Y.Z-prerelease.N)
+          LATEST_PRERELEASE_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-prerelease\.[0-9]+$' | head -n1)
           LATEST_PRERELEASE_VERSION=${LATEST_PRERELEASE_TAG#v}
           
-          # Parse dropdown and pre_release input
+          # Parse dropdown and prerelease input
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          PRE_RELEASE="${{ github.event.inputs.pre_release }}"
+          PRERELEASE="${{ github.event.inputs.prerelease }}"
           
           # Helper to bump version
           bump_version() {
@@ -87,23 +87,23 @@ jobs:
             echo "$MAJOR.$MINOR.$PATCH"
           }
           
-          if [ "$PRE_RELEASE" = "true" ]; then
-            # Pre-release logic
+          if [ "$PRERELEASE" = "true" ]; then
+            # Prerelease logic
             BASE_VERSION=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
-            # Find the highest pre_release number for this base version
-            EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-pre_release.*" | grep -E "^v${BASE_VERSION}-pre_release\\.[0-9]+$" | sort -V | tail -n1)
+            # Find the highest prerelease number for this base version
+            EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\\.[0-9]+$" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
-              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-pre_release\.([0-9]+)$/\1/')
+              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
               PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
             else
               PRERELEASE_NUM=1
             fi
-            NEW_VERSION_NAME="$BASE_VERSION-pre_release.$PRERELEASE_NUM"
+            NEW_VERSION_NAME="$BASE_VERSION-prerelease.$PRERELEASE_NUM"
             NEW_FULL_VERSION="$NEW_VERSION_NAME"
           else
             # Official release logic
-            # If the latest tag is a pre-release for this version, strip the suffix
-            if [[ "$LATEST_PRERELEASE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-pre_release\.[0-9]+$ ]]; then
+            # If the latest tag is a prerelease for this version, strip the suffix
+            if [[ "$LATEST_PRERELEASE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-prerelease\.[0-9]+$ ]]; then
               BASE_VERSION="${BASH_REMATCH[1]}"
               NEW_VERSION_NAME="$BASE_VERSION"
               NEW_FULL_VERSION="$BASE_VERSION"
@@ -190,7 +190,7 @@ jobs:
             - Flutter Version: 3.32.5
             - Build Date: ${{ steps.build_date.outputs.date }}
           draft: false
-          prerelease: ${{ github.event.inputs.pre_release }}
+          prerelease: ${{ github.event.inputs.prerelease }}
           generate_release_notes: true
 
       - name: Upload Release Assets
@@ -227,12 +227,12 @@ jobs:
         run: |
           RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          if [ "${{ github.event.inputs.pre_release }}" = "true" ]; then
-            echo "🎉 Successfully created pre-release $NEW_FULL_VERSION!"
+          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+            echo "🎉 Successfully created prerelease $NEW_FULL_VERSION!"
             echo "📱 Android APK and App Bundle created"
-            echo "�� Web build created"
+            echo "🌐 Web build created"
             echo "🏷️  Git tag v$NEW_FULL_VERSION created"
-            echo "📦 Pre-release GitHub release created"
+            echo "📦 Prerelease GitHub release created"
           else
             echo "🎉 Successfully released version $NEW_FULL_VERSION!"
             echo "📱 Android APK and App Bundle created"
