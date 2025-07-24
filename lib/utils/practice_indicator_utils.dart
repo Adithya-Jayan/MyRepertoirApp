@@ -52,19 +52,21 @@ class PracticeIndicatorUtils {
   /// - 8-14 days: Orange
   /// - 15-31 days: Red
   static Color _calculateLogarithmicColor(int hoursSincePractice) {
-    // Simple discrete color ranges for better predictability
-    if (hoursSincePractice <= 72) {
-      // 48-72 hours: Light yellow
-      return Colors.yellow.shade100;
-    } else if (hoursSincePractice <= 168) {
-      // 3-7 days: Yellow
-      return Colors.yellow;
-    } else if (hoursSincePractice <= 336) {
-      // 8-14 days: Orange
-      return Colors.orange;
+    // Smooth gradient: green (48h) -> yellow (192h) -> red (336h)
+    const int minHours = 48;
+    const int midHours = 192; // 8 days
+    const int maxHours = 336; // 14 days
+    if (hoursSincePractice <= minHours) return Colors.green;
+    if (hoursSincePractice >= maxHours) return Colors.red;
+
+    if (hoursSincePractice <= midHours) {
+      // Green to yellow
+      double t = (hoursSincePractice - minHours) / (midHours - minHours);
+      return Color.lerp(Colors.green, Colors.yellow, t)!;
     } else {
-      // 15+ days: Red
-      return Colors.red;
+      // Yellow to red
+      double t = (hoursSincePractice - midHours) / (maxHours - midHours);
+      return Color.lerp(Colors.yellow, Colors.red, t)!;
     }
   }
   
