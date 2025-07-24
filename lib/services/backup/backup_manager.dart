@@ -8,8 +8,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
-import '../../utils/app_logger.dart';
 
+import '../../utils/app_logger.dart';
 import '../../database/music_piece_repository.dart';
 import '../../models/music_piece.dart';
 import '../../models/tag.dart';
