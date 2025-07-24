@@ -70,26 +70,6 @@ class PracticeIndicatorUtils {
     }
   }
   
-  /// Performs logarithmic interpolation between two values.
-  ///
-  /// Returns a value between 0 and 1 representing the position on a logarithmic scale.
-  static double _logInterpolate(double value, double min, double max) {
-    if (value <= min) return 0.0;
-    if (value >= max) return 1.0;
-    
-    // Use logarithmic interpolation for smoother transition
-    final logMin = log(min);
-    final logMax = log(max);
-    final logValue = log(value);
-    
-    return (logValue - logMin) / (logMax - logMin);
-  }
-  
-  /// Natural logarithm function.
-  static double log(double x) {
-    return x <= 0 ? 0 : math.log(x);
-  }
-  
   /// Gets a human-readable description of the practice status.
   ///
   /// Returns strings like "Recently practiced", "Needs attention", etc.
