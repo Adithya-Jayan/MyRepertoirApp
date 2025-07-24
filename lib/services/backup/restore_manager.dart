@@ -128,7 +128,7 @@ class RestoreManager {
             final relativePath = pathParts.sublist(mediaIndex).join(Platform.pathSeparator);
             final newPath = p.join(appDir.path, relativePath);
             
-            AppLogger.log('RestoreManager: Updating media path for piece ${piece.title}:');
+            AppLogger.log('RestoreManager: Updating media path for piece  [33m${piece.title} [0m:');
             AppLogger.log('  Old path: $oldPath');
             AppLogger.log('  New path: $newPath');
             
@@ -138,15 +138,54 @@ class RestoreManager {
             AppLogger.log('RestoreManager: Could not extract relative path from: $oldPath');
           }
         }
+        // Update thumbnailPath for the media item if present and local
+        if (mediaItem.thumbnailPath != null && mediaItem.thumbnailPath!.isNotEmpty) {
+          final oldThumbPath = mediaItem.thumbnailPath!;
+          final thumbParts = oldThumbPath.split(Platform.pathSeparator);
+          final mediaIndex = thumbParts.indexWhere((part) => part == 'media');
+          if (mediaIndex != -1 && mediaIndex < thumbParts.length - 1) {
+            final relativeThumbPath = thumbParts.sublist(mediaIndex).join(Platform.pathSeparator);
+            final newThumbPath = p.join(appDir.path, relativeThumbPath);
+            if (oldThumbPath != newThumbPath) {
+              AppLogger.log('RestoreManager: Updating media thumbnail path for piece  [33m${piece.title} [0m:');
+              AppLogger.log('  Old thumbnail path: $oldThumbPath');
+              AppLogger.log('  New thumbnail path: $newThumbPath');
+              updatedItem = updatedItem.copyWith(thumbnailPath: newThumbPath);
+              pieceUpdated = true;
+            }
+          } else {
+            AppLogger.log('RestoreManager: Could not extract relative path from thumbnail: $oldThumbPath');
+          }
+        }
         
         updatedMediaItems.add(updatedItem);
       }
       
+      // Update the piece's own thumbnailPath if present and local
+      String? updatedPieceThumb = piece.thumbnailPath;
+      if (piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty) {
+        final oldPieceThumbPath = piece.thumbnailPath!;
+        final pieceThumbParts = oldPieceThumbPath.split(Platform.pathSeparator);
+        final mediaIndex = pieceThumbParts.indexWhere((part) => part == 'media');
+        if (mediaIndex != -1 && mediaIndex < pieceThumbParts.length - 1) {
+          final relativePieceThumbPath = pieceThumbParts.sublist(mediaIndex).join(Platform.pathSeparator);
+          final newPieceThumbPath = p.join(appDir.path, relativePieceThumbPath);
+          if (oldPieceThumbPath != newPieceThumbPath) {
+            AppLogger.log('RestoreManager: Updating piece thumbnail path for piece  [33m${piece.title} [0m:');
+            AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
+            AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
+            updatedPieceThumb = newPieceThumbPath;
+            pieceUpdated = true;
+          }
+        } else {
+          AppLogger.log('RestoreManager: Could not extract relative path from piece thumbnail: $oldPieceThumbPath');
+        }
+      }
       if (pieceUpdated) {
-        final updatedPiece = piece.copyWith(mediaItems: updatedMediaItems);
+        final updatedPiece = piece.copyWith(mediaItems: updatedMediaItems, thumbnailPath: updatedPieceThumb);
         await _repository.updateMusicPiece(updatedPiece);
         updatedPieces++;
-        AppLogger.log('RestoreManager: Updated media paths for piece: ${piece.title}');
+        AppLogger.log('RestoreManager: Updated media and thumbnail paths for piece: ${piece.title}');
       }
     }
     

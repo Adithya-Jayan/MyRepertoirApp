@@ -52,40 +52,22 @@ class PracticeIndicatorUtils {
   /// - 8-14 days: Orange
   /// - 15-31 days: Red
   static Color _calculateLogarithmicColor(int hoursSincePractice) {
-    // Simple discrete color ranges for better predictability
-    if (hoursSincePractice <= 72) {
-      // 48-72 hours: Light yellow
-      return Colors.yellow.shade100;
-    } else if (hoursSincePractice <= 168) {
-      // 3-7 days: Yellow
-      return Colors.yellow;
-    } else if (hoursSincePractice <= 336) {
-      // 8-14 days: Orange
-      return Colors.orange;
+    // Smooth gradient: green (48h) -> yellow (192h) -> red (336h)
+    const int minHours = 48;
+    const int midHours = 192; // 8 days
+    const int maxHours = 336; // 14 days
+    if (hoursSincePractice <= minHours) return Colors.green;
+    if (hoursSincePractice >= maxHours) return Colors.red;
+
+    if (hoursSincePractice <= midHours) {
+      // Green to yellow
+      double t = (hoursSincePractice - minHours) / (midHours - minHours);
+      return Color.lerp(Colors.green, Colors.yellow, t)!;
     } else {
-      // 15+ days: Red
-      return Colors.red;
+      // Yellow to red
+      double t = (hoursSincePractice - midHours) / (maxHours - midHours);
+      return Color.lerp(Colors.yellow, Colors.red, t)!;
     }
-  }
-  
-  /// Performs logarithmic interpolation between two values.
-  ///
-  /// Returns a value between 0 and 1 representing the position on a logarithmic scale.
-  static double _logInterpolate(double value, double min, double max) {
-    if (value <= min) return 0.0;
-    if (value >= max) return 1.0;
-    
-    // Use logarithmic interpolation for smoother transition
-    final logMin = log(min);
-    final logMax = log(max);
-    final logValue = log(value);
-    
-    return (logValue - logMin) / (logMax - logMin);
-  }
-  
-  /// Natural logarithm function.
-  static double log(double x) {
-    return x <= 0 ? 0 : math.log(x);
   }
   
   /// Gets a human-readable description of the practice status.
