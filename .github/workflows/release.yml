@@ -125,17 +125,23 @@ jobs:
           yq -i '.version = "'"${NEW_FULL_VERSION}"'"' pubspec.yaml
           echo "Updated pubspec.yaml to version $NEW_FULL_VERSION"
 
+      - name: Get build number
+        id: build_number
+        run: |
+          # Use the GitHub run number as a unique integer build number
+          echo "BUILD_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+
       - name: Build Android APK
         run: |
-          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
 
       - name: Build Android App Bundle
         run: |
-          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
 
       - name: Build Web
         run: |
-          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.version_calc.outputs.BUILD_NUMBER }}
+          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
 
       - name: Create Release Assets
         run: |
