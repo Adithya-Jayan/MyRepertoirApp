@@ -181,6 +181,16 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 },
               ),
               const SizedBox(height: 20),
+              SwitchListTile(
+                title: const Text('Enable Practice Tracking'),
+                value: _musicPiece.enablePracticeTracking,
+                onChanged: (bool value) {
+                  setState(() {
+                    _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
               TagGroupsSection(
                 tagGroups: _musicPiece.tagGroups,
                 allTagGroupNames: _allTagGroupNames,
