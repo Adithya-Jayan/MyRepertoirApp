@@ -184,17 +184,17 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        widget.onApplyFilter();
-                      },
-                      child: const Text('Apply Filter'),
-                    ),
-                    TextButton(
-                      onPressed: () {
                         widget.onClearFilter();
                         Navigator.pop(context);
                       },
                       child: const Text('Clear Filter'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onApplyFilter();
+                      },
+                      child: const Text('Apply Filter'),
                     ),
                   ],
                 ),
