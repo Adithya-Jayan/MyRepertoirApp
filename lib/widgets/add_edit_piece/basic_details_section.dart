@@ -26,7 +26,7 @@ class BasicDetailsSection extends StatelessWidget {
         ),
         TextFormField(
           initialValue: musicPiece.artistComposer,
-          decoration: const InputDecoration(labelText: 'Artist/Composer'),
+          decoration: const InputDecoration(labelText: 'Subtitle (Artist/Composer)'),
           onChanged: onArtistComposerChanged,
           onSaved: (value) => onArtistComposerChanged(value!),
         ),
