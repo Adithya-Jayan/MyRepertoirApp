@@ -39,7 +39,7 @@ class MusicPieceGridView extends StatelessWidget {
     } else if (errorMessage != null) {
       return Center(child: Text(errorMessage!));
     } else if (musicPieces.isEmpty) {
-      return const Center(child: Text('No music pieces found in this group.'));
+      return const Center(child: Text('This group is empty.'));
     }
 
     return RefreshIndicator(

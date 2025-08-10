@@ -87,7 +87,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
       title: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search music pieces...',
+          hintText: 'Search items...',
           hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),

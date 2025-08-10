@@ -145,7 +145,7 @@ class LibraryBody extends StatelessWidget {
                   if (filteredAndSortedPieces.isEmpty) {
                     return Container(
                       height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
-                      child: const Center(child: Text('No music pieces found in this group.')),
+                      child: const Center(child: Text('This group is empty.')),
                     );
                   }
 
