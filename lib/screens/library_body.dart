@@ -72,14 +72,7 @@ class LibraryBody extends StatelessWidget {
                       return const SizedBox.shrink();
                     }
                     final isSelected = selectedGroupId == group.id || (selectedGroupId == null && group.id == 'all_group');
-                    int pieceCount = 0;
-                    if (group.id == 'all_group') {
-                      pieceCount = allMusicPieces.length;
-                    } else if (group.id == 'ungrouped_group') {
-                      pieceCount = allMusicPieces.where((p) => p.groupIds.isEmpty).length;
-                    } else {
-                      pieceCount = allMusicPieces.where((p) => p.groupIds.contains(group.id)).length;
-                    }
+                    final pieceCount = getFilteredPiecesForGroup(group.id).length;
 
                     return Padding(
                       key: ValueKey(group.id),
