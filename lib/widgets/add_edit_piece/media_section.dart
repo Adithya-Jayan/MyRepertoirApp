@@ -30,26 +30,34 @@ class MediaSectionWidget extends StatelessWidget {
       children: [
         const Text('Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8.0),
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: mediaItems.length,
-          buildDefaultDragHandles: false,
-          itemBuilder: (context, index) {
-            final item = mediaItems[index];
-            return MediaSection(
-              key: ValueKey(item.id),
-              item: item,
-              index: index,
-              musicPieceThumbnail: musicPieceThumbnail,
-              musicPieceId: musicPieceId,
-              onUpdateMediaItem: onUpdateMediaItem,
-              onDeleteMediaItem: onDeleteMediaItem,
-              onSetThumbnail: onSetThumbnail,
-            );
-          },
-          onReorder: onReorderMediaItems,
-        ),
+        if (mediaItems.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text("Use the '+' sign to add media"),
+            ),
+          )
+        else
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: mediaItems.length,
+            buildDefaultDragHandles: false,
+            itemBuilder: (context, index) {
+              final item = mediaItems[index];
+              return MediaSection(
+                key: ValueKey(item.id),
+                item: item,
+                index: index,
+                musicPieceThumbnail: musicPieceThumbnail,
+                musicPieceId: musicPieceId,
+                onUpdateMediaItem: onUpdateMediaItem,
+                onDeleteMediaItem: onDeleteMediaItem,
+                onSetThumbnail: onSetThumbnail,
+              );
+            },
+            onReorder: onReorderMediaItems,
+          ),
       ],
     );
   }
