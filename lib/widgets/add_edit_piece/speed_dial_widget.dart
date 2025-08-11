@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import '../../models/media_item.dart';
 import '../../models/media_type.dart';
 
 /// A widget that displays a speed dial for adding different types of media items.
 class SpeedDialWidget extends StatelessWidget {
-  final Function(MediaType, List<MediaItem>) onAddMediaItem;
+  final Function(MediaType) onAddMediaItem;
 
   const SpeedDialWidget({
     super.key,
@@ -21,27 +20,27 @@ class SpeedDialWidget extends StatelessWidget {
         SpeedDialChild(
           child: const Icon(Icons.text_fields),
           label: 'Markdown Text',
-          onTap: () => onAddMediaItem(MediaType.markdown, []),
+          onTap: () => onAddMediaItem(MediaType.markdown),
         ),
         SpeedDialChild(
           child: const Icon(Icons.picture_as_pdf),
           label: 'PDF',
-          onTap: () => onAddMediaItem(MediaType.pdf, []),
+          onTap: () => onAddMediaItem(MediaType.pdf),
         ),
         SpeedDialChild(
           child: const Icon(Icons.image),
           label: 'Image',
-          onTap: () => onAddMediaItem(MediaType.image, []),
+          onTap: () => onAddMediaItem(MediaType.image),
         ),
         SpeedDialChild(
           child: const Icon(Icons.audiotrack),
           label: 'Audio',
-          onTap: () => onAddMediaItem(MediaType.audio, []),
+          onTap: () => onAddMediaItem(MediaType.audio),
         ),
         SpeedDialChild(
           child: const Icon(Icons.video_library),
           label: 'Link',
-          onTap: () => onAddMediaItem(MediaType.mediaLink, []),
+          onTap: () => onAddMediaItem(MediaType.mediaLink),
         ),
       ],
     );
