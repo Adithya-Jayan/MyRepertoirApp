@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
+import 'package:repertoire/utils/practice_indicator_utils.dart';
 import '../../screens/practice_logs_screen.dart';
 
 /// A card widget to display and manage practice tracking for a music piece.
@@ -51,29 +52,6 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       }
     } catch (e) {
       // Handle error silently
-    }
-  }
-
-  /// Formats the last practice time for display.
-  ///
-  /// Returns 'Never practiced' if [lastPracticeTime] is null.
-  /// Otherwise, returns a human-readable string like 'Today', 'Yesterday',
-  /// 'X days ago', or the date.
-  String _formatLastPracticeTime(DateTime? lastPracticeTime) {
-    if (lastPracticeTime == null) {
-      return 'Never practiced';
-    }
-    final now = DateTime.now();
-    final difference = now.difference(lastPracticeTime);
-
-    if (difference.inDays == 0) {
-      return 'Last practiced: Today';
-    } else if (difference.inDays == 1) {
-      return 'Last practiced: Yesterday';
-    } else if (difference.inDays < 30) {
-      return 'Last practiced: ${difference.inDays} days ago';
-    } else {
-      return 'Last practiced: ${lastPracticeTime.toLocal().toString().split(' ')[0]}';
     }
   }
 
@@ -133,7 +111,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_formatLastPracticeTime(_musicPiece.lastPracticeTime)),
+                  Text(PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime)),
                   Text('Practice Count: ${_musicPiece.practiceCount}'),
                   const SizedBox(height: 8),
                   Row(

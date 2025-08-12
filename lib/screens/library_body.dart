@@ -72,14 +72,7 @@ class LibraryBody extends StatelessWidget {
                       return const SizedBox.shrink();
                     }
                     final isSelected = selectedGroupId == group.id || (selectedGroupId == null && group.id == 'all_group');
-                    int pieceCount = 0;
-                    if (group.id == 'all_group') {
-                      pieceCount = allMusicPieces.length;
-                    } else if (group.id == 'ungrouped_group') {
-                      pieceCount = allMusicPieces.where((p) => p.groupIds.isEmpty).length;
-                    } else {
-                      pieceCount = allMusicPieces.where((p) => p.groupIds.contains(group.id)).length;
-                    }
+                    final pieceCount = getFilteredPiecesForGroup(group.id).length;
 
                     return Padding(
                       key: ValueKey(group.id),
@@ -145,7 +138,7 @@ class LibraryBody extends StatelessWidget {
                   if (filteredAndSortedPieces.isEmpty) {
                     return Container(
                       height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
-                      child: const Center(child: Text('No music pieces found in this group.')),
+                      child: const Center(child: Text('This group is empty.')),
                     );
                   }
 

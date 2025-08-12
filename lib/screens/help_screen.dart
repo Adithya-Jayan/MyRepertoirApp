@@ -26,7 +26,7 @@ class HelpScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'A: Use the search bar at the top of the main library screen. You can search by title, artist/composer, or tags.',
+              'A: Use the search bar at the top of the main library screen. You can search by title, artist/composer (Subtitle), or tags.',
             ),
             SizedBox(height: 10),
             Text(

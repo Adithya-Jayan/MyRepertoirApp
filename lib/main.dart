@@ -77,13 +77,15 @@ class MyApp extends StatefulWidget {
 /// Manages the logic for determining the initial screen (Welcome or Library)
 /// and loading the user's theme preference.
 class _MyAppState extends State<MyApp> {
-  /// Asynchronously checks if the app has been launched before.
+  /// Asynchronously checks if the app has been launched before and if the storage path is set.
   ///
-  /// This is determined by the presence of a 'hasRunBefore' flag in
-  /// SharedPreferences.
-  Future<bool> _hasRunBefore() async {
+  /// This is determined by the presence of a 'hasRunBefore' flag and a valid 'appStoragePath'
+  /// in SharedPreferences.
+  Future<bool> _isSetupComplete() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('hasRunBefore') ?? false;
+    final hasRunBefore = prefs.getBool('hasRunBefore') ?? false;
+    final storagePath = prefs.getString('appStoragePath');
+    return hasRunBefore && storagePath != null && storagePath.isNotEmpty;
   }
 
   Future<void> _setInitialDefaults() async {
@@ -128,7 +130,7 @@ class _MyAppState extends State<MyApp> {
     // FutureBuilder is used to asynchronously determine the initial screen
     // based on whether the app has been run before.
     return FutureBuilder<bool>(
-      future: _hasRunBefore(),
+      future: _isSetupComplete(),
       builder: (context, snapshot) {
         // While waiting for the _hasRunBefore() future to complete,
         // display a circular progress indicator.

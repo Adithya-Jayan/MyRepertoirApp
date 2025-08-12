@@ -87,7 +87,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
       title: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search music pieces...',
+          hintText: 'Search items...',
           hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),
@@ -184,17 +184,17 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        widget.onApplyFilter();
-                      },
-                      child: const Text('Apply Filter'),
-                    ),
-                    TextButton(
-                      onPressed: () {
                         widget.onClearFilter();
                         Navigator.pop(context);
                       },
                       child: const Text('Clear Filter'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onApplyFilter();
+                      },
+                      child: const Text('Apply Filter'),
                     ),
                   ],
                 ),
