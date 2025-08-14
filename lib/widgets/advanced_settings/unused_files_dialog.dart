@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../services/media_cleanup_service.dart';
+import 'package:path/path.dart' as p;
 
 /// A dialog that displays a list of unused files.
 class UnusedFilesDialog extends StatelessWidget {
-  final List<String> unusedFiles;
+  final List<UnusedFileInfo> unusedFiles;
 
   const UnusedFilesDialog({
     super.key,
@@ -19,7 +21,11 @@ class UnusedFilesDialog extends StatelessWidget {
           shrinkWrap: true,
           itemCount: unusedFiles.length,
           itemBuilder: (context, index) {
-            return Text(unusedFiles[index]);
+            final fileInfo = unusedFiles[index];
+            return ListTile(
+              title: Text(fileInfo.pieceName),
+              subtitle: Text('${fileInfo.fileType} - ${p.basename(fileInfo.filePath)}'),
+            );
           },
         ),
       ),

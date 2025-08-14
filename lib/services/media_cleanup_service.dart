@@ -40,6 +40,7 @@ class MediaCleanupService {
 
     // Get all music pieces to find referenced media files
     final musicPieces = await _repository.getMusicPieces();
+    final Map<String, MusicPiece> pieceIdToPiece = { for (var p in musicPieces) p.id: p };
     final Set<String> referencedFiles = <String>{};
     
     // Collect all referenced media file paths
@@ -68,7 +69,7 @@ class MediaCleanupService {
 
     // Scan all files in media directory
     final List<File> allFiles = [];
-    final List<File> unusedFiles = [];
+    final List<UnusedFileInfo> unusedFiles = [];
     int totalSize = 0;
     int unusedSize = 0;
 
@@ -79,7 +80,15 @@ class MediaCleanupService {
       totalSize += fileSize;
       
       if (!referencedFiles.contains(file.path)) {
-        unusedFiles.add(file);
+        final pieceId = p.basename(p.dirname(p.dirname(file.path)));
+        final piece = pieceIdToPiece[pieceId];
+        final fileType = p.basename(p.dirname(file.path));
+
+        unusedFiles.add(UnusedFileInfo(
+          pieceName: piece?.title ?? 'Unknown Piece',
+          fileType: fileType,
+          filePath: file.path,
+        ));
         unusedSize += fileSize;
       }
     }
@@ -121,16 +130,17 @@ class MediaCleanupService {
     int freedBytes = 0;
     List<String> errors = [];
 
-    for (final file in cleanupInfo.unusedFiles) {
+    for (final unusedFileInfo in cleanupInfo.unusedFiles) {
       try {
+        final file = File(unusedFileInfo.filePath);
         final fileSize = await file.length();
         await file.delete();
         deletedCount++;
         freedBytes += fileSize;
-        AppLogger.log('Deleted unused file: ${file.path}');
+        AppLogger.log('Deleted unused file: ${unusedFileInfo.filePath}');
       } catch (e) {
-        AppLogger.log('Error deleting file ${file.path}: $e');
-        errors.add('Failed to delete ${p.basename(file.path)}: $e');
+        AppLogger.log('Error deleting file ${unusedFileInfo.filePath}: $e');
+        errors.add('Failed to delete ${p.basename(unusedFileInfo.filePath)}: $e');
       }
     }
 
@@ -218,13 +228,25 @@ class MediaCleanupService {
   }
 }
 
+class UnusedFileInfo {
+  final String pieceName;
+  final String fileType;
+  final String filePath;
+
+  UnusedFileInfo({
+    required this.pieceName,
+    required this.fileType,
+    required this.filePath,
+  });
+}
+
 /// Information about media files that can be cleaned up
 class MediaCleanupInfo {
   final int totalFilesFound;
   final int unusedFilesFound;
   final int totalSizeBytes;
   final int unusedSizeBytes;
-  final List<File> unusedFiles;
+  final List<UnusedFileInfo> unusedFiles;
 
   MediaCleanupInfo({
     required this.totalFilesFound,
