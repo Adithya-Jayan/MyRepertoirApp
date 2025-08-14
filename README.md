@@ -137,7 +137,7 @@ Ensure you have the Flutter SDK installed on your machine. For more information,
 - Yes! Repertoire runs on Android, iOS, web, Windows, macOS, and Linux (where supported by Flutter).
 
 ## Credits
-Thank you to all the people who have contributed! (Please contribute 🥺)
+Thank you to all the people who have contributed! (Please contribute to help improve the app 🥺)
 
 <div align="center">
 <a href="https://github.com/Adithya-Jayan/">
