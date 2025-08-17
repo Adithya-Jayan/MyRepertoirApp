@@ -1,4 +1,5 @@
 import './media_type.dart'; // Import for MediaType enum
+import '../utils/path_utils.dart';
 
 /// Represents a single media attachment associated with a music piece.
 ///
@@ -50,6 +51,28 @@ class MediaItem {
         description: json['description'],
         googleDriveFileId: json['googleDriveFileId'],
         thumbnailPath: json['thumbnailPath'],
+      );
+
+  /// Converts a [MediaItem] object into a JSON-compatible Map for backup.
+  Map<String, dynamic> toJsonForBackup(String storagePath) => {
+        'id': id,
+        'type': type.name,
+        'pathOrUrl': getRelativePath(pathOrUrl, storagePath),
+        'title': title,
+        'description': description,
+        'googleDriveFileId': googleDriveFileId,
+        'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
+      };
+
+  /// Creates a [MediaItem] object from a JSON-compatible Map for backup.
+  factory MediaItem.fromJsonForBackup(Map<String, dynamic> json, String storagePath) => MediaItem(
+        id: json['id'],
+        type: MediaType.values.firstWhere((e) => e.name == json['type']),
+        pathOrUrl: getAbsolutePath(json['pathOrUrl'], storagePath),
+        title: json['title'],
+        description: json['description'],
+        googleDriveFileId: json['googleDriveFileId'],
+        thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
       );
 
   MediaItem copyWith({

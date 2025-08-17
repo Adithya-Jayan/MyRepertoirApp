@@ -1,6 +1,7 @@
 import 'dart:convert'; // For JSON encoding and decoding
 import './media_item.dart'; // Import for MediaItem model
 import './tag_group.dart'; // Import for TagGroup model
+import '../utils/path_utils.dart';
 
 /// Represents a single music piece in the repertoire.
 ///
@@ -89,6 +90,51 @@ class MusicPiece {
             .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
             .toList(), // Decode JSON string to List<TagGroup>
         thumbnailPath: json['thumbnailPath'],
+      );
+
+  /// Converts a [MusicPiece] object into a JSON-compatible Map for backup.
+  Map<String, dynamic> toJsonForBackup(String storagePath) => {
+        'id': id,
+        'title': title,
+        'artistComposer': artistComposer,
+        'tags': jsonEncode(tags),
+        'lastAccessed': lastAccessed?.toIso8601String(),
+        'isFavorite': isFavorite ? 1 : 0,
+        'lastPracticeTime': lastPracticeTime?.toIso8601String(),
+        'practiceCount': practiceCount,
+        'enablePracticeTracking': enablePracticeTracking ? 1 : 0,
+        'googleDriveFileId': googleDriveFileId,
+        'mediaItems': jsonEncode(mediaItems.map((item) => item.toJsonForBackup(storagePath)).toList()),
+        'groupIds': jsonEncode(groupIds),
+        'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()),
+        'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
+      };
+
+  /// Creates a [MusicPiece] object from a JSON-compatible Map for backup.
+  factory MusicPiece.fromJsonForBackup(Map<String, dynamic> json, String storagePath) => MusicPiece(
+        id: json['id'],
+        title: json['title'],
+        artistComposer: json['artistComposer'],
+        tags: List<String>.from(jsonDecode(json['tags'] ?? '[]')),
+        lastAccessed: json['lastAccessed'] != null
+            ? DateTime.parse(json['lastAccessed'])
+            : null,
+        isFavorite: (json['isFavorite'] as int) == 1,
+        lastPracticeTime: json['lastPracticeTime'] != null
+            ? DateTime.parse(json['lastPracticeTime'])
+            : null,
+        practiceCount: json['practiceCount'] ?? 0,
+        enablePracticeTracking: (json['enablePracticeTracking'] as int) == 1,
+        googleDriveFileId: json['googleDriveFileId'],
+        mediaItems: (jsonDecode(json['mediaItems'] ?? '[]') as List<dynamic>)
+                .map((itemJson) =>
+                    MediaItem.fromJsonForBackup(itemJson as Map<String, dynamic>, storagePath))
+                .toList(),
+        groupIds: List<String>.from(jsonDecode(json['groupIds'] ?? '[]')),
+        tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
+            .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
       );
 
   /// Creates a copy of this [MusicPiece] object with optional new values.
