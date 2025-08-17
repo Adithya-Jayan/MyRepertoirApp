@@ -48,10 +48,11 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get build date
-        id: build_date
+      - name: Get build info
+        id: build_info
         run: |
           echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+          echo "build_number=$(date +%s)" >> $GITHUB_OUTPUT
 
       - name: Get current version and calculate new version
         id: version_calc
@@ -91,9 +92,9 @@ jobs:
             # Prerelease logic
             BASE_VERSION=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
             # Find the highest prerelease number for this base version
-            EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\\.[0-9]+$" | sort -V | tail -n1)
+            EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\\.[0-9]+" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
-              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
+              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\\1/')
               PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
             else
               PRERELEASE_NUM=1
@@ -122,26 +123,20 @@ jobs:
       - name: Update version in pubspec.yaml
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          yq -i '.version = "'"${NEW_FULL_VERSION}"'"' pubspec.yaml
+          yq -i '.version = "'"${NEW_FULL_VERSION}"'."' pubspec.yaml
           echo "Updated pubspec.yaml to version $NEW_FULL_VERSION"
-
-      - name: Get build number
-        id: build_number
-        run: |
-          # Use the GitHub run number as a unique integer build number
-          echo "BUILD_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
+          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Build Android App Bundle
         run: |
-          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
+          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Build Web
         run: |
-          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_number.outputs.BUILD_NUMBER }}
+          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Create Release Assets
         run: |
@@ -165,7 +160,7 @@ jobs:
           TAG_NAME="v$NEW_FULL_VERSION"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
-          git push origin main
+          git push origin ${{ github.ref_name }}
           git push origin "$TAG_NAME"
 
       - name: Create GitHub Release
@@ -181,7 +176,6 @@ jobs:
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
-            **Build Number:** ${{ steps.version_calc.outputs.BUILD_NUMBER }}
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
             **Changes:**
@@ -194,7 +188,7 @@ jobs:
             
             ### Build Information
             - Flutter Version: 3.32.5
-            - Build Date: ${{ steps.build_date.outputs.date }}
+            - Build Date: ${{ steps.build_info.outputs.date }}
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
           generate_release_notes: true
@@ -245,4 +239,4 @@ jobs:
             echo "🌐 Web build created"
             echo "🏷️  Git tag v$NEW_FULL_VERSION created"
             echo "📦 Official GitHub release created"
-          fi 
+          fi
