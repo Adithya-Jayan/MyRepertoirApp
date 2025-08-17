@@ -124,20 +124,53 @@ jobs:
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
           BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
-          yq -i ".version = \"${NEW_FULL_VERSION}+${BUILD_NUMBER}\"" pubspec.yaml
-          echo "Updated pubspec.yaml to version ${NEW_FULL_VERSION}+${BUILD_NUMBER}"
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
+          
+          VERSION_FOR_PUBSPEC="$NEW_FULL_VERSION"
+          if [ "$BRANCH_NAME" != "main" ]; then
+            VERSION_FOR_PUBSPEC="${NEW_FULL_VERSION}-${BRANCH_NAME}"
+          fi
+          
+          yq -i ".version = \"${VERSION_FOR_PUBSPEC}+${BUILD_NUMBER}\"" pubspec.yaml
+          echo "Updated pubspec.yaml to version ${VERSION_FOR_PUBSPEC}+${BUILD_NUMBER}"
+
+      - name: Determine Final Tag Name
+        id: get_tag_name
+        run: |
+          TAG_NAME_BASE="${{ github.ref_name }}" # This is like v1.0.0 or v1.0.0-prerelease.1
+          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
+          
+          FINAL_TAG_NAME="$TAG_NAME_BASE"
+
+          # Append branch name if not main
+          if [ "$BRANCH_NAME" != "main" ]; then
+            FINAL_TAG_NAME="${FINAL_TAG_NAME}-${BRANCH_NAME}"
+            echo "Appending branch name '$BRANCH_NAME'. Current tag name: '$FINAL_TAG_NAME'."
+          fi
+
+          # Check if the constructed tag already exists or if it's a non-main branch
+          # If it exists, or if it's a non-main branch, append build number for uniqueness/clarity
+          if git ls-remote --tags origin "refs/tags/$FINAL_TAG_NAME" | grep -q "$FINAL_TAG_NAME" || [ "$BRANCH_NAME" != "main" ]; then
+            FINAL_TAG_NAME="${FINAL_TAG_NAME}+${BUILD_NUMBER}"
+            echo "Tag '$FINAL_TAG_NAME' already exists or is a non-main branch. Appending build number. Final tag name: '$FINAL_TAG_NAME'."
+          else
+            echo "Tag '$FINAL_TAG_NAME' does not exist and is main branch. Using '$FINAL_TAG_NAME' for release."
+          fi
+          
+          echo "::set-output name=final_tag_name::$FINAL_TAG_NAME"
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          flutter build apk --release --build-name=${{ steps.get_tag_name.outputs.final_tag_name }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Build Android App Bundle
         run: |
-          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          flutter build appbundle --release --build-name=${{ steps.get_tag_name.outputs.final_tag_name }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Build Web
         run: |
-          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          flutter build web --release --build-name=${{ steps.get_tag_name.outputs.final_tag_name }} --build-number=${{ steps.build_info.outputs.build_number }}
 
       - name: Create Release Assets
         run: |
@@ -159,7 +192,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add pubspec.yaml
           COMMIT_MSG="Release version ${NEW_FULL_VERSION}+${BUILD_NUMBER}"
-          TAG_NAME="v${NEW_FULL_VERSION}+${BUILD_NUMBER}"
+          TAG_NAME="${{ steps.get_tag_name.outputs.final_tag_name }}"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
           git push origin ${{ github.ref_name }}
@@ -171,10 +204,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
-          release_name: Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
+          tag_name: ${{ steps.get_tag_name.outputs.final_tag_name }}
+          release_name: Release ${{ steps.get_tag_name.outputs.final_tag_name }}
           body: |
-            ## Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
+            ## Release ${{ steps.get_tag_name.outputs.final_tag_name }}
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
@@ -235,12 +268,12 @@ jobs:
             echo "🎉 Successfully created prerelease ${NEW_FULL_VERSION}+${BUILD_NUMBER}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag v${NEW_FULL_VERSION}+${BUILD_NUMBER} created"
+            echo "🏷️  Git tag ${{ steps.get_tag_name.outputs.final_tag_name }} created"
             echo "📦 Prerelease GitHub release created"
           else
             echo "🎉 Successfully released version ${NEW_FULL_VERSION}+${BUILD_NUMBER}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag v${NEW_FULL_VERSION}+${BUILD_NUMBER} created"
+            echo "🏷️  Git tag ${{ steps.get_tag_name.outputs.final_tag_name }} created"
             echo "📦 Official GitHub release created"
           fi
