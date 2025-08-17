@@ -534,6 +534,7 @@ class RestoreManager {
       AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
 
       if (result != null && result.files.single.path != null) {
+        _showRestoreMessage(context, true, 'Restore in progress...');
         final data = await _extractBackupData(result.files.single.path!);
         if (data == null) return;
 
