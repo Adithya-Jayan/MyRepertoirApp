@@ -52,7 +52,7 @@ jobs:
         id: build_info
         run: |
           echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
-          echo "build_number=$(date +%s)" >> $GITHUB_OUTPUT
+          echo "build_number=$(date -u +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Get current version and calculate new version
         id: version_calc
@@ -123,8 +123,9 @@ jobs:
       - name: Update version in pubspec.yaml
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          yq -i '.version = "'"${NEW_FULL_VERSION}"'."' pubspec.yaml
-          echo "Updated pubspec.yaml to version $NEW_FULL_VERSION"
+          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
+          yq -i ".version = \"${NEW_FULL_VERSION}+${BUILD_NUMBER}\"" pubspec.yaml
+          echo "Updated pubspec.yaml to version ${NEW_FULL_VERSION}+${BUILD_NUMBER}"
 
       - name: Build Android APK
         run: |
@@ -153,11 +154,12 @@ jobs:
       - name: Create Git Tag and Push Changes
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add pubspec.yaml
-          COMMIT_MSG="Release version $NEW_FULL_VERSION"
-          TAG_NAME="v$NEW_FULL_VERSION"
+          COMMIT_MSG="Release version ${NEW_FULL_VERSION}+${BUILD_NUMBER}"
+          TAG_NAME="v${NEW_FULL_VERSION}+${BUILD_NUMBER}"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
           git push origin ${{ github.ref_name }}
@@ -169,13 +171,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
-          release_name: Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
+          tag_name: v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
+          release_name: Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
           body: |
-            ## Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}
+            ## Release v${{ steps.version_calc.outputs.NEW_FULL_VERSION }}+${{ steps.build_info.outputs.build_number }}
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
+            **Build Number:** ${{ steps.build_info.outputs.build_number }}
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
             **Changes:**
@@ -227,16 +230,17 @@ jobs:
         run: |
           RELEASE_TYPE="${{ steps.version_calc.outputs.RELEASE_TYPE }}"
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
           if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
-            echo "🎉 Successfully created prerelease $NEW_FULL_VERSION!"
+            echo "🎉 Successfully created prerelease ${NEW_FULL_VERSION}+${BUILD_NUMBER}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag v$NEW_FULL_VERSION created"
+            echo "🏷️  Git tag v${NEW_FULL_VERSION}+${BUILD_NUMBER} created"
             echo "📦 Prerelease GitHub release created"
           else
-            echo "🎉 Successfully released version $NEW_FULL_VERSION!"
+            echo "🎉 Successfully released version ${NEW_FULL_VERSION}+${BUILD_NUMBER}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag v$NEW_FULL_VERSION created"
+            echo "🏷️  Git tag v${NEW_FULL_VERSION}+${BUILD_NUMBER} created"
             echo "📦 Official GitHub release created"
           fi
