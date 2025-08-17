@@ -23,6 +23,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   bool _autoBackupEnabled = false;
   double _autoBackupFrequency = 7.0;
   int _autoBackupCount = 5;
+  String _currentStoragePath = '';
 
   @override
   void initState() {
@@ -34,6 +35,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     final prefs = await SharedPreferences.getInstance();
     _backupRestoreService = BackupRestoreService(MusicPieceRepository(), prefs);
     _loadAutoBackupSettings();
+    setState(() {
+      _currentStoragePath = prefs.getString('appStoragePath') ?? 'Not set';
+    });
   }
 
   /// Loads the saved automatic backup settings from [SharedPreferences].
@@ -81,6 +85,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           ListTile(
             leading: const Icon(Icons.folder),
             title: const Text('Change Storage Folder'),
+            subtitle: Text(_currentStoragePath),
             onTap: _changeStorageFolder,
           ),
           const Divider(),
