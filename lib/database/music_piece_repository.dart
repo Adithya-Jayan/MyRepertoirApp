@@ -10,6 +10,7 @@ import '../models/music_piece.dart'; // Data model for a music piece
 import '../models/tag.dart'; // Data model for a tag
 import '../models/group.dart'; // Data model for a group
 import '../models/practice_log.dart'; // Data model for practice logs
+import '../models/tag_group.dart'; // Data model for tag groups
 
 // Database and service imports
 import './database_helper.dart'; // Helper for SQLite database operations
@@ -232,25 +233,59 @@ class MusicPieceRepository {
   /// Retrieves all unique tag groups and their associated tags from all music pieces.
   /// Returns a map where keys are tag group names and values are sorted lists of tags.
   Future<Map<String, List<String>>> getAllUniqueTagGroups() async {
-    final allPieces = await dbHelper.getMusicPieces();
-    final Map<String, Set<String>> uniqueTags = {};
+    final db = await dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query('music_pieces', columns: ['tagGroups']);
 
-    for (var piece in allPieces) {
-      for (var tagGroup in piece.tagGroups) {
-        if (!uniqueTags.containsKey(tagGroup.name)) {
-          uniqueTags[tagGroup.name] = {};
+    final Map<String, Set<String>> uniqueTagGroups = {};
+
+    for (var map in maps) {
+      if (map['tagGroups'] != null) {
+        final List<dynamic> tagGroupMaps = jsonDecode(map['tagGroups']);
+        for (var tgMap in tagGroupMaps) {
+          final tagGroup = TagGroup.fromJson(tgMap);
+          uniqueTagGroups.putIfAbsent(tagGroup.name, () => <String>{});
+          for (var tag in tagGroup.tags) {
+            uniqueTagGroups[tagGroup.name]!.add(tag);
+          }
         }
-        uniqueTags[tagGroup.name]!.addAll(tagGroup.tags);
       }
     }
 
-    final Map<String, List<String>> result = {};
-    uniqueTags.forEach((key, value) {
-      final sortedTags = value.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-      result[key] = sortedTags;
+    return uniqueTagGroups.map((key, value) => MapEntry(key, value.toList()));
+  }
+
+  Future<int?> getMostCommonColorForTagGroup(String groupName) async {
+    final db = await dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query('music_pieces', columns: ['tagGroups']);
+
+    final Map<int, int> colorCounts = {};
+
+    for (var map in maps) {
+      if (map['tagGroups'] != null) {
+        final List<dynamic> tagGroupMaps = jsonDecode(map['tagGroups']);
+        for (var tgMap in tagGroupMaps) {
+          final tagGroup = TagGroup.fromJson(tgMap);
+          if (tagGroup.name == groupName && tagGroup.color != null) {
+            colorCounts[tagGroup.color!] = (colorCounts[tagGroup.color!] ?? 0) + 1;
+          }
+        }
+      }
+    }
+
+    if (colorCounts.isEmpty) {
+      return null;
+    }
+
+    int? mostCommonColor;
+    int maxCount = 0;
+    colorCounts.forEach((color, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonColor = color;
+      }
     });
 
-    return result;
+    return mostCommonColor;
   }
 
   /// Exports all music piece, tag, and group data to a JSON file.
@@ -266,6 +301,4 @@ class MusicPieceRepository {
   Future<bool> importDataFromJson() async {
     return await _dataExportImportRepository.importDataFromJson();
   }
-
-  
 }

@@ -39,6 +39,10 @@ class AddEditPieceTagManager {
     onTagGroupsChanged(newTagGroups);
   }
 
+  Future<int?> getMostCommonColorForTagGroup(String groupName) async {
+    return await repository.getMostCommonColorForTagGroup(groupName);
+  }
+
   void updateTagGroup(TagGroup oldTagGroup, TagGroup newTagGroup, List<TagGroup> currentTagGroups) {
     AppLogger.log('AddEditPieceTagManager: Updating tag group "${oldTagGroup.name}" color from ${oldTagGroup.color} to ${newTagGroup.color}');
     final updatedTagGroups = List<TagGroup>.from(currentTagGroups);

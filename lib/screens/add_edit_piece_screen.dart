@@ -87,6 +87,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
+  Future<int?> _fetchMostCommonColor(String tagName) async {
+    return await _tagManager.getMostCommonColorForTagGroup(tagName);
+  }
+
   void _onMediaItemsChanged(List<MediaItem> newMediaItems) {
     setState(() {
       _musicPiece = _musicPiece.copyWith(mediaItems: newMediaItems);
@@ -202,6 +206,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 onReorderTagGroups: (oldIndex, newIndex) => 
                   _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
                 onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+                onFetchMostCommonColor: _fetchMostCommonColor,
               ),
               const SizedBox(height: 20),
               MediaSectionWidget(

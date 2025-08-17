@@ -11,6 +11,7 @@ class TagGroupsSection extends StatelessWidget {
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
   final Function(int, int) onReorderTagGroups;
   final VoidCallback onAddTagGroup;
+  final Future<int?> Function(String) onFetchMostCommonColor;
 
   const TagGroupsSection({
     super.key,
@@ -21,6 +22,7 @@ class TagGroupsSection extends StatelessWidget {
     required this.onGetAllTagsForTagGroup,
     required this.onReorderTagGroups,
     required this.onAddTagGroup,
+    required this.onFetchMostCommonColor,
   });
 
   @override
@@ -54,6 +56,7 @@ class TagGroupsSection extends StatelessWidget {
               onUpdateTagGroup: onUpdateTagGroup,
               onDeleteTagGroup: onDeleteTagGroup,
               onGetAllTagsForTagGroup: onGetAllTagsForTagGroup,
+              onFetchMostCommonColor: onFetchMostCommonColor,
             );
           },
           onReorder: onReorderTagGroups,
