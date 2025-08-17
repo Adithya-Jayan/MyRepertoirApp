@@ -13,6 +13,8 @@ class TagGroupSection extends StatefulWidget {
   final Function(TagGroup, TagGroup) onUpdateTagGroup;
   final Function(TagGroup) onDeleteTagGroup;
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
+  final Future<int?> Function(String) onFetchMostCommonColor;
+
 
   const TagGroupSection({
     super.key,
@@ -22,6 +24,7 @@ class TagGroupSection extends StatefulWidget {
     required this.onUpdateTagGroup,
     required this.onDeleteTagGroup,
     required this.onGetAllTagsForTagGroup,
+    required this.onFetchMostCommonColor,
   });
 
   @override
@@ -174,9 +177,13 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                 // Update the tag group name immediately as user types
                                 widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
                               },
-                              onFieldSubmitted: (value) {
+                              onFieldSubmitted: (value) async {
                                 widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
                                 onFieldSubmitted();
+                                final mostCommonColor = await widget.onFetchMostCommonColor(value);
+                                if (mostCommonColor != null) {
+                                  widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor));
+                                }
                               },
                             );
                           },
@@ -189,9 +196,13 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                               return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                             });
                           },
-                          onSelected: (String selection) {
+                          onSelected: (String selection) async {
                             // Update the tag group name when a suggestion is selected.
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
+                            final mostCommonColor = await widget.onFetchMostCommonColor(selection);
+                            if (mostCommonColor != null) {
+                              widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor));
+                            }
                           },
                         ),
                       ),

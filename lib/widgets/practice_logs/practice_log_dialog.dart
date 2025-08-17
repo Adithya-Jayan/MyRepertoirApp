@@ -49,7 +49,19 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
 
-    if (date != null && mounted) {
+    if (date != null) {
+      if (mounted) {
+        setState(() {
+          _selectedDateTime = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            _selectedDateTime.hour,
+            _selectedDateTime.minute,
+          );
+        });
+      }
+
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
@@ -58,9 +70,9 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
       if (time != null && mounted) {
         setState(() {
           _selectedDateTime = DateTime(
-            date.year,
-            date.month,
-            date.day,
+            _selectedDateTime.year,
+            _selectedDateTime.month,
+            _selectedDateTime.day,
             time.hour,
             time.minute,
           );

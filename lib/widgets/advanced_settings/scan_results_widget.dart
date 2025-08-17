@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/media_cleanup_service.dart';
+import './unused_files_dialog.dart';
 
 /// A widget that displays media cleanup scan results.
 class ScanResultsWidget extends StatelessWidget {
@@ -45,32 +46,51 @@ class ScanResultsWidget extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               if (cleanupInfo.unusedFiles.isNotEmpty)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isCleaning ? null : onPurgeUnusedFiles,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => UnusedFilesDialog(
+                              unusedFiles: cleanupInfo.unusedFiles,
+                            ),
+                          );
+                        },
+                        child: const Text('See details'),
+                      ),
                     ),
-                    child: isCleaning
-                        ? const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Cleaning...'),
-                            ],
-                          )
-                        : const Text('Purge Unused Files'),
-                  ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isCleaning ? null : onPurgeUnusedFiles,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: isCleaning
+                            ? const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Cleaning...'),
+                                ],
+                              )
+                            : const Text('Purge Unused Files'),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -78,4 +98,5 @@ class ScanResultsWidget extends StatelessWidget {
       ),
     );
   }
-} 
+}
+ 

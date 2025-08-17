@@ -1,6 +1,6 @@
 {
-    "name": "repertoire",
-    "short_name": "repertoire",
+    "name": "Repertoire",
+    "short_name": "Repertoire",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

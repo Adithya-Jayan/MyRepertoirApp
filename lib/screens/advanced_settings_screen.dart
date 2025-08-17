@@ -196,10 +196,10 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                     final appStoragePath = prefs.getString('appStoragePath');
                     String? logFilePath;
                     if (appStoragePath != null && appStoragePath.isNotEmpty) {
-                      logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                      logFilePath = p.join(appStoragePath, 'logs', 'repertoir_logs.txt');
                     } else {
                       final directory = await getApplicationDocumentsDirectory();
-                      logFilePath = p.join(directory.path, 'app_debug.log');
+                      logFilePath = p.join(directory.path, 'repertoir_logs.txt');
                     }
                     final logFile = io.File(logFilePath);
                     if (await logFile.exists()) {
@@ -245,10 +245,10 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                         final appStoragePath = prefs.getString('appStoragePath');
                         String? logFilePath;
                         if (appStoragePath != null && appStoragePath.isNotEmpty) {
-                          logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                          logFilePath = p.join(appStoragePath, 'logs', 'repertoir_logs.txt');
                         } else {
                           final directory = await getApplicationDocumentsDirectory();
-                          logFilePath = p.join(directory.path, 'app_debug.log');
+                          logFilePath = p.join(directory.path, 'repertoir_logs.txt');
                         }
                         final logFile = io.File(logFilePath);
                         if (await logFile.exists()) {
@@ -332,10 +332,10 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             final appStoragePath = prefs.getString('appStoragePath');
                             String? logFilePath;
                             if (appStoragePath != null && appStoragePath.isNotEmpty) {
-                              logFilePath = p.join(appStoragePath, 'logs', 'app_debug.log');
+                              logFilePath = p.join(appStoragePath, 'logs', 'repertoir_logs.txt');
                             } else {
                               final directory = await getApplicationDocumentsDirectory();
-                              logFilePath = p.join(directory.path, 'app_debug.log');
+                              logFilePath = p.join(directory.path, 'repertoir_logs.txt');
                             }
                             final logFile = io.File(logFilePath);
                             if (await logFile.exists()) {

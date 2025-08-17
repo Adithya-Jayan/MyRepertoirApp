@@ -24,7 +24,7 @@ class BackupManager {
   BackupManager(this._repository, this.prefs);
 
   /// Creates backup data from the database
-  Future<Map<String, dynamic>> _createBackupData() async {
+  Future<Map<String, dynamic>> _createBackupData(String storagePath) async {
     final musicPieces = await _repository.getMusicPieces();
     final tags = await _repository.getTags();
     final groups = await _repository.getGroups();
@@ -34,7 +34,8 @@ class BackupManager {
     final appSettings = await _collectAppSettings();
 
     return {
-      'musicPieces': musicPieces.map((e) => e.toJson()).toList(),
+      'backupVersion': 2,
+      'musicPieces': musicPieces.map((e) => e.toJsonForBackup(storagePath)).toList(),
       'tags': tags.map((e) => e.toJson()).toList(),
       'groups': groups.map((e) => e.toJson()).toList(),
       'practiceLogs': practiceLogs.map((e) => e.toJson()).toList(),
@@ -275,7 +276,7 @@ class BackupManager {
         await backupDirectory.create(recursive: true);
       }
 
-      final data = await _createBackupData();
+      final data = await _createBackupData(storagePath);
       final zipBytes = await _createBackupZip(data, storagePath, manual);
       final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual, context);
 

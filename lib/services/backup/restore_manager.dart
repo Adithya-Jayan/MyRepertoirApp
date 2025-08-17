@@ -61,7 +61,7 @@ class RestoreManager {
   }
 
   /// Restores music pieces from backup data with merge logic
-  Future<void> _restoreMusicPieces(List<dynamic> musicPiecesJson) async {
+  Future<void> _restoreMusicPieces(List<dynamic> musicPiecesJson, String storagePath, int? backupVersion) async {
     AppLogger.log('RestoreManager: Starting music pieces restore with merge logic. Count: ${musicPiecesJson.length}');
     
     // Get existing pieces for comparison
@@ -71,12 +71,14 @@ class RestoreManager {
     
     int insertedCount = 0;
     int updatedCount = 0;
-    int skippedCount = 0;
     
     for (int i = 0; i < musicPiecesJson.length; i++) {
       final pieceJson = musicPiecesJson[i];
       try {
-        final piece = MusicPiece.fromJson(pieceJson);
+        final piece = backupVersion == 2
+            ? MusicPiece.fromJsonForBackup(pieceJson, storagePath)
+            : MusicPiece.fromJson(pieceJson);
+
         AppLogger.log('RestoreManager: Processing piece ${i + 1}/${musicPiecesJson.length}: ${piece.title} (ID: ${piece.id})');
         
         if (existingPieceIds.contains(piece.id)) {
@@ -96,7 +98,79 @@ class RestoreManager {
       }
     }
     
-    AppLogger.log('RestoreManager: Music pieces restore completed. Inserted: $insertedCount, Updated: $updatedCount, Skipped: $skippedCount');
+    AppLogger.log('RestoreManager: Music pieces restore completed. Inserted: $insertedCount, Updated: $updatedCount');
+  }
+
+  
+
+  /// Restores tags from backup data
+  Future<void> _restoreTags(List<dynamic> tagsJson) async {
+    AppLogger.log('RestoreManager: Starting tags restore. Count: ${tagsJson.length}');
+    
+    await _repository.deleteAllTags();
+    AppLogger.log('RestoreManager: Deleted all existing tags');
+    
+    for (int i = 0; i < tagsJson.length; i++) {
+      final tagJson = tagsJson[i];
+      try {
+        final tag = Tag.fromJson(tagJson);
+        AppLogger.log('RestoreManager: Restoring tag ${i + 1}/${tagsJson.length}: ${tag.name} (ID: ${tag.id})');
+        await _repository.insertTag(tag);
+      } catch (e) {
+        AppLogger.log('RestoreManager: Error restoring tag ${i + 1}: $e');
+        rethrow;
+      }
+    }
+    AppLogger.log('RestoreManager: Successfully restored ${tagsJson.length} tags');
+  }
+
+  /// Restores groups from backup data
+  Future<void> _restoreGroups(List<dynamic> groupsJson) async {
+    AppLogger.log('RestoreManager: Starting groups restore. Count: ${groupsJson.length}');
+    
+    final List<Group> oldGroupsBeforeRestore = await _repository.getGroups();
+    AppLogger.log('RestoreManager: Found ${oldGroupsBeforeRestore.length} existing groups before restore');
+
+    await _repository.deleteAllGroups();
+    AppLogger.log('RestoreManager: Deleted all existing groups');
+    
+    // Restore groups from backup
+    for (int i = 0; i < groupsJson.length; i++) {
+      final groupJson = groupsJson[i];
+      try {
+        final group = Group.fromJson(groupJson);
+        AppLogger.log('RestoreManager: Restoring group ${i + 1}/${groupsJson.length}: ${group.name} (ID: ${group.id})');
+        await _repository.createGroup(group);
+      } catch (e) {
+        AppLogger.log('RestoreManager: Error restoring group ${i + 1}: $e');
+        rethrow;
+      }
+    }
+    AppLogger.log('RestoreManager: Successfully restored ${groupsJson.length} groups from backup');
+
+    // Get current groups after restore
+    final List<Group> currentGroupsAfterRestore = await _repository.getGroups();
+    final Set<String> currentGroupIds = currentGroupsAfterRestore.map((g) => g.id).toSet();
+    AppLogger.log('RestoreManager: Current groups after restore: ${currentGroupsAfterRestore.length}');
+
+    // Re-add old groups that weren't in the backup
+    int nextOrder = currentGroupsAfterRestore.length;
+    int reAddedCount = 0;
+
+    for (final oldGroup in oldGroupsBeforeRestore) {
+      if (!currentGroupIds.contains(oldGroup.id)) {
+        final newOrder = nextOrder++;
+        final groupToReAdd = oldGroup.copyWith(order: newOrder);
+        try {
+          await _repository.createGroup(groupToReAdd);
+          AppLogger.log('RestoreManager: Re-added old group: ${groupToReAdd.name} (ID: ${groupToReAdd.id}, new order: $newOrder)');
+          reAddedCount++;
+        } catch (e) {
+          AppLogger.log('RestoreManager: Error re-adding old group ${oldGroup.name}: $e');
+        }
+      }
+    }
+    AppLogger.log('RestoreManager: Finished re-adding old groups. Re-added: $reAddedCount');
   }
 
   /// Updates media file paths in music pieces to reflect the new storage location
@@ -190,76 +264,6 @@ class RestoreManager {
     }
     
     AppLogger.log('RestoreManager: Media file path updates completed. Updated pieces: $updatedPieces');
-  }
-
-  /// Restores tags from backup data
-  Future<void> _restoreTags(List<dynamic> tagsJson) async {
-    AppLogger.log('RestoreManager: Starting tags restore. Count: ${tagsJson.length}');
-    
-    await _repository.deleteAllTags();
-    AppLogger.log('RestoreManager: Deleted all existing tags');
-    
-    for (int i = 0; i < tagsJson.length; i++) {
-      final tagJson = tagsJson[i];
-      try {
-        final tag = Tag.fromJson(tagJson);
-        AppLogger.log('RestoreManager: Restoring tag ${i + 1}/${tagsJson.length}: ${tag.name} (ID: ${tag.id})');
-        await _repository.insertTag(tag);
-      } catch (e) {
-        AppLogger.log('RestoreManager: Error restoring tag ${i + 1}: $e');
-        rethrow;
-      }
-    }
-    AppLogger.log('RestoreManager: Successfully restored ${tagsJson.length} tags');
-  }
-
-  /// Restores groups from backup data
-  Future<void> _restoreGroups(List<dynamic> groupsJson) async {
-    AppLogger.log('RestoreManager: Starting groups restore. Count: ${groupsJson.length}');
-    
-    final List<Group> oldGroupsBeforeRestore = await _repository.getGroups();
-    AppLogger.log('RestoreManager: Found ${oldGroupsBeforeRestore.length} existing groups before restore');
-
-    await _repository.deleteAllGroups();
-    AppLogger.log('RestoreManager: Deleted all existing groups');
-    
-    // Restore groups from backup
-    for (int i = 0; i < groupsJson.length; i++) {
-      final groupJson = groupsJson[i];
-      try {
-        final group = Group.fromJson(groupJson);
-        AppLogger.log('RestoreManager: Restoring group ${i + 1}/${groupsJson.length}: ${group.name} (ID: ${group.id})');
-        await _repository.createGroup(group);
-      } catch (e) {
-        AppLogger.log('RestoreManager: Error restoring group ${i + 1}: $e');
-        rethrow;
-      }
-    }
-    AppLogger.log('RestoreManager: Successfully restored ${groupsJson.length} groups from backup');
-
-    // Get current groups after restore
-    final List<Group> currentGroupsAfterRestore = await _repository.getGroups();
-    final Set<String> currentGroupIds = currentGroupsAfterRestore.map((g) => g.id).toSet();
-    AppLogger.log('RestoreManager: Current groups after restore: ${currentGroupsAfterRestore.length}');
-
-    // Re-add old groups that weren't in the backup
-    int nextOrder = currentGroupsAfterRestore.length;
-    int reAddedCount = 0;
-
-    for (final oldGroup in oldGroupsBeforeRestore) {
-      if (!currentGroupIds.contains(oldGroup.id)) {
-        final newOrder = nextOrder++;
-        final groupToReAdd = oldGroup.copyWith(order: newOrder);
-        try {
-          await _repository.createGroup(groupToReAdd);
-          AppLogger.log('RestoreManager: Re-added old group: ${groupToReAdd.name} (ID: ${groupToReAdd.id}, new order: $newOrder)');
-          reAddedCount++;
-        } catch (e) {
-          AppLogger.log('RestoreManager: Error re-adding old group ${oldGroup.name}: $e');
-        }
-      }
-    }
-    AppLogger.log('RestoreManager: Finished re-adding old groups. Re-added: $reAddedCount');
   }
 
   /// Restores practice logs from backup data
@@ -530,9 +534,11 @@ class RestoreManager {
       AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
 
       if (result != null && result.files.single.path != null) {
+        _showRestoreMessage(context, true, 'Restore in progress...');
         final data = await _extractBackupData(result.files.single.path!);
         if (data == null) return;
 
+        final int? backupVersion = data['backupVersion'] as int?;
         final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
         final List<dynamic> tagsJson = data['tags'] ?? [];
         final List<dynamic> groupsJson = data['groups'] ?? [];
@@ -541,8 +547,10 @@ class RestoreManager {
 
         AppLogger.log('RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}');
 
-        await _restoreMusicPieces(musicPiecesJson);
-        await _updateMediaFilePaths(storagePath!); // Update media file paths after restoring music pieces
+        await _restoreMusicPieces(musicPiecesJson, storagePath!, backupVersion);
+        if (backupVersion == null) {
+          await _updateMediaFilePaths(storagePath!);
+        }
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
         await _restorePracticeLogs(practiceLogsJson);
