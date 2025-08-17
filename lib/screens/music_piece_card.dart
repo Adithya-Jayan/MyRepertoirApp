@@ -92,23 +92,19 @@ class MusicPieceCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: Text(
                           piece.title,
                           style: Theme.of(context).textTheme.titleLarge, // Apply large title style.
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis, // Handle overflow with ellipsis.
                         ),
                       ),
                       const SizedBox(height: 4.0),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: Text(
                           piece.artistComposer,
                           style: Theme.of(context).textTheme.titleSmall, // Apply small title style.
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(height: 8.0),
