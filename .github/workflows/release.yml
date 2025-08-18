@@ -142,35 +142,14 @@ jobs:
       - name: Update version in pubspec.yaml
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          BUILD_NUMBER_SUFFIX="${{ steps.build_info.outputs.build_number }}" # This will be empty or +<num>
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
+          BUILD_NUMBER_SUFFIX="${{ steps.build_info.outputs.build_NUMBER }}"
           
-          FINAL_VERSION_STRING="$NEW_FULL_VERSION"
+          FINAL_VERSION_STRING="$NEW_FULL_VERSION$BUILD_NUMBER_SUFFIX"
           
-          # Append branch name to build metadata if not main
-          if [ "$BRANCH_NAME" != "main" ]; then
-            if [ -n "$BUILD_NUMBER_SUFFIX" ]; then
-              FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}.${BRANCH_NAME}"
-            else
-              FINAL_VERSION_STRING="${FINAL_VERSION_STRING}+${BRANCH_NAME}"
-            fi
-          else
-            FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}"
-          fi
+          # Directly update pubspec.yaml using yq with proper quoting
+          yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           
-                    - name: Update version in pubspec.yaml
-  working-directory: ./Repertoire
-  run: |
-    NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-    BUILD_NUMBER_SUFFIX="${{ steps.build_info.outputs.build_number }}"
-    
-    FINAL_VERSION_STRING="$NEW_FULL_VERSION$BUILD_NUMBER_SUFFIX"
-    
-    # Directly update pubspec.yaml using yq with proper quoting
-    yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
-    
-    echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
-          echo "Updated pubspec.yaml to version ${FINAL_VERSION_STRING}"
+          echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
 
       - name: Determine Final Tag Name
         id: get_tag_name
