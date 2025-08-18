@@ -158,7 +158,7 @@ jobs:
             FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}"
           fi
           
-          yq -i ".version = \"${FINAL_VERSION_STRING}\"" pubspec.yaml
+                    yq -i ".version = \"${FINAL_VERSION_STRING}\"" Repertoire/pubspec.yaml
           echo "Updated pubspec.yaml to version ${FINAL_VERSION_STRING}"
 
       - name: Determine Final Tag Name
