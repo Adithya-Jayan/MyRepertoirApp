@@ -48,11 +48,30 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get build info
+      - name: Get incremental build number
         id: build_info
         run: |
+          NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+          
+          BUILD_NUMBER="" # Initialize build number as empty
+          
+          # Check if the base version tag already exists (e.g., v1.0.0)
+          if git tag --list "v${NEW_FULL_VERSION}" | grep -q "v${NEW_FULL_VERSION}"; then
+            # If base version tag exists, find the highest existing build number for this version
+            # Example: if NEW_FULL_VERSION is 1.0.0, look for tags like v1.0.0+1, v1.0.0+2
+            LATEST_BUILD_TAG=$(git tag --list "v${NEW_FULL_VERSION}+*" --sort=-v:refname | head -n1)
+            
+            INCREMENTAL_BUILD_NUM=1
+            if [ -n "$LATEST_BUILD_TAG" ]; then
+              # Extract the build number from the tag (e.g., v1.0.0+123 -> 123)
+              EXISTING_BUILD_NUM=$(echo "$LATEST_BUILD_TAG" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)$/\1/')
+              INCREMENTAL_BUILD_NUM=$((EXISTING_BUILD_NUM + 1))
+            fi
+            BUILD_NUMBER="+$INCREMENTAL_BUILD_NUM" # Prepend with '+' for pubspec.yaml format
+          fi
+          
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
-          echo "build_number=$(date -u +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Get current version and calculate new version
         id: version_calc
@@ -123,16 +142,24 @@ jobs:
       - name: Update version in pubspec.yaml
         run: |
           NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
-          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
+          BUILD_NUMBER_SUFFIX="${{ steps.build_info.outputs.build_number }}" # This will be empty or +<num>
           BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
           
-          VERSION_FOR_PUBSPEC="$NEW_FULL_VERSION"
+          FINAL_VERSION_STRING="$NEW_FULL_VERSION"
+          
+          # Append branch name to build metadata if not main
           if [ "$BRANCH_NAME" != "main" ]; then
-            VERSION_FOR_PUBSPEC="${NEW_FULL_VERSION}-${BRANCH_NAME}"
+            if [ -n "$BUILD_NUMBER_SUFFIX" ]; then
+              FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}.${BRANCH_NAME}"
+            else
+              FINAL_VERSION_STRING="${FINAL_VERSION_STRING}+${BRANCH_NAME}"
+            fi
+          else
+            FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}"
           fi
           
-          yq -i ".version = \"${VERSION_FOR_PUBSPEC}+${BUILD_NUMBER}\"" pubspec.yaml
-          echo "Updated pubspec.yaml to version ${VERSION_FOR_PUBSPEC}+${BUILD_NUMBER}"
+          yq -i ".version = \"${FINAL_VERSION_STRING}\"" pubspec.yaml
+          echo "Updated pubspec.yaml to version ${FINAL_VERSION_STRING}"
 
       - name: Determine Final Tag Name
         id: get_tag_name
