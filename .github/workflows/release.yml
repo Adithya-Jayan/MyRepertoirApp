@@ -88,7 +88,7 @@ jobs:
             # Find the highest prerelease number for this base version
             EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\.[0-9]+" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
-              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\\1/')
+              PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
               PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
             else
               PRERELEASE_NUM=1
