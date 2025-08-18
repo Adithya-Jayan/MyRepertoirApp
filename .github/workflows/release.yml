@@ -110,60 +110,46 @@ jobs:
           echo "CURRENT_VERSION=${LATEST_OFFICIAL_VERSION}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
 
-      - name: Get build number and date
-        id: build_info
-        run: |
-          echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
-          echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
-
-      - name: Update version in pubspec.yaml
-        id: update_pubspec
+      - name: Determine Final Version String
+        id: final_version
         run: |
           VERSION_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
-          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
-          
-          # Append branch name if not main
           BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
+
           if [ "$BRANCH_NAME" != "main" ]; then
             VERSION_NAME="${VERSION_NAME}-${BRANCH_NAME}"
           fi
-          
-          FINAL_VERSION_STRING="$VERSION_NAME+$BUILD_NUMBER"
-          
-          # Directly update pubspec.yaml using yq with proper quoting
-          yq -i ".version = \"$FINAL_VERSION_STRING\"" Repertoire/pubspec.yaml
-          
-          echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
-          echo "FINAL_VERSION_STRING=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
 
-      - name: Determine Final Tag Name
-        id: get_tag_name
-        run: |
-          VERSION_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
-          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
-          
-          # Start with the base version name
-          FINAL_TAG_NAME="v$VERSION_NAME"
-
-          # Append branch name if not main
-          if [ "$BRANCH_NAME" != "main" ]; then
-            FINAL_TAG_NAME="${FINAL_TAG_NAME}-${BRANCH_NAME}"
+          BUILD_NUMBER=""
+          if git tag --list "v${VERSION_NAME}" | grep -q "v${VERSION_NAME}"; then
+            LATEST_BUILD_TAG=$(git tag --list "v${VERSION_NAME}+*" --sort=-v:refname | head -n1)
+            INCREMENTAL_BUILD_NUM=1
+            if [ -n "$LATEST_BUILD_TAG" ]; then
+              EXISTING_BUILD_NUM=$(echo "$LATEST_BUILD_TAG" | sed -E 's/.*\+([0-9]+)$/\1/')
+              INCREMENTAL_BUILD_NUM=$((EXISTING_BUILD_NUM + 1))
+            fi
+            BUILD_NUMBER="$INCREMENTAL_BUILD_NUM"
           fi
-          
-          echo "final_tag_name=$FINAL_TAG_NAME" >> $GITHUB_OUTPUT
 
-      - name: Build Android APK
-        run: |
-          flutter build apk --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          FINAL_VERSION_STRING="$VERSION_NAME"
+          if [ -n "$BUILD_NUMBER" ]; then
+            FINAL_VERSION_STRING="${FINAL_VERSION_STRING}+${BUILD_NUMBER}"
+          fi
 
-      - name: Build Android App Bundle
-        run: |
-          flutter build appbundle --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          echo "final_version_string=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
-      - name: Build Web
+      - name: Update version in pubspec.yaml
         run: |
-          flutter build web --release --build-name=${{ steps.version_calc.outputs.VERSION_NAME }} --build-number=${{ steps.build_info.outputs.build_number }}
+          FINAL_VERSION_STRING="${{ steps.final_version.outputs.final_version_string }}"
+          yq -i ".version = \"$FINAL_VERSION_STRING\"" Repertoire/pubspec.yaml
+          echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
+
+      - name: Build All Platforms
+        run: |
+          flutter build apk --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
+          flutter build appbundle --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
+          flutter build web --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
 
       - name: Create Release Assets
         run: |
@@ -172,14 +158,13 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab release_assets/
           cp -r build/web release_assets/web_build
           
-          # Create a zip of web build
           cd release_assets
           zip -r web_build.zip web_build/
           cd ..
 
       - name: Create Git Tag and Push Changes
         run: |
-          TAG_NAME="${{ steps.get_tag_name.outputs.final_tag_name }}"
+          TAG_NAME="v${{ steps.final_version.outputs.final_version_string }}"
           
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -196,14 +181,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.get_tag_name.outputs.final_tag_name }}
-          release_name: Release ${{ steps.get_tag_name.outputs.final_tag_name }}
+          tag_name: v${{ steps.final_version.outputs.final_version_string }}
+          release_name: Release v${{ steps.final_version.outputs.final_version_string }}
           body: |
-            ## Release ${{ steps.get_tag_name.outputs.final_tag_name }}
+            ## Release v${{ steps.final_version.outputs.final_version_string }}
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
-            **Build Number:** ${{ steps.build_info.outputs.build_number }}
+            **Build Number:** ${{ steps.final_version.outputs.build_number }}
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
             **Changes:**
@@ -216,7 +201,7 @@ jobs:
             
             ### Build Information
             - Flutter Version: 3.32.5
-            - Build Date: ${{ steps.build_info.outputs.date }}
+            - Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
           generate_release_notes: true
@@ -253,18 +238,17 @@ jobs:
 
       - name: Success Message
         run: |
-          VERSION_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
-          BUILD_NUMBER="${{ steps.build_info.outputs.build_number }}"
+          FINAL_VERSION_STRING="${{ steps.final_version.outputs.final_version_string }}"
           if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
-            echo "🎉 Successfully created prerelease ${VERSION_NAME}+${BUILD_NUMBER}!"
+            echo "🎉 Successfully created prerelease v${FINAL_VERSION_STRING}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag ${{ steps.get_tag_name.outputs.final_tag_name }} created"
+            echo "🏷️  Git tag v${FINAL_VERSION_STRING} created"
             echo "📦 Prerelease GitHub release created"
           else
-            echo "🎉 Successfully released version ${VERSION_NAME}+${BUILD_NUMBER}!"
+            echo "🎉 Successfully released version v${FINAL_VERSION_STRING}!"
             echo "📱 Android APK and App Bundle created"
             echo "🌐 Web build created"
-            echo "🏷️  Git tag ${{ steps.get_tag_name.outputs.final_tag_name }} created"
+            echo "🏷️  Git tag v${FINAL_VERSION_STRING} created"
             echo "📦 Official GitHub release created"
           fi
