@@ -214,7 +214,7 @@ jobs:
             
             ### Build Information
             - Flutter Version: 3.32.5
-            - Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+            - Build Date: ${{ steps.get_build_date.outputs.build_date }}
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
           generate_release_notes: true
@@ -248,6 +248,11 @@ jobs:
           asset_path: ./release_assets/web_build.zip
           asset_name: web_build.zip
           asset_content_type: application/zip
+
+      - name: Get Build Date
+        id: get_build_date
+        run: |
+          echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
       - name: Success Message
         run: |
