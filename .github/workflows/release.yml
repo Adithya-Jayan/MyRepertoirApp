@@ -158,7 +158,18 @@ jobs:
             FINAL_VERSION_STRING="${FINAL_VERSION_STRING}${BUILD_NUMBER_SUFFIX}"
           fi
           
-                    yq -i ".version = \"${FINAL_VERSION_STRING}\"" Repertoire/pubspec.yaml
+                    - name: Update version in pubspec.yaml
+  working-directory: ./Repertoire
+  run: |
+    NEW_FULL_VERSION="${{ steps.version_calc.outputs.NEW_FULL_VERSION }}"
+    BUILD_NUMBER_SUFFIX="${{ steps.build_info.outputs.build_number }}"
+    
+    FINAL_VERSION_STRING="$NEW_FULL_VERSION$BUILD_NUMBER_SUFFIX"
+    
+    # Directly update pubspec.yaml using yq with proper quoting
+    yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
+    
+    echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
           echo "Updated pubspec.yaml to version ${FINAL_VERSION_STRING}"
 
       - name: Determine Final Tag Name
