@@ -120,24 +120,29 @@ jobs:
             VERSION_NAME="${VERSION_NAME}-${BRANCH_NAME}"
           fi
 
-          BUILD_NUMBER=""
+          # Determine the suffix for the version string (e.g., +1, +2)
+          VERSION_SUFFIX=""
+          # This will be the value passed to --build-number. It will be empty if no build number is needed.
+          BUILD_NUMBER_FOR_FLUTTER=""
+
+          # Check if the base tag (without +build_number) already exists
           if git tag --list "v${VERSION_NAME}" | grep -q "v${VERSION_NAME}"; then
+            # If the base tag exists, we need to find the next incremental build number
             LATEST_BUILD_TAG=$(git tag --list "v${VERSION_NAME}+*" --sort=-v:refname | head -n1)
             INCREMENTAL_BUILD_NUM=1
             if [ -n "$LATEST_BUILD_TAG" ]; then
+              # Extract the existing build number and increment it
               EXISTING_BUILD_NUM=$(echo "$LATEST_BUILD_TAG" | sed -E 's/.*\+([0-9]+)$/\1/')
               INCREMENTAL_BUILD_NUM=$((EXISTING_BUILD_NUM + 1))
             fi
-            BUILD_NUMBER="$INCREMENTAL_BUILD_NUM"
+            BUILD_NUMBER_FOR_FLUTTER="$INCREMENTAL_BUILD_NUM"
+            VERSION_SUFFIX="+"$INCREMENTAL_BUILD_NUM
           fi
 
-          FINAL_VERSION_STRING="$VERSION_NAME"
-          if [ -n "$BUILD_NUMBER" ]; then
-            FINAL_VERSION_STRING="${FINAL_VERSION_STRING}+${BUILD_NUMBER}"
-          fi
+          FINAL_VERSION_STRING="${VERSION_NAME}${VERSION_SUFFIX}"
 
           echo "final_version_string=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
-          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER_FOR_FLUTTER" >> $GITHUB_OUTPUT
 
       - name: Update version in pubspec.yaml
         run: |
@@ -147,9 +152,17 @@ jobs:
 
       - name: Build All Platforms
         run: |
-          flutter build apk --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
-          flutter build appbundle --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
-          flutter build web --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
+          BUILD_NAME="${{ steps.final_version.outputs.final_version_string }}"
+          BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
+
+          FLUTTER_BUILD_NUMBER_ARG=""
+          if [ -n "$BUILD_NUMBER" ]; then
+            FLUTTER_BUILD_NUMBER_ARG="--build-number=$BUILD_NUMBER"
+          fi
+
+          flutter build apk --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build appbundle --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
 
       - name: Create Release Assets
         run: |
