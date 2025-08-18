@@ -142,7 +142,7 @@ jobs:
       - name: Update version in pubspec.yaml
         run: |
           FINAL_VERSION_STRING="${{ steps.final_version.outputs.final_version_string }}"
-          yq -i ".version = \"$FINAL_VERSION_STRING\"" Repertoire/pubspec.yaml
+          yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
 
       - name: Build All Platforms
@@ -168,7 +168,7 @@ jobs:
           
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add Repertoire/pubspec.yaml
+          git add pubspec.yaml
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
