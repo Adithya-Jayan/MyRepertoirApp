@@ -254,6 +254,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       floatingActionButton: SpeedDialWidget(
         onAddMediaItem: (mediaType) => _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems)),
       ),
+    ),
     );
   }
 

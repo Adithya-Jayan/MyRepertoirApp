@@ -136,6 +136,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -167,6 +167,7 @@ class PersonalizationSettingsScreenState
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -86,6 +86,7 @@ class HelpScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

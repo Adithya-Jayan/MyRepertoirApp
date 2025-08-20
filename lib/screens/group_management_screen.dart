@@ -180,6 +180,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
           child: const Icon(Icons.add),
         ),
       ),
+    ),
     );
   }
 

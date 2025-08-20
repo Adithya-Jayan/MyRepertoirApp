@@ -154,6 +154,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

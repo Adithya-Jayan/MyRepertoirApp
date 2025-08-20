@@ -211,7 +211,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       },
                       child: const Icon(Icons.add),
                     ),
-              ),
+                  ),
+                ),
             ),
           );
         },

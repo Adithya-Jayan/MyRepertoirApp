@@ -92,6 +92,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -212,6 +213,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     );
                   },
                 ),
+    ),
     );
   }
 }

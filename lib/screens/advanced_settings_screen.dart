@@ -396,6 +396,7 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
             ),
         ],
       ),
+    ),
     );
   }
 }
