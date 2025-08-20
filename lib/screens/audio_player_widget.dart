@@ -52,6 +52,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     });
     _player.setSpeed(_speed);
     _player.setPitch(pow(2, _pitch / 12.0).toDouble());
+    _player.errorStream.listen((error) {
+      AppLogger.log('AudioPlayerWidget: Error in player: $error');
+    });
   }
 
   /// Saves the current speed and pitch settings to [SharedPreferences].
