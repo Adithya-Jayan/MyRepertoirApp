@@ -188,14 +188,24 @@ jobs:
           git push origin ${{ github.ref_name }}
           git push origin "$TAG_NAME"
 
-      - name: Create GitHub Release
+      - name: Create Draft Release
+        id: create_draft_release
         uses: actions/create-release@v1
-        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.final_version.outputs.final_version_string }}
           release_name: Release v${{ steps.final_version.outputs.final_version_string }}
+          draft: true
+          prerelease: ${{ github.event.inputs.prerelease }}
+          generate_release_notes: true
+
+      - name: Update Release with Custom Body
+        uses: actions/update-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_draft_release.outputs.id }}
           body: |
             ## Release v${{ steps.final_version.outputs.final_version_string }}
             
@@ -205,7 +215,7 @@ jobs:
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
             **Changes:**
-            ${{ github.event.inputs.release_notes }}
+            ${{ steps.create_draft_release.outputs.body }}
             
             ### Assets
             - Android APK
@@ -216,15 +226,13 @@ jobs:
             - Flutter Version: 3.32.5
             - Build Date: ${{ steps.get_build_date.outputs.build_date }}
           draft: false
-          prerelease: ${{ github.event.inputs.prerelease }}
-          generate_release_notes: true
 
       - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
           asset_path: ./release_assets/app-release.apk
           asset_name: app-release.apk
           asset_content_type: application/vnd.android.package-archive
@@ -234,7 +242,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
           asset_path: ./release_assets/app-release.aab
           asset_name: app-release.aab
           asset_content_type: application/octet-stream
@@ -244,7 +252,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
           asset_path: ./release_assets/web_build.zip
           asset_name: web_build.zip
           asset_content_type: application/zip
