@@ -161,7 +161,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
           await _saveGroupOrder();
         }
       },
-      child: Scaffold(
+      child: SafeArea(
+        child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Groups'),
           leading: IconButton(

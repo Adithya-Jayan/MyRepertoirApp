@@ -63,7 +63,8 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

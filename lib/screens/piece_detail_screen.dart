@@ -35,7 +35,8 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('PieceDetailScreen: build called');
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_musicPiece.title),
         actions: [

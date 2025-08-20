@@ -48,7 +48,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('WelcomeScreen: build called');
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
