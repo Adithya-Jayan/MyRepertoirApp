@@ -211,39 +211,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               ),
               const SizedBox(height: 20),
               MediaSectionWidget(
-                mediaItems: _musicPiece.mediaItems,
-                musicPieceThumbnail: _musicPiece.thumbnailPath ?? '',
-                musicPieceId: _musicPiece.id,
-                onUpdateMediaItem: (updatedItem) {
+                musicPiece: _musicPiece,
+                onMusicPieceChanged: (updatedMusicPiece) {
                   setState(() {
-                    final updatedMediaItems = List<MediaItem>.from(_musicPiece.mediaItems);
-                    final itemIndex = updatedMediaItems.indexWhere((element) => element.id == updatedItem.id);
-                    if (itemIndex != -1) {
-                      updatedMediaItems[itemIndex] = updatedItem;
-                      _musicPiece = _musicPiece.copyWith(mediaItems: updatedMediaItems);
-                    }
-                  });
-                },
-                onDeleteMediaItem: (itemToDelete) {
-                  setState(() {
-                    final updatedMediaItems = List<MediaItem>.from(_musicPiece.mediaItems);
-                    updatedMediaItems.removeWhere((element) => element.id == itemToDelete.id);
-                    _musicPiece = _musicPiece.copyWith(mediaItems: updatedMediaItems);
-                  });
-                },
-                onSetThumbnail: (path) {
-                  setState(() {
-                    _musicPiece = _musicPiece.copyWith(thumbnailPath: path);
-                  });
-                },
-                onReorderMediaItems: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                    _musicPiece.mediaItems.insert(newIndex, item);
-                    _musicPiece = _musicPiece.copyWith(mediaItems: _musicPiece.mediaItems);
+                    _musicPiece = updatedMusicPiece;
                   });
                 },
               ),

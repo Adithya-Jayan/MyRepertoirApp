@@ -5,8 +5,7 @@ import 'dart:io';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
-
-import 'package:just_audio_background/just_audio_background.dart';
+import 'package:repertoire/services/audio_player_service.dart'; // Added this import
 
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
@@ -39,21 +38,20 @@ Future<void> main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Initialize just_audio_background for seamless background audio playback.
-  // Configures the Android notification channel for media controls.
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel',
-    androidNotificationChannelName: 'Audio playback',
-    androidNotificationOngoing: true, // Keeps the notification ongoing
-  );
-
   // Runs the Flutter application.
   // ChangeNotifierProvider is used here to provide ThemeNotifier to the widget tree,
   // allowing theme changes to be managed and listened to by various widgets.
   runApp(
-    ChangeNotifierProvider(
-      // Initializes ThemeNotifier with the system's current theme mode and a default accent color.
-      create: (_) => ThemeNotifier(ThemeMode.system, Colors.deepPurple),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ThemeNotifier(ThemeMode.system, Colors.deepPurple),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AudioPlayerService(),
+          lazy: false, // Initialize immediately
+        ),
+      ],
       child: const MyApp(),
     ),
   );

@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:audio_service/audio_service.dart';
-import 'package:just_audio_background/just_audio_background.dart';
+import 'package:just_audio/just_audio.dart' as ja;
+import 'package:repertoire/services/audio_player_service.dart';
+import 'package:provider/provider.dart';
 import 'dart:math'; // Import for pow function
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
+import '../models/music_piece.dart'; // Import MusicPiece
+import '../models/bookmark.dart'; // Import Bookmark
+import '../database/music_piece_repository.dart'; // Import MusicPieceRepository
+import 'package:uuid/uuid.dart'; // For generating unique IDs
+import 'package:audio_waveforms/audio_waveforms.dart'; // For audio waveform visualization
+import '../models/media_type.dart'; // Used in _initAudio
 
-/// A widget that provides audio playback functionality with speed and pitch control.
-///
-/// It uses `just_audio` for audio playback and `audio_service` for background
-/// playback capabilities. It also saves and loads speed and pitch settings.
 class AudioPlayerWidget extends StatefulWidget {
-  final String audioPath; // The local path to the audio file.
-  final String title; // The title of the audio track.
-  final String artist; // The artist of the audio track.
+  final MusicPiece musicPiece; // The music piece containing audio and bookmarks
+  final int mediaItemIndex; // Index of the audio media item to play
 
   const AudioPlayerWidget({
     super.key,
-    required this.audioPath,
-    this.title = 'Unknown Title',
-    this.artist = 'Unknown Artist',
+    required this.musicPiece,
+    required this.mediaItemIndex,
   });
 
   @override
@@ -30,123 +30,118 @@ class AudioPlayerWidget extends StatefulWidget {
 /// The state class for [AudioPlayerWidget].
 /// Manages the audio player, its state, and the speed/pitch controls.
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer _player; // The audio player instance.
   double _speed = 1.0; // Current playback speed.
   double _pitch = 0.0; // Current pitch in half-step units.
   bool _isInitialized = false; // Whether the audio source was successfully initialized.
   bool _hasError = false; // Whether there was an error initializing the audio.
+  List<Bookmark> _bookmarks = []; // List of bookmarks for the current audio.
+  final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for saving music piece.
+  final Uuid _uuid = Uuid(); // For generating unique bookmark IDs.
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer(); // Initialize the audio player.
+    _bookmarks = List.from(widget.musicPiece.bookmarks); // Initialize bookmarks from music piece.
     _loadSettings(); // Load saved speed and pitch settings.
-    _initAudio(); // Initialize the audio source.
   }
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    
     setState(() {
       _speed = prefs.getDouble('audio_speed') ?? 1.0;
       _pitch = prefs.getDouble('audio_pitch') ?? 0.0;
     });
-    _player.setSpeed(_speed);
-    _player.setPitch(pow(2, _pitch / 12.0).toDouble());
-    _player.errorStream.listen((error) {
-      AppLogger.log('AudioPlayerWidget: Error in player: $error');
-    });
+    
+    // Apply settings to the audio player service
+    final audioPlayerService = Provider.of<AudioPlayerService>(context, listen: false);
+    await audioPlayerService.setSpeed(_speed);
+    await audioPlayerService.setPitch(pow(2, _pitch / 12.0).toDouble());
+    
+    AppLogger.log('AudioPlayerWidget: Settings loaded - Speed: $_speed, Pitch: $_pitch');
   }
 
   /// Saves the current speed and pitch settings to [SharedPreferences].
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble('audio_speed', _speed); // Save current playback speed.
-    prefs.setDouble('audio_pitch', _pitch); // Save current pitch setting.
+    await prefs.setDouble('audio_speed', _speed); // Save current playback speed.
+    await prefs.setDouble('audio_pitch', _pitch); // Save current pitch setting.
+    AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
   }
 
   /// Initializes the audio player with the provided audio path.
-  ///
-  /// Sets the audio source and provides metadata for background playback.
-  Future<void> _initAudio() async {
+  Future<void> _initAudio(AudioPlayerService audioPlayerService) async {
     try {
-      AppLogger.log('AudioPlayerWidget: Initializing audio with path: ${widget.audioPath}');
+      final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+      if (audioMediaItem.type != MediaType.audio) {
+        throw Exception('Media item at index ${widget.mediaItemIndex} is not an audio type.');
+      }
+
+      final audioPath = audioMediaItem.pathOrUrl;
       
+      AppLogger.log('AudioPlayerWidget: Initializing audio with path: $audioPath');
+
+      // Validate file path for special characters that might cause issues
+      if (audioPath.contains('*') || audioPath.contains('?') || audioPath.contains('<') || audioPath.contains('>')) {
+        AppLogger.log('AudioPlayerWidget: Warning - File path contains special characters that may cause issues');
+      }
+
       // Check if file exists
-      final file = File(widget.audioPath);
+      final file = File(audioPath);
       if (!await file.exists()) {
-        AppLogger.log('AudioPlayerWidget: Audio file does not exist: ${widget.audioPath}');
+        AppLogger.log('AudioPlayerWidget: Audio file does not exist: $audioPath');
         setState(() {
           _hasError = true;
           _isInitialized = false;
         });
         return;
       }
-      
+
       AppLogger.log('AudioPlayerWidget: Audio file exists, size: ${await file.length()} bytes');
-      
-      await _player.setAudioSource(
-        AudioSource.uri(
-          Uri.parse(widget.audioPath),
-          tag: MediaItem(
-            id: widget.audioPath,
-            album: "Music Repertoire",
-            title: widget.title,
-            artist: widget.artist,
-            artUri: Uri.parse('https://example.com/albumart.jpg'), // Placeholder album art.
-          ),
-        ),
-      );
-      
-      AppLogger.log('AudioPlayerWidget: Audio source set successfully');
+
+      // Load and play the audio with error handling for threading issues
+      await audioPlayerService.loadAndPlay(audioPath, audioMediaItem.id);
+
+      // Small delay to allow the player to stabilize (helps with threading issues)
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Apply current speed and pitch settings after loading
+      await audioPlayerService.setSpeed(_speed);
+      await audioPlayerService.setPitch(pow(2, _pitch / 12.0).toDouble());
+
+      AppLogger.log('AudioPlayerWidget: Audio initialized successfully');
       setState(() {
         _isInitialized = true;
         _hasError = false;
       });
     } catch (e) {
       AppLogger.log('AudioPlayerWidget: Error initializing audio: $e');
-      
-      // Check if it's a background service conflict
-      if (e.toString().contains('just_audio_background supports only a single player instance')) {
-        AppLogger.log('AudioPlayerWidget: Background service conflict detected, retrying without background service');
-        // Try again without background service
-        try {
-          await _player.setAudioSource(
-            AudioSource.uri(Uri.parse(widget.audioPath)),
-          );
-          AppLogger.log('AudioPlayerWidget: Audio source set successfully (without background service)');
-          setState(() {
-            _isInitialized = true;
-            _hasError = false;
-          });
-        } catch (retryError) {
-          AppLogger.log('AudioPlayerWidget: Retry also failed: $retryError');
-          setState(() {
-            _hasError = true;
-            _isInitialized = false;
-          });
-        }
-      } else {
-        setState(() {
-          _hasError = true;
-          _isInitialized = false;
-        });
-      }
+      setState(() {
+        _hasError = true;
+        _isInitialized = false;
+      });
+      rethrow; // Let the button handler catch and display the error
     }
   }
 
   @override
   void dispose() {
-    try {
-      _player.stop();
-      _player.dispose();
-    } catch (e) {
-      AppLogger.log('AudioPlayerWidget: Error disposing player: $e');
+    _saveBookmarks(); // Save bookmarks when the widget is disposed.
+    final audioPlayerService = Provider.of<AudioPlayerService>(context, listen: false);
+    final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+
+    if (audioPlayerService.currentAudioId == audioMediaItem.id) {
+      audioPlayerService.stop(); // Stop if this is the current audio
     }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final audioPlayerService = Provider.of<AudioPlayerService>(context);
+    final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    final isCurrentAudio = audioPlayerService.currentAudioId == audioMediaItem.id;
+
     // Show error state if audio failed to initialize
     if (_hasError) {
       return Column(
@@ -163,7 +158,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
           const SizedBox(height: 8.0),
           Text(
-            'Path: ${widget.audioPath}',
+            'Path: ${audioMediaItem.pathOrUrl}',
             style: const TextStyle(fontSize: 12.0, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -171,68 +166,101 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       );
     }
 
-    // Show loading state if not initialized yet
-    if (!_isInitialized) {
-      return const Column(
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 8.0),
-          Text('Loading audio...'),
-        ],
-      );
-    }
-
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        StreamBuilder<PlayerState>(
-          stream: _player.playerStateStream,
+        StreamBuilder<ja.PlayerState>(
+          stream: audioPlayerService.playerStateStream,
           builder: (context, snapshot) {
             final playerState = snapshot.data;
             final processingState = playerState?.processingState;
             final playing = playerState?.playing;
-            if (processingState == ProcessingState.loading ||
-                processingState == ProcessingState.buffering) {
-              return const CircularProgressIndicator();
-            } else if (playing != true) {
-              return IconButton(
-                icon: const Icon(Icons.play_arrow),
-                iconSize: 64.0,
-                onPressed: _player.play,
+
+            // Debug logging to help identify the issue
+            AppLogger.log('AudioPlayerWidget: PlayerState - processing: $processingState, playing: $playing, isCurrentAudio: $isCurrentAudio');
+
+            // Show loading only if this is the current audio AND it's loading/buffering
+            if (isCurrentAudio && (processingState == ja.ProcessingState.loading ||
+                processingState == ja.ProcessingState.buffering)) {
+              return const Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Loading...'),
+                ],
               );
-            } else if (processingState != ProcessingState.completed) {
+            } 
+            // Show pause button if this is current audio and it's playing
+            else if (isCurrentAudio && playing == true) {
               return IconButton(
                 icon: const Icon(Icons.pause),
                 iconSize: 64.0,
-                onPressed: _player.pause,
+                onPressed: audioPlayerService.pause,
               );
-            } else {
+            } 
+            // Show replay button if this is current audio and playback completed
+            else if (isCurrentAudio && processingState == ja.ProcessingState.completed) {
               return IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
-                onPressed: () => _player.seek(Duration.zero),
+                onPressed: () => audioPlayerService.seekTo(Duration.zero),
+              );
+            } 
+            // Show play button for all other cases
+            else {
+              return IconButton(
+                icon: const Icon(Icons.play_arrow),
+                iconSize: 64.0,
+                onPressed: () async {
+                  try {
+                    await _initAudio(audioPlayerService);
+                  } catch (e) {
+                    AppLogger.log('AudioPlayerWidget: Error in play button: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error playing audio: $e')),
+                    );
+                  }
+                },
               );
             }
           },
         ),
-        StreamBuilder<Duration?>(
-          stream: _player.positionStream,
+        
+        // Position/Duration Slider
+        StreamBuilder<Duration>(
+          stream: audioPlayerService.positionStream,
           builder: (context, snapshot) {
             final position = snapshot.data ?? Duration.zero;
-            final duration = _player.duration ?? Duration.zero;
+            final duration = audioPlayerService.totalDuration ?? Duration.zero;
             final min = 0.0;
             final max = duration.inMilliseconds.toDouble();
-            // Clamp the value to be within min and max
             final value = position.inMilliseconds.clamp(min, max).toDouble();
-            return Slider(
-              min: min,
-              max: max,
-              value: value,
-              onChanged: (value) {
-                _player.seek(Duration(milliseconds: value.toInt()));
-              },
+            
+            return Column(
+              children: [
+                Slider(
+                  min: min,
+                  max: max > 0 ? max : 1.0, // Prevent division by zero
+                  value: max > 0 ? value : 0.0,
+                  onChanged: max > 0 ? (value) {
+                    audioPlayerService.seekTo(Duration(milliseconds: value.toInt()));
+                  } : null,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_formatDuration(position)),
+                      Text(_formatDuration(duration)),
+                    ],
+                  ),
+                ),
+              ],
             );
           },
         ),
+        
         // Speed Control
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -246,12 +274,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   value: _speed,
                   divisions: 15, // 0.5 to 2.0 in 0.1 increments
                   label: _speed.toStringAsFixed(1),
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     setState(() {
                       _speed = value;
-                      _player.setSpeed(_speed);
                     });
-                    _saveSettings();
+                    await audioPlayerService.setSpeed(value);
+                    await _saveSettings();
                   },
                 ),
               ),
@@ -259,6 +287,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             ],
           ),
         ),
+        
         // Pitch Control
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -272,14 +301,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   value: _pitch,
                   divisions: 24,
                   label: _getPitchDisplayString(_pitch),
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     setState(() {
                       _pitch = value;
-                      // Convert half-step units to pitch multiplier
-                      final pitchMultiplier = pow(2, _pitch / 12.0).toDouble();
-                      _player.setPitch(pitchMultiplier);
                     });
-                    _saveSettings();
+                    // Convert half-step units to pitch multiplier
+                    final pitchMultiplier = pow(2, _pitch / 12.0).toDouble();
+                    await audioPlayerService.setPitch(pitchMultiplier);
+                    await _saveSettings();
                   },
                 ),
               ),
@@ -287,24 +316,165 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             ],
           ),
         ),
+        
+        // Reset Controls Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              setState(() {
+                _speed = 1.0;
+                _pitch = 0.0;
+              });
+              await audioPlayerService.setSpeed(1.0);
+              await audioPlayerService.setPitch(1.0);
+              await _saveSettings();
+            },
+            icon: const Icon(Icons.restore),
+            label: const Text('Reset Controls'),
+          ),
+        ),
+        
+        // Add Bookmark Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: ElevatedButton.icon(
+            onPressed: isCurrentAudio ? _addBookmark : null,
+            icon: const Icon(Icons.bookmark_add),
+            label: const Text('Add Bookmark'),
+          ),
+        ),
+        
+        // Bookmarks List
+        if (_bookmarks.isNotEmpty)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _bookmarks.length,
+            itemBuilder: (context, index) {
+              final bookmark = _bookmarks[index];
+              return Dismissible(
+                key: Key(bookmark.id),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) {
+                  _removeBookmark(bookmark.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${bookmark.name} dismissed')),
+                  );
+                },
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: GestureDetector(
+                  onDoubleTap: () async {
+                    final newName = await showDialog<String>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Rename Bookmark'),
+                        content: TextField(
+                          controller: TextEditingController(text: bookmark.name),
+                          autofocus: true,
+                          onSubmitted: (value) => Navigator.of(context).pop(value),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(bookmark.name),
+                            child: const Text('Rename'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (newName != null && newName.isNotEmpty && newName != bookmark.name) {
+                      _renameBookmark(bookmark.id, newName);
+                    }
+                  },
+                  child: ListTile(
+                    title: Text(bookmark.name),
+                    subtitle: Text(_formatDuration(bookmark.timestamp)),
+                    onTap: () => _seekToBookmark(bookmark.timestamp),
+                  ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  // Bookmark Management Methods
+  Future<void> _addBookmark() async {
+    final audioPlayerService = Provider.of<AudioPlayerService>(context, listen: false);
+    final currentPosition = audioPlayerService.currentPosition;
+    final newBookmark = Bookmark(
+      id: _uuid.v4(),
+      timestamp: currentPosition,
+      name: 'Bookmark ${_bookmarks.length + 1}',
+    );
+
+    setState(() {
+      _bookmarks.add(newBookmark);
+      _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp)); // Keep sorted
+    });
+    await _saveBookmarks();
+  }
+
+  Future<void> _removeBookmark(String bookmarkId) async {
+    setState(() {
+      _bookmarks.removeWhere((bookmark) => bookmark.id == bookmarkId);
+    });
+    await _saveBookmarks();
+  }
+
+  Future<void> _renameBookmark(String bookmarkId, String newName) async {
+    setState(() {
+      final index = _bookmarks.indexWhere((bookmark) => bookmark.id == bookmarkId);
+      if (index != -1) {
+        _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
+      }
+    });
+    await _saveBookmarks();
+  }
+
+  void _seekToBookmark(Duration timestamp) {
+    final audioPlayerService = Provider.of<AudioPlayerService>(context, listen: false);
+    audioPlayerService.seekTo(timestamp);
+  }
+
+  Future<void> _saveBookmarks() async {
+    final updatedMusicPiece = widget.musicPiece.copyWith(bookmarks: _bookmarks);
+    await _repository.updateMusicPiece(updatedMusicPiece);
+    AppLogger.log('AudioPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
+  }
+
   String _getPitchDisplayString(double pitch) {
-    if (pitch.round() == 0) {
+    final roundedPitch = pitch.round();
+    if (roundedPitch == 0) {
       return "0";
     }
-    if (pitch.round() == 12) {
-      return "+1ve";
+    if (roundedPitch == 12) {
+      return "+1oct";
     }
-    if (pitch.round() == -12) {
-      return "-1ve";
+    if (roundedPitch == -12) {
+      return "-1oct";
     }
-    if (pitch > 0) {
-      return "+${pitch.round()}";
+    if (roundedPitch > 0) {
+      return "+$roundedPitch";
     } else {
-      return "${pitch.round()}";
+      return "$roundedPitch";
     }
   }
 }

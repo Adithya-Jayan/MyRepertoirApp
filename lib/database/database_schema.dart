@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS music_pieces (
   mediaItems TEXT, -- Stored as JSON string of List<MediaItem>
   groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
   tagGroups TEXT DEFAULT '[]', -- New column for tag groups, default to empty JSON array
+  bookmarks TEXT DEFAULT '[]', -- New column for bookmarks, default to empty JSON array
   thumbnailPath TEXT -- New column for thumbnail path
 )
 ''');
@@ -87,6 +88,9 @@ CREATE TABLE IF NOT EXISTS practice_logs (
 )
 ''');
     }
+    if (oldVersion < 6) {
+      await db.execute("ALTER TABLE music_pieces ADD COLUMN bookmarks TEXT DEFAULT '[]';");
+    }
   }
 
   /// Inserts initial dummy data into the database.
@@ -105,4 +109,4 @@ CREATE TABLE IF NOT EXISTS practice_logs (
     // One-time cleanup: remove any old 'Default Group' entries
     await db.delete('groups', where: 'name = ?', whereArgs: ['Default Group']);
   }
-} 
+}
