@@ -188,79 +188,57 @@ jobs:
           git push origin ${{ github.ref_name }}
           git push origin "$TAG_NAME"
 
-      - name: Create Draft Release
+      - name: Get Build Date
+        id: get_build_date
+        run: |
+          echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+      - name: Create Draft Release and Get Notes
         id: create_draft_release
-        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v${{ steps.final_version.outputs.final_version_string }} \
+            --generate-notes \
+            --title "Release v${{ steps.final_version.outputs.final_version_string }}" \
+            --draft \
+            --prerelease=${{ github.event.inputs.prerelease }}
+          
+          NOTES=$(gh release view v${{ steps.final_version.outputs.final_version_string }} --json body --jq .body)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.final_version.outputs.final_version_string }}
-          release_name: Release v${{ steps.final_version.outputs.final_version_string }}
-          draft: true
-          prerelease: ${{ github.event.inputs.prerelease }}
-          generate_release_notes: true
-
-      - name: Update Release with Custom Body
-        uses: actions/update-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release_id: ${{ steps.create_draft_release.outputs.id }}
           body: |
-            ## Release v${{ steps.final_version.outputs.final_version_string }}
+            ${{ github.event.inputs.release_notes }}
+
+            <details>
+            <summary>Release Details</summary>
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
             **Build Number:** ${{ steps.final_version.outputs.build_number }}
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
-            **Changes:**
-            ${{ steps.create_draft_release.outputs.body }}
-            
-            ### Assets
-            - Android APK
-            - Android App Bundle
-            - Web Build
-            
             ### Build Information
             - Flutter Version: 3.32.5
             - Build Date: ${{ steps.get_build_date.outputs.build_date }}
+            </details>
+
+            **Changes:**
+            ${{ steps.create_draft_release.outputs.notes }}
+          files: |
+            ./release_assets/app-release.apk
+            ./release_assets/app-release.aab
+            ./release_assets/web_build.zip
           draft: false
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
-          asset_path: ./release_assets/app-release.apk
-          asset_name: app-release.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload App Bundle
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
-          asset_path: ./release_assets/app-release.aab
-          asset_name: app-release.aab
-          asset_content_type: application/octet-stream
-
-      - name: Upload Web Build
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_draft_release.outputs.upload_url }}
-          asset_path: ./release_assets/web_build.zip
-          asset_name: web_build.zip
-          asset_content_type: application/zip
-
-      - name: Get Build Date
-        id: get_build_date
-        run: |
-          echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+          prerelease: ${{ github.event.inputs.prerelease }}
 
       - name: Success Message
         run: |
