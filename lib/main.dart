@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
-import 'package:repertoire/services/audio_player_service.dart'; // Added this import
+
 
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
@@ -47,10 +47,7 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => ThemeNotifier(ThemeMode.system, Colors.deepPurple),
         ),
-        ChangeNotifierProvider(
-          create: (_) => AudioPlayerService(),
-          lazy: false, // Initialize immediately
-        ),
+        
       ],
       child: const MyApp(),
     ),
