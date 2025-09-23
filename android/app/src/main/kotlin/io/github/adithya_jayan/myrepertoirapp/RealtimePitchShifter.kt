@@ -1,38 +1,40 @@
 package io.github.adithya_jayan.myrepertoirapp
 
-import android.media.AudioTrack
-import android.media.AudioFormat
-import android.media.AudioManager
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class RealtimePitchShifter {
     private val pitchProcessor = PitchShiftProcessor()
-    private lateinit var audioTrack: AudioTrack
-    private var isProcessing = false
-    
-    fun initializeAudio(sampleRate: Int) {
-        pitchProcessor.initialize(sampleRate, 2)
-        
-        val bufferSize = AudioTrack.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_OUT_STEREO,
-            AudioFormat.ENCODING_PCM_FLOAT
-        )
-        
-        audioTrack = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            sampleRate,
-            AudioFormat.CHANNEL_OUT_STEREO,
-            AudioFormat.ENCODING_PCM_FLOAT,
-            bufferSize,
-            AudioTrack.MODE_STREAM
-        )
+    private var initialized = false
+
+    fun initializeAudio(sampleRate: Int, channels: Int) {
+        if (!initialized) {
+            pitchProcessor.initialize(sampleRate, channels)
+            initialized = true
+        }
     }
-    
+
     fun setPitchShift(semitones: Float) {
-        pitchProcessor.setPitch(semitones)
+        if (initialized) {
+            pitchProcessor.setPitch(semitones)
+        }
+    }
+
+    fun process(inputBuffer: ByteBuffer, outputBuffer: ByteBuffer): Int {
+        if (!initialized) return 0
+        return pitchProcessor.processAudio(inputBuffer, outputBuffer)
+    }
+
+    fun flushAndReceive(outputBuffer: ByteBuffer): Int {
+        if (!initialized) return 0
+        return pitchProcessor.flushAndReceive(outputBuffer)
     }
     
-    fun processAudioBuffer(inputBuffer: FloatArray): FloatArray {
-        return pitchProcessor.processAudio(inputBuffer)
+    fun release() {
+        if (initialized) {
+            pitchProcessor.release()
+            initialized = false
+        }
     }
 }
+
