@@ -23,7 +23,7 @@ class ThumbnailService {
           }
           final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
           await thumbnailFile.writeAsBytes(response.bodyBytes);
-          item.thumbnailPath = thumbnailFile.path;
+          // Do not mutate the passed MediaItem here; let callers update state immutably
         }
       } catch (e) {
         AppLogger.log('Error fetching or saving thumbnail: $e');

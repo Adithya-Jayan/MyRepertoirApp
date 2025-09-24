@@ -57,10 +57,12 @@ class MediaItem {
   Map<String, dynamic> toJsonForBackup(String storagePath) => {
         'id': id,
         'type': type.name,
-        'pathOrUrl': getRelativePath(pathOrUrl, storagePath),
+        // Do not convert URLs for media links; only relativize local file paths
+        'pathOrUrl': type == MediaType.mediaLink ? pathOrUrl : getRelativePath(pathOrUrl, storagePath),
         'title': title,
         'description': description,
         'googleDriveFileId': googleDriveFileId,
+        // Thumbnails are always local files; keep conversion
         'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
       };
 
@@ -68,10 +70,14 @@ class MediaItem {
   factory MediaItem.fromJsonForBackup(Map<String, dynamic> json, String storagePath) => MediaItem(
         id: json['id'],
         type: MediaType.values.firstWhere((e) => e.name == json['type']),
-        pathOrUrl: getAbsolutePath(json['pathOrUrl'], storagePath),
+        // Leave media links untouched; absolutize only local file paths
+        pathOrUrl: MediaType.values.firstWhere((e) => e.name == json['type']) == MediaType.mediaLink
+            ? json['pathOrUrl']
+            : getAbsolutePath(json['pathOrUrl'], storagePath),
         title: json['title'],
         description: json['description'],
         googleDriveFileId: json['googleDriveFileId'],
+        // Thumbnails are local files
         thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
       );
 

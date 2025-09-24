@@ -64,6 +64,7 @@ class _MediaSectionState extends State<MediaSection> {
       return;
     }
 
+    AppLogger.log('MediaSection: Starting thumbnail fetch for URL: ${widget.item.pathOrUrl}');
     setState(() {
       _isLoadingThumbnail = true;
     });
@@ -72,16 +73,27 @@ class _MediaSectionState extends State<MediaSection> {
       await ThumbnailService.fetchAndSaveThumbnail(widget.item, widget.musicPieceId);
       final thumbnailPath = await ThumbnailService.getThumbnailPath(widget.item, widget.musicPieceId);
       
+      AppLogger.log('MediaSection: Thumbnail fetch completed, path: $thumbnailPath');
+      
       if (mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
         });
         
-        final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
+        // Defensive: ensure we never alter the media link URL when setting a thumbnail
+        final updatedItem = widget.item.copyWith(
+          thumbnailPath: thumbnailPath,
+          pathOrUrl: widget.item.pathOrUrl,
+        );
         widget.onUpdateMediaItem(updatedItem);
         
         AppLogger.log('Thumbnail fetched for media item: ${widget.item.title}');
+        
+        // Show success feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thumbnail fetched successfully!')),
+        );
       }
     } catch (e) {
       AppLogger.log('Error fetching thumbnail: $e');
