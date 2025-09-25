@@ -1,0 +1,141 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '30 16 * * *' # 16:30 UTC daily (10:00 PM IST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine last nightly reference
+        id: last
+        run: |
+          git fetch --tags --force
+          LAST_NIGHTLY_TAG=$(git tag --list 'nightly-*' --sort=-creatordate | head -n1)
+          echo "last_tag=$LAST_NIGHTLY_TAG" >> $GITHUB_OUTPUT
+
+      - name: Check if changes since last nightly
+        id: changes
+        run: |
+          set -e
+          DEFAULT_BRANCH="main"
+          if [ -z "${{ steps.last.outputs.last_tag }}" ]; then
+            echo "no_last=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            RANGE="${{ steps.last.outputs.last_tag }}..origin/$DEFAULT_BRANCH"
+            if git rev-list --count "$RANGE" | grep -q '^[1-9]'; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Respect previous status when no changes
+        if: steps.changes.outputs.has_changes == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "No changes since last nightly. Checking previous nightly run status..."
+          # Fetch the last completed run for this workflow on main
+          LAST_CONCLUSION=$(gh run list \
+            --workflow nightly.yml \
+            --branch main \
+            --status completed \
+            --limit 1 \
+            --json conclusion \
+            --jq '.[0].conclusion')
+          echo "Last nightly conclusion: ${LAST_CONCLUSION:-unknown}"
+          if [ "$LAST_CONCLUSION" = "failure" ]; then
+            echo "Previous nightly failed and there are no new changes. Failing this run to preserve status."
+            exit 1
+          fi
+          echo "Previous nightly succeeded (or unknown). Skipping build successfully."
+          exit 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          channel: 'stable'
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Compute nightly build metadata
+        id: meta
+        run: |
+          BRANCH="main"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +"%Y%m%d")
+          # Nightly tag rotates per day and latest commit
+          TAG="nightly-${DATE}-${SHORT_SHA}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "build_name=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Update version in pubspec.yaml (nightly)
+        run: |
+          VERSION="0.0.0-${{ steps.meta.outputs.build_name }}"
+          yq -i ".version = \"$VERSION\"" pubspec.yaml
+          echo "Updated pubspec.yaml to nightly version $VERSION"
+
+      - name: Build Nightly Artifacts
+        run: |
+          BUILD_NAME="${{ steps.meta.outputs.build_name }}"
+          flutter pub get
+          flutter build apk --release --build-name="$BUILD_NAME"
+          flutter build appbundle --release --build-name="$BUILD_NAME"
+          flutter build web --release --build-name="$BUILD_NAME"
+
+      - name: Package Nightly Assets
+        run: |
+          mkdir -p nightly_assets
+          cp build/app/outputs/flutter-apk/app-release.apk nightly_assets/app-nightly.apk
+          cp build/app/outputs/bundle/release/app-release.aab nightly_assets/app-nightly.aab
+          cp -r build/web nightly_assets/web_build
+          cd nightly_assets
+          zip -r web_build.zip web_build/
+          cd ..
+
+      - name: Create/Update rolling Nightly release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # Create or update a rolling release named "nightly" and tag "nightly"
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release delete nightly -y || true
+          fi
+          # Recreate the nightly release pointing to the default branch HEAD
+          git tag -f nightly
+          git push -f origin nightly
+          gh release create nightly \
+            --title "Nightly Build" \
+            --notes "Automated nightly build. Tag: ${{ steps.meta.outputs.tag }}" \
+            --prerelease \
+            --target main \
+            nightly_assets/app-nightly.apk \
+            nightly_assets/app-nightly.aab \
+            nightly_assets/web_build.zip
+
+      - name: Add immutable nightly tag for traceability
+        run: |
+          git tag -a "${{ steps.meta.outputs.tag }}" -m "Nightly build ${{ steps.meta.outputs.tag }}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Success message
+        run: echo "Nightly build ${{ steps.meta.outputs.tag }} published."
+
+
