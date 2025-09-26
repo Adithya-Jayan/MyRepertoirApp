@@ -119,6 +119,8 @@ jobs:
             gh release delete nightly -y || true
           fi
           # Recreate the nightly release pointing to the default branch HEAD
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git tag -f nightly
           git push -f origin nightly
           gh release create nightly \
@@ -132,6 +134,8 @@ jobs:
 
       - name: Add immutable nightly tag for traceability
         run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git tag -a "${{ steps.meta.outputs.tag }}" -m "Nightly build ${{ steps.meta.outputs.tag }}"
           git push origin "${{ steps.meta.outputs.tag }}"
 
