@@ -37,7 +37,8 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('About'), // Title of the About screen.
       ),
@@ -91,6 +92,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -155,7 +157,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Contributors'), // Title of the Contributors screen.
         actions: [
@@ -210,6 +213,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     );
                   },
                 ),
+    ),
     );
   }
 }

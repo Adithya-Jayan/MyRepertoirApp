@@ -120,7 +120,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                   notifier.pressedKeys.remove(event.logicalKey);
                 }
               },
-              child: Scaffold(
+              child: SafeArea(
+                child: Scaffold(
               appBar: LibraryAppBar(
                 isMultiSelectMode: notifier.isMultiSelectMode,
                 searchQuery: notifier.searchQuery,
@@ -210,7 +211,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       },
                       child: const Icon(Icons.add),
                     ),
-              ),
+                  ),
+                ),
             ),
           );
         },

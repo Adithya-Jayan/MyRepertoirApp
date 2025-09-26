@@ -120,24 +120,29 @@ jobs:
             VERSION_NAME="${VERSION_NAME}-${BRANCH_NAME}"
           fi
 
-          BUILD_NUMBER=""
+          # Determine the suffix for the version string (e.g., +1, +2)
+          VERSION_SUFFIX=""
+          # This will be the value passed to --build-number. It will be empty if no build number is needed.
+          BUILD_NUMBER_FOR_FLUTTER=""
+
+          # Check if the base tag (without +build_number) already exists
           if git tag --list "v${VERSION_NAME}" | grep -q "v${VERSION_NAME}"; then
+            # If the base tag exists, we need to find the next incremental build number
             LATEST_BUILD_TAG=$(git tag --list "v${VERSION_NAME}+*" --sort=-v:refname | head -n1)
             INCREMENTAL_BUILD_NUM=1
             if [ -n "$LATEST_BUILD_TAG" ]; then
+              # Extract the existing build number and increment it
               EXISTING_BUILD_NUM=$(echo "$LATEST_BUILD_TAG" | sed -E 's/.*\+([0-9]+)$/\1/')
               INCREMENTAL_BUILD_NUM=$((EXISTING_BUILD_NUM + 1))
             fi
-            BUILD_NUMBER="$INCREMENTAL_BUILD_NUM"
+            BUILD_NUMBER_FOR_FLUTTER="$INCREMENTAL_BUILD_NUM"
+            VERSION_SUFFIX="+"$INCREMENTAL_BUILD_NUM
           fi
 
-          FINAL_VERSION_STRING="$VERSION_NAME"
-          if [ -n "$BUILD_NUMBER" ]; then
-            FINAL_VERSION_STRING="${FINAL_VERSION_STRING}+${BUILD_NUMBER}"
-          fi
+          FINAL_VERSION_STRING="${VERSION_NAME}${VERSION_SUFFIX}"
 
           echo "final_version_string=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
-          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER_FOR_FLUTTER" >> $GITHUB_OUTPUT
 
       - name: Update version in pubspec.yaml
         run: |
@@ -147,9 +152,17 @@ jobs:
 
       - name: Build All Platforms
         run: |
-          flutter build apk --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
-          flutter build appbundle --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
-          flutter build web --release --build-name=${{ steps.final_version.outputs.final_version_string }} --build-number=${{ steps.final_version.outputs.build_number }}
+          BUILD_NAME="${{ steps.final_version.outputs.final_version_string }}"
+          BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
+
+          FLUTTER_BUILD_NUMBER_ARG=""
+          if [ -n "$BUILD_NUMBER" ]; then
+            FLUTTER_BUILD_NUMBER_ARG="--build-number=$BUILD_NUMBER"
+          fi
+
+          flutter build apk --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build appbundle --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
 
       - name: Create Release Assets
         run: |
@@ -175,66 +188,57 @@ jobs:
           git push origin ${{ github.ref_name }}
           git push origin "$TAG_NAME"
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        id: create_release
+      - name: Get Build Date
+        id: get_build_date
+        run: |
+          echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+      - name: Create Draft Release and Get Notes
+        id: create_draft_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v${{ steps.final_version.outputs.final_version_string }} \
+            --generate-notes \
+            --title "Release v${{ steps.final_version.outputs.final_version_string }}" \
+            --draft \
+            --prerelease=${{ github.event.inputs.prerelease }}
+          
+          NOTES=$(gh release view v${{ steps.final_version.outputs.final_version_string }} --json body --jq .body)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.final_version.outputs.final_version_string }}
-          release_name: Release v${{ steps.final_version.outputs.final_version_string }}
           body: |
-            ## Release v${{ steps.final_version.outputs.final_version_string }}
+            ${{ github.event.inputs.release_notes }}
+
+            <details>
+            <summary>Release Details</summary>
             
             **Release Type:** ${{ steps.version_calc.outputs.RELEASE_TYPE }}
             **Version Name:** ${{ steps.version_calc.outputs.VERSION_NAME }}
             **Build Number:** ${{ steps.final_version.outputs.build_number }}
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
-            **Changes:**
-            ${{ github.event.inputs.release_notes }}
-            
-            ### Assets
-            - Android APK
-            - Android App Bundle
-            - Web Build
-            
             ### Build Information
             - Flutter Version: 3.32.5
-            - Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+            - Build Date: ${{ steps.get_build_date.outputs.build_date }}
+            </details>
+
+            **Changes:**
+            ${{ steps.create_draft_release.outputs.notes }}
+          files: |
+            ./release_assets/app-release.apk
+            ./release_assets/app-release.aab
+            ./release_assets/web_build.zip
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
-          generate_release_notes: true
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_assets/app-release.apk
-          asset_name: app-release.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload App Bundle
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_assets/app-release.aab
-          asset_name: app-release.aab
-          asset_content_type: application/octet-stream
-
-      - name: Upload Web Build
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_assets/web_build.zip
-          asset_name: web_build.zip
-          asset_content_type: application/zip
 
       - name: Success Message
         run: |

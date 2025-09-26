@@ -7,7 +7,8 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Help & FAQ'), // Updated title for the Help screen.
       ),
@@ -85,6 +86,7 @@ class HelpScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

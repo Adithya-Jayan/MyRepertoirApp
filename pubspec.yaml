@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 3.0.0-prerelease.2
+version: 3.0.0
 environment:
   sdk: ^3.8.1
 # Dependencies specify other packages that your package needs in order to work.
@@ -33,18 +33,19 @@ dependencies:
   uuid: ^4.2.1 # For generating unique IDs
   http: ^1.1.0 # For making HTTP requests
   file_picker: ^10.2.0 # For picking files from local storage
-  syncfusion_flutter_pdfviewer: ^30.1.38 # Or another PDF viewer
+  syncfusion_flutter_pdfviewer: ^30.2.6 # Or another PDF viewer
   flutter_markdown: ^0.7.7+1 # For rendering markdown
   photo_view: ^0.15.0 # For zoomable images
   just_audio: ^0.10.4 # For audio playback
-  audio_service: ^0.18.12 # For background audio and media controls
-  just_audio_background: ^0.0.1-beta.11 # For simpler audio_service integration
+  just_audio_windows: ^0.2.0 # Added for Windows support
   video_player: ^2.8.1 # For video playback
   url_launcher: ^6.2.2 # For opening URLs
   shared_preferences: ^2.2.2 # For storing simple key-value pairs
   path: ^1.9.0 # For path manipulation
   flutter_speed_dial: ^7.0.0
   provider: ^6.0.5 # For state management
+  fftea: ^1.5.0+1 # For Fast Fourier Transform (FFT) and Short-Time Fourier Transform (STFT)
+  audio_waveforms: ^1.3.0 # For audio waveform visualization
   intl: ^0.19.0
   package_info_plus: ^8.0.0
   metadata_fetch: ^0.4.1

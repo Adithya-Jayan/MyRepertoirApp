@@ -4,6 +4,7 @@
 
 <!-- Build Status Badge -->
 [![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml)
+[![Nightly Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml)
 
 <!-- License Badge -->
 [![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
@@ -19,6 +20,8 @@ Repertoire is a cross-platform application designed for musicians, dancers, magi
 The app helps you keep your sheet music, notes, audio recordings, videos, links, and practice logs neatly organized for every piece in your collection.
 
 **[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
+
+**[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)**
 
 </div>
 

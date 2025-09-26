@@ -1,52 +1,129 @@
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Miscellaneous
+*.class
+*.lock
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+*.apk
+*.ap_
+*.aab
+*.keystore
+*.jks
 
-### IntelliJ IDEA ###
-.idea/
-*.iws
+# IntelliJ related
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+*.iws
+.idea/
 
-### Eclipse ###
-.apt_generated
+# Visual Studio Code related
 .classpath
-.factorypath
 .project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+.settings/
 .vscode/
 
-### Mac OS ###
-
+# Flutter/Dart/Pub related
+**/doc/api/
 .dart_tool/
-.DS_Store
-
-# Flutter/Dart specific
+.flutter-plugins
 .flutter-plugins-dependencies
-.metadata
+**/generated_plugin_registrant.dart
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
 pubspec.lock
-local.properties
-gradlew
-gradlew.bat
-android/local.properties
-android/gradlew
-android/gradlew.bat
+
+# Android related
+**/android/**/gradle-wrapper.jar
+.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+
+# iOS/XCode related
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile/
+**/ios/**/xcuserdata/
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# Windows
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+**/windows/runner/Debug/
+**/windows/runner/Release/
+**/windows/runner/Profile/
+**/windows/runner/ephemeral
+**/windows/runner/flutter_window.dll
+**/windows/runner/flutter_export.h
+**/windows/runner/flutter_messenger.h
+**/windows/runner/flutter_plugin_registrar.h
+**/windows/runner/flutter_windows.h
+**/windows/runner/runner_app.h
+**/windows/runner/utils.h
+**/windows/runner/win32_window.h
+**/windows/runner/window_configuration.h
+**/windows/runner/Generated.xcconfig
+**/windows/plugins/
+**/windows/CMakeLists.txt.user
+
+# Linux
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+**/linux/runner/Debug/
+**/linux/runner/Release/
+**/linux/runner/Profile/
+**/linux/runner/ephemeral
+**/linux/my_application.h
+**/linux/my_application.cc
+**/linux/main.cc
+**/linux/CMakeLists.txt.user
+
+# macOS
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral
+**/macos/Flutter/Flutter-Debug.xcconfig
+**/macos/Flutter/Flutter-Release.xcconfig
+**/macos/runner/Debug/
+**/macos/runner/Release/
+**/macos/runner/Profile/
+**/macos/Pods/
+**/macos/Runner/GeneratedPluginRegistrant.swift
+**/macos/Runner/Info.plist
+**/macos/Runner.xcworkspace
+**/macos/.symlinks
+**/macos/Runner.xcodeproj/project.xcworkspace
+**/macos/Runner.xcodeproj/xcuserdata
+.DS_Store

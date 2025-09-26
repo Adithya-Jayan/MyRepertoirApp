@@ -66,9 +66,8 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                       final item = _musicPiece.mediaItems[index];
                       return MediaDisplayWidget(
                         key: ValueKey(item.id),
-                        mediaItem: item,
-                        musicPieceTitle: _musicPiece.title,
-                        musicPieceArtist: _musicPiece.artistComposer,
+                        musicPiece: _musicPiece,
+                        mediaItemIndex: index,
                         isEditable: false,
                         trailing: ReorderableDragStartListener(
                           index: index,
@@ -97,9 +96,8 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                       final item = _musicPiece.mediaItems[index];
                       return MediaDisplayWidget(
                         key: ValueKey(item.id),
-                        mediaItem: item,
-                        musicPieceTitle: _musicPiece.title,
-                        musicPieceArtist: _musicPiece.artistComposer,
+                        musicPiece: _musicPiece,
+                        mediaItemIndex: index,
                         isEditable: false,
                       );
                     },

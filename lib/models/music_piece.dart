@@ -1,5 +1,6 @@
 import 'dart:convert'; // For JSON encoding and decoding
 import './media_item.dart'; // Import for MediaItem model
+import './bookmark.dart'; // Import for Bookmark model
 import './tag_group.dart'; // Import for TagGroup model
 import '../utils/path_utils.dart';
 
@@ -21,6 +22,7 @@ class MusicPiece {
   List<MediaItem> mediaItems; // List of associated media items (PDFs, audio, etc.)
   List<String> groupIds; // List of group IDs this music piece belongs to
   List<TagGroup> tagGroups; // List of TagGroup objects associated with the piece
+  List<Bookmark> bookmarks; // List of bookmarks for audio/video
   String? thumbnailPath; // Path to the thumbnail image for the piece (nullable)
 
   /// Constructor for the MusicPiece class.
@@ -38,6 +40,7 @@ class MusicPiece {
     this.mediaItems = const [],
     this.groupIds = const [],
     this.tagGroups = const [],
+    this.bookmarks = const [],
     this.thumbnailPath,
   });
 
@@ -59,6 +62,7 @@ class MusicPiece {
         'mediaItems': jsonEncode(mediaItems.map((item) => item.toJson()).toList()), // Encode list of MediaItem to JSON string
         'groupIds': jsonEncode(groupIds), // Encode list of strings to JSON string
         'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()), // Encode list of TagGroup to JSON string
+        'bookmarks': jsonEncode(bookmarks.map((e) => e.toJson()).toList()), // Encode list of Bookmark to JSON string
         'thumbnailPath': thumbnailPath,
       };
 
@@ -86,9 +90,12 @@ class MusicPiece {
                     MediaItem.fromJson(itemJson as Map<String, dynamic>)) // Decode JSON string to List<MediaItem>
                 .toList(),
         groupIds: List<String>.from(jsonDecode(json['groupIds'] ?? '[]')), // Decode JSON string to List<String>
-        tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
+                tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
             .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
             .toList(), // Decode JSON string to List<TagGroup>
+        bookmarks: (jsonDecode(json['bookmarks'] ?? '[]') as List<dynamic>)
+            .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
+            .toList(), // Decode JSON string to List<Bookmark>
         thumbnailPath: json['thumbnailPath'],
       );
 
@@ -107,6 +114,7 @@ class MusicPiece {
         'mediaItems': jsonEncode(mediaItems.map((item) => item.toJsonForBackup(storagePath)).toList()),
         'groupIds': jsonEncode(groupIds),
         'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()),
+        'bookmarks': jsonEncode(bookmarks.map((e) => e.toJson()).toList()),
         'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
       };
 
@@ -134,6 +142,9 @@ class MusicPiece {
         tagGroups: (jsonDecode(json['tagGroups'] ?? '[]') as List<dynamic>)
             .map((e) => TagGroup.fromJson(e as Map<String, dynamic>))
             .toList(),
+        bookmarks: (jsonDecode(json['bookmarks'] ?? '[]') as List<dynamic>)
+            .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
+            .toList(),
         thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
       );
 
@@ -154,6 +165,7 @@ class MusicPiece {
     List<MediaItem>? mediaItems,
     List<String>? groupIds,
     List<TagGroup>? tagGroups,
+    List<Bookmark>? bookmarks,
     String? thumbnailPath,
   }) {
     return MusicPiece(
@@ -170,6 +182,7 @@ class MusicPiece {
       mediaItems: mediaItems ?? this.mediaItems,
       groupIds: groupIds ?? this.groupIds,
       tagGroups: tagGroups ?? this.tagGroups,
+      bookmarks: bookmarks ?? this.bookmarks,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
     );
   }
@@ -191,6 +204,7 @@ class MusicPiece {
     List<MediaItem>? mediaItems,
     List<String>? groupIds,
     List<TagGroup>? tagGroups,
+    List<Bookmark>? bookmarks,
     String? thumbnailPath,
   }) {
     return MusicPiece(
@@ -207,6 +221,7 @@ class MusicPiece {
       mediaItems: mediaItems ?? this.mediaItems,
       groupIds: groupIds ?? this.groupIds,
       tagGroups: tagGroups ?? this.tagGroups,
+      bookmarks: bookmarks ?? this.bookmarks,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
     );
   }

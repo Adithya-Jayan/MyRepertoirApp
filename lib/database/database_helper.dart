@@ -44,7 +44,7 @@ class DatabaseHelper {
     // Open the database.
     final db = await openDatabase(
       path,
-      version: 5, // Current database version
+      version: 6, // Current database version
       onCreate: (db, version) async {
         await DatabaseSchema.createTables(db, version);
         await DatabaseSchema.insertDummyData(db);

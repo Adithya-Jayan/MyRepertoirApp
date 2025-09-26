@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
+import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/services/thumbnail_service.dart';
 import 'package:repertoire/utils/app_logger.dart';
@@ -17,6 +18,7 @@ class MediaSection extends StatefulWidget {
   final Function(MediaItem) onUpdateMediaItem;
   final Function(MediaItem) onDeleteMediaItem;
   final Function(String) onSetThumbnail;
+  final MusicPiece musicPiece; // Added this
 
   const MediaSection({
     super.key,
@@ -27,6 +29,7 @@ class MediaSection extends StatefulWidget {
     required this.onUpdateMediaItem,
     required this.onDeleteMediaItem,
     required this.onSetThumbnail,
+    required this.musicPiece,
   });
 
   @override
@@ -61,6 +64,7 @@ class _MediaSectionState extends State<MediaSection> {
       return;
     }
 
+    AppLogger.log('MediaSection: Starting thumbnail fetch for URL: ${widget.item.pathOrUrl}');
     setState(() {
       _isLoadingThumbnail = true;
     });
@@ -69,16 +73,27 @@ class _MediaSectionState extends State<MediaSection> {
       await ThumbnailService.fetchAndSaveThumbnail(widget.item, widget.musicPieceId);
       final thumbnailPath = await ThumbnailService.getThumbnailPath(widget.item, widget.musicPieceId);
       
+      AppLogger.log('MediaSection: Thumbnail fetch completed, path: $thumbnailPath');
+      
       if (mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
         });
         
-        final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
+        // Defensive: ensure we never alter the media link URL when setting a thumbnail
+        final updatedItem = widget.item.copyWith(
+          thumbnailPath: thumbnailPath,
+          pathOrUrl: widget.item.pathOrUrl,
+        );
         widget.onUpdateMediaItem(updatedItem);
         
         AppLogger.log('Thumbnail fetched for media item: ${widget.item.title}');
+        
+        // Show success feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thumbnail fetched successfully!')),
+        );
       }
     } catch (e) {
       AppLogger.log('Error fetching thumbnail: $e');
@@ -168,7 +183,8 @@ class _MediaSectionState extends State<MediaSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MediaDisplayWidget(
-                    mediaItem: widget.item,
+                    musicPiece: widget.musicPiece,
+                    mediaItemIndex: widget.index,
                     onTitleChanged: (newTitle) {
                       widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
                     },

@@ -48,20 +48,20 @@ class MediaCleanupService {
       for (final mediaItem in piece.mediaItems) {
         if (mediaItem.pathOrUrl.isNotEmpty && 
             await _isFileInLocalStorage(mediaItem.pathOrUrl)) {
-          referencedFiles.add(mediaItem.pathOrUrl);
+          referencedFiles.add(p.normalize(mediaItem.pathOrUrl));
         }
         // Also check thumbnail paths
         if (mediaItem.thumbnailPath != null && 
             mediaItem.thumbnailPath!.isNotEmpty &&
             await _isFileInLocalStorage(mediaItem.thumbnailPath!)) {
-          referencedFiles.add(mediaItem.thumbnailPath!);
+          referencedFiles.add(p.normalize(mediaItem.thumbnailPath!));
         }
       }
       // Check piece thumbnail
       if (piece.thumbnailPath != null && 
           piece.thumbnailPath!.isNotEmpty &&
           await _isFileInLocalStorage(piece.thumbnailPath!)) {
-        referencedFiles.add(piece.thumbnailPath!);
+                  referencedFiles.add(p.normalize(piece.thumbnailPath!));
       }
     }
 
@@ -79,7 +79,7 @@ class MediaCleanupService {
       final fileSize = await file.length();
       totalSize += fileSize;
       
-      if (!referencedFiles.contains(file.path)) {
+      if (!referencedFiles.contains(p.normalize(file.path))) {
         final pieceId = p.basename(p.dirname(p.dirname(file.path)));
         final piece = pieceIdToPiece[pieceId];
         final fileType = p.basename(p.dirname(file.path));

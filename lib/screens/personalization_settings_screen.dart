@@ -69,7 +69,8 @@ class PersonalizationSettingsScreenState
     AppLogger.log('PersonalizationSettingsScreen: build called');
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Personalization'),
         leading: IconButton(
@@ -166,6 +167,7 @@ class PersonalizationSettingsScreenState
           ],
         ),
       ),
+    ),
     );
   }
 }

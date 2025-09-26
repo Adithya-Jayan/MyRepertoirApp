@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
+import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
@@ -9,18 +10,17 @@ import '../screens/audio_player_widget.dart';
 import 'dart:io';
 
 class MediaDisplayWidget extends StatefulWidget {
-  final MediaItem mediaItem;
-  final String? musicPieceTitle;
-  final String? musicPieceArtist;
+  final MusicPiece musicPiece;
+  final int mediaItemIndex;
+
   final Widget? trailing;
   final Function(String)? onTitleChanged;
   final bool isEditable;
 
   const MediaDisplayWidget({
     super.key,
-    required this.mediaItem,
-    this.musicPieceTitle,
-    this.musicPieceArtist,
+    required this.musicPiece,
+    required this.mediaItemIndex,
     this.trailing,
     this.onTitleChanged,
     this.isEditable = false,
@@ -39,7 +39,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   void initState() {
     super.initState();
-    _currentTitle = widget.mediaItem.title;
+    _currentTitle = widget.musicPiece.mediaItems[widget.mediaItemIndex].title;
     _titleController = TextEditingController(text: _currentTitle);
     _focusNode = FocusNode();
     
@@ -56,15 +56,18 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   void didUpdateWidget(MediaDisplayWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    final newMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    final oldMediaItem = oldWidget.musicPiece.mediaItems[oldWidget.mediaItemIndex];
     
     // Only update if we're not currently editing and the title actually changed
-    if (!_isEditingTitle && widget.mediaItem.title != _currentTitle) {
-      _currentTitle = widget.mediaItem.title;
+    if (!_isEditingTitle && newMediaItem.title != _currentTitle) {
+      _currentTitle = newMediaItem.title;
       _titleController.text = _currentTitle ?? '';
     }
     
     // Force rebuild if thumbnail path changed
-    if (oldWidget.mediaItem.thumbnailPath != widget.mediaItem.thumbnailPath) {
+    if (oldMediaItem.thumbnailPath != newMediaItem.thumbnailPath) {
       setState(() {});
     }
   }
@@ -84,7 +87,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     });
     
     // Only call the callback if the title actually changed
-    if (newTitle != widget.mediaItem.title) {
+    if (newTitle != widget.musicPiece.mediaItems[widget.mediaItemIndex].title) {
       widget.onTitleChanged?.call(newTitle);
     }
   }
@@ -109,18 +112,19 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
     Widget content;
 
-    switch (widget.mediaItem.type) {
+    switch (currentMediaItem.type) {
       case MediaType.markdown:
-        content = MarkdownBody(data: widget.mediaItem.pathOrUrl);
+        content = MarkdownBody(data: currentMediaItem.pathOrUrl);
         break;
       case MediaType.pdf:
         content = ElevatedButton(
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => PdfViewerScreen(pdfPath: widget.mediaItem.pathOrUrl),
+                builder: (context) => PdfViewerScreen(pdfPath: currentMediaItem.pathOrUrl),
               ),
             );
           },
@@ -132,14 +136,14 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => ImageViewerScreen(imagePath: widget.mediaItem.pathOrUrl),
+                builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
               ),
             );
           },
           child: SizedBox(
             height: 200,
             child: Image.file(
-              File(widget.mediaItem.pathOrUrl),
+              File(currentMediaItem.pathOrUrl),
               fit: BoxFit.contain, // Maintain aspect ratio within the bounds
             ),
           ),
@@ -149,7 +153,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         if (widget.isEditable) {
           // In edit mode, show a simple file status instead of full audio player
           content = FutureBuilder<bool>(
-            future: File(widget.mediaItem.pathOrUrl).exists(),
+            future: File(currentMediaItem.pathOrUrl).exists(),
             builder: (context, snapshot) {
               final fileExists = snapshot.data ?? false;
               return Container(
@@ -199,25 +203,24 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         } else {
           // In view mode, use the full audio player
           content = AudioPlayerWidget(
-            audioPath: widget.mediaItem.pathOrUrl,
-            title: widget.mediaItem.title ?? 'Unknown Title',
-            artist: widget.musicPieceArtist ?? 'Unknown Artist',
+            musicPiece: widget.musicPiece, // Pass the entire musicPiece
+            mediaItemIndex: widget.mediaItemIndex, // Pass the index
           );
         }
         break;
       case MediaType.mediaLink:
-        final Uri uri = Uri.parse(widget.mediaItem.pathOrUrl);
+        final Uri uri = Uri.parse(currentMediaItem.pathOrUrl);
         content = GestureDetector(
           onTap: () async {
             if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
               throw 'Could not launch $uri';
             }
           },
-          child: (widget.mediaItem.thumbnailPath != null && 
-                  widget.mediaItem.thumbnailPath!.isNotEmpty && 
-                  widget.mediaItem.thumbnailPath != '')
+          child: (currentMediaItem.thumbnailPath != null &&
+                  currentMediaItem.thumbnailPath!.isNotEmpty &&
+                  currentMediaItem.thumbnailPath != '')
               ? Image.file(
-                  File(widget.mediaItem.thumbnailPath!),
+                  File(currentMediaItem.thumbnailPath!),
                   height: 200,
                   fit: BoxFit.contain,
                 )
@@ -272,13 +275,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                                 child: Text(
-                                  _currentTitle ?? widget.mediaItem.type.name,
+                                  _currentTitle ?? currentMediaItem.type.name,
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ),
                             )
                           : Text(
-                              _currentTitle ?? widget.mediaItem.type.name,
+                              _currentTitle ?? currentMediaItem.type.name,
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             )),
                   const SizedBox(height: 8.0),
