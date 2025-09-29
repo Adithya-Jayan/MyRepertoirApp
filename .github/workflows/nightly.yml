@@ -41,8 +41,8 @@ jobs:
             fi
           fi
 
-      - name: Respect previous status when no changes
-        if: steps.changes.outputs.has_changes == 'false'
+      - name: Respect previous status when no changes (scheduled runs only)
+        if: steps.changes.outputs.has_changes == 'false' && github.event_name == 'schedule'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
