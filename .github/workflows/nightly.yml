@@ -120,6 +120,8 @@ jobs:
             gh release delete nightly -y || true
           fi
           # Recreate the nightly release pointing to the default branch HEAD
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git tag -f nightly
           git push -f origin nightly
           gh release create nightly \
@@ -137,6 +139,8 @@ jobs:
           if git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
             echo "Immutable nightly tag ${TAG_NAME} already exists. Skipping creation."
           else
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
             git tag -a "${TAG_NAME}" -m "Nightly build ${TAG_NAME}"
             git push origin "${TAG_NAME}"
           fi
