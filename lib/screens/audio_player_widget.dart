@@ -431,6 +431,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   // Bookmark Management Methods
   Future<void> _addBookmark() async {
+    // Guard: ensure audio is loaded before adding a bookmark
+    if (!_isInitialized || _player.player.duration == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio not loaded yet. Please wait.')),
+        );
+      }
+    	return;
+    }
     final currentPosition = _player.player.position; // Use new player's position
     final newBookmark = Bookmark(
       id: _uuid.v4(),
