@@ -343,7 +343,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: ElevatedButton.icon(
-            onPressed: _player.player.playing ? _addBookmark : null, // Check if player is playing
+            onPressed: _addBookmark,
             icon: const Icon(Icons.bookmark_add),
             label: const Text('Add Bookmark'),
           ),
