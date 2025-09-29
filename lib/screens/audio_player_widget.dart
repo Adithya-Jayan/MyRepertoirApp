@@ -403,6 +403,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     title: Text(bookmark.name),
                     subtitle: Text(_formatDuration(bookmark.timestamp)),
                     onTap: () => _seekToBookmark(bookmark.timestamp),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      tooltip: 'Delete bookmark',
+                      onPressed: () {
+                        _removeBookmark(bookmark.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${bookmark.name} deleted')),
+                        );
+                      },
+                    ),
                   ),
                 ),
               );
