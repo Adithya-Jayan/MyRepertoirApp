@@ -57,8 +57,10 @@ class MediaItem {
   Map<String, dynamic> toJsonForBackup(String storagePath) => {
         'id': id,
         'type': type.name,
-        // Do not convert URLs for media links; only relativize local file paths
-        'pathOrUrl': type == MediaType.mediaLink ? pathOrUrl : getRelativePath(pathOrUrl, storagePath),
+        // Only relativize local file paths. Leave external links and inline content (e.g., markdown) untouched
+        'pathOrUrl': (type == MediaType.mediaLink || type == MediaType.markdown)
+            ? pathOrUrl
+            : getRelativePath(pathOrUrl, storagePath),
         'title': title,
         'description': description,
         'googleDriveFileId': googleDriveFileId,
@@ -70,10 +72,14 @@ class MediaItem {
   factory MediaItem.fromJsonForBackup(Map<String, dynamic> json, String storagePath) => MediaItem(
         id: json['id'],
         type: MediaType.values.firstWhere((e) => e.name == json['type']),
-        // Leave media links untouched; absolutize only local file paths
-        pathOrUrl: MediaType.values.firstWhere((e) => e.name == json['type']) == MediaType.mediaLink
-            ? json['pathOrUrl']
-            : getAbsolutePath(json['pathOrUrl'], storagePath),
+        // Leave media links and markdown content untouched; absolutize only local file paths
+        pathOrUrl: (() {
+          final mediaType = MediaType.values.firstWhere((e) => e.name == json['type']);
+          if (mediaType == MediaType.mediaLink || mediaType == MediaType.markdown) {
+            return json['pathOrUrl'];
+          }
+          return getAbsolutePath(json['pathOrUrl'], storagePath);
+        })(),
         title: json['title'],
         description: json['description'],
         googleDriveFileId: json['googleDriveFileId'],
