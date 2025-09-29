@@ -343,7 +343,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: ElevatedButton.icon(
-            onPressed: _player.player.playing ? _addBookmark : null, // Check if player is playing
+            onPressed: _addBookmark,
             icon: const Icon(Icons.bookmark_add),
             label: const Text('Add Bookmark'),
           ),
@@ -403,6 +403,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     title: Text(bookmark.name),
                     subtitle: Text(_formatDuration(bookmark.timestamp)),
                     onTap: () => _seekToBookmark(bookmark.timestamp),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      tooltip: 'Delete bookmark',
+                      onPressed: () {
+                        _removeBookmark(bookmark.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${bookmark.name} deleted')),
+                        );
+                      },
+                    ),
                   ),
                 ),
               );
@@ -421,6 +431,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   // Bookmark Management Methods
   Future<void> _addBookmark() async {
+    // Guard: ensure audio is loaded before adding a bookmark
+    if (!_isInitialized || _player.player.duration == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio not loaded yet. Please wait.')),
+        );
+      }
+    	return;
+    }
     final currentPosition = _player.player.position; // Use new player's position
     final newBookmark = Bookmark(
       id: _uuid.v4(),
