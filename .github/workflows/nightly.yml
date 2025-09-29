@@ -80,8 +80,9 @@ jobs:
           BRANCH="main"
           SHORT_SHA=$(git rev-parse --short HEAD)
           DATE=$(date -u +"%Y%m%d")
-          # Nightly tag rotates per day and latest commit
-          TAG="nightly-${DATE}-${SHORT_SHA}"
+          RUN_NUMBER=${GITHUB_RUN_NUMBER}
+          # Nightly tag is unique per run to avoid collisions between manual and scheduled runs
+          TAG="nightly-${DATE}-${SHORT_SHA}-r${RUN_NUMBER}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "build_name=$TAG" >> $GITHUB_OUTPUT
 
@@ -132,8 +133,13 @@ jobs:
 
       - name: Add immutable nightly tag for traceability
         run: |
-          git tag -a "${{ steps.meta.outputs.tag }}" -m "Nightly build ${{ steps.meta.outputs.tag }}"
-          git push origin "${{ steps.meta.outputs.tag }}"
+          TAG_NAME="${{ steps.meta.outputs.tag }}"
+          if git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Immutable nightly tag ${TAG_NAME} already exists. Skipping creation."
+          else
+            git tag -a "${TAG_NAME}" -m "Nightly build ${TAG_NAME}"
+            git push origin "${TAG_NAME}"
+          fi
 
       - name: Success message
         run: echo "Nightly build ${{ steps.meta.outputs.tag }} published."
