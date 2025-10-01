@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import '../database/music_piece_repository.dart';
 import '../models/music_piece.dart';
 import '../utils/app_logger.dart';
+import '../utils/path_utils.dart';
 
 /// Service for cleaning up unused media files in the app's storage.
 ///
@@ -46,26 +47,35 @@ class MediaCleanupService {
     // Collect all referenced media file paths
     for (final piece in musicPieces) {
       for (final mediaItem in piece.mediaItems) {
-        if (mediaItem.pathOrUrl.isNotEmpty && 
-            await _isFileInLocalStorage(mediaItem.pathOrUrl)) {
-          referencedFiles.add(p.normalize(mediaItem.pathOrUrl));
+        if (mediaItem.pathOrUrl.isNotEmpty) {
+          final absolutePath = getAbsolutePath(mediaItem.pathOrUrl, mediaDir);
+          if (await File(absolutePath).exists()) {
+            referencedFiles.add(p.normalize(absolutePath));
+          }
         }
         // Also check thumbnail paths
-        if (mediaItem.thumbnailPath != null && 
-            mediaItem.thumbnailPath!.isNotEmpty &&
-            await _isFileInLocalStorage(mediaItem.thumbnailPath!)) {
-          referencedFiles.add(p.normalize(mediaItem.thumbnailPath!));
+        if (mediaItem.thumbnailPath != null &&
+            mediaItem.thumbnailPath!.isNotEmpty) {
+            final absolutePath = getAbsolutePath(mediaItem.thumbnailPath!, mediaDir);
+            if (await File(absolutePath).exists()) {
+              referencedFiles.add(p.normalize(absolutePath));
+            }
         }
       }
       // Check piece thumbnail
-      if (piece.thumbnailPath != null && 
-          piece.thumbnailPath!.isNotEmpty &&
-          await _isFileInLocalStorage(piece.thumbnailPath!)) {
-                  referencedFiles.add(p.normalize(piece.thumbnailPath!));
+      if (piece.thumbnailPath != null &&
+          piece.thumbnailPath!.isNotEmpty) {
+          final absolutePath = getAbsolutePath(piece.thumbnailPath!, mediaDir);
+          if (await File(absolutePath).exists()) {
+            referencedFiles.add(p.normalize(absolutePath));
+          }
       }
     }
 
     AppLogger.log('Found ${referencedFiles.length} referenced media files');
+    for (final file in referencedFiles) {
+      AppLogger.log('  - $file');
+    }
 
     // Scan all files in media directory
     final List<File> allFiles = [];
@@ -176,11 +186,6 @@ class MediaCleanupService {
     }
   }
 
-  /// Checks if a file is within the app's local storage
-  Future<bool> _isFileInLocalStorage(String filePath) async {
-    final mediaDir = await _mediaDirectoryPath;
-    return filePath.startsWith(mediaDir);
-  }
 
   /// Removes empty directories after file cleanup
   Future<void> _cleanupEmptyDirectories() async {
