@@ -144,6 +144,16 @@ jobs:
           yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
 
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storeFile=my-release-key.jks" > android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+
       - name: Build All Platforms
         run: |
           BUILD_NAME="${{ steps.final_version.outputs.final_version_string }}"
