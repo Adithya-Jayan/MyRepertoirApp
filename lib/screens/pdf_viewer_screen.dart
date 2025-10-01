@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'dart:io';
+import 'package:pdfrx/pdfrx.dart';
 
 /// A screen for viewing PDF documents.
 ///
-/// This screen utilizes the `syncfusion_flutter_pdfviewer` package to display
+/// This screen utilizes the `pdfrx` package to display
 /// PDF files from a given local path.
 class PdfViewerScreen extends StatelessWidget {
   final String pdfPath; // The local file path of the PDF document to display.
@@ -17,7 +16,7 @@ class PdfViewerScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('PDF Viewer'), // Title of the PDF viewer screen.
       ),
-      body: SfPdfViewer.file(File(pdfPath)), // Display the PDF from the file path.
+      body: PdfView.file(pdfPath), // Display the PDF from the file path.
     );
   }
 }
