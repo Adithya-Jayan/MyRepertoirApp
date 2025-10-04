@@ -93,11 +93,11 @@ jobs:
           echo "Updated pubspec.yaml to nightly version $VERSION"
 
       - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
 
       - name: Create key.properties
         run: |
-          echo "storeFile=app/my-release-key.jks" > android/key.properties
+          echo "storeFile=my-release-key.jks" > android/key.properties
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
