@@ -16,7 +16,7 @@ class PdfViewerScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('PDF Viewer'), // Title of the PDF viewer screen.
       ),
-      body: PdfView.file(pdfPath), // Display the PDF from the file path.
+      body: PdfViewer.file(pdfPath), // Display the PDF from the file path.
     );
   }
 }
