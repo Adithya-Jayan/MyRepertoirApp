@@ -81,15 +81,34 @@ class MusicPieceCard extends StatelessWidget {
                       if (piece.enablePracticeTracking)
                         Align(
                           alignment: Alignment.topRight,
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            margin: const EdgeInsets.only(bottom: 4.0),
-                            decoration: BoxDecoration(
-                              color: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 1.5),
-                            ),
+                          child: FutureBuilder<Color>(
+                            future: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                                return Container(
+                                  width: 12,
+                                  height: 12,
+                                  margin: const EdgeInsets.only(bottom: 4.0),
+                                  decoration: BoxDecoration(
+                                    color: snapshot.data,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                );
+                              } else {
+                                // Placeholder while loading
+                                return Container(
+                                  width: 12,
+                                  height: 12,
+                                  margin: const EdgeInsets.only(bottom: 4.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                       SingleChildScrollView(

@@ -1,75 +1,54 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Utility class for calculating practice indicator colors based on practice recency.
-///
-/// Uses a logarithmic scale where:
-/// - Green: Less than 48 hours (2 days)
-/// - Yellow to Red: 48 hours to 32 days (logarithmic transition)
-/// - Black: More than 32 days or never practiced
 class PracticeIndicatorUtils {
-  /// The threshold for green color (48 hours = 2 days)
-  static const int greenThresholdHours = 48;
-  
-  /// The threshold for black color (32 days)
-  static const int blackThresholdDays = 32;
-  
-  /// Calculates the color for the practice indicator based on last practice time.
-  ///
-  /// Returns:
-  /// - [Colors.green] if practiced within 48 hours
-  /// - A color between yellow and red for 48 hours to 32 days (logarithmic)
-  /// - [Colors.black] if more than 32 days or never practiced
-  static Color getPracticeIndicatorColor(DateTime? lastPracticeTime) {
+  static Future<Color> getPracticeIndicatorColor(DateTime? lastPracticeTime) async {
+    final prefs = await SharedPreferences.getInstance();
+    final greenPeriod = prefs.getInt('greenPeriod') ?? 7;
+    final greenToYellowTransition = prefs.getInt('greenToYellowTransition') ?? 7;
+    final yellowToRedTransition = prefs.getInt('yellowToRedTransition') ?? 16;
+    final redToBlackTransition = prefs.getInt('redToBlackTransition') ?? 30;
+
     if (lastPracticeTime == null) {
       return Colors.black;
     }
-    
+
     final now = DateTime.now();
     final difference = now.difference(lastPracticeTime);
-    final hoursSincePractice = difference.inHours;
     final daysSincePractice = difference.inDays;
-    
-    // Green if practiced within 48 hours
-    if (hoursSincePractice < greenThresholdHours) {
+
+    final greenEnd = greenPeriod;
+    final yellowEnd = greenEnd + greenToYellowTransition;
+    final redEnd = yellowEnd + yellowToRedTransition;
+    final blackEnd = redEnd + redToBlackTransition;
+
+    if (daysSincePractice <= greenEnd) {
       return Colors.green;
-    }
-    
-    // Black if more than 32 days
-    if (daysSincePractice > blackThresholdDays) {
+    } else if (daysSincePractice <= yellowEnd) {
+      return _calculateColor(
+          daysSincePractice, greenEnd, yellowEnd, Colors.green, Colors.yellow);
+    } else if (daysSincePractice <= redEnd) {
+      return _calculateColor(
+          daysSincePractice, yellowEnd, redEnd, Colors.yellow, Colors.red);
+    } else if (daysSincePractice <= blackEnd) {
+      return _calculateColor(
+          daysSincePractice, redEnd, blackEnd, Colors.red, Colors.black);
+    } else {
       return Colors.black;
     }
-    
-    // Simple discrete color ranges for better predictability
-    return _calculateLogarithmicColor(hoursSincePractice);
   }
-  
-  /// Calculates a color using a simpler, more predictable scale.
-  ///
-  /// Uses discrete ranges for better visual feedback:
-  /// - 48-72 hours: Light yellow
-  /// - 3-7 days: Yellow
-  /// - 8-14 days: Orange
-  /// - 15-31 days: Red
-  static Color _calculateLogarithmicColor(int hoursSincePractice) {
-    // Smooth gradient: green (48h) -> yellow (192h) -> red (336h)
-    const int minHours = 48;
-    const int midHours = 192; // 8 days
-    const int maxHours = 336; // 14 days
-    if (hoursSincePractice <= minHours) return Colors.green;
-    if (hoursSincePractice >= maxHours) return Colors.red;
 
-    if (hoursSincePractice <= midHours) {
-      // Green to yellow
-      double t = (hoursSincePractice - minHours) / (midHours - minHours);
-      return Color.lerp(Colors.green, Colors.yellow, t)!;
-    } else {
-      // Yellow to red
-      double t = (hoursSincePractice - midHours) / (maxHours - midHours);
-      return Color.lerp(Colors.yellow, Colors.red, t)!;
+  static Color _calculateColor(int days, int periodStart, int periodEnd, Color startColor, Color endColor) {
+    // Ensure we don't divide by zero
+    if (periodEnd - periodStart <= 0) {
+        return endColor;
     }
+    // Calculate the progress within the current transition period
+    double t = (days - periodStart) / (periodEnd - periodStart);
+    t = t.clamp(0.0, 1.0); // Ensure t is within the valid range
+    return Color.lerp(startColor, endColor, t)!;
   }
-  
+
   /// Gets a human-readable description of the practice status.
   ///
   /// Returns strings like "Recently practiced", "Needs attention", etc.
@@ -83,13 +62,13 @@ class PracticeIndicatorUtils {
     final hoursSincePractice = difference.inHours;
     final daysSincePractice = difference.inDays;
     
-    if (hoursSincePractice < greenThresholdHours) {
+    if (hoursSincePractice < 48) {
       return "Recently practiced";
     } else if (daysSincePractice <= 7) {
       return "Practiced this week";
     } else if (daysSincePractice <= 14) {
       return "Practiced recently";
-    } else if (daysSincePractice <= blackThresholdDays) {
+    } else if (daysSincePractice <= 32) {
       return "Needs attention";
     } else {
       return "Long overdue";
@@ -118,5 +97,4 @@ class PracticeIndicatorUtils {
       return 'Last practiced: ${lastPracticeTime.toLocal().toString().split(' ')[0]}';
     }
   }
-
 } 

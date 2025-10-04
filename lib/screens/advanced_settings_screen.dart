@@ -21,7 +21,6 @@ class AdvancedSettingsScreen extends StatefulWidget {
 
 class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
   bool _debugLogsEnabled = false;
-  bool _showPracticeTimeStats = false;
   bool _isScanning = false;
   bool _isCleaning = false;
   MediaCleanupInfo? _cleanupInfo;
@@ -30,23 +29,8 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
   void initState() {
     super.initState();
     _debugLogsEnabled = AppLogger.debugLogsEnabled;
-    _loadSettings();
   }
 
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
-    });
-  }
-
-  Future<void> _savePracticeTimeStatsSetting(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('show_practice_time_stats', value);
-    setState(() {
-      _showPracticeTimeStats = value;
-    });
-  }
 
   Future<void> _scanForUnusedMedia() async {
     setState(() {
@@ -368,12 +352,6 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
               ),
             ),
           ],
-          SwitchListTile(
-            title: const Text('Show Practice Time Statistics'),
-            subtitle: const Text('Display duration and time-based statistics in practice logs'),
-            value: _showPracticeTimeStats,
-            onChanged: _savePracticeTimeStatsSetting,
-          ),
           const Divider(),
           ListTile(
             title: const Text('Purge Unused Media'),

@@ -7,6 +7,7 @@ import 'package:repertoire/screens/backup_restore_screen.dart';
 import 'package:repertoire/screens/advanced_settings_screen.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/screens/functionality_settings_screen.dart';
 import 'package:repertoire/screens/personalization_settings_screen.dart';
 
 /// A screen that displays various settings options for the application.
@@ -79,7 +80,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
           ),
-          
+          ListTile(
+            leading: const Icon(Icons.tune),
+            title: const Text('Functionality'),
+            onTap: () {
+              AppLogger.log('Navigating to Functionality Settings screen.');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
+              );
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.backup),
             title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
