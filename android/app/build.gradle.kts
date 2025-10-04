@@ -48,7 +48,7 @@ android {
     signingConfigs {
         create("release") {
             val keyProperties = Properties()
-            val keyPropertiesFile = rootProject.file("android/key.properties")
+            val keyPropertiesFile = rootProject.file("key.properties")
             if (keyPropertiesFile.exists()) {
                 keyProperties.load(FileInputStream(keyPropertiesFile))
                 keyAlias = keyProperties["keyAlias"] as String
