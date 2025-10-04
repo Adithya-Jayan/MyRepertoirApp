@@ -229,6 +229,16 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Create F-Droid Changelog
+        run: |
+          VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE=1
+          fi
+          NOTES="${{ steps.create_draft_release.outputs.notes }}"
+          mkdir -p Repertoire/fastlane/metadata/android/en-US/changelogs
+          echo "$NOTES" > "Repertoire/fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+
       - name: Delete Draft Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
