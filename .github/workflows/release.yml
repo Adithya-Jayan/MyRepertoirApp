@@ -164,8 +164,8 @@ jobs:
             FLUTTER_BUILD_NUMBER_ARG="--build-number=$BUILD_NUMBER"
           fi
 
-          flutter build apk --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
-          flutter build appbundle --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
           flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
 
       - name: Create Release Assets
