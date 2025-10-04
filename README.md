@@ -27,8 +27,8 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links,
 
 ## Quick Start
 
-- **Just want to use the app?** [Download the latest release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest) (Just follow the link, and download the .apk file at the bottom of the page!) and run it on your platform. No setup required for end users!
-- If you want to contribute or build from source, see the [Contributing](#contributing) section below.
+- **Just want to use the app on Android?** Follow our **[Step-by-Step Installation Guide](INSTALL.md)**.
+- **Want to contribute or build from source?** See the [Contributing](#contributing) section below.
 
 ## Screenshots 
 
