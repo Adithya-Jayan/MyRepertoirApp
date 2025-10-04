@@ -96,14 +96,8 @@ jobs:
             NEW_VERSION_NAME="$BASE_VERSION-prerelease.$PRERELEASE_NUM"
           else
             # Official release logic
-            # If the latest tag is a prerelease for this version, strip the suffix
-            if [[ "$LATEST_PRERELEASE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-prerelease\.[0-9]+$ ]]; then
-              BASE_VERSION="${BASH_REMATCH[1]}"
-              NEW_VERSION_NAME="$BASE_VERSION"
-            else
-              # Otherwise, bump from latest official
-              NEW_VERSION_NAME=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
-            fi
+            # Bump from latest official
+            NEW_VERSION_NAME=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
           fi
           
           echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
@@ -149,6 +143,16 @@ jobs:
           FINAL_VERSION_STRING="${{ steps.final_version.outputs.final_version_string }}"
           yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storeFile=my-release-key.jks" > android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
 
       - name: Build All Platforms
         run: |
