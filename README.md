@@ -104,7 +104,7 @@ lib/
 ├── database/     # Database helper and schema
 ├── models/       # Core data models (MusicPiece, MediaItem, etc.)
 ├── screens/      # UI for each screen of the app
-├── services/     # Business logic for services (e.g., Google Drive sync)
+├── services/     # Business logic for services
 ├── utils/        # Utility functions and constants
 ├── widgets/      # Reusable custom widgets
 └── main.dart     # App entry point
@@ -114,7 +114,6 @@ lib/
 
 - **Flutter** (Dart)
 - **SQLite** (local storage)
-- **Google Drive** (optional sync)
 - **just_audio**, **video_player** (media playback)
 - **Provider** (state management)
 - **Other major libraries**: `file_picker`, `share_plus`, `url_launcher`, etc.

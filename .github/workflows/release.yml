@@ -164,8 +164,8 @@ jobs:
             FLUTTER_BUILD_NUMBER_ARG="--build-number=$BUILD_NUMBER"
           fi
 
-          flutter build apk --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
-          flutter build appbundle --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
           flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
 
       - name: Create Release Assets
@@ -177,6 +177,13 @@ jobs:
           
           cd release_assets
           zip -r web_build.zip web_build/
+          cd ..
+
+      - name: Generate Checksums
+        run: |
+          cd release_assets
+          sha256sum app-release.apk > app-release.apk.sha256
+          sha256sum app-release.aab > app-release.aab.sha256
           cd ..
 
       - name: Create Git Tag and Push Changes
@@ -248,6 +255,8 @@ jobs:
             ./release_assets/app-release.apk
             ./release_assets/app-release.aab
             ./release_assets/web_build.zip
+            ./release_assets/app-release.apk.sha256
+            ./release_assets/app-release.aab.sha256
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
 

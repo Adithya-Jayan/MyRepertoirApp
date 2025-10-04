@@ -64,6 +64,14 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+
+    flavorDimensions += "app"
+    productFlavors {
+        create("fdroid") {
+            dimension = "app"
+            applicationIdSuffix = ".fdroid"
+        }
+    }
 }
 
 flutter {
