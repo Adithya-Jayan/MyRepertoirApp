@@ -204,6 +204,7 @@ jobs:
         run: |
           gh release create v${{ steps.final_version.outputs.final_version_string }} \
             --generate-notes \
+            --notes-start-tag v${{ steps.version_calc.outputs.CURRENT_VERSION }} \
             --title "Release v${{ steps.final_version.outputs.final_version_string }}" \
             --draft \
             --prerelease=${{ github.event.inputs.prerelease }}
@@ -212,6 +213,12 @@ jobs:
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Delete Draft Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete v${{ steps.final_version.outputs.final_version_string }} --yes
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
