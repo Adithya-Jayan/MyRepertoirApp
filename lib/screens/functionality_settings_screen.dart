@@ -20,6 +20,7 @@ class _FunctionalitySettingsScreenState
       TextEditingController();
   final TextEditingController _redToBlackController =
       TextEditingController();
+  bool _showPracticeTimeStats = false;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _FunctionalitySettingsScreenState
           (prefs.getInt('yellowToRedTransition') ?? 16).toString();
       _redToBlackController.text =
           (prefs.getInt('redToBlackTransition') ?? 30).toString();
+      _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
     });
   }
 
@@ -51,6 +53,7 @@ class _FunctionalitySettingsScreenState
         'yellowToRedTransition', int.parse(_yellowToRedController.text));
     await prefs.setInt(
         'redToBlackTransition', int.parse(_redToBlackController.text));
+    await prefs.setBool('show_practice_time_stats', _showPracticeTimeStats);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Settings saved.')),
@@ -110,6 +113,18 @@ class _FunctionalitySettingsScreenState
                   labelText: 'Red to black transition (days)',
                 ),
                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              SwitchListTile(
+                title: const Text('Show Practice Time Statistics'),
+                subtitle: const Text('Display duration and time-based statistics in practice logs'),
+                value: _showPracticeTimeStats,
+                onChanged: (bool value) {
+                  setState(() {
+                    _showPracticeTimeStats = value;
+                  });
+                },
               ),
               const SizedBox(height: 24),
               ElevatedButton(
