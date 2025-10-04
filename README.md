@@ -36,8 +36,7 @@ The app helps you keep your sheet music, notes, audio recordings, videos, links,
 
 ### Light and Dark Modes
 <p align="center">
-  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814206.jpg?raw=true" width="300" alt="Light mode interface"/>
-  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814201.jpg?raw=true" width="300" alt="Dark mode interface"/>
+  TODO: Update image here.
 </p>
 
 ### Gallery View
