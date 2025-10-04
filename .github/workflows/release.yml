@@ -149,10 +149,13 @@ jobs:
 
       - name: Create key.properties
         run: |
-          echo "storeFile=my-release-key.jks" > android/key.properties
+          echo "storeFile=app/my-release-key.jks" > android/key.properties
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+
+      - name: Install dependencies
+        run: flutter pub get
 
       - name: Build All Platforms
         run: |
@@ -168,11 +171,16 @@ jobs:
           flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
           flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
 
+      - name: Verify APK Signature
+        run: |
+          APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
+          $APKSIGNER_PATH verify --print-certs build/app/outputs/flutter-apk/app-fdroid-release.apk
+
       - name: Create Release Assets
         run: |
           mkdir -p release_assets
-          cp build/app/outputs/flutter-apk/app-release.apk release_assets/
-          cp build/app/outputs/bundle/release/app-release.aab release_assets/
+          cp build/app/outputs/flutter-apk/app-fdroid-release.apk release_assets/
+          cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab release_assets/
           cp -r build/web release_assets/web_build
           
           cd release_assets
@@ -182,8 +190,8 @@ jobs:
       - name: Generate Checksums
         run: |
           cd release_assets
-          sha256sum app-release.apk > app-release.apk.sha256
-          sha256sum app-release.aab > app-release.aab.sha256
+          sha256sum app-fdroid-release.apk > app-fdroid-release.apk.sha256
+          sha256sum app-fdroid-release.aab > app-fdroid-release.aab.sha256
           cd ..
 
       - name: Create Git Tag and Push Changes
@@ -252,11 +260,11 @@ jobs:
             **Changes:**
             ${{ steps.create_draft_release.outputs.notes }}
           files: |
-            ./release_assets/app-release.apk
-            ./release_assets/app-release.aab
+            ./release_assets/app-fdroid-release.apk
+            ./release_assets/app-fdroid-release.aab
             ./release_assets/web_build.zip
-            ./release_assets/app-release.apk.sha256
-            ./release_assets/app-release.aab.sha256
+            ./release_assets/app-fdroid-release.apk.sha256
+            ./release_assets/app-fdroid-release.aab.sha256
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
 
