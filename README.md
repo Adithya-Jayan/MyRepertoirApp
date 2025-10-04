@@ -14,21 +14,18 @@
 </a>
 
 # Repertoire: Music Practice & Sheet Music Organizer
+**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**  |  **[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)**
 
 Repertoire is a cross-platform application designed for musicians, dancers, magicians, or performers to help manage their repertoire (musical pieces, dance routines, or even magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
 
 The app helps you keep your sheet music, notes, audio recordings, videos, links, and practice logs neatly organized for every piece in your collection.
 
-**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
-
-**[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)**
-
 </div>
 
 ## Quick Start
 
-- **Just want to use the app?** [Download the latest release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest) (Just follow the link, and download the .apk file at the bottom of the page!) and run it on your platform. No setup required for end users!
-- If you want to contribute or build from source, see the [Contributing](#contributing) section below.
+- **Just want to use the app on Android?** Follow our **[Step-by-Step Installation Guide](INSTALL.md)**.
+- **Want to contribute or build from source?** See the [Contributing](#contributing) section below.
 
 ## Screenshots 
 
@@ -104,7 +101,7 @@ lib/
 ├── database/     # Database helper and schema
 ├── models/       # Core data models (MusicPiece, MediaItem, etc.)
 ├── screens/      # UI for each screen of the app
-├── services/     # Business logic for services (e.g., Google Drive sync)
+├── services/     # Business logic for services
 ├── utils/        # Utility functions and constants
 ├── widgets/      # Reusable custom widgets
 └── main.dart     # App entry point
@@ -114,7 +111,6 @@ lib/
 
 - **Flutter** (Dart)
 - **SQLite** (local storage)
-- **Google Drive** (optional sync)
 - **just_audio**, **video_player** (media playback)
 - **Provider** (state management)
 - **Other major libraries**: `file_picker`, `share_plus`, `url_launcher`, etc.

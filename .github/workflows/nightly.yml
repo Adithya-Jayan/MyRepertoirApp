@@ -106,8 +106,8 @@ jobs:
         run: |
           BUILD_NAME="${{ steps.meta.outputs.build_name }}"
           flutter pub get
-          flutter build apk --release --build-name="$BUILD_NAME"
-          flutter build appbundle --release --build-name="$BUILD_NAME"
+          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME"
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME"
           flutter build web --release --build-name="$BUILD_NAME"
 
       - name: Package Nightly Assets
@@ -118,6 +118,13 @@ jobs:
           cp -r build/web nightly_assets/web_build
           cd nightly_assets
           zip -r web_build.zip web_build/
+          cd ..
+
+      - name: Generate Nightly Checksums
+        run: |
+          cd nightly_assets
+          sha256sum app-nightly.apk > app-nightly.apk.sha256
+          sha256sum app-nightly.aab > app-nightly.aab.sha256
           cd ..
 
       - name: Create/Update rolling Nightly release
@@ -141,7 +148,9 @@ jobs:
             --target main \
             nightly_assets/app-nightly.apk \
             nightly_assets/app-nightly.aab \
-            nightly_assets/web_build.zip
+            nightly_assets/web_build.zip \
+            nightly_assets/app-nightly.apk.sha256 \
+            nightly_assets/app-nightly.aab.sha256
 
       - name: Add immutable nightly tag for traceability
         run: |
