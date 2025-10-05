@@ -190,8 +190,9 @@ class RestoreManager {
       for (final mediaItem in piece.mediaItems) {
         MediaItem updatedItem = mediaItem;
 
-        // Only update paths for local files (not media links)
+        // Only update paths for local files (not media links or markdown)
         if (mediaItem.type != MediaType.mediaLink &&
+            mediaItem.type != MediaType.markdown &&
             mediaItem.pathOrUrl.isNotEmpty) {
           final oldPath = mediaItem.pathOrUrl;
           final newPath = _getCorrectedPath(oldPath, appDir.path);
@@ -563,9 +564,7 @@ class RestoreManager {
         AppLogger.log('RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}');
 
         await _restoreMusicPieces(musicPiecesJson, storagePath!, backupVersion);
-        if (backupVersion == null) {
-          await _updateMediaFilePaths(storagePath!);
-        }
+        await _updateMediaFilePaths(storagePath!);
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
         await _restorePracticeLogs(practiceLogsJson);
