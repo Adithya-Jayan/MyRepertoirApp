@@ -173,97 +173,112 @@ class RestoreManager {
     AppLogger.log('RestoreManager: Finished re-adding old groups. Re-added: $reAddedCount');
   }
 
-  /// Updates media file paths in music pieces to reflect the new storage location
+  /// Updates media file paths in music pieces to reflect the new storage location.
+  /// This function is backwards-compatible and handles older backup versions.
   Future<void> _updateMediaFilePaths(String storagePath) async {
-    AppLogger.log('RestoreManager: Starting media file path updates for storage path: $storagePath');
-    
+    AppLogger.log(
+        'RestoreManager: Starting media file path updates for storage path: $storagePath');
+
     final appDir = await getApplicationDocumentsDirectory();
     final allPieces = await _repository.getMusicPieces();
     int updatedPieces = 0;
-    
+
     for (final piece in allPieces) {
       bool pieceUpdated = false;
       final updatedMediaItems = <MediaItem>[];
-      
+
       for (final mediaItem in piece.mediaItems) {
         MediaItem updatedItem = mediaItem;
-        
+
         // Only update paths for local files (not media links)
-        if (mediaItem.type != MediaType.mediaLink && mediaItem.pathOrUrl.isNotEmpty) {
+        if (mediaItem.type != MediaType.mediaLink &&
+            mediaItem.pathOrUrl.isNotEmpty) {
           final oldPath = mediaItem.pathOrUrl;
-          
-          // Extract the relative path from the old path
-          // Old path format: /path/to/storage/media/pieceId/type/filename
-          // We need to extract: media/pieceId/type/filename
-          final pathParts = oldPath.split(Platform.pathSeparator);
-          final mediaIndex = pathParts.indexWhere((part) => part == 'media');
-          
-          if (mediaIndex != -1 && mediaIndex < pathParts.length - 1) {
-            final relativePath = pathParts.sublist(mediaIndex).join(Platform.pathSeparator);
-            final newPath = p.join(appDir.path, relativePath);
-            
-            AppLogger.log('RestoreManager: Updating media path for piece  [33m${piece.title} [0m:');
+          final newPath = _getCorrectedPath(oldPath, appDir.path);
+
+          if (oldPath != newPath) {
+            AppLogger.log(
+                'RestoreManager: Updating media path for piece [33m${piece.title} [0m:');
             AppLogger.log('  Old path: $oldPath');
             AppLogger.log('  New path: $newPath');
-            
+
             updatedItem = mediaItem.copyWith(pathOrUrl: newPath);
             pieceUpdated = true;
-          } else {
-            AppLogger.log('RestoreManager: Could not extract relative path from: $oldPath');
           }
         }
         // Update thumbnailPath for the media item if present and local
-        if (mediaItem.thumbnailPath != null && mediaItem.thumbnailPath!.isNotEmpty) {
+        if (mediaItem.thumbnailPath != null &&
+            mediaItem.thumbnailPath!.isNotEmpty) {
           final oldThumbPath = mediaItem.thumbnailPath!;
-          final thumbParts = oldThumbPath.split(Platform.pathSeparator);
-          final mediaIndex = thumbParts.indexWhere((part) => part == 'media');
-          if (mediaIndex != -1 && mediaIndex < thumbParts.length - 1) {
-            final relativeThumbPath = thumbParts.sublist(mediaIndex).join(Platform.pathSeparator);
-            final newThumbPath = p.join(appDir.path, relativeThumbPath);
-            if (oldThumbPath != newThumbPath) {
-              AppLogger.log('RestoreManager: Updating media thumbnail path for piece  [33m${piece.title} [0m:');
-              AppLogger.log('  Old thumbnail path: $oldThumbPath');
-              AppLogger.log('  New thumbnail path: $newThumbPath');
-              updatedItem = updatedItem.copyWith(thumbnailPath: newThumbPath);
-              pieceUpdated = true;
-            }
-          } else {
-            AppLogger.log('RestoreManager: Could not extract relative path from thumbnail: $oldThumbPath');
+          final newThumbPath = _getCorrectedPath(oldThumbPath, appDir.path);
+
+          if (oldThumbPath != newThumbPath) {
+            AppLogger.log(
+                'RestoreManager: Updating media thumbnail path for piece [33m${piece.title} [0m:');
+            AppLogger.log('  Old thumbnail path: $oldThumbPath');
+            AppLogger.log('  New thumbnail path: $newThumbPath');
+            updatedItem = updatedItem.copyWith(thumbnailPath: newThumbPath);
+            pieceUpdated = true;
           }
         }
-        
+
         updatedMediaItems.add(updatedItem);
       }
-      
+
       // Update the piece's own thumbnailPath if present and local
       String? updatedPieceThumb = piece.thumbnailPath;
       if (piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty) {
         final oldPieceThumbPath = piece.thumbnailPath!;
-        final pieceThumbParts = oldPieceThumbPath.split(Platform.pathSeparator);
-        final mediaIndex = pieceThumbParts.indexWhere((part) => part == 'media');
-        if (mediaIndex != -1 && mediaIndex < pieceThumbParts.length - 1) {
-          final relativePieceThumbPath = pieceThumbParts.sublist(mediaIndex).join(Platform.pathSeparator);
-          final newPieceThumbPath = p.join(appDir.path, relativePieceThumbPath);
-          if (oldPieceThumbPath != newPieceThumbPath) {
-            AppLogger.log('RestoreManager: Updating piece thumbnail path for piece  [33m${piece.title} [0m:');
-            AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
-            AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
-            updatedPieceThumb = newPieceThumbPath;
-            pieceUpdated = true;
-          }
-        } else {
-          AppLogger.log('RestoreManager: Could not extract relative path from piece thumbnail: $oldPieceThumbPath');
+        final newPieceThumbPath =
+            _getCorrectedPath(oldPieceThumbPath, appDir.path);
+
+        if (oldPieceThumbPath != newPieceThumbPath) {
+          AppLogger.log(
+              'RestoreManager: Updating piece thumbnail path for piece [33m${piece.title} [0m:');
+          AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
+          AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
+          updatedPieceThumb = newPieceThumbPath;
+          pieceUpdated = true;
         }
       }
       if (pieceUpdated) {
-        final updatedPiece = piece.copyWith(mediaItems: updatedMediaItems, thumbnailPath: updatedPieceThumb);
+        final updatedPiece = piece.copyWith(
+            mediaItems: updatedMediaItems, thumbnailPath: updatedPieceThumb);
         await _repository.updateMusicPiece(updatedPiece);
         updatedPieces++;
-        AppLogger.log('RestoreManager: Updated media and thumbnail paths for piece: ${piece.title}');
+        AppLogger.log(
+            'RestoreManager: Updated media and thumbnail paths for piece: ${piece.title}');
       }
     }
-    
-    AppLogger.log('RestoreManager: Media file path updates completed. Updated pieces: $updatedPieces');
+
+    AppLogger.log(
+        'RestoreManager: Media file path updates completed. Updated pieces: $updatedPieces');
+  }
+
+  String _getCorrectedPath(String oldPath, String appDirPath) {
+    // Normalize paths to handle mixed separators
+    final normalizedOldPath = p.normalize(oldPath);
+    final pathParts = normalizedOldPath.split(p.separator);
+
+    // Find the 'media' directory, which is the root for all app media
+    final mediaIndex = pathParts.lastIndexOf('media');
+
+    if (mediaIndex != -1) {
+      // The relative path starts from the 'media' directory
+      final relativePath = pathParts.sublist(mediaIndex).join(p.separator);
+      return p.join(appDirPath, relativePath);
+    } else {
+      // If 'media' is not found, this might be a very old backup format
+      // or an invalid path. We'll try to extract the filename and join it
+      // with the new path. This is a fallback.
+      final fileName = p.basename(normalizedOldPath);
+      AppLogger.log(
+          'RestoreManager: "media" directory not found in path: $oldPath. Using fallback to filename: $fileName');
+      // This is a guess, as we don't know the pieceId or media type.
+      // The file might not be found, but it's better than crashing.
+      return p.join(appDirPath, 'media',
+          'unknown_piece', 'unknown_type', fileName);
+    }
   }
 
   /// Restores practice logs from backup data
