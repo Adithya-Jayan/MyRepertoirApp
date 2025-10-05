@@ -1,3 +1,9 @@
-Repertoire is a cross-platform application designed for musicians, dancers, magicians, or performers to help manage their repertoire (musical pieces, dance routines, or even magic tricks), track practice sessions, and organize all related media in one place. Built with Flutter, it offers a seamless experience on mobile, web, and desktop platforms.
-
+Repertoire is a cross-platform application designed for musicians, dancers, magicians, or performers to help manage their repertoire (musical pieces, dance routines, or even magic tricks).
 The app helps you keep your sheet music, notes, audio recordings, videos, links, and practice logs neatly organized for every piece in your collection.
+            
+    - Create a library of your pieces/songs, with all related information attached.        
+    - Save related media like recordings, links and notes in one consolidated location.        
+    - Log your practice sessions. Keep in touch with stuff you learnt over time.
+    - Tag your pieces and organize your gallery into groups. Quick and easy search and filter functionality to find what you want.
+    - Various quality of life features, like thumbnails for your pieces, speed control for audio (If you want to practice slow), etc.
+    - Personalization options to make it to your liking, and automated and manual backup options so you don't lose any data.

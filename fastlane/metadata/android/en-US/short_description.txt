@@ -1,1 +1,1 @@
-A repertoir manager and media organizer.
+A simple app to help musicians keep track of their repertoire, built with Flutter. It allows users to add, categorize, and manage their music lists and practice sessions along with any associated media.
