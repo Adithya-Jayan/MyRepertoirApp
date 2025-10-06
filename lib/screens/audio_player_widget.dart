@@ -124,7 +124,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         _hasError = true;
         _isInitialized = false;
       });
-      rethrow; // Let the button handler catch and display the error
     }
   }
 
