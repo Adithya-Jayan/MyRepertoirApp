@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repertoire: Music Practice & Sheet Music Organizer</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/Adithya-Jayan/MyRepertoirApp/main/web/icons/Icon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        #hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,96C1248,75,1344,53,1392,42.7L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+            background-size: cover;
+            animation: wave 15s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        #hero .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        #hero h2 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out;
+            font-weight: 700;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #hero p {
+            font-size: 20px;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+            opacity: 0.95;
+            line-height: 1.8;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn {
+            display: inline-block;
+            background: #fff;
+            color: #667eea;
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Features Section */
+        #features {
+            padding: 100px 0;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        #features h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+        }
+
+        .feature {
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .feature:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .feature p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Screenshots Section */
+        #screenshots {
+            padding: 100px 0;
+            background: #fff;
+        }
+
+        #screenshots h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .screenshot-grid img {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .screenshot-grid img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Download Section */
+        #download {
+            padding: 100px 0;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        #download h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        #download p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-buttons .btn {
+            background: #fff;
+            color: #667eea;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #fff;
+            color: #667eea;
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3748;
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer p {
+            opacity: 0.8;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #hero h2 {
+                font-size: 36px;
+            }
+
+            #hero p {
+                font-size: 16px;
+            }
+
+            nav ul {
+                gap: 15px;
+            }
+
+            .feature-grid,
+            .screenshot-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .download-buttons .btn {
+                width: 80%;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="https://raw.githubusercontent.com/Adithya-Jayan/MyRepertoirApp/main/web/icons/Icon.png" alt="Repertoire Logo">
+                <h1>Repertoire</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#screenshots">Screenshots</a></li>
+                    <li><a href="#download">Download</a></li>
+                    <li><a href="privacy.html">Privacy</a></li>
+                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="hero">
+        <div class="container">
+            <h2>Music Practice & Sheet Music Organizer</h2>
+            <p>A powerful cross-platform application for musicians, dancers, magicians, and performers. Manage your repertoire, track practice sessions, and organize all your media in one beautiful place.</p>
+            <a href="#download" class="btn">Download Now</a>
+        </div>
+    </section>
+
+    <section id="features">
+        <div class="container">
+            <h2>Powerful Features</h2>
+            <div class="feature-grid">
+                <div class="feature">
+                    <h3>📚 Repertoire Library</h3>
+                    <p>View your entire collection in a beautiful grid or list format. Organize pieces with custom groups and tags for easy access.</p>
+                </div>
+                <div class="feature">
+                    <h3>🎵 Detailed Piece View</h3>
+                    <p>Each piece has a dedicated page with comprehensive metadata including title, composer, difficulty, and custom tags.</p>
+                </div>
+                <div class="feature">
+                    <h3>📎 Flexible Media Attachments</h3>
+                    <p>Attach PDFs, Markdown notes, images, audio files, and video links. All your materials in one place.</p>
+                </div>
+                <div class="feature">
+                    <h3>⏱️ Practice Tracking</h3>
+                    <p>Log practice sessions, track dates, and monitor your progress with detailed statistics and history.</p>
+                </div>
+                <div class="feature">
+                    <h3>🔍 Smart Search & Filtering</h3>
+                    <p>Full-text search with advanced filtering by genre, difficulty, tags, practice history, and more.</p>
+                </div>
+                <div class="feature">
+                    <h3>💾 Backup & Restore</h3>
+                    <p>Export your entire library for safekeeping. Automatic periodic backups ensure your data is always protected.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="screenshots">
+        <div class="container">
+            <h2>See It In Action</h2>
+            <div class="screenshot-grid">
+                <img src="https://github.com/user-attachments/assets/c66daedf-76cc-4c41-afc5-4f608674dd7a" alt="Piece gallery view">
+                <img src="https://github.com/user-attachments/assets/d77d40c9-c185-474d-8ddd-de517cbfa72c" alt="Grid layout view">
+                <img src="https://github.com/user-attachments/assets/59918de7-5e0c-40d9-a4db-73d10bfe440e" alt="Media attachments">
+                <img src="https://github.com/user-attachments/assets/3b6eb20d-e677-416d-9fcb-111f14a0ed1b" alt="Practice tracking">
+                <img src="https://github.com/user-attachments/assets/ceb12e0f-9ce5-4197-82e9-db8563faa386" alt="Organization">
+                <img src="https://github.com/user-attachments/assets/4aa90d2e-184e-4213-9ca8-d9018d3bedf7" alt="Sorting options">
+                <img src="https://github.com/user-attachments/assets/e56f076a-71f0-4e17-9464-d5f899d1a055" alt="Customization">
+                <img src="https://github.com/user-attachments/assets/e3aede9a-62e1-4e4f-bd33-4fca6dc623e9" alt="Backup restore">
+            </div>
+        </div>
+    </section>
+
+    <section id="download">
+        <div class="container">
+            <h2>Get Started Today</h2>
+            <p>Download the latest version of Repertoire and take control of your practice routine.</p>
+            <div class="download-buttons">
+                <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest" class="btn" target="_blank">📥 Latest Release</a>
+                <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly" class="btn btn-secondary" target="_blank">🌙 Nightly Build</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
+            <p>Built with ❤️ by the open source community | <a href="privacy.html">Privacy Policy</a></p>
+        </div>
+    </footer>
+</body>
+</html>
