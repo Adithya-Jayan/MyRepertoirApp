@@ -124,7 +124,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         _hasError = true;
         _isInitialized = false;
       });
-      rethrow; // Let the button handler catch and display the error
     }
   }
 
@@ -212,7 +211,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 iconSize: 64.0,
                 onPressed: () async {
                   try {
-                    await _initAudio(); // Call without parameter
+                    if (!_isInitialized) {
+                      await _initAudio();
+                    } else {
+                      await _player.play();
+                    }
                   } catch (e) {
                     AppLogger.log('AudioPlayerWidget: Error in play button: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
