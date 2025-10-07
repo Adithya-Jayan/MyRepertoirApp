@@ -36,6 +36,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
@@ -66,6 +68,7 @@
             border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 25px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .back-link:hover {
@@ -172,6 +175,31 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            header {
+                padding: 15px 0;
+            }
+
+            header .container {
+                justify-content: center;
+            }
+
+            .logo {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+
+            .logo h1 {
+                font-size: 22px;
+            }
+
+            .back-link {
+                width: auto;
+                text-align: center;
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
             main {
                 padding: 30px 20px;
                 margin: 20px 10px;
@@ -184,10 +212,28 @@
             h2 {
                 font-size: 24px;
             }
+        }
 
-            header .container {
-                flex-direction: column;
-                gap: 15px;
+        @media (max-width: 480px) {
+            .logo h1 {
+                font-size: 20px;
+            }
+
+            .logo img {
+                width: 35px;
+                height: 35px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            main {
+                padding: 20px 15px;
             }
         }
     </style>
@@ -308,7 +354,7 @@
             <div class="contact-info">
                 <p>If you have any questions, concerns, or suggestions about this Privacy Policy or the Repertoire app, please contact us:</p>
                 <p><strong>GitHub:</strong> <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/issues" target="_blank">Open an issue on our repository</a></p>
-                <p><strong>Email:</strong> contact_me@adithyajayan.in</p>
+                <p><strong>Email:</strong>contact_me@adithyajayan.in</p>
                 <p>We value your feedback and are committed to addressing any privacy concerns promptly.</p>
             </div>
 
