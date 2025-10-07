@@ -53,6 +53,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
@@ -77,10 +79,18 @@
             font-weight: 700;
         }
 
+        nav {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
         nav ul {
             list-style: none;
             display: flex;
             gap: 30px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         nav a {
