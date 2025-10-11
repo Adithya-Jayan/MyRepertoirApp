@@ -377,12 +377,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 ),
                 child: GestureDetector(
                   onDoubleTap: () async {
+                    final controller = TextEditingController(text: bookmark.name);
                     final newName = await showDialog<String>(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Rename Bookmark'),
                         content: TextField(
-                          controller: TextEditingController(text: bookmark.name),
+                          controller: controller,
                           autofocus: true,
                           onSubmitted: (value) => Navigator.of(context).pop(value),
                         ),
@@ -392,7 +393,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                             child: const Text('Cancel'),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.of(context).pop(bookmark.name),
+                            onPressed: () => Navigator.of(context).pop(controller.text),
                             child: const Text('Rename'),
                           ),
                         ],
