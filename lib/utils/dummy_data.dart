@@ -13,7 +13,7 @@ final List<MusicPiece> dummyMusicPieces = [
   MusicPiece(
     id: StableIdGenerator.generatePieceId('Sonata No. 14 "Moonlight"', 'Ludwig van Beethoven'),
     title: 'Sonata No. 14 "Moonlight"',
-    artistComposer: 'Ludwig van Beethoven',
+    artistComposer: 'Ludwig van Beethoven - Template',
     tagGroups: [
       TagGroup(id: StableIdGenerator.generatePieceId('Genre', 'Classical'), name: 'Genre', tags: ['Classical', 'Romantic'], color: 0xFF64B5F6),
       TagGroup(id: StableIdGenerator.generatePieceId('Instrumentation', 'Piano'), name: 'Instrumentation', tags: ['Piano'], color: 0xFF81C784),
@@ -44,25 +44,25 @@ This is a **template piece** created to demonstrate the app's features. You can:
 ### Features Demonstrated
 - Multiple tag groups (Genre, Instrumentation, Difficulty)
 - Practice notes in markdown format
-- PDF attachment placeholder
+- Media link example
 
 Feel free to modify or delete this template piece!''',
       ),
       MediaItem(
         id: StableIdGenerator.generateMediaItemId(
           StableIdGenerator.generatePieceId('Sonata No. 14 "Moonlight"', 'Ludwig van Beethoven'),
-          'pdf',
-          'sheet_music'
+          'mediaLink',
+          'video_link'
         ),
-        type: MediaType.pdf,
-        pathOrUrl: '', // Dummy path
+        type: MediaType.mediaLink,
+        pathOrUrl: 'https://youtu.be/dQw4w9WgXcQ?si=rrfXv3biBSQ00z-I',
       ),
     ],
   ),
   MusicPiece(
     id: StableIdGenerator.generatePieceId('Clair de Lune', 'Claude Debussy'),
     title: 'Clair de Lune',
-    artistComposer: 'Claude Debussy',
+    artistComposer: 'Claude Debussy - Template',
     tagGroups: [
       TagGroup(id: StableIdGenerator.generatePieceId('Genre', 'Classical'), name: 'Genre', tags: ['Classical', 'Impressionistic'], color: 0xFF64B5F6),
       TagGroup(id: StableIdGenerator.generatePieceId('Instrumentation', 'Piano'), name: 'Instrumentation', tags: ['Piano'], color: 0xFF81C784),
@@ -98,7 +98,7 @@ You can edit or delete this template piece as needed!''',
   MusicPiece(
     id: StableIdGenerator.generatePieceId('Für Elise', 'Ludwig van Beethoven'),
     title: 'Für Elise',
-    artistComposer: 'Ludwig van Beethoven',
+    artistComposer: 'Ludwig van Beethoven - Template',
     tagGroups: [
       TagGroup(id: StableIdGenerator.generatePieceId('Genre', 'Classical'), name: 'Genre', tags: ['Classical', 'Romantic'], color: 0xFF64B5F6),
       TagGroup(id: StableIdGenerator.generatePieceId('Instrumentation', 'Piano'), name: 'Instrumentation', tags: ['Piano'], color: 0xFF81C784),
