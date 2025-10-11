@@ -9,20 +9,9 @@ String getRelativePath(String absolutePath, String basePath) {
 }
 
 /// Converts a relative path to an absolute path based on the given base path.
-String getAbsolutePath(String relativePath, String basePath) {
-  // Find the 'media' directory, which is the root for all app media
-  final mediaIndex = relativePath.lastIndexOf('media');
-
-  if (mediaIndex != -1) {
-    // The relative path starts from the 'media' directory
-    final correctRelativePath =
-        relativePath.substring(mediaIndex);
-    return p.join(basePath, correctRelativePath);
-  } else {
-    // Fallback for older versions or if 'media' is not in the path
-    if (p.isRelative(relativePath)) {
-      return p.join(basePath, relativePath);
-    }
-    return relativePath;
+String getAbsolutePath(String path, String basePath) {
+  if (p.isAbsolute(path)) {
+    return path;
   }
+  return p.join(basePath, path);
 }
