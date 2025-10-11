@@ -72,11 +72,14 @@ class RestoreManager {
     int insertedCount = 0;
     int updatedCount = 0;
     
+    final appDir = await getApplicationDocumentsDirectory();
+    final internalStoragePath = appDir.path;
+    
     for (int i = 0; i < musicPiecesJson.length; i++) {
       final pieceJson = musicPiecesJson[i];
       try {
         final piece = backupVersion == 2
-            ? MusicPiece.fromJsonForBackup(pieceJson, storagePath)
+            ? MusicPiece.fromJsonForBackup(pieceJson, internalStoragePath)
             : MusicPiece.fromJson(pieceJson);
 
         AppLogger.log('RestoreManager: Processing piece ${i + 1}/${musicPiecesJson.length}: ${piece.title} (ID: ${piece.id})');

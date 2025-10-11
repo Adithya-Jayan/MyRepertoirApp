@@ -24,7 +24,7 @@ class UnusedFilesDialog extends StatelessWidget {
             final fileInfo = unusedFiles[index];
             return ListTile(
               title: Text(fileInfo.pieceName),
-              subtitle: Text('${fileInfo.fileType} - ${p.basename(fileInfo.filePath)}'),
+              subtitle: Text('${fileInfo.fileType} - ${fileInfo.filePath}'),
             );
           },
         ),
