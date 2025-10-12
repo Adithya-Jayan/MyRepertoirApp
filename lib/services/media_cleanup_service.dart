@@ -142,12 +142,20 @@ class MediaCleanupService {
 
     for (final unusedFileInfo in cleanupInfo.unusedFiles) {
       try {
-        final file = File(unusedFileInfo.filePath);
-        final fileSize = await file.length();
-        await file.delete();
-        deletedCount++;
-        freedBytes += fileSize;
-        AppLogger.log('Deleted unused file: ${unusedFileInfo.filePath}');
+        // Normalize the file path to handle any inconsistencies (e.g., mixed separators).
+        final normalizedPath = p.normalize(unusedFileInfo.filePath);
+        final file = File(normalizedPath);
+
+        if (await file.exists()) {
+          final fileSize = await file.length();
+          await file.delete();
+          deletedCount++;
+          freedBytes += fileSize;
+          AppLogger.log('Deleted unused file: ${unusedFileInfo.filePath}');
+        } else {
+          AppLogger.log('File not found for deletion (already deleted or moved): ${unusedFileInfo.filePath}');
+          errors.add('File not found: ${p.basename(unusedFileInfo.filePath)}');
+        }
       } catch (e) {
         AppLogger.log('Error deleting file ${unusedFileInfo.filePath}: $e');
         errors.add('Failed to delete ${p.basename(unusedFileInfo.filePath)}: $e');
