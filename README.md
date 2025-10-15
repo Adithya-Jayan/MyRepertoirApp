@@ -4,6 +4,11 @@
 
 [![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml)
 [![Nightly Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml)
+
+[![Github All Releases](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/total.svg)]()
+[![Github Lastest Releases](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/latest/total.svg)]()
+
+
 [![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
 
 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp">
