@@ -32,13 +32,17 @@ class TagGroupSection extends StatefulWidget {
 }
 
 class _TagGroupSectionState extends State<TagGroupSection> {
+  late final TextEditingController _tagGroupController;
+
   @override
   void initState() {
     super.initState();
+    _tagGroupController = TextEditingController(text: widget.tagGroup.name);
   }
 
   @override
   void dispose() {
+    _tagGroupController.dispose();
     super.dispose();
   }
 
@@ -162,13 +166,14 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                     children: [
                       Expanded(
                         child: Autocomplete<String>(
+                          initialValue: TextEditingValue(text: widget.tagGroup.name),
                           fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                            // Initialize the Autocomplete's controller with the current value
-                            if (fieldTextEditingController.text.isEmpty && widget.tagGroup.name.isNotEmpty) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                fieldTextEditingController.text = widget.tagGroup.name;
-                              });
-                            }
+                            // This is a workaround to sync the parent controller with the field's controller
+                            _tagGroupController.addListener(() {
+                              if (_tagGroupController.text != fieldTextEditingController.text) {
+                                fieldTextEditingController.text = _tagGroupController.text;
+                              }
+                            });
                             return TextFormField(
                               controller: fieldTextEditingController,
                               focusNode: focusNode,
@@ -198,6 +203,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                           },
                           onSelected: (String selection) async {
                             // Update the tag group name when a suggestion is selected.
+                            _tagGroupController.text = selection;
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
                             final mostCommonColor = await widget.onFetchMostCommonColor(selection);
                             if (mostCommonColor != null) {
