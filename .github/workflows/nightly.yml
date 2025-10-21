@@ -106,9 +106,9 @@ jobs:
         run: |
           BUILD_NAME="${{ steps.meta.outputs.build_name }}"
           flutter pub get
-          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME"
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME"
-          flutter build web --release --build-name="$BUILD_NAME"
+          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
+          flutter build web --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
 
       - name: Verify APK Signature
         run: |

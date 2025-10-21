@@ -13,12 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@vv4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: check_changes
+        if: github.event_name == 'schedule'
+        run: |
+          LAST_UPDATE_COMMIT=$(git log --author="github-actions[bot]" --grep="Update contributors.json in assets" -n 1 --pretty=format:%H)
+          if [ -z "$LAST_UPDATE_COMMIT" ]; then
+            echo "No previous contributor update found. Running job."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            if git rev-list $LAST_UPDATE_COMMIT..HEAD --count | grep -q '^[1-9]'; then
+              echo "Changes found since last contributor update. Running job."
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "No changes found since last contributor update. Skipping job."
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
 
       - name: Install jq
+        if: github.event_name == 'workflow_dispatch' || steps.check_changes.outputs.has_changes == 'true'
         run: sudo apt-get install -y jq
 
       - name: Fetch, sort & clean contributor list
+        if: github.event_name == 'workflow_dispatch' || steps.check_changes.outputs.has_changes == 'true'
         run: |
           mkdir -p assets
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/contributors)
@@ -38,6 +60,7 @@ jobs:
           fi
 
       - name: Commit updated JSON
+        if: github.event_name == 'workflow_dispatch' || steps.check_changes.outputs.has_changes == 'true'
         run: |
           git config user.name github-actions[bot]
           git config user.email github-actions[bot]@users.noreply.github.com

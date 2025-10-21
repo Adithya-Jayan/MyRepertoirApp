@@ -69,7 +69,12 @@ android {
     productFlavors {
         create("fdroid") {
             dimension = "app"
-            applicationIdSuffix = ".fdroid"
+            if (project.hasProperty("IS_NIGHTLY")) {
+                applicationIdSuffix = ".fdroid.nightly"
+                resValue("string", "app_name", "Repertoire Nightly")
+            } else {
+                applicationIdSuffix = ".fdroid"
+            }
         }
     }
 }
