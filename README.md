@@ -99,7 +99,6 @@ Group your pieces and tag them as you wish
 <p align="center">
   <img src="https://github.com/user-attachments/assets/ceb12e0f-9ce5-4197-82e9-db8563faa386" width="300" alt="Piece organization"/>
   <img src="https://github.com/user-attachments/assets/4aa90d2e-184e-4213-9ca8-d9018d3bedf7" width="300" alt="Sorting options"/>
-  <img src="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/screenshots/assets/images/6294161292981814203.jpg?raw=true" width="300" alt="Sorting"/>
 </p>
 
 ### Customization & Backup
