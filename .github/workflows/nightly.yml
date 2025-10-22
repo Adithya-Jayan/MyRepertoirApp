@@ -106,9 +106,9 @@ jobs:
         run: |
           BUILD_NAME="${{ steps.meta.outputs.build_name }}"
           flutter pub get
-          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
-          flutter build web --release --build-name="$BUILD_NAME" --dart-define=IS_NIGHTLY=true
+          flutter build apk --flavor nightly --release --build-name="$BUILD_NAME"
+          flutter build appbundle --flavor nightly --release --build-name="$BUILD_NAME"
+          flutter build web --release --build-name="$BUILD_NAME"
 
       - name: Verify APK Signature
         run: |
@@ -118,8 +118,8 @@ jobs:
       - name: Package Nightly Assets
         run: |
           mkdir -p nightly_assets
-          cp build/app/outputs/flutter-apk/app-fdroid-release.apk nightly_assets/app-nightly.apk
-          cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab nightly_assets/app-nightly.aab
+          cp build/app/outputs/flutter-apk/app-nightly-release.apk nightly_assets/app-nightly.apk
+          cp build/app/outputs/bundle/nightlyRelease/app-nightly-release.aab nightly_assets/app-nightly.aab
           cp -r build/web nightly_assets/web_build
           cd nightly_assets
           zip -r web_build.zip web_build/
