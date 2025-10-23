@@ -1,0 +1,7 @@
+#include "../AppInfo.xcconfig"
+
+// Application-specific settings
+// For more information, see https://docs.flutter.dev/deployment/ios#flavoring-your-app
+
+APP_NAME = Repertoire Nightly
+BUNDLE_ID_SUFFIX = .nightly
