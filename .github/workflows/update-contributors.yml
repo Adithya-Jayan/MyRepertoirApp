@@ -58,6 +58,11 @@ jobs:
             echo "$RESPONSE" > assets/contributors.json
             echo "Warning: GitHub API did not return an array. See assets/contributors.json for details."
           fi
+      
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
 
       - name: Commit updated JSON
         if: github.event_name == 'workflow_dispatch' || steps.check_changes.outputs.has_changes == 'true'

@@ -131,6 +131,11 @@ jobs:
           sha256sum app-nightly.apk > app-nightly.apk.sha256
           sha256sum app-nightly.aab > app-nightly.aab.sha256
           cd ..
+          
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
 
       - name: Create/Update rolling Nightly release
         env:
