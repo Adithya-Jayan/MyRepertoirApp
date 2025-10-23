@@ -1,29 +1,7 @@
 import java.util.Properties
 import java.io.FileInputStream
-import java.io.File
 
-fun getVersionNameFromPubspec(): String {
-    val pubspecFile = File(rootProject.projectDir.parentFile, "pubspec.yaml")
-    val pubspecContent = pubspecFile.readText()
-    val regex = "version: (.*)".toRegex()
-    val match = regex.find(pubspecContent)
-    return match?.groups?.get(1)?.value?.trim()?.split("+")?.get(0) ?: "1.0.0"
-}
 
-fun getVersionCodeFromPubspec(): Int {
-    val pubspecFile = File(rootProject.projectDir.parentFile, "pubspec.yaml")
-    val pubspecContent = pubspecFile.readText()
-    val regex = "version: (.*)".toRegex()
-    val match = regex.find(pubspecContent)
-    val versionString = match?.groups?.get(1)?.value?.trim()
-    if (versionString != null) {
-        val parts = versionString.split("+")
-        if (parts.size > 1) {
-            return parts[1].toInt()
-        }
-    }
-    return 1
-}
 
 plugins {
     id("com.android.application")
@@ -53,8 +31,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = 36
-        versionCode = getVersionCodeFromPubspec()
-        versionName = getVersionNameFromPubspec()
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
 
         externalNativeBuild {
             cmake {
