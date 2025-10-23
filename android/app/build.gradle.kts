@@ -62,6 +62,7 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            resValue("string", "app_name", "Repertoire")
         }
     }
 

@@ -48,25 +48,24 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get current version and calculate new version
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Get latest version tag
+        id: get_latest_tag
+        run: |
+          git fetch --tags
+          LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          echo "latest_tag=$LATEST_OFFICIAL_TAG" >> $GITHUB_OUTPUT
+
+      - name: Calculate next version name
         id: version_calc
         run: |
-          # Fetch all tags
-          git fetch --tags
-          
-          # Find the latest official release tag (vX.Y.Z)
-          LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
-          LATEST_OFFICIAL_VERSION=${LATEST_OFFICIAL_TAG#v}
-          
-          # Find the latest prerelease tag for the next version (vX.Y.Z-prerelease.N)
-          LATEST_PRERELEASE_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-prerelease\.[0-9]+$' | head -n1)
-          LATEST_PRERELEASE_VERSION=${LATEST_PRERELEASE_TAG#v}
-          
-          # Parse dropdown and prerelease input
+          LATEST_OFFICIAL_VERSION=${{ steps.get_latest_tag.outputs.latest_tag }}
+          LATEST_OFFICIAL_VERSION=${LATEST_OFFICIAL_VERSION#v}
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           PRERELEASE="${{ github.event.inputs.prerelease }}"
           
-          # Helper to bump version
           bump_version() {
             local version=$1
             local type=$2
@@ -83,9 +82,7 @@ jobs:
           }
           
           if [ "$PRERELEASE" = "true" ]; then
-            # Prerelease logic
             BASE_VERSION=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
-            # Find the highest prerelease number for this base version
             EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\.[0-9]+" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
               PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
@@ -95,8 +92,6 @@ jobs:
             fi
             NEW_VERSION_NAME="$BASE_VERSION-prerelease.$PRERELEASE_NUM"
           else
-            # Official release logic
-            # Bump from latest official
             NEW_VERSION_NAME=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
           fi
           
@@ -104,39 +99,22 @@ jobs:
           echo "CURRENT_VERSION=${LATEST_OFFICIAL_VERSION}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
 
+      - name: Update build number
+        id: update_build_number
+        run: |
+          BUILD_NUMBER=$(jq -r '.build_number' version.json)
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+          jq ".build_number = $NEW_BUILD_NUMBER" version.json > version.json.tmp && mv version.json.tmp version.json
+          echo "build_number=$NEW_BUILD_NUMBER" >> $GITHUB_OUTPUT
+
       - name: Determine Final Version String
         id: final_version
         run: |
           VERSION_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///g')
-
-          if [ "$BRANCH_NAME" != "main" ]; then
-            VERSION_NAME="${VERSION_NAME}-${BRANCH_NAME}"
-          fi
-
-          # Determine the suffix for the version string (e.g., +1, +2)
-          VERSION_SUFFIX=""
-          # This will be the value passed to --build-number. It will be empty if no build number is needed.
-          BUILD_NUMBER_FOR_FLUTTER=""
-
-          # Check if the base tag (without +build_number) already exists
-          if git tag --list "v${VERSION_NAME}" | grep -q "v${VERSION_NAME}"; then
-            # If the base tag exists, we need to find the next incremental build number
-            LATEST_BUILD_TAG=$(git tag --list "v${VERSION_NAME}+*" --sort=-v:refname | head -n1)
-            INCREMENTAL_BUILD_NUM=1
-            if [ -n "$LATEST_BUILD_TAG" ]; then
-              # Extract the existing build number and increment it
-              EXISTING_BUILD_NUM=$(echo "$LATEST_BUILD_TAG" | sed -E 's/.*\+([0-9]+)$/\1/')
-              INCREMENTAL_BUILD_NUM=$((EXISTING_BUILD_NUM + 1))
-            fi
-            BUILD_NUMBER_FOR_FLUTTER="$INCREMENTAL_BUILD_NUM"
-            VERSION_SUFFIX="+"$INCREMENTAL_BUILD_NUM
-          fi
-
-          FINAL_VERSION_STRING="${VERSION_NAME}${VERSION_SUFFIX}"
-
+          BUILD_NUMBER="${{ steps.update_build_number.outputs.build_number }}"
+          FINAL_VERSION_STRING="${VERSION_NAME}+${BUILD_NUMBER}"
           echo "final_version_string=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
-          echo "build_number=$BUILD_NUMBER_FOR_FLUTTER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Update version in pubspec.yaml
         run: |
@@ -159,17 +137,11 @@ jobs:
 
       - name: Build All Platforms
         run: |
-          BUILD_NAME="${{ steps.final_version.outputs.final_version_string }}"
+          BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
-
-          FLUTTER_BUILD_NUMBER_ARG=""
-          if [ -n "$BUILD_NUMBER" ]; then
-            FLUTTER_BUILD_NUMBER_ARG="--build-number=$BUILD_NUMBER"
-          fi
-
-          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
-          flutter build web --release --build-name="$BUILD_NAME" $FLUTTER_BUILD_NUMBER_ARG
+          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
 
       - name: Verify APK Signature
         run: |
@@ -200,7 +172,7 @@ jobs:
           
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add pubspec.yaml
+          git add pubspec.yaml version.json
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
@@ -219,7 +191,7 @@ jobs:
         run: |
           gh release create v${{ steps.final_version.outputs.final_version_string }} \
             --generate-notes \
-            --notes-start-tag v${{ steps.version_calc.outputs.CURRENT_VERSION }} \
+            --notes-start-tag ${{ steps.get_latest_tag.outputs.latest_tag }} \
             --title "Release v${{ steps.final_version.outputs.final_version_string }}" \
             --draft \
             --prerelease=${{ github.event.inputs.prerelease }}
@@ -232,12 +204,9 @@ jobs:
       - name: Create F-Droid Changelog
         run: |
           VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
-          if [ -z "$VERSION_CODE" ]; then
-            VERSION_CODE=1
-          fi
           NOTES="${{ steps.create_draft_release.outputs.notes }}"
           mkdir -p Repertoire/fastlane/metadata/android/en-US/changelogs
-          echo "$NOTES" > "Repertoire/fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
 
       - name: Delete Draft Release
         env:
