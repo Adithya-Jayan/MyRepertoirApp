@@ -61,8 +61,11 @@ jobs:
       - name: Calculate next version name
         id: version_calc
         run: |
-          LATEST_OFFICIAL_VERSION=${{ steps.get_latest_tag.outputs.latest_tag }}
-          LATEST_OFFICIAL_VERSION=${LATEST_OFFICIAL_VERSION#v}
+          # Get current full version from pubspec.yaml (e.g., "3.1.4+1")
+          CURRENT_FULL_VERSION=$(yq '.version' pubspec.yaml)
+          # Extract semantic version part (e.g., "3.1.4")
+          CURRENT_SEMANTIC_VERSION=$(echo "$CURRENT_FULL_VERSION" | cut -d'+' -f1)
+          
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           PRERELEASE="${{ github.event.inputs.prerelease }}"
           
@@ -82,7 +85,7 @@ jobs:
           }
           
           if [ "$PRERELEASE" = "true" ]; then
-            BASE_VERSION=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
+            BASE_VERSION=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
             EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\.[0-9]+" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
               PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
@@ -92,11 +95,11 @@ jobs:
             fi
             NEW_VERSION_NAME="$BASE_VERSION-prerelease.$PRERELEASE_NUM"
           else
-            NEW_VERSION_NAME=$(bump_version "$LATEST_OFFICIAL_VERSION" "$RELEASE_TYPE")
+            NEW_VERSION_NAME=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
           fi
           
           echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
-          echo "CURRENT_VERSION=${LATEST_OFFICIAL_VERSION}" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=${CURRENT_SEMANTIC_VERSION}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
 
       - name: Update build number
