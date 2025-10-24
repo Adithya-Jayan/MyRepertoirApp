@@ -193,6 +193,7 @@ Thank you to all the people who have contributed! (Please contribute to help imp
     <img src="https://contrib.rocks/image?repo=Adithya-Jayan/MyRepertoirApp" alt="MyRepertoir app contributors" title="MyRepertoir app contributors" width="100"/>
 </a>
 </div>
+Made with [contributors-img](https://contrib.rocks).
 
 ## Support & License
 
