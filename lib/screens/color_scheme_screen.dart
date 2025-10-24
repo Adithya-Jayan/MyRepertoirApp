@@ -29,7 +29,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
 
   Future<void> _loadInitialAccentColor() async {
     final prefs = await SharedPreferences.getInstance();
-    final accentColorValue = prefs.getInt('appAccentColor') ?? _selectedAccentColor.value;
+    final accentColorValue = prefs.getInt('appAccentColor') ?? _selectedAccentColor.toARGB32();
     if (!mounted) return;
     final currentContext = context;
     if (currentContext.mounted) {
@@ -127,6 +127,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+                  final navigator = Navigator.of(context);
                   ThemeMode themeMode;
                   switch (_selectedTheme) {
                     case 'Light':
@@ -142,9 +143,7 @@ class _ColorSchemeScreenState extends State<ColorSchemeScreen> {
                   themeNotifier.setAccentColor(_selectedAccentColor);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool('hasRunBefore', true);
-                  if (!mounted) return;
-                  Navigator.pushReplacement(
-                    context,
+                  navigator.pushReplacement(
                     MaterialPageRoute(builder: (context) => const LibraryScreen()),
                   );
                 },

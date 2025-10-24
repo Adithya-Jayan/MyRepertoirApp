@@ -11,9 +11,7 @@ import 'package:archive/archive_io.dart';
 
 import '../../utils/app_logger.dart';
 import '../../database/music_piece_repository.dart';
-import '../../models/music_piece.dart';
-import '../../models/tag.dart';
-import '../../models/group.dart';
+
 
 import 'package:intl/intl.dart';
 
@@ -194,7 +192,7 @@ class BackupManager {
   }
 
   /// Saves backup file to the specified location
-  Future<String?> _saveBackupFile(Uint8List zipBytes, String backupDirectory, bool manual, BuildContext? context) async {
+  Future<String?> _saveBackupFile(Uint8List zipBytes, String backupDirectory, bool manual) async {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
     final fileName = manual ? 'music_repertoire_backup_$timestamp.zip' : 'auto_backup_$timestamp.zip';
 
@@ -240,9 +238,9 @@ class BackupManager {
   }
 
   /// Shows appropriate success/failure messages
-  void _showBackupMessage(BuildContext? context, bool success, String message) {
-    if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+  void _showBackupMessage(ScaffoldMessengerState? messenger, bool success, String message) {
+    if (messenger != null) {
+      messenger.showSnackBar(
         SnackBar(
           content: Text(message),
           backgroundColor: success ? Colors.green : Colors.red,
@@ -254,16 +252,16 @@ class BackupManager {
   /// Performs the complete backup process
   Future<void> performBackup({bool manual = true, BuildContext? context}) async {
     AppLogger.log('Initiating backup (manual: $manual).');
-    if (context != null && !context.mounted) return;
+    final messenger = context != null ? ScaffoldMessenger.of(context) : null;
     
     // Show progress message for both manual and auto-backup
-    _showBackupMessage(context, true, manual ? 'Backing up data...' : 'Creating auto-backup...');
+    _showBackupMessage(messenger, true, manual ? 'Backing up data...' : 'Creating auto-backup...');
     
     try {
       final storagePath = prefs.getString('appStoragePath');
       if (storagePath == null) {
         AppLogger.log('Backup failed: Storage path not configured.');
-        _showBackupMessage(context, false, 'Backup failed: Storage path not configured.');
+        _showBackupMessage(messenger, false, 'Backup failed: Storage path not configured.');
         return;
       }
       AppLogger.log('Storage path: $storagePath');
@@ -278,21 +276,21 @@ class BackupManager {
 
       final data = await _createBackupData(storagePath);
       final zipBytes = await _createBackupZip(data, storagePath, manual);
-      final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual, context);
+      final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual);
 
       if (outputFile != null) {
         // Only show success banner for manual backup, not for auto-backup (handled in backup_utils)
         if (manual) {
-          _showBackupMessage(context, true, 'Data backed up successfully!');
+          _showBackupMessage(messenger, true, 'Data backed up successfully!');
         }
         AppLogger.log(manual ? 'Manual backup successful.' : 'Autobackup successful.');
       } else {
-        _showBackupMessage(context, false, 'Backup cancelled.');
+        _showBackupMessage(messenger, false, 'Backup cancelled.');
         AppLogger.log('Backup cancelled by user.');
       }
     } catch (e) {
       AppLogger.log('Backup failed: $e');
-      _showBackupMessage(context, false, 'Backup failed: $e');
+      _showBackupMessage(messenger, false, 'Backup failed: $e');
     }
   }
 

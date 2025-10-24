@@ -43,6 +43,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 final result = await Navigator.of(context).push<bool?>(
                   MaterialPageRoute(
                     builder:
@@ -65,7 +66,6 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                   } catch (e) {
                     AppLogger.log('Error refreshing music piece: $e');
                   }
-                  final messenger = ScaffoldMessenger.of(context);
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Music piece updated successfully.'),
@@ -77,6 +77,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
+                final navigator = Navigator.of(context);
                 final confirmDelete = await showDialog<bool>(
                   context: context,
                   builder:
@@ -101,8 +102,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 if (confirmDelete == true) {
                   await _repository.deleteMusicPiece(_musicPiece.id);
                   if (mounted) {
-                    final currentContext = context;
-                    Navigator.of(currentContext).pop();
+                    navigator.pop();
                   }
                 }
               },

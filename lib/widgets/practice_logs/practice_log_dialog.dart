@@ -42,8 +42,9 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
   }
 
   Future<void> _selectDateTime() async {
+    final navigator = Navigator.of(context);
     final date = await showDatePicker(
-      context: context,
+      context: navigator.context,
       initialDate: _selectedDateTime,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
@@ -63,7 +64,7 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
       }
 
       final time = await showTimePicker(
-        context: context,
+        context: navigator.context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
       );
 

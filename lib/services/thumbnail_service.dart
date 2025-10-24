@@ -2,7 +2,7 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+
 import '../utils/app_logger.dart';
 import '../models/media_item.dart';
 import '../models/media_type.dart';

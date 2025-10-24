@@ -8,7 +8,6 @@ import '../models/music_piece.dart'; // Import MusicPiece
 import '../models/bookmark.dart'; // Import Bookmark
 import '../database/music_piece_repository.dart'; // Import MusicPieceRepository
 import 'package:uuid/uuid.dart'; // For generating unique IDs
-import 'package:audio_waveforms/audio_waveforms.dart'; // For audio waveform visualization
 import '../models/media_type.dart'; // Used in _initAudio
 
 class AudioPlayerWidget extends StatefulWidget {
@@ -210,6 +209,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 icon: const Icon(Icons.play_arrow),
                 iconSize: 64.0,
                 onPressed: () async {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
                   try {
                     if (!_isInitialized) {
                       await _initAudio();
@@ -218,7 +218,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     }
                   } catch (e) {
                     AppLogger.log('AudioPlayerWidget: Error in play button: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       SnackBar(content: Text('Error playing audio: $e')),
                     );
                   }
@@ -485,21 +485,5 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     AppLogger.log('AudioPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
   }
 
-  String _getPitchDisplayString(double pitch) {
-    final roundedPitch = pitch.round();
-    if (roundedPitch == 0) {
-      return "0";
-    }
-    if (roundedPitch == 12) {
-      return "+1oct";
-    }
-    if (roundedPitch == -12) {
-      return "-1oct";
-    }
-    if (roundedPitch > 0) {
-      return "+$roundedPitch";
-    } else {
-      return "$roundedPitch";
-    }
-  }
+
 }

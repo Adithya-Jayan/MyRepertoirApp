@@ -83,6 +83,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 try {
                   await launchUrl(url, mode: LaunchMode.externalApplication);
                 } catch (e) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Could not open the link.')),
                   );

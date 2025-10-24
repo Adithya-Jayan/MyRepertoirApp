@@ -24,9 +24,9 @@ class RestoreManager {
   RestoreManager(this._repository, this.prefs);
 
   /// Shows restore messages to the user
-  void _showRestoreMessage(BuildContext? context, bool success, String message) {
-    if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+  void _showRestoreMessage(ScaffoldMessengerState? messenger, bool success, String message) {
+    if (messenger != null) {
+      messenger.showSnackBar(
         SnackBar(
           content: Text(message),
           backgroundColor: success ? Colors.green : Colors.red,
@@ -528,9 +528,10 @@ class RestoreManager {
   /// Performs the complete restore process
   Future<void> performRestore({BuildContext? context}) async {
     AppLogger.log('RestoreManager: Initiating data restore');
-    if (context != null && !context.mounted) return;
-    
-    _showRestoreMessage(context, true, 'Restoring data...');
+    final messenger = context != null ? ScaffoldMessenger.of(context) : null;
+    final navigator = context != null ? Navigator.of(context) : null;
+
+    _showRestoreMessage(messenger, true, 'Restoring data...');
     
     try {
       final storagePath = prefs.getString('appStoragePath');
@@ -553,9 +554,15 @@ class RestoreManager {
       AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
 
       if (result != null && result.files.single.path != null) {
-        _showRestoreMessage(context, true, 'Restore in progress...');
-        final data = await _extractBackupData(result.files.single.path!);
+        final backupPath = result.files.single.path!;
+        _showRestoreMessage(messenger, true, 'Restore in progress...');
+        final data = await _extractBackupData(backupPath);
         if (data == null) return;
+
+        if (storagePath == null) {
+          _showRestoreMessage(messenger, false, 'Restore failed: Storage path not configured.');
+          return;
+        }
 
         final int? backupVersion = data['backupVersion'] as int?;
         final List<dynamic> musicPiecesJson = data['musicPieces'] ?? [];
@@ -566,8 +573,8 @@ class RestoreManager {
 
         AppLogger.log('RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}');
 
-        await _restoreMusicPieces(musicPiecesJson, storagePath!, backupVersion);
-        await _updateMediaFilePaths(storagePath!);
+        await _restoreMusicPieces(musicPiecesJson, storagePath, backupVersion);
+        await _updateMediaFilePaths(storagePath);
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
         await _restorePracticeLogs(practiceLogsJson);
@@ -575,26 +582,26 @@ class RestoreManager {
         await _restoreAppSettings(appSettingsJson);
 
         // Extract media files
-        final inputStream = InputFileStream(result.files.single.path!);
+        final inputStream = InputFileStream(backupPath);
         final archive = ZipDecoder().decodeBuffer(inputStream);
-        await _restoreMediaFiles(archive, storagePath!);
+        await _restoreMediaFiles(archive, storagePath);
 
-        _showRestoreMessage(context, true, 'Data restored successfully!');
+        _showRestoreMessage(messenger, true, 'Data restored successfully!');
         AppLogger.log('RestoreManager: Data restored successfully');
         
         // Force a rebuild of the app to refresh all data
-        if (context != null && context.mounted) {
+        if (navigator != null && navigator.context.mounted) {
           AppLogger.log('RestoreManager: Triggering app rebuild after restore');
           // This will cause the library screen to reload when navigated back to
-          Navigator.of(context).pop(true);
+          navigator.pop(true);
         }
       } else {
-        _showRestoreMessage(context, false, 'Restore cancelled.');
+        _showRestoreMessage(messenger, false, 'Restore cancelled.');
         AppLogger.log('RestoreManager: Restore cancelled by user');
       }
     } catch (e) {
       AppLogger.log('RestoreManager: Restore failed: $e');
-      _showRestoreMessage(context, false, 'Restore failed: $e');
+      _showRestoreMessage(messenger, false, 'Restore failed: $e');
     }
   }
 } 

@@ -53,8 +53,6 @@ class LibraryAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _LibraryAppBarState extends State<LibraryAppBar> {
   late TextEditingController _searchController;
 
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   void initState() {
@@ -151,7 +149,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                         ),
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'Practice Tracking'),
-                          value: widget.filterOptions['practiceTracking'],
+                          initialValue: widget.filterOptions['practiceTracking'],
                           items: const [
                             DropdownMenuItem(value: null, child: Text('All')),
                             DropdownMenuItem(value: 'enabled', child: Text('Enabled')),
@@ -165,7 +163,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                         ),
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'Practice Duration'),
-                          value: widget.filterOptions['practiceDuration'],
+                          initialValue: widget.filterOptions['practiceDuration'],
                           items: const [
                             DropdownMenuItem(value: null, child: Text('Any')),
                             DropdownMenuItem(value: 'last7Days', child: Text('Practiced in last 7 days')),

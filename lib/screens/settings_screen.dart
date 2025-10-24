@@ -45,18 +45,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Groups'), // Title for the Groups setting.
             onTap: () async {
               AppLogger.log('Navigating to Group Management screen.');
+              final navigator = Navigator.of(context);
               // Navigate to GroupManagementScreen and wait for any changes.
-              final bool? changesMade = await Navigator.push<bool?>(
-                context,
+              final bool? changesMade = await navigator.push<bool?>(
                 MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
               );
               if (!mounted) return;
               // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
               if (changesMade == true) {
                 AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
-                if (!mounted) return;
-                final currentContext = context;
-                Navigator.of(currentContext).pop(true);
+                navigator.pop(true);
               }
             },
           ),
@@ -65,18 +63,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Personalization'), // Title for the Personalization setting.
             onTap: () async {
               AppLogger.log('Navigating to Personalization Settings screen.');
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               // Navigate to PersonalizationSettingsScreen and wait for any changes.
-              final bool? changesMade = await Navigator.push<bool?>(
-                context,
+              final bool? changesMade = await navigator.push<bool?>(
                 MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
               );
               if (!mounted) return;
               if (changesMade == true) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(content: Text('Settings saved.')),
                 );
                 // Return true to indicate changes were made
-                Navigator.of(context).pop(true);
+                navigator.pop(true);
               }
             },
           ),

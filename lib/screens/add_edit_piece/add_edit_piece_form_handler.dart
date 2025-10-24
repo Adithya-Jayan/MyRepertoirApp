@@ -5,7 +5,7 @@ import '../../models/media_item.dart';
 import '../../models/tag_group.dart';
 import '../../models/group.dart';
 import '../../database/music_piece_repository.dart';
-import '../../services/thumbnail_service.dart';
+
 import '../../utils/app_logger.dart';
 
 class AddEditPieceFormHandler {

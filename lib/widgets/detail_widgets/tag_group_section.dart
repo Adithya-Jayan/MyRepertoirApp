@@ -100,7 +100,6 @@ class _TagGroupSectionState extends State<TagGroupSection> {
         widget.onUpdateTagGroup(widget.tagGroup, updatedTagGroup);
       },
       items: colorOptions.asMap().entries.map((entry) {
-        final index = entry.key;
         final color = entry.value;
         String colorName;
         
@@ -231,7 +230,6 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                     spacing: 8.0,
                     runSpacing: 4.0,
                     children: widget.tagGroup.tags.map((tag) {
-                      final color = widget.tagGroup.color != null ? Color(widget.tagGroup.color!) : null;
                       return Chip(
                         label: Text(tag),
                         backgroundColor: () {

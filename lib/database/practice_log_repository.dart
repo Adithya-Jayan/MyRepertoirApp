@@ -1,5 +1,4 @@
 import '../models/practice_log.dart';
-import '../models/music_piece.dart';
 import '../utils/app_logger.dart';
 import './database_helper.dart';
 import './music_piece_repository.dart';
@@ -113,7 +112,7 @@ class PracticeLogRepository {
           .map((log) => log.timestamp)
           .reduce((a, b) => a.isAfter(b) ? a : b);
       
-      AppLogger.log('_updateMusicPiecePracticeTracking: ${practiceCount} practice logs found, last practice time: $lastPracticeTime');
+      AppLogger.log('_updateMusicPiecePracticeTracking: $practiceCount practice logs found, last practice time: $lastPracticeTime');
       final updatedPiece = piece.copyWith(
         lastPracticeTime: lastPracticeTime,
         practiceCount: practiceCount,

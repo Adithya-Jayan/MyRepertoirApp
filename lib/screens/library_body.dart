@@ -136,7 +136,7 @@ class LibraryBody extends StatelessWidget {
                   AppLogger.log('LibraryBody: filteredAndSortedPieces count: ${filteredAndSortedPieces.length}');
 
                   if (filteredAndSortedPieces.isEmpty) {
-                    return Container(
+                    return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
                       child: const Center(child: Text('This group is empty.')),
                     );

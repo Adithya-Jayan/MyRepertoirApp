@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:url_launcher/url_launcher.dart';
