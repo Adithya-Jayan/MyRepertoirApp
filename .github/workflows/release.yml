@@ -142,9 +142,30 @@ jobs:
         run: |
           BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
-          flutter build apk --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
-          flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          
+          # Calculate F-Droid compatible version codes
+          VERCODE_ARMEABI_V7A=$((BUILD_NUMBER * 100 + 1))
+          VERCODE_ARM64_V8A=$((BUILD_NUMBER * 100 + 2))
+          VERCODE_X86_64=$((BUILD_NUMBER * 100 + 3))
+
+          echo "Building APK for armeabi-v7a with versionCode: $VERCODE_ARMEABI_V7A"
+          flutter build apk --flavor fdroid --release --target-platform=android-arm --build-name="$BUILD_NAME" --build-number="$VERCODE_ARMEABI_V7A" --split-per-abi
+          
+          echo "Building APK for arm64-v8a with versionCode: $VERCODE_ARM64_V8A"
+          flutter build apk --flavor fdroid --release --target-platform=android-arm64 --build-name="$BUILD_NAME" --build-number="$VERCODE_ARM64_V8A" --split-per-abi
+          
+          echo "Building APK for x86_64 with versionCode: $VERCODE_X86_64"
+          flutter build apk --flavor fdroid --release --target-platform=android-x64 --build-name="$BUILD_NAME" --build-number="$VERCODE_X86_64" --split-per-abi
+          
+          # Calculate F-Droid compatible version code for appbundle
+          VERCODE_APPBUNDLE=$((BUILD_NUMBER * 100 + 4))
+          echo "Building App Bundle with versionCode: $VERCODE_APPBUNDLE"
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$VERCODE_APPBUNDLE"
+          
+          # Calculate F-Droid compatible version code for web
+          VERCODE_WEB=$((BUILD_NUMBER * 100 + 5))
+          echo "Building Web with versionCode: $VERCODE_WEB"
+          flutter build web --release --build-name="$BUILD_NAME" --build-number="$VERCODE_WEB"
 
       - name: Verify APK Signature
         run: |
