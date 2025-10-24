@@ -1,9 +1,9 @@
 import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../models/music_piece.dart';
 import '../models/media_item.dart';
-import '../models/media_type.dart';
+
+
 import '../models/group.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
@@ -104,11 +104,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
-  void _setThumbnail(String path) {
-    setState(() {
-      _musicPiece = _musicPiece.copyWith(thumbnailPath: path);
-    });
-  }
+
 
   bool _isSaving = false;
 

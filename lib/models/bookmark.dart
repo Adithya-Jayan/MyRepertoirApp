@@ -18,7 +18,7 @@ class Bookmark {
         'id': id,
         'timestamp': timestamp.inMilliseconds, // Store as milliseconds
         'name': name,
-        'color': color?.value, // Store color as int value
+        'color': color?.toARGB32(), // Store color as int value
       };
 
   // Create a Bookmark object from a JSON-compatible Map

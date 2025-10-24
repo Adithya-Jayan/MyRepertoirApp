@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
+
 import 'package:repertoire/services/pitch_shifter.dart';
-import 'dart:io';
+import '../../utils/app_logger.dart';
+
 
 // Helper function to generate a WAV header with unknown length
 Uint8List _generateWavHeader(int sampleRate, int channels) {
@@ -81,7 +82,7 @@ class SoundTouchAudioSource extends StreamAudioSource {
           final processedBytes = await PitchShifter.process(processBuffer.buffer, outputByteBuffer.buffer);
 
           if (processedBytes > 0) {
-            print('SoundTouchAudioSource: Yielding processed bytes: $processedBytes');
+            AppLogger.log('SoundTouchAudioSource: Yielding processed bytes: $processedBytes');
             yield outputByteBuffer.sublist(0, processedBytes);
           }
         }
@@ -94,7 +95,7 @@ class SoundTouchAudioSource extends StreamAudioSource {
         final processedBytes = await PitchShifter.process(processBuffer.buffer, outputByteBuffer.buffer);
 
         if (processedBytes > 0) {
-          print('SoundTouchAudioSource: Yielding remaining processed bytes: $processedBytes');
+          AppLogger.log('SoundTouchAudioSource: Yielding remaining processed bytes: $processedBytes');
           yield outputByteBuffer.sublist(0, processedBytes);
         }
       }
@@ -103,11 +104,11 @@ class SoundTouchAudioSource extends StreamAudioSource {
       final outputByteBuffer = Uint8List(bufferSize * 2);
       final flushedBytes = await PitchShifter.flushAndReceive(outputByteBuffer.buffer);
       if (flushedBytes > 0) {
-        print('SoundTouchAudioSource: Yielding flushed bytes: $flushedBytes');
+        AppLogger.log('SoundTouchAudioSource: Yielding flushed bytes: $flushedBytes');
         yield outputByteBuffer.sublist(0, flushedBytes);
       }
     } finally {
-      print('SoundTouchAudioSource: Releasing PitchShifter resources.');
+      AppLogger.log('SoundTouchAudioSource: Releasing PitchShifter resources.');
       await PitchShifter.release();
     }
   }

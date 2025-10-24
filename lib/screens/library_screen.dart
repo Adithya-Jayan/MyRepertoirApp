@@ -79,7 +79,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
       child: Consumer<LibraryScreenNotifier>(
         builder: (context, notifier, child) {
           // Force rebuild when gallery columns change
-          final galleryColumns = notifier.galleryColumnsNotifier.value;
+
           if (!notifier.isInitialized) {
             return const Scaffold(
               body: Center(

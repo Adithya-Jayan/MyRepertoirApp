@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/app_logger.dart';
+
 
 class FunctionalitySettingsScreen extends StatefulWidget {
   const FunctionalitySettingsScreen({super.key});

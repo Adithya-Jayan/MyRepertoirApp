@@ -37,7 +37,7 @@ class ThemeNotifier with ChangeNotifier {
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final themePreference = prefs.getString('appThemePreference') ?? 'System'; // Retrieve saved theme preference.
-    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.value; // Retrieve saved accent color.
+    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.toARGB32(); // Retrieve saved accent color.
 
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.
     _accentColor = Color(accentColorValue); // Convert integer value to Color.
@@ -66,7 +66,7 @@ class ThemeNotifier with ChangeNotifier {
       _accentColor = color; // Update the accent color.
       notifyListeners(); // Notify listeners of the change.
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('appAccentColor', color.value); // Save the new accent color.
+      await prefs.setInt('appAccentColor', color.toARGB32()); // Save the new accent color.
     }
   }
 

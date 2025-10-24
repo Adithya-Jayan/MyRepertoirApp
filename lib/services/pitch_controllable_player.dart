@@ -3,7 +3,7 @@ import 'package:just_audio/just_audio.dart';
 class PitchControllablePlayer {
   final AudioPlayer _player = AudioPlayer();
   double _currentPitch = 0.0;
-  String? _currentAudioPath;
+
 
   AudioPlayer get player => _player;
 
@@ -17,7 +17,6 @@ class PitchControllablePlayer {
   double get pitch => _currentPitch;
 
   Future<void> setUrl(String url) async {
-    _currentAudioPath = url;
     await _player.setFilePath(url);
   }
 
@@ -25,7 +24,6 @@ class PitchControllablePlayer {
   Future<void> pause() => _player.pause();
   Future<void> stop() async {
     await _player.stop();
-    _currentAudioPath = null; // Clear current audio path on stop
   }
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;

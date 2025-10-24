@@ -20,8 +20,8 @@ class BackupRestoreService {
   ///
   /// If `manual` is true, it prompts the user for a save location. Otherwise,
   /// it performs an automatic backup to a predefined location.
-  Future<void> backupData({bool manual = true, BuildContext? context}) async {
-    await _backupManager.performBackup(manual: manual, context: context);
+  Future<void> backupData({bool manual = true, ScaffoldMessengerState? messenger}) async {
+    await _backupManager.performBackup(manual: manual, messenger: messenger);
   }
 
   /// Triggers an automatic backup process.
@@ -29,9 +29,13 @@ class BackupRestoreService {
   /// This function calls `backupData` with `manual` set to false,
   /// and then manages the number of automatic backup files, deleting older ones
   /// if the count exceeds the configured limit.
-  Future<void> triggerAutoBackup(int autoBackupCount, {BuildContext? context}) async {
-    AppLogger.log('Triggering automatic backup.');
-    await backupData(manual: false, context: context);
+  Future<void> triggerAutoBackup(int autoBackupCount, {ScaffoldMessengerState? messenger}) async {
+    AppLogger.log('BackupRestoreService: Performing auto-backup. Retaining $autoBackupCount backups.');
+
+    // Perform a backup
+    await _backupManager.performBackup(manual: false, messenger: messenger);
+
+    // Clean up old backups
     await _backupManager.cleanupOldBackups(autoBackupCount);
   }
 

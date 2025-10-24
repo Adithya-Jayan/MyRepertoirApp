@@ -10,10 +10,9 @@ import 'package:repertoire/utils/theme_notifier.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
-import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+
 
 // Global navigator key for accessing context from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -106,7 +105,7 @@ class _MyAppState extends State<MyApp> {
           AppLogger.log('MyApp: Triggering auto-backup after initialization');
           // Use a delay to ensure the app is fully loaded before checking auto-backup
           Future.delayed(const Duration(seconds: 2), () {
-            triggerAutoBackup(context: navigatorKey.currentContext);
+            triggerAutoBackup(messenger: ScaffoldMessenger.of(navigatorKey.currentContext!));
           });
         }
       });

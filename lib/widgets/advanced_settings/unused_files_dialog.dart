@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/media_cleanup_service.dart';
-import 'package:path/path.dart' as p;
 
 /// A dialog that displays a list of unused files.
 class UnusedFilesDialog extends StatelessWidget {

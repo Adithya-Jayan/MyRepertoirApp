@@ -1,6 +1,5 @@
-import 'dart:convert';
+
 import 'dart:io';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
@@ -36,18 +35,20 @@ Future<DateTime?> _getLatestBackupDateFromFilenames(List<File> backupFiles) asyn
   return latest;
 }
 
-Future<void> triggerAutoBackup({BuildContext? context}) async {
+Future<void> triggerAutoBackup({ScaffoldMessengerState? messenger}) async {
   AppLogger.log('BackupUtils: Checking auto-backup conditions.');
   final prefs = await SharedPreferences.getInstance();
   final autoBackupEnabled = prefs.getBool('autoBackupEnabled') ?? false;
   AppLogger.log('BackupUtils: Auto-backup enabled: $autoBackupEnabled');
 
+
+
   if (autoBackupEnabled) {
     final appStoragePath = prefs.getString('appStoragePath');
     if (appStoragePath == null || appStoragePath.isEmpty) {
       AppLogger.log('BackupUtils: ERROR: appStoragePath is not set. Cannot perform auto-backup.');
-      if (context != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (messenger != null) {
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Auto-backup failed: Storage path not configured.'),
             backgroundColor: Colors.red,
@@ -109,8 +110,8 @@ Future<void> triggerAutoBackup({BuildContext? context}) async {
     if (noBackupFiles && lastBackupTimestampPrefs != null && lastBackupTimestampPrefs > 0) {
       final lastPrefsDate = DateTime.fromMillisecondsSinceEpoch(lastBackupTimestampPrefs);
       AppLogger.log('BackupUtils: WARNING: lastAutoBackupTimestamp in prefs is $lastPrefsDate, but no backup file found. Triggering new backup.');
-      if (context != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (messenger != null) {
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Warning: Last backup file missing (expected at $lastPrefsDate). Creating new backup.'),
             backgroundColor: Colors.orange,
@@ -124,8 +125,8 @@ Future<void> triggerAutoBackup({BuildContext? context}) async {
     final shouldBackup = noBackupFiles || (timeElapsed != null && timeElapsed > requiredInterval);
     if (shouldBackup) {
       AppLogger.log('BackupUtils: Auto-backup condition met (no backups or interval exceeded). Triggering backup.');
-      if (context != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (messenger != null) {
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Auto-backup starting in a few seconds...'),
             backgroundColor: Colors.blue,
@@ -137,13 +138,13 @@ Future<void> triggerAutoBackup({BuildContext? context}) async {
       try {
         final backupService = BackupRestoreService(MusicPieceRepository(), prefs);
         final autoBackupCount = prefs.getInt('autoBackupCount') ?? 5;
-        await backupService.triggerAutoBackup(autoBackupCount, context: context);
+        await backupService.triggerAutoBackup(autoBackupCount, messenger: messenger);
         // Update the lastAutoBackupTimestamp in prefs for user info/warning only
         await prefs.setInt('lastAutoBackupTimestamp', now.millisecondsSinceEpoch);
         AppLogger.log('BackupUtils: Updated lastAutoBackupTimestamp to: ${now.millisecondsSinceEpoch}');
         AppLogger.log('BackupUtils: Auto-backup completed successfully.');
-        if (context != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (messenger != null) {
+          messenger.showSnackBar(
             const SnackBar(
               content: Text('Auto-backup completed successfully!'),
               backgroundColor: Colors.green,
@@ -153,8 +154,8 @@ Future<void> triggerAutoBackup({BuildContext? context}) async {
         }
       } catch (e) {
         AppLogger.log('BackupUtils: Auto-backup failed: $e');
-        if (context != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (messenger != null) {
+          messenger.showSnackBar(
             SnackBar(
               content: Text('Auto-backup failed: $e'),
               backgroundColor: Colors.red,

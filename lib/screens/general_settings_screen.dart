@@ -49,6 +49,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   /// and the UI is updated to reflect the new path.
   Future<void> _selectStorageFolder() async {
     AppLogger.log('Attempting to select storage folder.');
+    final messenger = ScaffoldMessenger.of(context);
     final result = await FilePicker.platform.getDirectoryPath(); // Open the directory picker.
     if (result != null) {
       AppLogger.log('Selected directory: $result');
@@ -64,11 +65,11 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         // Reinitialize the logger with the new storage path
         await AppLogger.reinitialize();
         
-        setState(() {
-          _currentStoragePath = result; // Update the state to display the new path.
-        });
-        if (!mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
+        if (mounted) {
+          setState(() {
+            _currentStoragePath = result; // Update the state to display the new path.
+          });
+        }
         messenger.showSnackBar(
           const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
         );
@@ -76,9 +77,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       } catch (e) {
         // Path is not writable
         AppLogger.log('Selected path is not writable: $e');
-        if (!mounted) return;
-        if (!mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
         messenger.showSnackBar(
           SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
         );
@@ -90,17 +88,17 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         // Reinitialize the logger with the default path
         await AppLogger.reinitialize();
         
-        setState(() {
-          _currentStoragePath = defaultPath;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (mounted) {
+          setState(() {
+            _currentStoragePath = defaultPath;
+          });
+        }
+        messenger.showSnackBar(
           SnackBar(content: Text('Reverted to default app storage path: $defaultPath')),
         );
         AppLogger.log('Reverted to default app storage path: $defaultPath');
       }
     } else {
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
       messenger.showSnackBar(
         const SnackBar(content: Text('Folder selection cancelled.')),
       );

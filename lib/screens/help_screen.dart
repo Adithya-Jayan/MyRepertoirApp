@@ -73,12 +73,13 @@ class HelpScreen extends StatelessWidget {
               title: Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
               subtitle: Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
               onTap: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');
                 try {
                   await launchUrl(url, mode: LaunchMode.externalApplication);
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Could not open the link.')),
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Could not open the link.')),
                   );
                 }
               },

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
 import '../utils/app_logger.dart';
-import '../utils/settings_manager.dart';
+
 
 /// A screen for managing personalization settings of the application.
 ///
@@ -89,35 +89,29 @@ class PersonalizationSettingsScreenState
               'Theme Mode',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            RadioListTile<ThemeMode>(
-              title: const Text('System Default'),
-              value: ThemeMode.system,
+            RadioGroup<ThemeMode>(
               groupValue: themeNotifier.themeMode,
               onChanged: (value) {
                 if (value != null) {
                   themeNotifier.setTheme(value);
                 }
               },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Light'),
-              value: ThemeMode.light,
-              groupValue: themeNotifier.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setTheme(value);
-                }
-              },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Dark'),
-              value: ThemeMode.dark,
-              groupValue: themeNotifier.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setTheme(value);
-                }
-              },
+              child: Column(
+                children: [
+                  RadioListTile<ThemeMode>(
+                    title: const Text('System Default'),
+                    value: ThemeMode.system,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: const Text('Light'),
+                    value: ThemeMode.light,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: const Text('Dark'),
+                    value: ThemeMode.dark,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Text(

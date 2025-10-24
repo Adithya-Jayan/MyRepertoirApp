@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Represents a single practice session log entry.
 ///
 /// This class holds information about individual practice sessions,
@@ -78,7 +76,7 @@ class PracticeLog {
     } else if (logDate == yesterday) {
       return 'Yesterday at ${_formatTime(timestamp)}';
     } else {
-      return '${timestamp.toLocal().toString().split('.')[0]}';
+      return timestamp.toLocal().toString().split('.')[0];
     }
   }
 

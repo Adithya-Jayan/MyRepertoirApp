@@ -155,6 +155,8 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
             subtitle: const Text('Log detailed information for debugging'),
             value: _debugLogsEnabled,
             onChanged: (bool value) async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               if (!value) {
                 // If disabling, ask if user wants to delete the log file
                 final shouldDelete = await showDialog<bool>(
@@ -164,11 +166,11 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                     content: const Text('Would you like to delete the debug log file created so far?'),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
+                        onPressed: () => navigator.pop(false),
                         child: const Text('No'),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
+                        onPressed: () => navigator.pop(true),
                         child: const Text('Yes, delete'),
                       ),
                     ],
@@ -189,30 +191,26 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                     final logFile = io.File(logFilePath);
                     if (await logFile.exists()) {
                       await logFile.delete();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Log file deleted.')),
-                        );
-                      }
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(content: Text('Log file deleted.')),
+                      );
                     } else {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No log file found to delete.')),
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error deleting log file: $e')),
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(content: Text('No log file found to delete.')),
                       );
                     }
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text('Error deleting log file: $e')),
+                    );
                   }
                 }
               }
-              setState(() {
-                _debugLogsEnabled = value;
-              });
+              if (mounted) {
+                setState(() {
+                  _debugLogsEnabled = value;
+                });
+              }
               AppLogger.setDebugLogsEnabled(value);
             },
           ),
@@ -226,6 +224,8 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                       icon: const Icon(Icons.folder_open),
                       label: const Text('Open Log File'),
                       onPressed: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
                         final prefs = await SharedPreferences.getInstance();
                         final appStoragePath = prefs.getString('appStoragePath');
                         String? logFilePath;
@@ -253,21 +253,21 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             } else {
                               throw Exception('No app found to open the log file.');
                             }
-                          } catch (e) {
-                            if (mounted) {
-                              showDialog(
-                                context: context,
+                                                      } catch (e) {
+                                                        if (!mounted) return;
+                                                        if (navigator.context.mounted) {                              showDialog(
+                                context: navigator.context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Could not open log file'),
                                   content: const Text('No app was found to open the log file. You may need to install a text editor app.\n\nWould you like to share the log file instead?'),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      onPressed: () => navigator.pop(),
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
                                       onPressed: () async {
-                                        Navigator.of(context).pop();
+                                        navigator.pop();
                                         await Share.shareXFiles([XFile(logFile.path)], text: 'Repertoire app debug log');
                                       },
                                       child: const Text('Share Log File'),
@@ -278,11 +278,9 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             }
                           }
                         } else {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('No log file found to open.')),
-                            );
-                          }
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(content: Text('No log file found to open.')),
+                          );
                         }
                       },
                     ),
@@ -294,6 +292,8 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                       label: const Text('Delete Log File'),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                       onPressed: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
                         final shouldDelete = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
@@ -301,11 +301,11 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             content: const Text('Are you sure you want to delete the debug log file?'),
                             actions: [
                               TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
+                                onPressed: () => navigator.pop(false),
                                 child: const Text('No'),
                               ),
                               TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
+                                onPressed: () => navigator.pop(true),
                                 child: const Text('Yes, delete'),
                               ),
                             ],
@@ -325,24 +325,18 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             final logFile = io.File(logFilePath);
                             if (await logFile.exists()) {
                               await logFile.delete();
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Log file deleted.')),
-                                );
-                              }
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(content: Text('Log file deleted.')),
+                              );
                             } else {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('No log file found to delete.')),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error deleting log file: $e')),
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(content: Text('No log file found to delete.')),
                               );
                             }
+                          } catch (e) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(content: Text('Error deleting log file: $e')),
+                            );
                           }
                         }
                       },
