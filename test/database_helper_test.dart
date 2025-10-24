@@ -7,13 +7,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // Mock path_provider plugin
-  const MethodChannel('plugins.flutter.io/path_provider')
-      .setMockMethodCallHandler((MethodCall methodCall) async {
-    if (methodCall.method == 'getApplicationDocumentsDirectory') {
-      return '.'; // Return current directory for testing
-    }
-    return null;
-  });
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+    const MethodChannel('plugins.flutter.io/path_provider'),
+    (MethodCall methodCall) async {
+      if (methodCall.method == 'getApplicationDocumentsDirectory') {
+        return '.'; // Return current directory for testing
+      }
+      return null;
+    },
+  );
 
   setUpAll(() {
     sqfliteFfiInit();
