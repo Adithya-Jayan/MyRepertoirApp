@@ -89,35 +89,29 @@ class PersonalizationSettingsScreenState
               'Theme Mode',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            RadioListTile<ThemeMode>(
-              title: const Text('System Default'),
-              value: ThemeMode.system,
+            RadioGroup<ThemeMode>(
               groupValue: themeNotifier.themeMode,
               onChanged: (value) {
                 if (value != null) {
                   themeNotifier.setTheme(value);
                 }
               },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Light'),
-              value: ThemeMode.light,
-              groupValue: themeNotifier.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setTheme(value);
-                }
-              },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Dark'),
-              value: ThemeMode.dark,
-              groupValue: themeNotifier.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setTheme(value);
-                }
-              },
+              child: Column(
+                children: [
+                  RadioListTile<ThemeMode>(
+                    title: const Text('System Default'),
+                    value: ThemeMode.system,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: const Text('Light'),
+                    value: ThemeMode.light,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: const Text('Dark'),
+                    value: ThemeMode.dark,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Text(
