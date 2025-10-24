@@ -199,7 +199,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             subtitle: const Text('Create a backup of all your data'),
             onTap: () async {
               try {
-                await _backupRestoreService.backupData(manual: true, context: context);
+                await _backupRestoreService.backupData(manual: true, messenger: ScaffoldMessenger.of(context));
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -387,7 +387,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
               subtitle: const Text('Manually trigger an automatic backup'),
               onTap: () async {
                 try {
-                  await _backupRestoreService.triggerAutoBackup(_autoBackupCount, context: context);
+                  await _backupRestoreService.triggerAutoBackup(_autoBackupCount, messenger: ScaffoldMessenger.of(context));
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

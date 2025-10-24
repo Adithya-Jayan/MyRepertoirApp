@@ -253,9 +253,9 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                             } else {
                               throw Exception('No app found to open the log file.');
                             }
-                          } catch (e) {
-                            if (navigator.context.mounted) {
-                              showDialog(
+                                                      } catch (e) {
+                                                        if (!mounted) return;
+                                                        if (navigator.context.mounted) {                              showDialog(
                                 context: navigator.context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Could not open log file'),

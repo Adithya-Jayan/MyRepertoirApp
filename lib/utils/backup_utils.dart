@@ -35,13 +35,13 @@ Future<DateTime?> _getLatestBackupDateFromFilenames(List<File> backupFiles) asyn
   return latest;
 }
 
-Future<void> triggerAutoBackup({BuildContext? context}) async {
+Future<void> triggerAutoBackup({ScaffoldMessengerState? messenger}) async {
   AppLogger.log('BackupUtils: Checking auto-backup conditions.');
   final prefs = await SharedPreferences.getInstance();
   final autoBackupEnabled = prefs.getBool('autoBackupEnabled') ?? false;
   AppLogger.log('BackupUtils: Auto-backup enabled: $autoBackupEnabled');
 
-  final messenger = context != null ? ScaffoldMessenger.of(context) : null;
+
 
   if (autoBackupEnabled) {
     final appStoragePath = prefs.getString('appStoragePath');

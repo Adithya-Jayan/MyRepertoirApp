@@ -63,21 +63,23 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
         });
       }
 
-      final time = await showTimePicker(
-        context: navigator.context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
-      );
+      if (mounted) {
+        final time = await showTimePicker(
+          context: navigator.context,
+          initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        );
 
-      if (time != null && mounted) {
-        setState(() {
-          _selectedDateTime = DateTime(
-            _selectedDateTime.year,
-            _selectedDateTime.month,
-            _selectedDateTime.day,
-            time.hour,
-            time.minute,
-          );
-        });
+        if (time != null && mounted) {
+          setState(() {
+            _selectedDateTime = DateTime(
+              _selectedDateTime.year,
+              _selectedDateTime.month,
+              _selectedDateTime.day,
+              time.hour,
+              time.minute,
+            );
+          });
+        }
       }
     }
   }

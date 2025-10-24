@@ -250,9 +250,8 @@ class BackupManager {
   }
 
   /// Performs the complete backup process
-  Future<void> performBackup({bool manual = true, BuildContext? context}) async {
+  Future<void> performBackup({bool manual = true, ScaffoldMessengerState? messenger}) async {
     AppLogger.log('Initiating backup (manual: $manual).');
-    final messenger = context != null ? ScaffoldMessenger.of(context) : null;
     
     // Show progress message for both manual and auto-backup
     _showBackupMessage(messenger, true, manual ? 'Backing up data...' : 'Creating auto-backup...');
@@ -305,7 +304,7 @@ class BackupManager {
         files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
         AppLogger.log('Found ${files.length} auto-backup files.');
         if (files.length > autoBackupCount) {
-          AppLogger.log('Deleting old auto-backup files. Keeping ${autoBackupCount}.');
+          AppLogger.log('Deleting old auto-backup files. Keeping $autoBackupCount.');
           for (int i = 0; i < files.length - autoBackupCount; i++) {
             AppLogger.log('Deleting: ${files[i].path}');
             await files[i].delete();

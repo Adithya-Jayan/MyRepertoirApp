@@ -105,7 +105,7 @@ class _MyAppState extends State<MyApp> {
           AppLogger.log('MyApp: Triggering auto-backup after initialization');
           // Use a delay to ensure the app is fully loaded before checking auto-backup
           Future.delayed(const Duration(seconds: 2), () {
-            triggerAutoBackup(context: navigatorKey.currentContext);
+            triggerAutoBackup(messenger: ScaffoldMessenger.of(navigatorKey.currentContext!));
           });
         }
       });
