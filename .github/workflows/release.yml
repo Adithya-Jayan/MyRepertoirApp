@@ -194,7 +194,7 @@ jobs:
       - name: Create Release Assets
         run: |
           mkdir -p release_assets
-          cp build/app/outputs/flutter-apk/app-*-fdroid-release.apk release_assets/
+          find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk" -exec cp {} release_assets/ \;
           cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab release_assets/
           cp -r build/web release_assets/web_build
           
@@ -205,9 +205,12 @@ jobs:
       - name: Generate Checksums
         run: |
           cd release_assets
-          for apk in app-*-fdroid-release.apk; do
-            sha256sum "$apk" > "$apk.sha256"
-          done
+          APKS_TO_CHECKSUM=$(find . -name "app-*-fdroid-release.apk")
+          if [ -n "$APKS_TO_CHECKSUM" ]; then
+            for apk in $APKS_TO_CHECKSUM; do
+              sha256sum "$apk" > "$apk.sha256"
+            done
+          fi
           sha256sum app-fdroid-release.aab > app-fdroid-release.aab.sha256
           cd ..
       
