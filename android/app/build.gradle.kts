@@ -31,7 +31,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = 36
-        versionCode = flutter.versionCode
+        versionCode = project.property("flutter.versionCode")?.toString()?.toInt() ?: 1
         versionName = flutter.versionName
 
         externalNativeBuild {
