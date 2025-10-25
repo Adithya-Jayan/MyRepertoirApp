@@ -61,7 +61,7 @@ jobs:
         id: get_latest_tag
         run: |
           git fetch --tags
-          LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?$' | head -n1)
           echo "latest_tag=$LATEST_OFFICIAL_TAG" >> $GITHUB_OUTPUT
 
       - name: Calculate next version name
