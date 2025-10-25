@@ -31,14 +31,9 @@ This workflow is used to create new official and pre-release versions of the app
 
 ### Versioning Scheme
 
-The versioning is managed by two files:
+The versioning is managed by the `version` string in the `pubspec.yaml` file, which is in the format `VERSION_NAME+BUILD_NUMBER` (e.g., `3.1.4+1`).
 
--   `pubspec.yaml`: Contains the version name (e.g., `3.1.4`).
--   `version.json`: Contains the `build_number` (e.g., `1`).
-
-The final version string for all releases is in the format `VERSION_NAME+BUILD_NUMBER` (e.g., `3.1.4+1`).
-
--   **Official Release:** The `VERSION_NAME` is bumped based on the selected `release_type`, and the `build_number` is incremented.
+-   **Official Release:** The `VERSION_NAME` is bumped based on the selected `release_type`, and the `BUILD_NUMBER` is incremented.
 -   **Pre-release:** A pre-release is created for the *next* version.
 
 ### Version Change Examples
@@ -58,15 +53,15 @@ The workflow generates F-Droid compatible version codes for each CPU architectur
 
 ### What the Workflow Does
 
-1.  **Calculates the next version** and build number.
-2.  **Updates `pubspec.yaml` and `version.json`**.
+1.  **Calculates the next version** and build number from `pubspec.yaml`.
+2.  **Updates `pubspec.yaml`** with the new version.
 3.  **Builds the application** for the `fdroid` flavor:
     -   Android APKs for `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
     -   Android App Bundle.
     -   Web build.
 4.  **Generates checksums** for all release assets.
 5.  **Creates a Git tag** in the format `vVERSION_NAME+BUILD_NUMBER`.
-6.  **Commits and pushes** the version file changes to the repository.
+6.  **Commits and pushes** the `pubspec.yaml` file changes to the repository.
 7.  **Generates automated release notes** based on the commits since the last release.
 8.  **Creates an F-Droid changelog** file.
 9.  **Publishes a GitHub release** with the generated assets and release notes.

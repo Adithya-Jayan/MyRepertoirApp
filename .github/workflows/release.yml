@@ -64,13 +64,15 @@ jobs:
           LATEST_OFFICIAL_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?$' | head -n1)
           echo "latest_tag=$LATEST_OFFICIAL_TAG" >> $GITHUB_OUTPUT
 
-      - name: Calculate next version name
+      - name: Calculate next version
         id: version_calc
         run: |
           # Get current full version from pubspec.yaml (e.g., "3.1.4+1")
           CURRENT_FULL_VERSION=$(yq '.version' pubspec.yaml)
           # Extract semantic version part (e.g., "3.1.4")
           CURRENT_SEMANTIC_VERSION=$(echo "$CURRENT_FULL_VERSION" | cut -d'+' -f1)
+          # Extract build number part (e.g., "1")
+          CURRENT_BUILD_NUMBER=$(echo "$CURRENT_FULL_VERSION" | cut -d'+' -f2)
           
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           PRERELEASE="${{ github.event.inputs.prerelease }}"
@@ -104,23 +106,18 @@ jobs:
             NEW_VERSION_NAME=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
           fi
           
+          NEW_BUILD_NUMBER=$((CURRENT_BUILD_NUMBER + 1))
+          
           echo "VERSION_NAME=${NEW_VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=${NEW_BUILD_NUMBER}" >> $GITHUB_OUTPUT
           echo "CURRENT_VERSION=${CURRENT_SEMANTIC_VERSION}" >> $GITHUB_OUTPUT
           echo "RELEASE_TYPE=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
-
-      - name: Update build number
-        id: update_build_number
-        run: |
-          BUILD_NUMBER=$(jq -r '.build_number' version.json)
-          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
-          jq ".build_number = $NEW_BUILD_NUMBER" version.json > version.json.tmp && mv version.json.tmp version.json
-          echo "build_number=$NEW_BUILD_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Determine Final Version String
         id: final_version
         run: |
           VERSION_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
-          BUILD_NUMBER="${{ steps.update_build_number.outputs.build_number }}"
+          BUILD_NUMBER="${{ steps.version_calc.outputs.BUILD_NUMBER }}"
           FINAL_VERSION_STRING="${VERSION_NAME}+${BUILD_NUMBER}"
           echo "final_version_string=$FINAL_VERSION_STRING" >> $GITHUB_OUTPUT
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
@@ -225,7 +222,7 @@ jobs:
           
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add pubspec.yaml version.json
+          git add pubspec.yaml
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
