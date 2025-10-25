@@ -24,6 +24,12 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    val localProperties = Properties()
+    val localPropertiesFile = file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(FileInputStream(localPropertiesFile))
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "io.github.adithya_jayan.myrepertoirapp"
@@ -31,8 +37,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = 36
-        versionCode = project.property("flutter.versionCode")?.toString()?.toInt() ?: 1
-        versionName = flutter.versionName
+        versionCode = localProperties.getProperty("flutter.versionCode")?.toInt() ?: 1
+        versionName = localProperties.getProperty("flutter.versionName")
 
         externalNativeBuild {
             cmake {

@@ -131,12 +131,15 @@ jobs:
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
 
-      - name: Create key.properties
+      - name: Create key.properties and local.properties
         run: |
           echo "storeFile=../my-release-key.jks" > android/key.properties
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+
+          echo "flutter.versionName=${{ steps.version_calc.outputs.VERSION_NAME }}" > android/app/local.properties
+          echo "flutter.versionCode=${{ steps.final_version.outputs.build_number }}" >> android/app/local.properties
 
       - name: Install dependencies
         run: flutter pub get
