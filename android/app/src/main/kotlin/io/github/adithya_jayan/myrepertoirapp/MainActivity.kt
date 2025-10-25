@@ -9,7 +9,7 @@ import java.nio.ByteOrder
 class MainActivity: FlutterActivity() {
     companion object {
         init {
-            System.loadLibrary("soundtouch")
+            // System.loadLibrary("soundtouch")
         }
     }
     private val pitchShifter: RealtimePitchShifter = RealtimePitchShifter()

@@ -6,7 +6,7 @@ import java.nio.ShortBuffer
 class PitchShiftProcessor {
     companion object {
         init {
-            System.loadLibrary("soundtouch")
+            // System.loadLibrary("soundtouch")
         }
     }
     
