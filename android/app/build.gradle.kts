@@ -10,6 +10,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val flutterProperties = Properties()
+val flutterPropertiesFile = rootProject.file("../.android/flutter.properties")
+if (flutterPropertiesFile.exists()) {
+    flutterProperties.load(flutterPropertiesFile.reader(Charsets.UTF_8))
+}
+
+val flutterVersionCode = flutterProperties.getProperty("versionCode")?.toInt() ?: 1
+val flutterVersionName = flutterProperties.getProperty("versionName") ?: "1.0"
+
 android {
     namespace = "io.github.adithya_jayan.myrepertoirapp"
     compileSdk = 36
@@ -24,12 +33,6 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    val localProperties = Properties()
-    val localPropertiesFile = file("local.properties")
-    if (localPropertiesFile.exists()) {
-        localProperties.load(FileInputStream(localPropertiesFile))
-    }
-
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "io.github.adithya_jayan.myrepertoirapp"
@@ -37,8 +40,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = 36
-        versionCode = localProperties.getProperty("flutter.versionCode")?.toInt() ?: 1
-        versionName = localProperties.getProperty("flutter.versionName")
+        versionCode = flutterVersionCode
+        versionName = flutterVersionName
 
         externalNativeBuild {
             cmake {

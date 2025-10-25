@@ -71,6 +71,8 @@ jobs:
           CURRENT_FULL_VERSION=$(yq '.version' pubspec.yaml)
           # Extract semantic version part (e.g., "3.1.4")
           CURRENT_SEMANTIC_VERSION=$(echo "$CURRENT_FULL_VERSION" | cut -d'+' -f1)
+          # Strip any prerelease identifiers to get a clean base version
+          CURRENT_SEMANTIC_VERSION=$(echo "$CURRENT_SEMANTIC_VERSION" | sed 's/-.*//')
           # Extract build number part (e.g., "1")
           CURRENT_BUILD_NUMBER=$(echo "$CURRENT_FULL_VERSION" | cut -d'+' -f2)
           
@@ -131,15 +133,12 @@ jobs:
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
 
-      - name: Create key.properties and local.properties
+      - name: Create key.properties
         run: |
           echo "storeFile=../my-release-key.jks" > android/key.properties
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-
-          echo "flutter.versionName=${{ steps.version_calc.outputs.VERSION_NAME }}" > android/app/local.properties
-          echo "flutter.versionCode=${{ steps.final_version.outputs.build_number }}" >> android/app/local.properties
 
       - name: Install dependencies
         run: flutter pub get
