@@ -11,7 +11,7 @@ plugins {
 }
 
 val flutterProperties = Properties()
-val flutterPropertiesFile = rootProject.file("../local.properties")
+val flutterPropertiesFile = rootProject.file("local.properties")
 if (flutterPropertiesFile.exists()) {
     flutterProperties.load(flutterPropertiesFile.reader(Charsets.UTF_8))
 }
