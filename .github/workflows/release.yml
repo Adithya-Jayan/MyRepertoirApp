@@ -152,29 +152,47 @@ jobs:
           VERCODE_ARMEABI_V7A=$((BUILD_NUMBER * 100 + 1))
           VERCODE_ARM64_V8A=$((BUILD_NUMBER * 100 + 2))
           VERCODE_X86_64=$((BUILD_NUMBER * 100 + 3))
-
-          echo "Building APK for armeabi-v7a with versionCode: $VERCODE_ARMEABI_V7A"
-          flutter build apk --flavor fdroid --release --target-platform=android-arm --build-name="$BUILD_NAME" --build-number="$VERCODE_ARMEABI_V7A"
-          mv build/app/outputs/flutter-apk/app-fdroid-release.apk build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk
-          
-          echo "Building APK for arm64-v8a with versionCode: $VERCODE_ARM64_V8A"
-          flutter build apk --flavor fdroid --release --target-platform=android-arm64 --build-name="$BUILD_NAME" --build-number="$VERCODE_ARM64_V8A"
-          mv build/app/outputs/flutter-apk/app-fdroid-release.apk build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
-          
-          echo "Building APK for x86_64 with versionCode: $VERCODE_X86_64"
-          flutter build apk --flavor fdroid --release --target-platform=android-x64 --build-name="$BUILD_NAME" --build-number="$VERCODE_X86_64"
-          mv build/app/outputs/flutter-apk/app-fdroid-release.apk build/app/outputs/flutter-apk/app-x86_64-fdroid-release.apk
-          
-          # Calculate F-Droid compatible version code for appbundle
           VERCODE_APPBUNDLE=$((BUILD_NUMBER * 100 + 4))
+          VERCODE_WEB=$((BUILD_NUMBER * 100 + 5))
+
+          # --- Build armeabi-v7a ---
+          echo "Building APK for armeabi-v7a with versionCode: $VERCODE_ARMEABI_V7A"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-arm \
+            --build-name="$BUILD_NAME" \
+            --build-number="$VERCODE_ARMEABI_V7A"
+          
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release-final.apk
+          
+          # --- Build arm64-v8a ---
+          echo "Building APK for arm64-v8a with versionCode: $VERCODE_ARM64_V8A"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-arm64 \
+            --build-name="$BUILD_NAME" \
+            --build-number="$VERCODE_ARM64_V8A"
+          
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release-final.apk
+          
+          # --- Build x86_64 ---
+          echo "Building APK for x86_64 with versionCode: $VERCODE_X86_64"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-x64 \
+            --build-name="$BUILD_NAME" \
+            --build-number="$VERCODE_X86_64"
+          
+          mv build/app/outputs/flutter-apk/app-x86_64-fdroid-release.apk build/app/outputs/flutter-apk/app-x86_64-fdroid-release-final.apk
+
+          # Calculate F-Droid compatible version code for appbundle
           echo "Building App Bundle with versionCode: $VERCODE_APPBUNDLE"
           flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$VERCODE_APPBUNDLE"
           
           # Calculate F-Droid compatible version code for web
-          VERCODE_WEB=$((BUILD_NUMBER * 100 + 5))
           echo "Building Web with versionCode: $VERCODE_WEB"
           flutter build web --release --build-name="$BUILD_NAME" --build-number="$VERCODE_WEB"
-
+          
       - name: Verify APK Versions
         run: |
           AAPT2_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "aapt2" | sort -r | head -n 1)

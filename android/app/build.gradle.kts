@@ -90,6 +90,23 @@ android {
             resValue("string", "app_name", "Repertoire Nightly")
         }
     }
+
+    applicationVariants.all {
+        val variantVersion = this.versionCode
+        outputs.all {
+            val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
+            
+            // THIS IS THE NEW LOGIC:
+            // Check if this is an ABI split AND if the 'target-platform' property was passed.
+            if (abiFilter != null && project.hasProperty("target-platform")) {
+                // If 'target-platform' exists, disable the prefix logic
+                // and just use the base version code.
+                this.versionCodeOverride = variantVersion
+            }
+            // If 'target-platform' is NOT present, this 'if' block is skipped,
+            // and Flutter's default +1000 logic will apply.
+        }
+    }
 }
 
 flutter {
