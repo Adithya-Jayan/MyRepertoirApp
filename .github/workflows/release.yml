@@ -289,10 +289,10 @@ jobs:
             **Changes:**
             ${{ steps.create_draft_release.outputs.notes }}
           files: |
-            ./release_assets/app-fdroid-release.apk
+            ./release_assets/app-*-fdroid-release.apk
+            ./release_assets/app-*-fdroid-release.apk.sha256
             ./release_assets/app-fdroid-release.aab
             ./release_assets/web_build.zip
-            ./release_assets/app-fdroid-release.apk.sha256
             ./release_assets/app-fdroid-release.aab.sha256
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}
