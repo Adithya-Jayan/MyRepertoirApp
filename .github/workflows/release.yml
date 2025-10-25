@@ -173,13 +173,23 @@ jobs:
           echo "Building Web with versionCode: $VERCODE_WEB"
           flutter build web --release --build-name="$BUILD_NAME" --build-number="$VERCODE_WEB"
 
-      - name: Verify APK Signature
+      - name: Verify Signatures
         run: |
+          # Verify APKs
           APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
-          for apk in build/app/outputs/flutter-apk/app-fdroid-*-release.apk; do
+          APKS_TO_VERIFY=$(find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk")
+          if [ -z "$APKS_TO_VERIFY" ]; then
+            echo "No APKs found to verify."
+            exit 1
+          fi
+          for apk in $APKS_TO_VERIFY; do
             echo "Verifying $apk"
             $APKSIGNER_PATH verify --print-certs "$apk"
           done
+          
+          # Verify App Bundle
+          echo "Verifying App Bundle"
+          jarsigner -verify -certs build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab
 
       - name: Create Release Assets
         run: |
