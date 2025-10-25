@@ -94,15 +94,16 @@ android {
     applicationVariants.all {
         val variantVersion = this.versionCode
         outputs.all {
-            if (this is com.android.build.gradle.api.ApkVariantOutput) {                
+            if (this is com.android.build.gradle.api.ApkVariantOutput) {
+
                 val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
                 
                 if (abiFilter != null && project.hasProperty("target-platform")) {
                     this.versionCodeOverride = variantVersion
+                    
                 }
             }
         }
-    }
     }
 }
 
