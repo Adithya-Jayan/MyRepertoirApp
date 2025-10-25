@@ -175,6 +175,54 @@ jobs:
           echo "Building Web with versionCode: $VERCODE_WEB"
           flutter build web --release --build-name="$BUILD_NAME" --build-number="$VERCODE_WEB"
 
+      - name: Verify APK Versions
+        run: |
+          AAPT2_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "aapt2" | sort -r | head -n 1)
+          if [ -z "$AAPT2_PATH" ]; then
+            echo "aapt2 not found!"
+            exit 1
+          fi
+          # Expected values
+          EXPECTED_BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
+          BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
+          EXPECTED_VC_V7A=$((BUILD_NUMBER * 100 + 1))
+          EXPECTED_VC_V8A=$((BUILD_NUMBER * 100 + 2))
+          EXPECTED_VC_X64=$((BUILD_NUMBER * 100 + 3))
+          # --- Verify armeabi-v7a ---
+          APK_PATH_V7A="build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk"
+          echo "Verifying $APK_PATH_V7A"
+          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
+          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
+          echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
+          echo "Expected Version Code: $EXPECTED_VC_V7A, Actual: $ACTUAL_VERSION_CODE"
+          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_V7A" ]; then
+            echo "Version mismatch for armeabi-v7a!"
+            exit 1
+          fi
+          # --- Verify arm64-v8a ---
+          APK_PATH_V8A="build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk"
+          echo "Verifying $APK_PATH_V8A"
+          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
+          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
+          echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
+          echo "Expected Version Code: $EXPECTED_VC_V8A, Actual: $ACTUAL_VERSION_CODE"
+          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_V8A" ]; then
+            echo "Version mismatch for arm64-v8a!"
+            exit 1
+          fi
+          # --- Verify x86_64 ---
+          APK_PATH_X64="build/app/outputs/flutter-apk/app-x86_64-fdroid-release.apk"
+          echo "Verifying $APK_PATH_X64"
+          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
+          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
+          echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
+          echo "Expected Version Code: $EXPECTED_VC_X64, Actual: $ACTUAL_VERSION_CODE"
+          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_X64" ]; then
+            echo "Version mismatch for x86_64!"
+            exit 1
+          fi
+          echo "All APK versions verified successfully."
+
       - name: Verify Signatures
         run: |
           # Verify APKs
