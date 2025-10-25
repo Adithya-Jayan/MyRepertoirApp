@@ -176,7 +176,10 @@ jobs:
       - name: Verify APK Signature
         run: |
           APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
-          $APKSIGNER_PATH verify --print-certs build/app/outputs/flutter-apk/app-fdroid-release.apk
+          for apk in build/app/outputs/flutter-apk/app-fdroid-*-release.apk; do
+            echo "Verifying $apk"
+            $APKSIGNER_PATH verify --print-certs "$apk"
+          done
 
       - name: Create Release Assets
         run: |
