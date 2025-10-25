@@ -16,8 +16,8 @@ if (flutterPropertiesFile.exists()) {
     flutterProperties.load(flutterPropertiesFile.reader(Charsets.UTF_8))
 }
 
-val flutterVersionCode = flutterProperties.getProperty("versionCode")?.toInt() ?: 1
-val flutterVersionName = flutterProperties.getProperty("versionName") ?: "1.0"
+val flutterVersionCode = flutterProperties.getProperty("flutter.versionCode")?.toInt() ?: 1
+val flutterVersionName = flutterProperties.getProperty("flutter.versionName") ?: "1.0"
 
 android {
     namespace = "io.github.adithya_jayan.myrepertoirapp"
