@@ -84,25 +84,27 @@ android {
             resValue("string", "app_name", "Repertoire Nightly")
         }
     }
-}
+    applicationVariants.all {
+        // 'this' is the ApplicationVariant (let's name it 'variant' for clarity)
+        val variant = this 
+        
+        // Get the base version code from the variant (e.g., 1301)
+        val baseVersionCode = variant.versionCode 
 
-// Only override version code when --target-platform is specified
-// This removes Flutter's +1000 offset when building for a specific platform
-project.afterEvaluate {
-    if (project.hasProperty("target-platform")) {
-        android.applicationVariants.all {
-            val variant = this
-            val baseVersionCode = variant.versionCode
-            
-            variant.outputs.all {
-                val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-                // Set all outputs to the original base version code
-                // This removes both the +1000 base offset and any ABI offsets
-                output.versionCodeOverride = baseVersionCode
+        // Get the final packaging task for this variant.
+        variant.packageApplicationProvider.configure {
+            // 'this' is now the PackageApplication task
+
+            // We only apply our override if the 'target-platform' property was passed
+            if (project.hasProperty("target-platform")) {
+                
+                // Unconditionally set the version code to the base version.
+                // This wins any race condition and is the correct approach.
+                this.versionCode.set(baseVersionCode)
             }
         }
     }
-}
+} // <--- This is the closing brace for 'android'
 
 flutter {
     source = "../.."
