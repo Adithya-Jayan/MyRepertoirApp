@@ -1,8 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
 
-
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -86,38 +84,21 @@ android {
             resValue("string", "app_name", "Repertoire Nightly")
         }
     }
+}
 
-    // We wrap everything in 'project.afterEvaluate' to ensure
-    // this code runs *after* the Flutter plugin's logic.
-    applicationVariants.all {
-        outputs.all {
-            if (this is com.android.build.gradle.api.ApkVariantOutput) {
-                val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
-
-                // Check if this is an ABI build AND the target-platform flag is present
-                if (abiFilter != null && project.hasProperty("target-platform")) {
-                    
-                    // NEW LOGIC:
-                    // Let Flutter do its +1000 logic. We then simply subtract it.
-                    // This avoids all race conditions.
-                    
-                    // We must access the property *after* it has been set by Flutter.
-                    // We do this by configuring the task that uses the final version code.
-                    this.packageApplicationProvider.configure {
-                        // 'this' is now the 'packageApplication' task
-                        // We get the final version code (e.g., 2301)
-                        val finalVersionCode = this.versionCode.get()
-                        
-                        // We get the base version code (e.g., 1301)
-                        val baseVersionCode = variant.versionCode
-                        
-                        // If they don't match, it means Flutter added a prefix.
-                        if (finalVersionCode != baseVersionCode) {
-                            // Set the version code back to the base version.
-                            this.versionCode.set(baseVersionCode)
-                        }
-                    }
-                }
+// Only override version code when --target-platform is specified
+// This removes Flutter's +1000 offset when building for a specific platform
+project.afterEvaluate {
+    if (project.hasProperty("target-platform")) {
+        android.applicationVariants.all {
+            val variant = this
+            val baseVersionCode = variant.versionCode
+            
+            variant.outputs.all {
+                val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+                // Set all outputs to the original base version code
+                // This removes both the +1000 base offset and any ABI offsets
+                output.versionCodeOverride = baseVersionCode
             }
         }
     }
