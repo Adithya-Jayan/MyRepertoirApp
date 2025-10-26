@@ -85,25 +85,21 @@ android {
         }
     }
     applicationVariants.all {
-        // 'this' is the ApplicationVariant (let's name it 'variant' for clarity)
-        val variant = this 
-        
-        // Get the base version code from the variant (e.g., 1301)
-        val baseVersionCode = variant.versionCode 
-
-        // Get the final packaging task for this variant.
-        variant.packageApplicationProvider.configure {
-            // 'this' is now the PackageApplication task
-
-            // We only apply our override if the 'target-platform' property was passed
-            if (project.hasProperty("target-platform")) {
-                
-                // Unconditionally set the version code to the base version.
-                // This wins any race condition and is the correct approach.
-                this.versionCode.set(baseVersionCode)
+    // 'this' is the variant
+    val variant = this        
+    val baseVersionCode = variant.versionCode 
+               
+    // Only override if building for a specific target platform
+    if (project.hasProperty("target-platform")) {
+        variant.outputs.all { output ->
+            // Use the public API with a safe type check
+            if (output is com.android.build.gradle.api.ApkVariantOutput) {
+                // Unconditionally set the override when target-platform is present
+                output.versionCodeOverride = baseVersionCode
             }
         }
     }
+}
 } // <--- This is the closing brace for 'android'
 
 flutter {
