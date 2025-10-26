@@ -1,5 +1,7 @@
 import java.util.Properties
 import java.io.FileInputStream
+// Import the necessary task type
+import com.android.build.gradle.tasks.PackageApplication
 
 plugins {
     id("com.android.application")
@@ -72,6 +74,9 @@ android {
     }
 
     flavorDimensions += "app"
+    //
+    // ↓↓↓ CORRECTED TYPO HERE ↓↓↓
+    //
     productFlavors {
         create("fdroid") {
             dimension = "app"
@@ -84,22 +89,17 @@ android {
             resValue("string", "app_name", "Repertoire Nightly")
         }
     }
-    applicationVariants.all {
-    // 'this' is the variant
-    val variant = this        
-    val baseVersionCode = variant.versionCode 
-               
-    // Only override if building for a specific target platform
-    if (project.hasProperty("target-platform")) {
-        variant.outputs.all { output ->
-            // Use the public API with a safe type check
-            if (output is com.android.build.gradle.api.ApkVariantOutput) {
-                // Unconditionally set the override when target-platform is present
-                output.versionCodeOverride = baseVersionCode
+
+    androidComponents {
+        onVariants { variant ->
+            if (rootProject.hasProperty("target-platform") && rootProject.hasProperty("build-number")) {
+                val buildNumber = rootProject.property("build-number").toString().toInt()
+                variant.outputs.forEach { output ->
+                    output.versionCode.set(buildNumber)
+                }
             }
         }
     }
-}
 } // <--- This is the closing brace for 'android'
 
 flutter {
