@@ -34,15 +34,11 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "io.github.adithya_jayan.myrepertoirapp"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = 36
         versionCode = flutterVersionCode
         versionName = flutterVersionName
-
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
@@ -91,16 +87,19 @@ android {
         }
     }
 
-    applicationVariants.all {
-        val variantVersion = this.versionCode
-        outputs.all {
-            if (this is com.android.build.gradle.api.ApkVariantOutput) {
+    // We wrap everything in 'project.afterEvaluate' to ensure
+    // this code runs *after* the Flutter plugin's logic.
+    project.afterEvaluate {
+        applicationVariants.all {
+            val variantVersion = this.versionCode
+            outputs.all {
+                if (this is com.android.build.gradle.api.ApkVariantOutput) {
 
-                val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
-                
-                if (abiFilter != null && project.hasProperty("target-platform")) {
-                    this.versionCodeOverride = variantVersion
+                    val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
                     
+                    if (abiFilter != null && project.hasProperty("target-platform")) {
+                        this.versionCodeOverride = variantVersion
+                    }
                 }
             }
         }
