@@ -148,44 +148,37 @@ jobs:
           BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
           
-          # Calculate F-Droid compatible version codes
-          VERCODE_ARMEABI_V7A=$((BUILD_NUMBER * 100 + 1))
-          VERCODE_ARM64_V8A=$((BUILD_NUMBER * 100 + 2))
-          VERCODE_X86_64=$((BUILD_NUMBER * 100 + 3))
-          VERCODE_APPBUNDLE=$((BUILD_NUMBER * 100 + 4))
-          VERCODE_WEB=$((BUILD_NUMBER * 100 + 5))
-
           # --- Build armeabi-v7a ---
-          echo "Building APK for armeabi-v7a with versionCode: $VERCODE_ARMEABI_V7A"
+          echo "Building APK for armeabi-v7a"
           flutter build apk --flavor fdroid --release \
             --split-per-abi \
             --target-platform=android-arm \
             --build-name="$BUILD_NAME" \
-            --build-number="$VERCODE_ARMEABI_V7A"
+            --build-number="$BUILD_NUMBER"
           
           # --- Build arm64-v8a ---
-          echo "Building APK for arm64-v8a with versionCode: $VERCODE_ARM64_V8A"
+          echo "Building APK for arm64-v8a"
           flutter build apk --flavor fdroid --release \
             --split-per-abi \
             --target-platform=android-arm64 \
             --build-name="$BUILD_NAME" \
-            --build-number="$VERCODE_ARM64_V8A"
+            --build-number="$BUILD_NUMBER"
           
           # --- Build x86_64 ---
-          echo "Building APK for x86_64 with versionCode: $VERCODE_X86_64"
+          echo "Building APK for x86_64"
           flutter build apk --flavor fdroid --release \
             --split-per-abi \
             --target-platform=android-x64 \
             --build-name="$BUILD_NAME" \
-            --build-number="$VERCODE_X86_64"
+            --build-number="$BUILD_NUMBER"
 
-          # Calculate F-Droid compatible version code for appbundle
-          echo "Building App Bundle with versionCode: $VERCODE_APPBUNDLE"
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$VERCODE_APPBUNDLE"
+          # Build App Bundle
+          echo "Building App Bundle"
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
           
-          # Calculate F-Droid compatible version code for web
-          echo "Building Web with versionCode: $VERCODE_WEB"
-          flutter build web --release --build-name="$BUILD_NAME" --build-number="$VERCODE_WEB"
+          # Build Web
+          echo "Building Web"
+          flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
           
       - name: Verify APK Versions
         run: |
@@ -197,9 +190,9 @@ jobs:
           # Expected values
           EXPECTED_BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
-          EXPECTED_VC_V7A=$((BUILD_NUMBER * 100 + 1))
-          EXPECTED_VC_V8A=$((BUILD_NUMBER * 100 + 2))
-          EXPECTED_VC_X64=$((BUILD_NUMBER * 100 + 3))
+          EXPECTED_VC_V7A=$((BUILD_NUMBER + 1000))
+          EXPECTED_VC_V8A=$((BUILD_NUMBER + 2000))
+          EXPECTED_VC_X64=$((BUILD_NUMBER + 3000))
           # --- Verify armeabi-v7a ---
           APK_PATH_V7A="build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk"
           echo "Verifying $APK_PATH_V7A"

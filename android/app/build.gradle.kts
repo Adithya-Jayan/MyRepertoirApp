@@ -74,9 +74,6 @@ android {
     }
 
     flavorDimensions += "app"
-    //
-    // ↓↓↓ CORRECTED TYPO HERE ↓↓↓
-    //
     productFlavors {
         create("fdroid") {
             dimension = "app"
@@ -90,17 +87,7 @@ android {
         }
     }
 
-    androidComponents {
-        onVariants { variant ->
-            if (rootProject.hasProperty("target-platform") && rootProject.hasProperty("build-number")) {
-                val buildNumber = rootProject.property("build-number").toString().toInt()
-                variant.outputs.forEach { output ->
-                    output.versionCode.set(buildNumber)
-                }
-            }
-        }
-    }
-} // <--- This is the closing brace for 'android'
+    } // <--- This is the closing brace for 'android'
 
 flutter {
     source = "../.."
