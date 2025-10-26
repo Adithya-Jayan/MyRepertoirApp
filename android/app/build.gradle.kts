@@ -89,16 +89,33 @@ android {
 
     // We wrap everything in 'project.afterEvaluate' to ensure
     // this code runs *after* the Flutter plugin's logic.
-    project.afterEvaluate {
-        applicationVariants.all {
-            val variantVersion = this.versionCode
-            outputs.all {
-                if (this is com.android.build.gradle.api.ApkVariantOutput) {
+    applicationVariants.all {
+        outputs.all {
+            if (this is com.android.build.gradle.api.ApkVariantOutput) {
+                val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
 
-                    val abiFilter = this.filters.find { it.filterType == com.android.build.OutputFile.ABI }
+                // Check if this is an ABI build AND the target-platform flag is present
+                if (abiFilter != null && project.hasProperty("target-platform")) {
                     
-                    if (abiFilter != null && project.hasProperty("target-platform")) {
-                        this.versionCodeOverride = variantVersion
+                    // NEW LOGIC:
+                    // Let Flutter do its +1000 logic. We then simply subtract it.
+                    // This avoids all race conditions.
+                    
+                    // We must access the property *after* it has been set by Flutter.
+                    // We do this by configuring the task that uses the final version code.
+                    this.packageApplicationProvider.configure {
+                        // 'this' is now the 'packageApplication' task
+                        // We get the final version code (e.g., 2301)
+                        val finalVersionCode = this.versionCode.get()
+                        
+                        // We get the base version code (e.g., 1301)
+                        val baseVersionCode = variant.versionCode
+                        
+                        // If they don't match, it means Flutter added a prefix.
+                        if (finalVersionCode != baseVersionCode) {
+                            // Set the version code back to the base version.
+                            this.versionCode.set(baseVersionCode)
+                        }
                     }
                 }
             }
