@@ -41,7 +41,7 @@ jobs:
             fi
           fi
 
-      - name: Respect previous status when no changes (scheduled runs only)
+      - name: Skip/fail run if no changes (scheduled runs only)
         if: steps.changes.outputs.has_changes == 'false' && github.event_name == 'schedule'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,8 +60,8 @@ jobs:
             echo "Previous nightly failed and there are no new changes. Failing this run to preserve status."
             exit 1
           fi
-          echo "Previous nightly succeeded (or unknown). Skipping build successfully."
-          exit 0
+          echo "Previous nightly succeeded (or unknown). Skipping build."
+          gh workflow cancel ${{ github.run_id }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
