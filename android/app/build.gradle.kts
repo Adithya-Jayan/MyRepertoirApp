@@ -11,16 +11,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val flutterProperties = Properties()
-val flutterPropertiesFile = rootProject.file("local.properties")
-if (flutterPropertiesFile.exists()) {
-    flutterProperties.load(flutterPropertiesFile.reader(Charsets.UTF_8))
-}
-
-val flutterVersionCode = flutterProperties.getProperty("flutter.versionCode")?.toInt() ?: 1
-val flutterVersionName = flutterProperties.getProperty("flutter.versionName") ?: "1.0"
-
-android {
+    android {
     namespace = "io.github.adithya_jayan.myrepertoirapp"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
@@ -38,8 +29,8 @@ android {
         applicationId = "io.github.adithya_jayan.myrepertoirapp"
         minSdk = 29
         targetSdk = 36
-        versionCode = flutterVersionCode
-        versionName = flutterVersionName
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
@@ -99,7 +90,8 @@ android.applicationVariants.configureEach {
     variant.outputs.forEach { output ->
         val abiVersionCode = abiCodes[output.filters.find { it.filterType == "ABI" }?.identifier]
         if (abiVersionCode != null) {
-            (output as ApkVariantOutputImpl).versionCodeOverride = variant.versionCode * 10 + abiVersionCode
+            val originalVersionCode = flutter.versionCode as? Int ?: 1
+            (output as ApkVariantOutputImpl).versionCodeOverride = originalVersionCode * 10 + abiVersionCode
         }
     }
 }

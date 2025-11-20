@@ -190,9 +190,9 @@ jobs:
           # Expected values
           EXPECTED_BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
-          EXPECTED_VC_V7A=$((BUILD_NUMBER + 1000))
-          EXPECTED_VC_V8A=$((BUILD_NUMBER + 2000))
-          EXPECTED_VC_X64=$((BUILD_NUMBER + 4000))
+          EXPECTED_VC_V7A=$((BUILD_NUMBER * 10 + 1))
+          EXPECTED_VC_V8A=$((BUILD_NUMBER * 10 + 2))
+          EXPECTED_VC_X64=$((BUILD_NUMBER * 10 + 3))
           # --- Verify armeabi-v7a ---
           APK_PATH_V7A="build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk"
           echo "Verifying $APK_PATH_V7A"
