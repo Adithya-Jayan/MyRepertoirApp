@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import java.util.Properties
 import java.io.FileInputStream
 // Import the necessary task type
@@ -86,9 +87,19 @@ android {
             resValue("string", "app_name", "Repertoire Nightly")
         }
     }
-
-    } // <--- This is the closing brace for 'android'
+}
 
 flutter {
     source = "../.."
+}
+
+val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
+android.applicationVariants.configureEach {
+    val variant = this
+    variant.outputs.forEach { output ->
+        val abiVersionCode = abiCodes[output.filters.find { it.filterType == "ABI" }?.identifier]
+        if (abiVersionCode != null) {
+            (output as ApkVariantOutputImpl).versionCodeOverride = variant.versionCode * 10 + abiVersionCode
+        }
+    }
 }
