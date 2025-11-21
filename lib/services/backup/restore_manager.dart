@@ -40,7 +40,7 @@ class RestoreManager {
     try {
       AppLogger.log('RestoreManager: Starting backup data extraction from: $backupFilePath');
       final inputStream = InputFileStream(backupFilePath);
-      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
       AppLogger.log('RestoreManager: Backup file decoded successfully. Archive contains ${archive.files.length} files');
 
       final jsonFile = archive.findFile('music_repertoire.json');
@@ -583,7 +583,7 @@ class RestoreManager {
 
         // Extract media files
         final inputStream = InputFileStream(backupPath);
-        final archive = ZipDecoder().decodeBuffer(inputStream);
+        final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
         await _restoreMediaFiles(archive, storagePath);
 
         _showRestoreMessage(messenger, true, 'Data restored successfully!');

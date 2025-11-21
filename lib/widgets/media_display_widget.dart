@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:url_launcher/url_launcher.dart';
@@ -116,7 +116,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
     switch (currentMediaItem.type) {
       case MediaType.markdown:
-        content = MarkdownBody(data: currentMediaItem.pathOrUrl);
+        content = Markdown(data: currentMediaItem.pathOrUrl);
         break;
       case MediaType.pdf:
         content = ElevatedButton(
