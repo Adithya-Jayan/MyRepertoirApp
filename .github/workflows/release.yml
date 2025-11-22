@@ -12,6 +12,7 @@ on:
           - patch
           - minor
           - major
+          - stabilize
       prerelease:
         description: 'Mark as prerelease? (Creates an incremental prerelease version for next patch/minor/major version)'
         required: false
@@ -105,7 +106,11 @@ jobs:
             fi
             NEW_VERSION_NAME="$BASE_VERSION-prerelease.$PRERELEASE_NUM"
           else
-            NEW_VERSION_NAME=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
+            if [ "$RELEASE_TYPE" = "stabilize" ]; then
+              NEW_VERSION_NAME="$CURRENT_SEMANTIC_VERSION"
+            else
+              NEW_VERSION_NAME=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
+            fi
           fi
           
           NEW_BUILD_NUMBER=$((CURRENT_BUILD_NUMBER + 1))
