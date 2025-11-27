@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
 
 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp">
-  <img src="./web/icons/Icon.png" alt="Repertoir logo" title="Repertoir logo" width="80"/>
+  <img src="./web/icons/Icon.png" alt="Repertoire logo" title="Repertoire logo" width="80"/>
 </a>
 
 # Repertoire: Music Practice & Sheet Music Organizer
@@ -31,7 +31,7 @@ Keep your sheet music, notes, audio recordings, videos, links, and practice logs
 
 **Just want to use the app on Android?** Follow our **[Step-by-Step Installation Guide](INSTALL.md)**.
 
-Currently available for Android. Support for other platforms is planned for the future.
+Currently available for Android. A web version is available in the [Nightly Builds](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly), and support for Windows, macOS, and Linux is planned for the future.
 
 ### Quick Overview
 
@@ -109,11 +109,6 @@ Personalize your experience and keep your data safe
   <img src="https://github.com/user-attachments/assets/e3aede9a-62e1-4e4f-bd33-4fca6dc623e9" width="300" alt="Backup and restore"/>
 </p>
 
-### Light and Dark Modes
-<p align="center">
-  TODO: Update image here.
-</p>
-
 ## Frequently Asked Questions
 
 **Where is my data stored?**
@@ -143,12 +138,12 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) before getting starte
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your_username/repertoire.git
+   git clone https://github.com/Adithya-Jayan/MyRepertoirApp.git
    ```
 
 2. Navigate to the project directory:
    ```sh
-   cd repertoire
+   cd MyRepertoirApp
    ```
 
 3. Install dependencies:
@@ -198,4 +193,4 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 For help, bug reports, or feature requests, open an [issue](https://github.com/Adithya-Jayan/MyRepertoirApp/issues).
 
-Distributed under the Apache 2.0 licence. See [NOTICE](Notice) and [LICENSE](LICENSE) for more information.
+Distributed under the Apache 2.0 licence. See [NOTICE](NOTICE) and [LICENSE](LICENSE) for more information.

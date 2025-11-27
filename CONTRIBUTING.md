@@ -23,7 +23,7 @@ There are many ways to contribute to Repertoire, from writing code to improving 
     ```
 3.  **Navigate to the project directory:**
     ```sh
-    cd MyRepertoirApp/Repertoire
+    cd MyRepertoirApp
     ```
 4.  **Install dependencies:**
     ```sh
