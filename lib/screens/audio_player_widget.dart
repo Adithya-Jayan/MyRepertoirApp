@@ -101,28 +101,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
       AppLogger.log('AudioPlayerWidget: Audio file exists, size: ${await file.length()} bytes');
 
+      if (!mounted) return;
+
       // Load and play the audio with error handling for threading issues
       await _player.setUrl(audioPath); // Use setUrl from PitchControllablePlayer
+      
+      if (!mounted) return;
+      
       await _player.play();
 
       // Small delay to allow the player to stabilize (helps with threading issues)
       await Future.delayed(const Duration(milliseconds: 150));
+
+      if (!mounted) return;
 
       // Apply current speed and pitch settings after loading
       await _player.player.setSpeed(_speed);
       await _player.setPitch(_pitch); // Directly set semitones
 
       AppLogger.log('AudioPlayerWidget: Audio initialized successfully');
-      setState(() {
-        _isInitialized = true;
-        _hasError = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _hasError = false;
+        });
+      }
     } catch (e) {
       AppLogger.log('AudioPlayerWidget: Error initializing audio: $e');
-      setState(() {
-        _hasError = true;
-        _isInitialized = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isInitialized = false;
+        });
+      }
     }
   }
 
@@ -130,7 +141,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void dispose() {
     _saveBookmarks(); // Save bookmarks when the widget is disposed.
     _player.stop(); // Stop the player
-    _player.player.dispose(); // Dispose the just_audio player
+    _player.dispose(); // Dispose the just_audio player
     super.dispose();
   }
 
