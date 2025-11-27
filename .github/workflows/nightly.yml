@@ -61,7 +61,7 @@ jobs:
             exit 1
           fi
           echo "Previous nightly succeeded (or unknown). Skipping build."
-          gh workflow cancel ${{ github.run_id }}
+          exit 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
