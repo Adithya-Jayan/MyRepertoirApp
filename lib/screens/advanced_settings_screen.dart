@@ -268,6 +268,7 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                                     TextButton(
                                       onPressed: () async {
                                         navigator.pop();
+                                        // ignore: deprecated_member_use
                                         await Share.shareXFiles([XFile(logFile.path)], text: 'Repertoire app debug log');
                                       },
                                       child: const Text('Share Log File'),
