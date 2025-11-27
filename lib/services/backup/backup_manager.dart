@@ -120,13 +120,9 @@ class BackupManager {
 
     // Encode the archive to zip format
     final zipBytes = ZipEncoder().encode(archive);
-    AppLogger.log('Archive encoded to zip format (${zipBytes?.length ?? 0} bytes)');
+    AppLogger.log('Archive encoded to zip format (${zipBytes.length} bytes)');
 
-    if (zipBytes != null) {
-      return Uint8List.fromList(zipBytes);
-    } else {
-      throw Exception('Failed to create zip archive');
-    }
+    return Uint8List.fromList(zipBytes);
   }
 
   /// Creates README content explaining the backup structure
