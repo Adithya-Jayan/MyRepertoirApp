@@ -1,0 +1,94 @@
+name: Manual Test Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storeFile=../my-release-key.jks" > android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+
+      - name: Build All Platforms
+        run: |
+          # Use a placeholder build name/number since we aren't calculating/bumping it
+          BUILD_NAME="0.0.0-test"
+          BUILD_NUMBER="${{ github.run_number }}"
+          
+          # --- Build armeabi-v7a ---
+          echo "Building APK for armeabi-v7a"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-arm \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER"
+          
+          # --- Build arm64-v8a ---
+          echo "Building APK for arm64-v8a"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-arm64 \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER"
+          
+          # --- Build x86_64 ---
+          echo "Building APK for x86_64"
+          flutter build apk --flavor fdroid --release \
+            --split-per-abi \
+            --target-platform=android-x64 \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER"
+
+          # Build App Bundle
+          echo "Building App Bundle"
+          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          
+          # Build Web
+          echo "Building Web"
+          flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+
+      - name: Create Release Assets
+        run: |
+          mkdir -p release_assets
+          find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk" -exec cp {} release_assets/ \;
+          cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab release_assets/
+          cp -r build/web release_assets/web_build
+          
+          cd release_assets
+          zip -r web_build.zip web_build/
+          cd ..
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release_assets
+          path: release_assets/
+          retention-days: 5
