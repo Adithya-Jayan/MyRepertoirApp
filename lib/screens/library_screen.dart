@@ -26,34 +26,20 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserver {
   bool _hasReturnedFromSettings = false;
-  bool _shouldReloadOnNextBuild = false;
+  late final LibraryScreenNotifier _notifier;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _notifier = LibraryScreenNotifier(MusicPieceRepository());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _notifier.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check if we should reload data (e.g., when returning from settings)
-    if (_shouldReloadOnNextBuild) {
-      _shouldReloadOnNextBuild = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final notifier = Provider.of<LibraryScreenNotifier>(context, listen: false);
-          AppLogger.log('LibraryScreen: Reloading data in didChangeDependencies');
-          notifier.reloadData();
-        }
-      });
-    }
   }
 
   @override
@@ -65,8 +51,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
       // Trigger reload after a short delay to ensure the widget is fully built
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          final notifier = Provider.of<LibraryScreenNotifier>(context, listen: false);
-          notifier.reloadData();
+          _notifier.reloadData();
         }
       });
     }
@@ -74,8 +59,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => LibraryScreenNotifier(MusicPieceRepository()),
+    return ChangeNotifierProvider.value(
+      value: _notifier,
       child: Consumer<LibraryScreenNotifier>(
         builder: (context, notifier, child) {
           // Force rebuild when gallery columns change
@@ -94,21 +79,13 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
             onPopInvokedWithResult: (didPop, result) async {
               AppLogger.log('LibraryScreen: PopScope triggered - didPop: $didPop, result: $result');
               if (didPop) {
-                // Check if we're returning from a restore operation
-                if (result == true) {
-                  AppLogger.log('LibraryScreen: Returning from restore operation, triggering full data reload');
-                  _shouldReloadOnNextBuild = true;
-                  // Mark that we've returned from settings to ensure reload
-                  _hasReturnedFromSettings = true;
-                } else {
-                  // Mark that we've returned from settings
-                  _hasReturnedFromSettings = true;
-                  // Always refresh data when returning to the library screen
-                  // This ensures the gallery updates regardless of how the user navigates back
-                  AppLogger.log('LibraryScreen: Reloading data after navigation return');
-                  await notifier.reloadData();
-                  AppLogger.log('LibraryScreen: Data reload completed');
-                }
+                // Mark that we've returned from settings/navigation
+                _hasReturnedFromSettings = true;
+                // Always refresh data when returning to the library screen
+                // This ensures the gallery updates regardless of how the user navigates back
+                AppLogger.log('LibraryScreen: Reloading data after navigation return');
+                await notifier.reloadData();
+                AppLogger.log('LibraryScreen: Data reload completed');
               }
             },
             child: KeyboardListener(
