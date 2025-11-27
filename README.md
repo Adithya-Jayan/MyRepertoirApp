@@ -17,7 +17,7 @@
 
 # Repertoire: Music Practice & Sheet Music Organizer
 
-**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)** | **[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)** | **[View the Webpage](https://adithyajayan.in/MyRepertoirApp/)**
+**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)** | **[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)** | **[Download from F-Droid](https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/)** | **[View the Webpage](https://adithyajayan.in/MyRepertoirApp/)**
 
 Repertoire is an app designed for musicians, dancers, magicians, or performers to help manage their repertoire, track practice sessions, and organize all related media in one place.
 
