@@ -12,7 +12,7 @@ F-Droid is a trusted, community-maintained software repository for Android. Inst
 2.  **Open the App Page:** Once F-Droid is installed, you can open the Repertoire app page by clicking the logo below, or by searching for "Repertoire" in the F-Droid app.
 
     <a href="https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/F-Droid_logo_2019.svg/256px-F-Droid_logo_2019.svg.png" alt="Get it on F-Droid" height="80">
+      <img src="https://gitlab.com/fdroid/fdroidclient/-/raw/master/logo-icon.svg" alt="Get it on F-Droid" height="80">
     </a>
 
 3.  **Install:** Tap the "Install" button on the app page in F-Droid. The app will be downloaded, installed, and automatically updated in the future.
