@@ -174,6 +174,22 @@ jobs:
             git push origin "${TAG_NAME}"
           fi
 
+      - name: Cleanup old nightly tags
+        run: |
+          # Calculate cutoff date (30 days ago)
+          CUTOFF_DATE=$(date -d "30 days ago" +%Y-%m-%d)
+          echo "Cleaning up nightly tags older than $CUTOFF_DATE"
+          
+          # List tags matching 'nightly-*', filter by date, and delete
+          git fetch --tags
+          git tag --list 'nightly-*' --sort=creatordate --format='%(refname:short) %(creatordate:short)' | while read tag date; do
+            if [[ "$date" < "$CUTOFF_DATE" ]]; then
+              echo "Deleting old tag: $tag ($date)"
+              git push --delete origin "$tag" || true
+              git tag -d "$tag" || true
+            fi
+          done
+
       - name: Success message
         run: echo "Nightly build ${{ steps.meta.outputs.tag }} published."
 
