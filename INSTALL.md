@@ -29,16 +29,16 @@ The installer file for an Android app is called an "APK" file.
 
 1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
 2.  On the release page, scroll down until you see a section labeled **Assets**. You may need to tap on it to see the list of files.
-3.  Look for the file that ends with `.apk`. It will be named something like `app-release.apk`.
+3.  Look for the file that ends with `.apk`. It will typically be named `app-arm64-v8a-fdroid-release.apk` (for newer phones) or `app-armeabi-v7a-fdroid-release.apk` (for older phones).
 4.  Tap on that file to download it to your phone.
 
-Here is what the "Assets" section looks like. You want to download the file highlighted below:
+Here is what the "Assets" section looks like. You want to download one of the highlighted files:
 ```
 ▼ Assets
-  app-release.aab
-  app-release.aab.sha256
-  app-release.apk      <-- TAP THIS ONE TO DOWNLOAD
-  app-release.apk.sha256
+  app-arm64-v8a-fdroid-release.apk      <-- TAP THIS ONE (Most common)
+  app-armeabi-v7a-fdroid-release.apk    <-- OR THIS ONE (Older phones)
+  app-x86_64-fdroid-release.apk
+  app-fdroid-release.aab
   Source code (zip)
   Source code (tar.gz)
   web_build.zip
