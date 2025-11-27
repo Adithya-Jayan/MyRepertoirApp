@@ -63,15 +63,30 @@ class HelpScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              'Need more help? Visit our GitHub repository for issues and support:',
+              'Need more help? Visit our website or GitHub repository:',
               style: TextStyle(fontStyle: FontStyle.italic),
             ),
             SizedBox(height: 8),
-            // Replace GestureDetector with ListTile for better UX and consistency
             ListTile(
-              leading: Icon(Icons.code, color: Colors.blue),
-              title: Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
-              subtitle: Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
+              leading: const Icon(Icons.public, color: Colors.blue),
+              title: const Text('Website & Documentation', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: const Text('https://adithyajayan.in/MyRepertoirApp/', style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final url = Uri.parse('https://adithyajayan.in/MyRepertoirApp/');
+                try {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } catch (e) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Could not open the link.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.code, color: Colors.black),
+              title: const Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: const Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
               onTap: () async {
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                 final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');

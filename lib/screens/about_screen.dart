@@ -56,7 +56,7 @@ class _AboutScreenState extends State<AboutScreen> {
             const Text('License: Apache 2.0'), // Display the app license.
             const SizedBox(height: 20),
             const Text(
-              'This app helps you organize your music pieces, attach various media types, and track practice sessions.',
+              'This app helps you organize your music pieces, attach various media types, and track practice sessions. Check out the website for more details.',
             ),
             const SizedBox(height: 20),
             const Text('Credits:'),
@@ -73,11 +73,43 @@ class _AboutScreenState extends State<AboutScreen> {
               child: const Text('View Contributors'),
             ),
             const SizedBox(height: 20),
-            // Replace the old ListTile with a nicer one
+            const Divider(),
             ListTile(
-              leading: Icon(Icons.code, color: Colors.blue),
-              title: Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
-              subtitle: Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
+              leading: const Icon(Icons.public, color: Colors.blue),
+              title: const Text('Website', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: const Text('https://adithyajayan.in/MyRepertoirApp/', style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                final url = Uri.parse('https://adithyajayan.in/MyRepertoirApp/');
+                try {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open the link.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.android, color: Colors.green),
+              title: const Text('F-Droid', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: const Text('https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/', style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                final url = Uri.parse('https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/');
+                try {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open the link.')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.code, color: Colors.black),
+              title: const Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+              subtitle: const Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
               onTap: () async {
                 final url = Uri.parse('https://github.com/Adithya-Jayan/MyRepertoirApp');
                 try {
@@ -85,7 +117,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Could not open the link.')),
+                    const SnackBar(content: Text('Could not open the link.')),
                   );
                 }
               },
