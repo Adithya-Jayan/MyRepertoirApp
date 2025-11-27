@@ -33,6 +33,7 @@ class TagGroupSection extends StatefulWidget {
 
 class _TagGroupSectionState extends State<TagGroupSection> {
   late final TextEditingController _tagGroupController;
+  TextEditingController? _addTagController;
 
   @override
   void initState() {
@@ -264,8 +265,10 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                             final updatedTags = List<String>.from(widget.tagGroup.tags)..add(selection);
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
                           }
+                          _addTagController?.clear();
                         },
                         fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                          _addTagController = fieldTextEditingController;
                           return TextFormField(
                             controller: fieldTextEditingController,
                             focusNode: focusNode,
