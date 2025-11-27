@@ -1,8 +1,29 @@
 # How to Install Repertoire on Your Android Phone
 
-This guide will walk you through the simple steps to install the Repertoire app on your Android device.
+There are two ways to install Repertoire on your Android device. The recommended method is through F-Droid, which provides automatic updates.
 
-## Step 1: Download the App Installer
+---
+
+## Option 1: Install from F-Droid (Recommended)
+
+F-Droid is a trusted, community-maintained software repository for Android. Installing from F-Droid is the easiest way to get the app and keep it updated.
+
+1.  **Get the F-Droid Client:** If you don't already have it, install the F-Droid client from the [official F-Droid website](https://f-droid.org/). You'll need to follow their instructions to allow installation of apps from your browser.
+2.  **Open the App Page:** Once F-Droid is installed, you can open the Repertoire app page by clicking the logo below, or by searching for "Repertoire" in the F-Droid app.
+
+    <a href="https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/F-Droid_logo_2019.svg/256px-F-Droid_logo_2019.svg.png" alt="Get it on F-Droid" height="80">
+    </a>
+
+3.  **Install:** Tap the "Install" button on the app page in F-Droid. The app will be downloaded, installed, and automatically updated in the future.
+
+---
+
+## Option 2: Manual Installation (Advanced)
+
+If you prefer not to use F-Droid, you can download and install the app manually from our GitHub releases.
+
+### Step 1: Download the App Installer
 
 The installer file for an Android app is called an "APK" file.
 
@@ -24,7 +45,7 @@ Here is what the "Assets" section looks like. You want to download the file high
 ```
 *(Note: The other files like `.aab` and `.sha256` are for developers or for verifying the download. You can safely ignore them.)*
 
-## Step 2: Allow Installation from Your Browser
+### Step 2: Allow Installation from Your Browser
 
 Android has a security feature that may block installations from outside the Google Play Store. You'll need to give your browser permission to install the app.
 
@@ -34,7 +55,7 @@ Android has a security feature that may block installations from outside the Goo
 4.  You will be taken to a screen with an option like **"Allow from this source"**. Toggle the switch to enable it.
 5.  Press the back button. You will now be able to proceed with the installation.
 
-## Step 3: Install the App
+### Step 3: Install the App
 
 After allowing the installation, you should see a screen asking for confirmation to install Repertoire.
 
