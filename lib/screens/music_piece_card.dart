@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import provider
 import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/practice_indicator_utils.dart';
+import 'package:repertoire/utils/theme_notifier.dart'; // Import ThemeNotifier
 import '../models/music_piece.dart';
 
 /// A widget that displays a single music piece as a card in a grid or list.
@@ -26,12 +28,14 @@ class MusicPieceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context); // Retrieve ThemeNotifier
     final Brightness brightness = Theme.of(context).brightness;
     final colorScheme = Theme.of(context).colorScheme;
     final bool hasThumbnail = piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty;
+    final ThumbnailStyle thumbnailStyle = themeNotifier.thumbnailStyle;
 
     Widget textWithOutline(String text, TextStyle? style) {
-      if (hasThumbnail) {
+      if (hasThumbnail && thumbnailStyle == ThumbnailStyle.outline) {
         return Stack(
           children: <Widget>[
             // Stroked text as border.
@@ -83,6 +87,24 @@ class MusicPieceCard extends StatelessWidget {
                         AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
                         return Container();
                       },
+                    ),
+                  ),
+                ),
+              if (hasThumbnail && thumbnailStyle == ThumbnailStyle.gradient)
+                 Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            (brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.9),
+                            (brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.25),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
