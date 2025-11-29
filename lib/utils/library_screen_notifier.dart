@@ -49,7 +49,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Key _groupListKey = UniqueKey();
   String? _selectedGroupId;
 
-  LibraryScreenNotifier(this._repository) {
+  LibraryScreenNotifier(this._repository, SharedPreferences prefs) {
+    _settingsManager = SettingsManager(galleryColumnsNotifier);
+    _settingsManager.prefs = prefs;
     _initialize();
   }
 
@@ -93,8 +95,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Future<void> _initialize() async {
     _pageController = PageController();
     _groupScrollController = ScrollController();
-    _settingsManager = SettingsManager(galleryColumnsNotifier);
-    await _settingsManager.initialize();
+    
     _libraryDataManager = LibraryDataManager(
       _repository,
       _settingsManager.prefs,

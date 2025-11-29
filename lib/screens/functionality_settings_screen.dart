@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:repertoire/services/update_service.dart';
 
 
 class FunctionalitySettingsScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _FunctionalitySettingsScreenState
   final TextEditingController _redToBlackController =
       TextEditingController();
   bool _showPracticeTimeStats = false;
+  bool _notifyNewReleases = false;
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _FunctionalitySettingsScreenState
       _redToBlackController.text =
           (prefs.getInt('redToBlackTransition') ?? 30).toString();
       _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
+      _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? false;
     });
   }
 
@@ -54,6 +57,7 @@ class _FunctionalitySettingsScreenState
     await prefs.setInt(
         'redToBlackTransition', int.parse(_redToBlackController.text));
     await prefs.setBool('show_practice_time_stats', _showPracticeTimeStats);
+    await prefs.setBool('notifyNewReleases', _notifyNewReleases);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Settings saved.')),
@@ -125,6 +129,26 @@ class _FunctionalitySettingsScreenState
                     _showPracticeTimeStats = value;
                   });
                 },
+              ),
+              SwitchListTile(
+                title: const Text('Notify New Releases'),
+                subtitle: const Text('Show a popup when a new version is available on GitHub.'),
+                value: _notifyNewReleases,
+                onChanged: (bool value) {
+                  setState(() {
+                    _notifyNewReleases = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton.icon(
+                  icon: const Icon(Icons.update),
+                  label: const Text('Check for Updates Now'),
+                  onPressed: () {
+                    UpdateService().checkForUpdates(context, manual: true);
+                  },
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
