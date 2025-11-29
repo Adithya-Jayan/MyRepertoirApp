@@ -49,6 +49,9 @@ class BackupManager {
     settings['appThemePreference'] = prefs.getString('appThemePreference');
     settings['appAccentColor'] = prefs.getInt('appAccentColor');
     settings['galleryColumns'] = prefs.getInt('galleryColumns');
+    settings['thumbnailStyle'] = prefs.getString('thumbnailStyle');
+    settings['showPracticeCount'] = prefs.getBool('showPracticeCount');
+    settings['showLastPracticed'] = prefs.getBool('showLastPracticed');
     
     // Backup settings
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
