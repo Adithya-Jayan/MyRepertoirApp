@@ -89,25 +89,29 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Practice Tracking',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            SwitchListTile(
-              title: const Text('Enable Practice Tracking'),
-              value: _musicPiece.enablePracticeTracking,
-              onChanged: (bool value) async {
-                setState(() {
-                  _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
-                });
-                await _repository.updateMusicPiece(_musicPiece);
-                widget.onMusicPieceChanged(_musicPiece);
-              },
-            ),
-            if (_musicPiece.enablePracticeTracking)
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Practice Tracking',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          Switch(
+                            value: _musicPiece.enablePracticeTracking,
+                            onChanged: (bool value) async {
+                              setState(() {
+                                _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
+                              });
+                              await _repository.updateMusicPiece(_musicPiece);
+                              widget.onMusicPieceChanged(_musicPiece);
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8.0),            if (_musicPiece.enablePracticeTracking)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
