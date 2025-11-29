@@ -198,20 +198,20 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 ],
               );
             } 
-            // Show pause button if it's playing
-            else if (playing == true) {
-              return IconButton(
-                icon: const Icon(Icons.pause),
-                iconSize: 64.0,
-                onPressed: _player.pause, // Use new player's pause
-              );
-            } 
             // Show replay button if playback completed
             else if (processingState == ja.ProcessingState.completed) {
               return IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
                 onPressed: () => _player.player.seek(Duration.zero), // Use new player's seek
+              );
+            } 
+            // Show pause button if it's playing
+            else if (playing == true) {
+              return IconButton(
+                icon: const Icon(Icons.pause),
+                iconSize: 64.0,
+                onPressed: _player.pause, // Use new player's pause
               );
             } 
             // Show play button for all other cases
