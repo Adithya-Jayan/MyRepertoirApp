@@ -13,8 +13,7 @@ import 'package:repertoire/utils/backup_utils.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
-import 'package:repertoire/widgets/dot_pattern_background.dart'; // Import DotPatternBackground
-import 'package:repertoire/widgets/gradient_background.dart'; // Import GradientBackground
+
 
 
 // Global navigator key for accessing context from anywhere
