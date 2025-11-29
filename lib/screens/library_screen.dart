@@ -19,6 +19,9 @@ import './add_edit_piece_screen.dart';
 /// music pieces. It supports single and multi-selection modes for batch operations.
 import 'package:repertoire/services/update_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:repertoire/widgets/dot_pattern_background.dart';
+import 'package:repertoire/widgets/gradient_background.dart';
+import 'package:repertoire/utils/theme_notifier.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -85,6 +88,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
       );
     }
 
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return ChangeNotifierProvider.value(
       value: _notifier!,
       child: Consumer<LibraryScreenNotifier>(
@@ -123,10 +128,26 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                   notifier.pressedKeys.remove(event.logicalKey);
                 }
               },
-              child: SafeArea(
-                child: Scaffold(
-                  backgroundColor: Colors.transparent,
-              appBar: LibraryAppBar(
+              child: Stack(
+                children: [
+                   // Base background color (behind everything)
+                  Positioned.fill(
+                    child: Container(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                    ),
+                  ),
+                  // Optional patterned background
+                  if (themeNotifier.showDotPatternBackground)
+                    const Positioned.fill(child: DotPatternBackground()),
+                  // Optional gradient background
+                  if (themeNotifier.showGradientBackground)
+                    const Positioned.fill(child: GradientBackground()),
+                  // Content layer
+                  Positioned.fill( // Added Positioned.fill here
+                    child: SafeArea(
+                      child: Scaffold(
+                        backgroundColor: Colors.transparent, // Transparent to show backgrounds
+                        appBar: LibraryAppBar(
                 isMultiSelectMode: notifier.isMultiSelectMode,
                 searchQuery: notifier.searchQuery,
                 onSearchChanged: notifier.setSearchQuery,
@@ -216,7 +237,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                       child: const Icon(Icons.add),
                     ),
                   ),
-                ),
+                ],
+              ),
             ),
           );
         },

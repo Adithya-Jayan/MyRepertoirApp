@@ -80,7 +80,8 @@ class PersonalizationSettingsScreenState
           },
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,6 +190,13 @@ class PersonalizationSettingsScreenState
                 themeNotifier.setShowDotPatternBackground(value);
               },
             ),
+            SwitchListTile(
+              title: const Text('Show Gradient Background'),
+              value: themeNotifier.showGradientBackground,
+              onChanged: (value) {
+                themeNotifier.setShowGradientBackground(value);
+              },
+            ),
             const SizedBox(height: 24),
             Text(
               'Gallery Columns',
@@ -206,6 +214,7 @@ class PersonalizationSettingsScreenState
             ),
           ],
         ),
+      ),
       ),
     ),
     );

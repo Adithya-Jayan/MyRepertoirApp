@@ -14,6 +14,7 @@ import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
 import 'package:repertoire/widgets/dot_pattern_background.dart'; // Import DotPatternBackground
+import 'package:repertoire/widgets/gradient_background.dart'; // Import GradientBackground
 
 
 // Global navigator key for accessing context from anywhere
@@ -167,16 +168,7 @@ class _MyAppState extends State<MyApp> {
               ),
               // Sets the home screen based on whether the app has run before.
               // If true, navigate to LibraryScreen; otherwise, navigate to WelcomeScreen.
-              home: Scaffold(
-                resizeToAvoidBottomInset: false,
-                body: Stack(
-                  children: [
-                    if (themeNotifier.showDotPatternBackground)
-                      const DotPatternBackground(),
-                    homeWidget,
-                  ],
-                ),
-              ),
+              home: homeWidget,
               debugShowCheckedModeBanner: false,
             );
           },

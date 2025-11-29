@@ -7,7 +7,7 @@ class DotPatternBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _DotPainter(
-        dotColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08), // Subtle dots
+        dotColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15), // Subtle dots
         gridSize: 30, // Distance between dot centers
         dotRadius: 1, // Radius of each dot
       ),
