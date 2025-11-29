@@ -459,6 +459,10 @@ class RestoreManager {
       await prefs.setBool('showLastPracticed', appSettingsJson['showLastPracticed']);
       AppLogger.log('RestoreManager: Restored showLastPracticed: ${appSettingsJson['showLastPracticed']}');
     }
+    if (appSettingsJson['showDotPatternBackground'] != null) {
+      await prefs.setBool('showDotPatternBackground', appSettingsJson['showDotPatternBackground']);
+      AppLogger.log('RestoreManager: Restored showDotPatternBackground: ${appSettingsJson['showDotPatternBackground']}');
+    }
     
     // Backup settings
     if (appSettingsJson['autoBackupEnabled'] != null) {

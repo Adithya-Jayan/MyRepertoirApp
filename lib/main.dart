@@ -13,6 +13,7 @@ import 'package:repertoire/utils/backup_utils.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
+import 'package:repertoire/widgets/dot_pattern_background.dart'; // Import DotPatternBackground
 
 
 // Global navigator key for accessing context from anywhere
@@ -144,6 +145,10 @@ class _MyAppState extends State<MyApp> {
         // the MaterialApp with the updated theme.
         return Consumer<ThemeNotifier>(
           builder: (context, themeNotifier, child) {
+            final Widget homeWidget = (snapshot.data ?? false)
+                ? const LibraryScreen()
+                : const WelcomeScreen();
+            
             return MaterialApp(
               navigatorKey: navigatorKey, // Use global navigator key
               title: 'Music Repertoire', // Title of the application
@@ -162,11 +167,13 @@ class _MyAppState extends State<MyApp> {
               ),
               // Sets the home screen based on whether the app has run before.
               // If true, navigate to LibraryScreen; otherwise, navigate to WelcomeScreen.
-              
-            
-            home: (snapshot.data ?? false)
-                  ? const LibraryScreen()
-                  : const WelcomeScreen(),
+              home: Stack(
+                children: [
+                  if (themeNotifier.showDotPatternBackground)
+                    const DotPatternBackground(),
+                  homeWidget,
+                ],
+              ),
               debugShowCheckedModeBanner: false,
             );
           },

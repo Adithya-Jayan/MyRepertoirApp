@@ -52,6 +52,7 @@ class BackupManager {
     settings['thumbnailStyle'] = prefs.getString('thumbnailStyle');
     settings['showPracticeCount'] = prefs.getBool('showPracticeCount');
     settings['showLastPracticed'] = prefs.getBool('showLastPracticed');
+    settings['showDotPatternBackground'] = prefs.getBool('showDotPatternBackground');
     
     // Backup settings
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');

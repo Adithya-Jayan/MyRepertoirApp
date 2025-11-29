@@ -13,6 +13,7 @@ class ThemeNotifier with ChangeNotifier {
   ThumbnailStyle _thumbnailStyle = ThumbnailStyle.outline;
   bool _showPracticeCount = true;
   bool _showLastPracticed = true;
+  bool _showDotPatternBackground = false;
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
@@ -39,6 +40,7 @@ class ThemeNotifier with ChangeNotifier {
   ThumbnailStyle get thumbnailStyle => _thumbnailStyle;
   bool get showPracticeCount => _showPracticeCount;
   bool get showLastPracticed => _showLastPracticed;
+  bool get showDotPatternBackground => _showDotPatternBackground;
 
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
@@ -54,6 +56,7 @@ class ThemeNotifier with ChangeNotifier {
     _thumbnailStyle = _getThumbnailStyleFromString(thumbnailStyleString);
     _showPracticeCount = prefs.getBool('showPracticeCount') ?? true;
     _showLastPracticed = prefs.getBool('showLastPracticed') ?? true;
+    _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? false;
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 
@@ -107,6 +110,15 @@ class ThemeNotifier with ChangeNotifier {
       notifyListeners();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('showLastPracticed', value);
+    }
+  }
+
+  void setShowDotPatternBackground(bool value) async {
+    if (_showDotPatternBackground != value) {
+      _showDotPatternBackground = value;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('showDotPatternBackground', value);
     }
   }
 

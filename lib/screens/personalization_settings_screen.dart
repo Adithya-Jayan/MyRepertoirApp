@@ -182,6 +182,13 @@ class PersonalizationSettingsScreenState
                 themeNotifier.setShowLastPracticed(value);
               },
             ),
+            SwitchListTile(
+              title: const Text('Show Dot Pattern Background'),
+              value: themeNotifier.showDotPatternBackground,
+              onChanged: (value) {
+                themeNotifier.setShowDotPatternBackground(value);
+              },
+            ),
             const SizedBox(height: 24),
             Text(
               'Gallery Columns',
