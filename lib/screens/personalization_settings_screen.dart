@@ -168,6 +168,20 @@ class PersonalizationSettingsScreenState
                 ],
               ),
             ),
+            SwitchListTile(
+              title: const Text('Show Practice Count'),
+              value: themeNotifier.showPracticeCount,
+              onChanged: (value) {
+                themeNotifier.setShowPracticeCount(value);
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Show Last Practiced'),
+              value: themeNotifier.showLastPracticed,
+              onChanged: (value) {
+                themeNotifier.setShowLastPracticed(value);
+              },
+            ),
             const SizedBox(height: 24),
             Text(
               'Gallery Columns',

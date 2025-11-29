@@ -11,6 +11,8 @@ class ThemeNotifier with ChangeNotifier {
   ThemeMode _themeMode; // The current theme mode of the application.
   Color _accentColor; // The current accent color of the application.
   ThumbnailStyle _thumbnailStyle = ThumbnailStyle.outline;
+  bool _showPracticeCount = true;
+  bool _showLastPracticed = true;
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
@@ -35,6 +37,8 @@ class ThemeNotifier with ChangeNotifier {
   Color get accentColor => _accentColor;
 
   ThumbnailStyle get thumbnailStyle => _thumbnailStyle;
+  bool get showPracticeCount => _showPracticeCount;
+  bool get showLastPracticed => _showLastPracticed;
 
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
@@ -48,6 +52,8 @@ class ThemeNotifier with ChangeNotifier {
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.
     _accentColor = Color(accentColorValue); // Convert integer value to Color.
     _thumbnailStyle = _getThumbnailStyleFromString(thumbnailStyleString);
+    _showPracticeCount = prefs.getBool('showPracticeCount') ?? true;
+    _showLastPracticed = prefs.getBool('showLastPracticed') ?? true;
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 
@@ -83,6 +89,24 @@ class ThemeNotifier with ChangeNotifier {
       notifyListeners();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('thumbnailStyle', _getStringFromThumbnailStyle(style));
+    }
+  }
+
+  void setShowPracticeCount(bool value) async {
+    if (_showPracticeCount != value) {
+      _showPracticeCount = value;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('showPracticeCount', value);
+    }
+  }
+
+  void setShowLastPracticed(bool value) async {
+    if (_showLastPracticed != value) {
+      _showLastPracticed = value;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('showLastPracticed', value);
     }
   }
 
