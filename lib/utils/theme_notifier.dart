@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum ThumbnailStyle { outline, gradient }
+
 /// A [ChangeNotifier] that manages the application's theme mode.
 ///
 /// It allows setting and loading the theme preference (System, Light, Dark)
@@ -8,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeNotifier with ChangeNotifier {
   ThemeMode _themeMode; // The current theme mode of the application.
   Color _accentColor; // The current accent color of the application.
+  ThumbnailStyle _thumbnailStyle = ThumbnailStyle.outline;
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
@@ -31,6 +34,8 @@ class ThemeNotifier with ChangeNotifier {
   /// Getter for the current accent color.
   Color get accentColor => _accentColor;
 
+  ThumbnailStyle get thumbnailStyle => _thumbnailStyle;
+
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
   /// If no preference is found, it defaults to [ThemeMode.system] and [Colors.deepPurple].
@@ -38,9 +43,11 @@ class ThemeNotifier with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final themePreference = prefs.getString('appThemePreference') ?? 'System'; // Retrieve saved theme preference.
     final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.toARGB32(); // Retrieve saved accent color.
+    final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Outline';
 
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.
     _accentColor = Color(accentColorValue); // Convert integer value to Color.
+    _thumbnailStyle = _getThumbnailStyleFromString(thumbnailStyleString);
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 
@@ -70,6 +77,15 @@ class ThemeNotifier with ChangeNotifier {
     }
   }
 
+  void setThumbnailStyle(ThumbnailStyle style) async {
+    if (_thumbnailStyle != style) {
+      _thumbnailStyle = style;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('thumbnailStyle', _getStringFromThumbnailStyle(style));
+    }
+  }
+
   /// Converts a string representation of a theme to its [ThemeMode] enum value.
   ThemeMode _getThemeModeFromString(String themeString) {
     switch (themeString) {
@@ -92,6 +108,25 @@ class ThemeNotifier with ChangeNotifier {
         return 'Dark';
       case ThemeMode.system:
         return 'System';
+    }
+  }
+
+  ThumbnailStyle _getThumbnailStyleFromString(String styleString) {
+    switch (styleString) {
+      case 'Gradient':
+        return ThumbnailStyle.gradient;
+      case 'Outline':
+      default:
+        return ThumbnailStyle.outline;
+    }
+  }
+
+  String _getStringFromThumbnailStyle(ThumbnailStyle style) {
+    switch (style) {
+      case ThumbnailStyle.gradient:
+        return 'Gradient';
+      case ThumbnailStyle.outline:
+        return 'Outline';
     }
   }
 }

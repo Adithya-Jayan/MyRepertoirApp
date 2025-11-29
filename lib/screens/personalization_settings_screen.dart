@@ -145,6 +145,31 @@ class PersonalizationSettingsScreenState
             ),
             const SizedBox(height: 24),
             Text(
+              'Thumbnail Style',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            RadioGroup<ThumbnailStyle>(
+              groupValue: themeNotifier.thumbnailStyle,
+              onChanged: (value) {
+                if (value != null) {
+                  themeNotifier.setThumbnailStyle(value);
+                }
+              },
+              child: Column(
+                children: [
+                  RadioListTile<ThumbnailStyle>(
+                    title: const Text('Outline Text'),
+                    value: ThumbnailStyle.outline,
+                  ),
+                  RadioListTile<ThumbnailStyle>(
+                    title: const Text('Gradient Overlay'),
+                    value: ThumbnailStyle.gradient,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
               'Gallery Columns',
               style: Theme.of(context).textTheme.titleLarge,
             ),
