@@ -201,7 +201,7 @@ class MusicPieceCard extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 8.0),
-                      if (piece.enablePracticeTracking)
+                      if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: textWithOutline(
@@ -209,7 +209,7 @@ class MusicPieceCard extends StatelessWidget {
                             Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
-                      if (piece.enablePracticeTracking)
+                      if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: textWithOutline(

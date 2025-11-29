@@ -447,6 +447,22 @@ class RestoreManager {
       await prefs.setInt('galleryColumns', appSettingsJson['galleryColumns']);
       AppLogger.log('RestoreManager: Restored galleryColumns: ${appSettingsJson['galleryColumns']}');
     }
+    if (appSettingsJson['thumbnailStyle'] != null) {
+      await prefs.setString('thumbnailStyle', appSettingsJson['thumbnailStyle']);
+      AppLogger.log('RestoreManager: Restored thumbnailStyle: ${appSettingsJson['thumbnailStyle']}');
+    }
+    if (appSettingsJson['showPracticeCount'] != null) {
+      await prefs.setBool('showPracticeCount', appSettingsJson['showPracticeCount']);
+      AppLogger.log('RestoreManager: Restored showPracticeCount: ${appSettingsJson['showPracticeCount']}');
+    }
+    if (appSettingsJson['showLastPracticed'] != null) {
+      await prefs.setBool('showLastPracticed', appSettingsJson['showLastPracticed']);
+      AppLogger.log('RestoreManager: Restored showLastPracticed: ${appSettingsJson['showLastPracticed']}');
+    }
+    if (appSettingsJson['showDotPatternBackground'] != null) {
+      await prefs.setBool('showDotPatternBackground', appSettingsJson['showDotPatternBackground']);
+      AppLogger.log('RestoreManager: Restored showDotPatternBackground: ${appSettingsJson['showDotPatternBackground']}');
+    }
     
     // Backup settings
     if (appSettingsJson['autoBackupEnabled'] != null) {
