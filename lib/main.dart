@@ -167,12 +167,15 @@ class _MyAppState extends State<MyApp> {
               ),
               // Sets the home screen based on whether the app has run before.
               // If true, navigate to LibraryScreen; otherwise, navigate to WelcomeScreen.
-              home: Stack(
-                children: [
-                  if (themeNotifier.showDotPatternBackground)
-                    const DotPatternBackground(),
-                  homeWidget,
-                ],
+              home: Scaffold(
+                resizeToAvoidBottomInset: false,
+                body: Stack(
+                  children: [
+                    if (themeNotifier.showDotPatternBackground)
+                      const DotPatternBackground(),
+                    homeWidget,
+                  ],
+                ),
               ),
               debugShowCheckedModeBanner: false,
             );

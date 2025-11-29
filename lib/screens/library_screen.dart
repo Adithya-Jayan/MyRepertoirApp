@@ -125,6 +125,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
               },
               child: SafeArea(
                 child: Scaffold(
+                  backgroundColor: Colors.transparent,
               appBar: LibraryAppBar(
                 isMultiSelectMode: notifier.isMultiSelectMode,
                 searchQuery: notifier.searchQuery,
