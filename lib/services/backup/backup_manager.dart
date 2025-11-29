@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate'; // Import Isolate
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -86,16 +87,12 @@ class BackupManager {
     return settings;
   }
 
-  /// Creates a zip file with backup data
-  Future<Uint8List> _createBackupZip(Map<String, dynamic> data, String storagePath, bool manual) async {
+  // --- Static Methods for Isolate execution ---
+
+  /// Creates a zip file with backup data (Run in Isolate)
+  static Future<Uint8List> _createBackupZipTask(Map<String, dynamic> data, bool manual, String appDocPath) async {
     final jsonString = jsonEncode(data);
-    final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
-    final fileName = manual ? 'music_repertoire_backup_$timestamp.zip' : 'auto_backup_$timestamp.zip';
-
-    final tempDir = await getTemporaryDirectory();
-    final tempZipPath = p.join(tempDir.path, fileName);
-    AppLogger.log('Temporary zip path: $tempZipPath');
-
+    
     // Create archive using the archive package directly
     final archive = Archive();
     
@@ -103,34 +100,27 @@ class BackupManager {
     final jsonBytes = utf8.encode(jsonString);
     final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonBytes.length, jsonBytes);
     archive.addFile(jsonArchiveFile);
-    AppLogger.log('JSON data added to archive (${jsonBytes.length} bytes)');
 
     // Create and add README file
-    final readmeContent = await _createReadmeContent(data);
+    final readmeContent = await _staticCreateReadmeContent(data);
     final readmeBytes = utf8.encode(readmeContent);
     final readmeArchiveFile = ArchiveFile('README.txt', readmeBytes.length, readmeBytes);
     archive.addFile(readmeArchiveFile);
-    AppLogger.log('README file added to archive (${readmeBytes.length} bytes)');
 
-    // Add media files to archive (media files are stored in app documents directory)
-    final appDir = await getApplicationDocumentsDirectory();
-    final mediaDir = Directory(p.join(appDir.path, 'media'));
+    // Add media files to archive
+    final mediaDir = Directory(p.join(appDocPath, 'media'));
     if (await mediaDir.exists()) {
-      AppLogger.log('Adding media directory to archive: ${mediaDir.path}');
-      await _addMediaFilesToArchive(archive, mediaDir, appDir.path);
-    } else {
-      AppLogger.log('Media directory does not exist: ${mediaDir.path}');
+      await _staticAddMediaFilesToArchive(archive, mediaDir, appDocPath);
     }
 
     // Encode the archive to zip format
     final zipBytes = ZipEncoder().encode(archive);
-    AppLogger.log('Archive encoded to zip format (${zipBytes.length} bytes)');
 
     return Uint8List.fromList(zipBytes);
   }
 
-  /// Creates README content explaining the backup structure
-  Future<String> _createReadmeContent(Map<String, dynamic> data) async {
+  /// Creates README content (Static for Isolate)
+  static Future<String> _staticCreateReadmeContent(Map<String, dynamic> data) async {
     final musicPieces = data['musicPieces'] as List<dynamic>;
     
     final buffer = StringBuffer();
@@ -157,37 +147,29 @@ class BackupManager {
     return buffer.toString();
   }
 
-  /// Recursively adds media files to the archive
-  Future<void> _addMediaFilesToArchive(Archive archive, Directory dir, String basePath) async {
-    AppLogger.log('Scanning directory: ${dir.path}');
-    
+  /// Recursively adds media files to the archive (Static for Isolate)
+  static Future<void> _staticAddMediaFilesToArchive(Archive archive, Directory dir, String basePath) async {
     try {
       final entities = await dir.list().toList();
-      int fileCount = 0;
       
       for (final entity in entities) {
         if (entity is File) {
           final relativePath = p.relative(entity.path, from: basePath);
-          AppLogger.log('Adding file to archive: $relativePath');
           
           try {
             final bytes = await entity.readAsBytes();
             final archiveFile = ArchiveFile(relativePath, bytes.length, bytes);
             archive.addFile(archiveFile);
-            fileCount++;
-            AppLogger.log('Successfully added file: $relativePath (${bytes.length} bytes)');
           } catch (e) {
-            AppLogger.log('Error reading file ${entity.path}: $e');
+            // Ignore error inside isolate
           }
         } else if (entity is Directory) {
           // Recursively add subdirectories
-          await _addMediaFilesToArchive(archive, entity, basePath);
+          await _staticAddMediaFilesToArchive(archive, entity, basePath);
         }
       }
-      
-      AppLogger.log('Added $fileCount files from directory: ${dir.path}');
     } catch (e) {
-      AppLogger.log('Error scanning directory ${dir.path}: $e');
+      // Ignore error inside isolate
     }
   }
 
@@ -274,7 +256,15 @@ class BackupManager {
       }
 
       final data = await _createBackupData(storagePath);
-      final zipBytes = await _createBackupZip(data, storagePath, manual);
+      
+      // Get App Documents Directory for Media files
+      final appDocDir = await getApplicationDocumentsDirectory();
+      
+      // Run compression in isolate to prevent UI freeze
+      AppLogger.log('Starting backup compression in background isolate...');
+      final zipBytes = await Isolate.run(() => _createBackupZipTask(data, manual, appDocDir.path));
+      AppLogger.log('Backup compression completed.');
+      
       final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual);
 
       if (outputFile != null) {
