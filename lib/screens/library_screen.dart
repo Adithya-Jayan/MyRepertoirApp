@@ -17,6 +17,9 @@ import './add_edit_piece_screen.dart';
 ///
 /// This screen allows users to view, search, filter, sort, and manage their
 /// music pieces. It supports single and multi-selection modes for batch operations.
+import 'package:repertoire/services/update_service.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
@@ -25,14 +28,26 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserver {
+  
+  late LibraryScreenNotifier _notifier;
   bool _hasReturnedFromSettings = false;
-  late final LibraryScreenNotifier _notifier;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _notifier = LibraryScreenNotifier(MusicPieceRepository());
+    _initialize();
+    
+    // Check for updates after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService().checkForUpdates(context);
+    });
+  }
+
+  Future<void> _initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
+    _notifier.loadMusicPieces();
   }
 
   @override

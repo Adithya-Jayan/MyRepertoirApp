@@ -56,6 +56,7 @@ dependencies:
   crypto: ^3.0.7
   share_plus: ^12.0.1
   flutter_markdown: ^0.7.1
+  pub_semver: ^2.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
