@@ -42,6 +42,26 @@ class MusicPieceGridView extends StatelessWidget {
       return const Center(child: Text('This group is empty.'));
     }
 
+    if (galleryColumns == 1) {
+      return RefreshIndicator(
+        onRefresh: () async {
+          onReloadData();
+        },
+        child: ListView.builder(
+          key: ValueKey('list_${currentPageGroupId}_$galleryColumns'),
+          padding: const EdgeInsets.all(8.0),
+          itemCount: musicPieces.length,
+          itemBuilder: (context, index) {
+             final piece = musicPieces[index];
+             return ConstrainedBox(
+               constraints: const BoxConstraints(maxHeight: 400),
+               child: _buildMusicPieceCard(context, piece),
+             );
+          },
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: () async {
         onReloadData();
@@ -58,43 +78,47 @@ class MusicPieceGridView extends StatelessWidget {
         itemCount: musicPieces.length,
         itemBuilder: (context, index) {
           final piece = musicPieces[index];
-          final isSelected = selectedPieceIds.contains(piece.id);
-          return MusicPieceCard(
-            key: ValueKey('card_${piece.id}_$isSelected'), // Add key for better performance
-            piece: piece,
-            isSelected: isSelected,
-            onTap: () async {
-              // Check if Shift key is pressed for multi-selection.
-              final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
-                  pressedKeys.contains(LogicalKeyboardKey.shiftRight);
-
-              if (isShiftPressed) {
-                if (!isMultiSelectMode) {
-                  onToggleMultiSelectMode(); // Enter multi-select mode if not already in it.
-                }
-                onPieceSelected(piece); // Select/deselect the piece.
-              } else if (isMultiSelectMode) {
-                onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
-              } else {
-                // Navigate to PieceDetailScreen in single-selection mode.
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => PieceDetailScreen(musicPiece: piece),
-                  ),
-                );
-                onReloadData(); // Reload data after returning from detail screen.
-              }
-            },
-            onLongPress: () {
-              // Enter multi-select mode on long press and select the piece.
-              if (!isMultiSelectMode) {
-                onToggleMultiSelectMode();
-              }
-              onPieceSelected(piece);
-            },
-          );
+          return _buildMusicPieceCard(context, piece);
         },
       ),
+    );
+  }
+
+  Widget _buildMusicPieceCard(BuildContext context, MusicPiece piece) {
+    final isSelected = selectedPieceIds.contains(piece.id);
+    return MusicPieceCard(
+      key: ValueKey('card_${piece.id}_$isSelected'), // Add key for better performance
+      piece: piece,
+      isSelected: isSelected,
+      onTap: () async {
+        // Check if Shift key is pressed for multi-selection.
+        final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
+            pressedKeys.contains(LogicalKeyboardKey.shiftRight);
+
+        if (isShiftPressed) {
+          if (!isMultiSelectMode) {
+            onToggleMultiSelectMode(); // Enter multi-select mode if not already in it.
+          }
+          onPieceSelected(piece); // Select/deselect the piece.
+        } else if (isMultiSelectMode) {
+          onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
+        } else {
+          // Navigate to PieceDetailScreen in single-selection mode.
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => PieceDetailScreen(musicPiece: piece),
+            ),
+          );
+          onReloadData(); // Reload data after returning from detail screen.
+        }
+      },
+      onLongPress: () {
+        // Enter multi-select mode on long press and select the piece.
+        if (!isMultiSelectMode) {
+          onToggleMultiSelectMode();
+        }
+        onPieceSelected(piece);
+      },
     );
   }
 }
