@@ -19,6 +19,9 @@ import './add_edit_piece_screen.dart';
 /// music pieces. It supports single and multi-selection modes for batch operations.
 import 'package:repertoire/services/update_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:repertoire/widgets/dot_pattern_background.dart';
+import 'package:repertoire/widgets/gradient_background.dart';
+import 'package:repertoire/utils/theme_notifier.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -29,7 +32,7 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserver {
   
-  late LibraryScreenNotifier _notifier;
+  LibraryScreenNotifier? _notifier;
   bool _hasReturnedFromSettings = false;
 
   @override
@@ -46,14 +49,17 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
   Future<void> _initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
-    _notifier.loadMusicPieces();
+    if (mounted) {
+      setState(() {
+        _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
+      });
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _notifier.dispose();
+    _notifier?.dispose();
     super.dispose();
   }
 
@@ -66,7 +72,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
       // Trigger reload after a short delay to ensure the widget is fully built
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _notifier.reloadData();
+          _notifier?.reloadData();
         }
       });
     }
@@ -74,8 +80,18 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
+    if (_notifier == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return ChangeNotifierProvider.value(
-      value: _notifier,
+      value: _notifier!,
       child: Consumer<LibraryScreenNotifier>(
         builder: (context, notifier, child) {
           // Force rebuild when gallery columns change
@@ -112,99 +128,119 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                   notifier.pressedKeys.remove(event.logicalKey);
                 }
               },
-              child: SafeArea(
-                child: Scaffold(
-              appBar: LibraryAppBar(
-                isMultiSelectMode: notifier.isMultiSelectMode,
-                searchQuery: notifier.searchQuery,
-                onSearchChanged: notifier.setSearchQuery,
-                hasActiveFilters: notifier.hasActiveFilters,
-                filterOptions: notifier.filterOptions,
-                onFilterOptionsChanged: notifier.setFilterOptions,
-                onApplyFilter: notifier.loadMusicPieces,
-                onClearFilter: notifier.clearFilter,
-                sortOption: notifier.sortOption,
-                onSortOptionChanged: notifier.setSortOption,
-                onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                selectedPieceCount: notifier.selectedPieceIds.length,
-                onSelectAll: notifier.selectAllPieces,
-                repository: MusicPieceRepository(),
-                prefs: notifier.prefs,
-                onSettingsChanged: notifier.reloadData,
-              ),
-              body: ValueListenableBuilder<int>(
-                valueListenable: notifier.galleryColumnsNotifier,
-                builder: (context, galleryColumns, child) {
-                  AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      AppLogger.log('LibraryScreen: Swipe-to-refresh triggered');
-                      await notifier.reloadData();
-                    },
-                    child: LibraryBody(
-                      key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
-                      visibleGroups: visibleGroups,
-                      selectedGroupId: notifier.selectedGroupId,
-                      allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                      musicPieces: notifier.musicPiecesNotifier.value,
-                      isLoading: notifier.isLoadingNotifier.value,
-                      errorMessage: notifier.errorMessageNotifier.value,
-                      galleryColumns: galleryColumns,
-                      groupListKey: notifier.groupListKey,
-                      pageController: notifier.pageController,
-                      groupScrollController: notifier.groupScrollController,
-                      isMultiSelectMode: notifier.isMultiSelectMode,
-                      selectedPieceIds: notifier.selectedPieceIds,
-                      pressedKeys: notifier.pressedKeys,
-                      onPieceSelected: notifier.onPieceSelected,
-                      onReloadData: notifier.reloadData,
-                      onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                      onGroupSelected: notifier.onGroupSelected,
-                      searchQuery: notifier.searchQuery,
-                      filterOptions: notifier.filterOptions,
-                      sortOption: notifier.sortOption,
-                      getFilteredPiecesForGroup: notifier.getFilteredPiecesForGroup,
-                    ),
-                  );
-                },
-              ),
-              bottomNavigationBar: notifier.isMultiSelectMode
-                  ? LibraryBottomAppBar(
-                      isMultiSelectMode: notifier.isMultiSelectMode,
-                      onDeleteSelectedPieces: () {
-                        LibraryActions(
-                          repository: MusicPieceRepository(),
-                          onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
-                          onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                          allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                        ).deleteSelectedPieces(context, notifier.selectedPieceIds);
-                      },
-                      onModifyGroupOfSelectedPieces: () {
-                        LibraryActions(
-                          repository: MusicPieceRepository(),
-                          onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
-                          onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                          allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                        ).modifyGroupOfSelectedPieces(context, notifier.selectedPieceIds, notifier.groupsNotifier.value);
-                      },
-                      isSelectionEmpty: notifier.selectedPieceIds.isEmpty,
-                    )
-                  : null,
-              floatingActionButton: notifier.isMultiSelectMode
-                  ? null
-                  : FloatingActionButton(
-                      onPressed: () async {
-                        final result = await Navigator.of(context).push<bool?>(
-                          MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: notifier.selectedGroupId)),
-                        );
-                        if (result == true) {
-                          await notifier.reloadData();
-                        }
-                      },
-                      child: const Icon(Icons.add),
+              child: Stack(
+                children: [
+                   // Base background color (behind everything)
+                  Positioned.fill(
+                    child: Container(
+                      color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                   ),
-                ),
+                  // Optional patterned background
+                  if (themeNotifier.showDotPatternBackground)
+                    const Positioned.fill(child: DotPatternBackground()),
+                  // Optional gradient background
+                  if (themeNotifier.showGradientBackground)
+                    const Positioned.fill(child: GradientBackground()),
+                  // Content layer
+                  Positioned.fill(
+                    child: SafeArea(
+                      child: Scaffold(
+                        backgroundColor: Colors.transparent, // Transparent to show backgrounds
+                        appBar: LibraryAppBar(
+                          isMultiSelectMode: notifier.isMultiSelectMode,
+                          searchQuery: notifier.searchQuery,
+                          onSearchChanged: notifier.setSearchQuery,
+                          hasActiveFilters: notifier.hasActiveFilters,
+                          filterOptions: notifier.filterOptions,
+                          onFilterOptionsChanged: notifier.setFilterOptions,
+                          onApplyFilter: notifier.loadMusicPieces,
+                          onClearFilter: notifier.clearFilter,
+                          sortOption: notifier.sortOption,
+                          onSortOptionChanged: notifier.setSortOption,
+                          onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                          selectedPieceCount: notifier.selectedPieceIds.length,
+                          onSelectAll: notifier.selectAllPieces,
+                          repository: MusicPieceRepository(),
+                          prefs: notifier.prefs,
+                          onSettingsChanged: notifier.reloadData,
+                        ),
+                        body: ValueListenableBuilder<int>(
+                          valueListenable: notifier.galleryColumnsNotifier,
+                          builder: (context, galleryColumns, child) {
+                            AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                AppLogger.log('LibraryScreen: Swipe-to-refresh triggered');
+                                await notifier.reloadData();
+                              },
+                              child: LibraryBody(
+                                key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
+                                visibleGroups: visibleGroups,
+                                selectedGroupId: notifier.selectedGroupId,
+                                allMusicPieces: notifier.allMusicPiecesNotifier.value,
+                                musicPieces: notifier.musicPiecesNotifier.value,
+                                isLoading: notifier.isLoadingNotifier.value,
+                                errorMessage: notifier.errorMessageNotifier.value,
+                                galleryColumns: galleryColumns,
+                                groupListKey: notifier.groupListKey,
+                                pageController: notifier.pageController,
+                                groupScrollController: notifier.groupScrollController,
+                                isMultiSelectMode: notifier.isMultiSelectMode,
+                                selectedPieceIds: notifier.selectedPieceIds,
+                                pressedKeys: notifier.pressedKeys,
+                                onPieceSelected: notifier.onPieceSelected,
+                                onReloadData: notifier.reloadData,
+                                onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                                onGroupSelected: notifier.onGroupSelected,
+                                searchQuery: notifier.searchQuery,
+                                filterOptions: notifier.filterOptions,
+                                sortOption: notifier.sortOption,
+                                getFilteredPiecesForGroup: notifier.getFilteredPiecesForGroup,
+                              ),
+                            );
+                          },
+                        ),
+                        bottomNavigationBar: notifier.isMultiSelectMode
+                            ? LibraryBottomAppBar(
+                                isMultiSelectMode: notifier.isMultiSelectMode,
+                                onDeleteSelectedPieces: () {
+                                  LibraryActions(
+                                    repository: MusicPieceRepository(),
+                                    onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
+                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
+                                  ).deleteSelectedPieces(context, notifier.selectedPieceIds);
+                                },
+                                onModifyGroupOfSelectedPieces: () {
+                                  LibraryActions(
+                                    repository: MusicPieceRepository(),
+                                    onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
+                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
+                                  ).modifyGroupOfSelectedPieces(context, notifier.selectedPieceIds, notifier.groupsNotifier.value);
+                                },
+                                isSelectionEmpty: notifier.selectedPieceIds.isEmpty,
+                              )
+                            : null,
+                        floatingActionButton: notifier.isMultiSelectMode
+                            ? null
+                            : FloatingActionButton(
+                                onPressed: () async {
+                                  final result = await Navigator.of(context).push<bool?>(
+                                    MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: notifier.selectedGroupId)),
+                                  );
+                                  if (result == true) {
+                                    await notifier.reloadData();
+                                  }
+                                },
+                                child: const Icon(Icons.add),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
