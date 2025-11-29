@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
+import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
 
@@ -23,6 +24,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   // Ensures that Flutter widgets are initialized before running the app.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Enable edge-to-edge display and transparent system bars
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: Colors.transparent,
+    statusBarColor: Colors.transparent,
+  ));
 
   await AppLogger.init(); // Initialize the logger
   AppLogger.log('App started.');
