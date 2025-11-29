@@ -29,7 +29,7 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserver {
   
-  late LibraryScreenNotifier _notifier;
+  LibraryScreenNotifier? _notifier;
   bool _hasReturnedFromSettings = false;
 
   @override
@@ -46,14 +46,17 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
   Future<void> _initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
-    _notifier.loadMusicPieces();
+    if (mounted) {
+      setState(() {
+        _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
+      });
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _notifier.dispose();
+    _notifier?.dispose();
     super.dispose();
   }
 
@@ -66,7 +69,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
       // Trigger reload after a short delay to ensure the widget is fully built
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _notifier.reloadData();
+          _notifier?.reloadData();
         }
       });
     }
@@ -74,8 +77,16 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
+    if (_notifier == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return ChangeNotifierProvider.value(
-      value: _notifier,
+      value: _notifier!,
       child: Consumer<LibraryScreenNotifier>(
         builder: (context, notifier, child) {
           // Force rebuild when gallery columns change
