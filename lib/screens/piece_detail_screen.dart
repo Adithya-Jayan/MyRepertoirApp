@@ -134,6 +134,8 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               ),
               if (_musicPiece.tagGroups.isNotEmpty)
                 TagGroupsDisplay(musicPiece: _musicPiece),
+              const Divider(),
+              const SizedBox(height: 16.0),
               MediaDisplayList(
                 musicPiece: _musicPiece,
                 onMusicPieceChanged: (updatedPiece) {
