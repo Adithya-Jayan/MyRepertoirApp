@@ -24,6 +24,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   void initState() {
     super.initState();
     _musicPiece = widget.musicPiece;
+    AppLogger.log('PieceDetailScreen: initState for piece: ${_musicPiece.title} (ID: ${_musicPiece.id})');
   }
 
   @override
@@ -34,7 +35,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.log('PieceDetailScreen: build called');
+    AppLogger.log('PieceDetailScreen: build called for piece: ${_musicPiece.title}');
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
