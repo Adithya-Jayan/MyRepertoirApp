@@ -525,6 +525,12 @@ class RestoreManager {
       await prefs.setDouble('audio_pitch', appSettingsJson['audio_pitch']);
       AppLogger.log('RestoreManager: Restored audio_pitch: ${appSettingsJson['audio_pitch']}');
     }
+
+    // Practice settings
+    if (appSettingsJson['practice_stages'] != null) {
+      await prefs.setString('practice_stages', appSettingsJson['practice_stages']);
+      AppLogger.log('RestoreManager: Restored practice_stages');
+    }
     
     // App state settings
     if (appSettingsJson['hasRunBefore'] != null) {
