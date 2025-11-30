@@ -51,15 +51,15 @@ class ThemeNotifier with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final themePreference = prefs.getString('appThemePreference') ?? 'System'; // Retrieve saved theme preference.
     final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.toARGB32(); // Retrieve saved accent color.
-    final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Outline';
+    final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Gradient';
 
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.
     _accentColor = Color(accentColorValue); // Convert integer value to Color.
     _thumbnailStyle = _getThumbnailStyleFromString(thumbnailStyleString);
     _showPracticeCount = prefs.getBool('showPracticeCount') ?? true;
     _showLastPracticed = prefs.getBool('showLastPracticed') ?? true;
-    _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? false;
-    _showGradientBackground = prefs.getBool('showGradientBackground') ?? false;
+    _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? true;
+    _showGradientBackground = prefs.getBool('showGradientBackground') ?? true;
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 
