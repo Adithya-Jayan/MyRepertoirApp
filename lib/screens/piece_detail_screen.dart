@@ -124,16 +124,21 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16.0),
-              PracticeTrackingCard(
-                musicPiece: _musicPiece,
-                onMusicPieceChanged: (updatedPiece) {
-                  setState(() {
-                    _musicPiece = updatedPiece;
-                  });
-                },
-              ),
+              if (_musicPiece.enablePracticeTracking)
+                PracticeTrackingCard(
+                  musicPiece: _musicPiece,
+                  onMusicPieceChanged: (updatedPiece) {
+                    setState(() {
+                      _musicPiece = updatedPiece;
+                    });
+                  },
+                ),
               if (_musicPiece.tagGroups.isNotEmpty)
                 TagGroupsDisplay(musicPiece: _musicPiece),
+              if (_musicPiece.mediaItems.isNotEmpty) ...[ // Only show divider if there's media
+                const Divider(),
+                const SizedBox(height: 16.0),
+              ],
               MediaDisplayList(
                 musicPiece: _musicPiece,
                 onMusicPieceChanged: (updatedPiece) {

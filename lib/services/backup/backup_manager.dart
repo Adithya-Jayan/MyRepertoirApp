@@ -77,6 +77,9 @@ class BackupManager {
     settings['audio_speed'] = prefs.getDouble('audio_speed');
     settings['audio_pitch'] = prefs.getDouble('audio_pitch');
     
+    // Practice settings
+    settings['practice_stages'] = prefs.getString('practice_stages');
+    
     // App state settings
     settings['hasRunBefore'] = prefs.getBool('hasRunBefore');
     

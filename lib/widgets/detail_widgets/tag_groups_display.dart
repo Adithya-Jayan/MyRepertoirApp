@@ -19,23 +19,45 @@ class TagGroupsDisplay extends StatelessWidget {
         ),
         const SizedBox(height: 8.0),
         ...musicPiece.tagGroups.map((tagGroup) {
+          final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
+          final backgroundColor = color != null 
+              ? adjustColorForBrightness(color, brightness) 
+              : Theme.of(context).colorScheme.primaryContainer;
+          
+          // Determine text color based on background brightness for readability
+          final textColor = ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.light
+              ? Colors.black
+              : Colors.white;
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${tagGroup.name}:', style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4.0),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: tagGroup.tags.map((tag) {
-                    final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
-                    return Chip(
-                      label: Text(tag),
-                      backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
-                    );
-                  }).toList(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Text(
+                    tagGroup.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+                const Text(' : '), // Add a colon after the tag group name
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0), // Align text vertically with the label
+                    child: Text(
+                      tagGroup.tags.join(', '),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
                 ),
               ],
             ),

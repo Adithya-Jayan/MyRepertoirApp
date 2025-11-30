@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:just_audio/just_audio.dart';
 
 class PitchControllablePlayer {
@@ -10,8 +11,9 @@ class PitchControllablePlayer {
   Future<void> initialize() async {}
 
   Future<void> setPitch(double semitones) async {
-    // Temporarily disabled pitch shifting to fix loading issues
     _currentPitch = semitones;
+    final pitchMultiplier = pow(2.0, semitones / 12.0).toDouble();
+    await _player.setPitch(pitchMultiplier);
   }
 
   double get pitch => _currentPitch;

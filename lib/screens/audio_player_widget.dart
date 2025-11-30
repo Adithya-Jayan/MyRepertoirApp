@@ -52,8 +52,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     final prefs = await SharedPreferences.getInstance();
     
     setState(() {
-      _speed = prefs.getDouble('audio_speed') ?? 1.0;
-      _pitch = prefs.getDouble('audio_pitch') ?? 0.0;
+      _speed = prefs.getDouble('audio_speed_${widget.musicPiece.id}') ?? 1.0;
+      _pitch = prefs.getDouble('audio_pitch_${widget.musicPiece.id}') ?? 0.0;
     });
     
     // Apply settings to the audio player
@@ -66,8 +66,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   /// Saves the current speed and pitch settings to [SharedPreferences].
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('audio_speed', _speed); // Save current playback speed.
-    await prefs.setDouble('audio_pitch', _pitch); // Save current pitch setting.
+    await prefs.setDouble('audio_speed_${widget.musicPiece.id}', _speed); // Save current playback speed.
+    await prefs.setDouble('audio_pitch_${widget.musicPiece.id}', _pitch); // Save current pitch setting.
     AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
   }
 
@@ -197,26 +197,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   Text('Loading...'),
                 ],
               );
-            } 
-            // Show replay button if playback completed
-            else if (processingState == ja.ProcessingState.completed) {
-              return IconButton(
+            }
+            
+            // Define the main control button based on state
+            Widget mainButton;
+            if (processingState == ja.ProcessingState.completed) {
+              mainButton = IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
-                onPressed: () => _player.player.seek(Duration.zero), // Use new player's seek
+                onPressed: () => _player.player.seek(Duration.zero),
               );
-            } 
-            // Show pause button if it's playing
-            else if (playing == true) {
-              return IconButton(
+            } else if (playing == true) {
+              mainButton = IconButton(
                 icon: const Icon(Icons.pause),
                 iconSize: 64.0,
-                onPressed: _player.pause, // Use new player's pause
+                onPressed: _player.pause,
               );
-            } 
-            // Show play button for all other cases
-            else {
-              return IconButton(
+            } else {
+              mainButton = IconButton(
                 icon: const Icon(Icons.play_arrow),
                 iconSize: 64.0,
                 onPressed: () async {
@@ -236,6 +234,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 },
               );
             }
+
+            // Return the Row with Skip buttons and Main button
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Rewind 2s Button
+                IconButton(
+                  icon: const Icon(Icons.replay_5), // Using generic replay icon
+                  iconSize: 32.0,
+                  tooltip: 'Rewind 2s',
+                  onPressed: () {
+                    final current = _player.player.position;
+                    final newPos = current - const Duration(seconds: 2);
+                    _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
+                  },
+                ),
+                const SizedBox(width: 16), // Spacing
+                mainButton,
+                const SizedBox(width: 16), // Spacing
+                // Forward 2s Button
+                IconButton(
+                  icon: const Icon(Icons.forward_5), // Using generic forward icon
+                  iconSize: 32.0,
+                  tooltip: 'Forward 2s',
+                  onPressed: () {
+                    final current = _player.player.position;
+                    final duration = _player.player.duration ?? Duration.zero;
+                    final newPos = current + const Duration(seconds: 2);
+                    _player.player.seek(newPos > duration ? duration : newPos);
+                  },
+                ),
+              ],
+            );
           },
         ),
         
@@ -287,10 +318,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               const Text('Speed:'),
               Expanded(
                 child: Slider(
-                  min: 0.5,
-                  max: 2.0,
+                  min: 0.2,
+                  max: 2.5,
                   value: _speed,
-                  divisions: 15, // 0.5 to 2.0 in 0.1 increments
+                  divisions: 23, // 0.2 to 2.5 in 0.1 increments
                   label: _speed.toStringAsFixed(1),
                   onChanged: (value) async {
                     setState(() {
@@ -306,34 +337,32 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
         ),
         
-        // Pitch Control (temporarily disabled)
-        // The pitch shifting UI is hidden for now to stabilize playback.
-        // To re-enable later, restore the block below.
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        //   child: Row(
-        //     children: [
-        //       const Text('Pitch:'),
-        //       Expanded(
-        //         child: Slider(
-        //           min: -12.0, // One octave down
-        //           max: 12.0, // One octave up
-        //           value: _pitch,
-        //           divisions: 24,
-        //           label: _getPitchDisplayString(_pitch),
-        //           onChanged: (value) async {
-        //             setState(() {
-        //               _pitch = value;
-        //             });
-        //             await _player.setPitch(value); // Use new player's setPitch directly
-        //             await _saveSettings();
-        //           },
-        //         ),
-        //       ),
-        //       Text(_getPitchDisplayString(_pitch)),
-        //     ],
-        //   ),
-        // ),
+        // Pitch Control
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              const Text('Pitch:'),
+              Expanded(
+                child: Slider(
+                  min: -12.0, // One octave down
+                  max: 12.0, // One octave up
+                  value: _pitch,
+                  divisions: 24,
+                  label: _getPitchDisplayString(_pitch),
+                  onChanged: (value) async {
+                    setState(() {
+                      _pitch = value;
+                    });
+                    await _player.setPitch(value);
+                    await _saveSettings();
+                  },
+                ),
+              ),
+              Text(_getPitchDisplayString(_pitch)),
+            ],
+          ),
+        ),
         
         // Reset Controls Button
         Padding(
@@ -435,6 +464,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
       ],
     );
+  }
+
+  String _getPitchDisplayString(double semitones) {
+    if (semitones == 0) return 'Normal';
+    return '${semitones > 0 ? '+' : ''}${semitones.round()} st';
   }
 
   String _formatDuration(Duration duration) {

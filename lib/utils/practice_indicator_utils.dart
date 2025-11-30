@@ -1,41 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/practice_config_service.dart';
 
 class PracticeIndicatorUtils {
   static Future<Color> getPracticeIndicatorColor(DateTime? lastPracticeTime) async {
-    final prefs = await SharedPreferences.getInstance();
-    final greenPeriod = prefs.getInt('greenPeriod') ?? 7;
-    final greenToYellowTransition = prefs.getInt('greenToYellowTransition') ?? 7;
-    final yellowToRedTransition = prefs.getInt('yellowToRedTransition') ?? 16;
-    final redToBlackTransition = prefs.getInt('redToBlackTransition') ?? 30;
-
     if (lastPracticeTime == null) {
       return Colors.black;
+    }
+
+    final service = PracticeConfigService();
+    final stages = await service.loadStages();
+
+    if (stages.isEmpty) {
+        return Colors.black;
     }
 
     final now = DateTime.now();
     final difference = now.difference(lastPracticeTime);
     final daysSincePractice = difference.inDays;
 
-    final greenEnd = greenPeriod;
-    final yellowEnd = greenEnd + greenToYellowTransition;
-    final redEnd = yellowEnd + yellowToRedTransition;
-    final blackEnd = redEnd + redToBlackTransition;
+    int accumulatedDays = 0;
 
-    if (daysSincePractice <= greenEnd) {
-      return Colors.green;
-    } else if (daysSincePractice <= yellowEnd) {
-      return _calculateColor(
-          daysSincePractice, greenEnd, yellowEnd, Colors.green, Colors.yellow);
-    } else if (daysSincePractice <= redEnd) {
-      return _calculateColor(
-          daysSincePractice, yellowEnd, redEnd, Colors.yellow, Colors.red);
-    } else if (daysSincePractice <= blackEnd) {
-      return _calculateColor(
-          daysSincePractice, redEnd, blackEnd, Colors.red, Colors.black);
-    } else {
-      return Colors.black;
+    for (int i = 0; i < stages.length; i++) {
+      final stage = stages[i];
+      
+      // Hold Period Check
+      final holdEnd = accumulatedDays + stage.holdDays;
+      if (daysSincePractice <= holdEnd) {
+        return stage.color;
+      }
+
+      // If last stage, we stay here forever
+      if (i == stages.length - 1) {
+        return stage.color;
+      }
+      
+      // Transition Period Check
+      final nextStage = stages[i + 1];
+      final transitionEnd = holdEnd + stage.transitionDays;
+      
+      if (daysSincePractice <= transitionEnd) {
+        return _calculateColor(
+          daysSincePractice,
+          holdEnd,
+          transitionEnd,
+          stage.color,
+          nextStage.color
+        );
+      }
+
+      accumulatedDays = transitionEnd;
     }
+
+    return stages.last.color;
   }
 
   static Color _calculateColor(int days, int periodStart, int periodEnd, Color startColor, Color endColor) {
@@ -50,8 +66,8 @@ class PracticeIndicatorUtils {
   }
 
   /// Gets a human-readable description of the practice status.
-  ///
-  /// Returns strings like "Recently practiced", "Needs attention", etc.
+  /// This relies on the first stage being roughly "Recently practiced" etc.
+  /// For full dynamic names, we'd need to return the stage name.
   static String getPracticeStatusDescription(DateTime? lastPracticeTime) {
     if (lastPracticeTime == null) {
       return "Never practiced";
@@ -59,16 +75,13 @@ class PracticeIndicatorUtils {
     
     final now = DateTime.now();
     final difference = now.difference(lastPracticeTime);
-    final hoursSincePractice = difference.inHours;
     final daysSincePractice = difference.inDays;
     
-    if (hoursSincePractice < 48) {
-      return "Recently practiced";
-    } else if (daysSincePractice <= 7) {
-      return "Practiced this week";
-    } else if (daysSincePractice <= 14) {
+    // Fallback static logic since this method is synchronous and unused.
+    // If we needed it, we'd make it async.
+    if (daysSincePractice <= 7) {
       return "Practiced recently";
-    } else if (daysSincePractice <= 32) {
+    } else if (daysSincePractice <= 30) {
       return "Needs attention";
     } else {
       return "Long overdue";
@@ -76,10 +89,6 @@ class PracticeIndicatorUtils {
   }
 
   /// Formats the last practice time for display.
-  ///
-  /// Returns 'Never practiced' if [lastPracticeTime] is null.
-  /// Otherwise, returns a human-readable string like 'Today', 'Yesterday',
-  /// 'X days ago', or the date.
   static String formatLastPracticeTime(DateTime? lastPracticeTime) {
     if (lastPracticeTime == null) {
       return 'Never practiced';
@@ -97,4 +106,4 @@ class PracticeIndicatorUtils {
       return 'Last practiced: ${lastPracticeTime.toLocal().toString().split(' ')[0]}';
     }
   }
-} 
+}
