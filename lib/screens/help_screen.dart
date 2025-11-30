@@ -84,7 +84,14 @@ class HelpScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.code, color: Colors.black),
+              leading: Container(
+                padding: const EdgeInsets.all(4.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: const Icon(Icons.code, color: Colors.black),
+              ),
               title: const Text('Source Code on GitHub', style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
               subtitle: const Text('https://github.com/Adithya-Jayan/MyRepertoirApp', style: TextStyle(fontSize: 12)),
               onTap: () async {
