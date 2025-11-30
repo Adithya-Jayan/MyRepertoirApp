@@ -75,38 +75,36 @@ Once installed, you can:
 
 ## Screenshots
 
-> Note: Screenshots are slightly outdated — new screenshots are welcome as contributions!
-
 ### Gallery View
 Create a gallery of all your pieces
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/c66daedf-76cc-4c41-afc5-4f608674dd7a" width="300" alt="Piece gallery view"/>
-  <img src="https://github.com/user-attachments/assets/d77d40c9-c185-474d-8ddd-de517cbfa72c" width="300" alt="Grid layout view"/>
+  <img src="./docs/assets/images/LightModeGallery.png" width="300" alt="Piece gallery view"/>
+  <img src="./docs/assets/images/list_view.png" width="300" alt="List layout view"/>
 </p>
 
 ### Media & Practice
 Attach all relevant media and track practice sessions
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/59918de7-5e0c-40d9-a4db-73d10bfe440e" width="300" alt="Media attachments interface"/>
-  <img src="https://github.com/user-attachments/assets/3b6eb20d-e677-416d-9fcb-111f14a0ed1b" width="300" alt="Practice tracking interface"/>
+  <img src="./docs/assets/images/AudioPlayer.png" width="300" alt="Media attachments interface"/>
+  <img src="./docs/assets/images/MusicPiecePracticeandLinks.png" width="300" alt="Practice tracking interface"/>
 </p>
 
 ### Organization & Sorting
 Group your pieces and tag them as you wish
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ceb12e0f-9ce5-4197-82e9-db8563faa386" width="300" alt="Piece organization"/>
-  <img src="https://github.com/user-attachments/assets/4aa90d2e-184e-4213-9ca8-d9018d3bedf7" width="300" alt="Sorting options"/>
+  <img src="./docs/assets/images/GroupFilter.png" width="300" alt="Piece organization"/>
+  <img src="./docs/assets/images/Sortbylastpracticed.png" width="300" alt="Sorting options"/>
 </p>
 
 ### Customization & Backup
 Personalize your experience and keep your data safe
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e56f076a-71f0-4e17-9464-d5f899d1a055" width="300" alt="Customization settings"/>
-  <img src="https://github.com/user-attachments/assets/e3aede9a-62e1-4e4f-bd33-4fca6dc623e9" width="300" alt="Backup and restore"/>
+  <img src="./docs/assets/images/LookCustomization.png" width="300" alt="Customization settings"/>
+  <img src="./docs/assets/images/AutomaticBackups.png" width="300" alt="Backup and restore"/>
 </p>
 
 ## Frequently Asked Questions
