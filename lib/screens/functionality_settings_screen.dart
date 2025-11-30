@@ -159,7 +159,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                   'Configure the stages of practice indicators. Drag to reorder.',
+                   'Configure the stages of practice indicators. Drag to reorder. Double tap name to edit.',
                    style: TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 16),
@@ -209,15 +209,15 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                           ),
                           const SizedBox(width: 8),
 
-                          // Status Name
+                          // Status Name (Editable Label)
                           Expanded(
                             flex: 3,
-                            child: TextFormField(
-                              initialValue: stage.name,
-                              decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                              style: const TextStyle(fontSize: 13),
+                            child: _EditableLabel(
+                              value: stage.name,
                               onChanged: (val) {
-                                _stages[index].name = val;
+                                setState(() {
+                                  _stages[index].name = val;
+                                });
                                 _saveStages();
                               },
                             ),
@@ -338,6 +338,81 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditableLabel extends StatefulWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _EditableLabel({required this.value, required this.onChanged});
+
+  @override
+  State<_EditableLabel> createState() => _EditableLabelState();
+}
+
+class _EditableLabelState extends State<_EditableLabel> {
+  bool _isEditing = false;
+  late TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value);
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        setState(() {
+          _isEditing = false;
+        });
+        if (_controller.text != widget.value) {
+           widget.onChanged(_controller.text);
+        }
+      }
+    });
+  }
+  
+  @override 
+  void didUpdateWidget(_EditableLabel oldWidget) {
+      super.didUpdateWidget(oldWidget);
+      if (widget.value != _controller.text && !_isEditing) {
+          _controller.text = widget.value;
+      }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isEditing) {
+      return TextFormField(
+        controller: _controller,
+        focusNode: _focusNode,
+        autofocus: true,
+        decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 8)),
+        style: const TextStyle(fontSize: 13),
+        onFieldSubmitted: (val) {
+          setState(() {
+            _isEditing = false;
+          });
+          widget.onChanged(val);
+        },
+      );
+    }
+    return GestureDetector(
+      onDoubleTap: () {
+        setState(() {
+          _isEditing = true;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        color: Colors.transparent, // Hit test
+        child: Text(
+            widget.value, 
+            style: const TextStyle(fontSize: 13),
+            overflow: TextOverflow.ellipsis,
         ),
       ),
     );
