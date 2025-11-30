@@ -71,7 +71,7 @@ class PersonalizationSettingsScreenState
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         Navigator.of(context).pop(true);
       },
