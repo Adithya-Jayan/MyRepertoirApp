@@ -57,7 +57,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       _stages.add(PracticeStage(
         id: const Uuid().v4(),
         name: 'New Stage',
-        colorValue: Colors.grey.value,
+        colorValue: Colors.grey.toARGB32(),
         holdDays: 0,
         transitionDays: 7,
       ));
@@ -123,7 +123,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       _updateStage(index, PracticeStage(
         id: stage.id,
         name: stage.name,
-        colorValue: newColor.value,
+        colorValue: newColor.toARGB32(),
         holdDays: stage.holdDays,
         transitionDays: stage.transitionDays,
       ));

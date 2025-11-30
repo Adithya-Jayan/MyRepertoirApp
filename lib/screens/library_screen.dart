@@ -45,6 +45,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final updateService = UpdateService();
       await updateService.showChangelogOnStartup(context);
+      if (!mounted) return;
       await updateService.checkForUpdates(context);
     });
   }
