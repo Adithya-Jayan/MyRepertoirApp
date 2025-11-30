@@ -18,6 +18,7 @@ class ThemeNotifier with ChangeNotifier {
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
+    Colors.lightBlue, // Default
     Colors.deepPurple,
     Colors.blue,
     Colors.green,
@@ -26,6 +27,7 @@ class ThemeNotifier with ChangeNotifier {
     Colors.pink,
     Colors.teal,
     Colors.indigo,
+    Colors.black, // No Accent
   ];
 
   /// Constructor for [ThemeNotifier].
@@ -46,11 +48,11 @@ class ThemeNotifier with ChangeNotifier {
 
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
-  /// If no preference is found, it defaults to [ThemeMode.system] and [Colors.deepPurple].
+  /// If no preference is found, it defaults to [ThemeMode.system] and [Colors.lightBlue].
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final themePreference = prefs.getString('appThemePreference') ?? 'System'; // Retrieve saved theme preference.
-    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.toARGB32(); // Retrieve saved accent color.
+    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.lightBlue.toARGB32(); // Retrieve saved accent color.
     final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Gradient';
 
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.

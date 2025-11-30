@@ -53,7 +53,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => ThemeNotifier(ThemeMode.system, Colors.deepPurple),
+          create: (_) => ThemeNotifier(ThemeMode.system, Colors.lightBlue),
         ),
         
       ],
