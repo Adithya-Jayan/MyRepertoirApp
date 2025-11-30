@@ -259,12 +259,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
               setState(() {});
               // Call the settings changed callback
               widget.onSettingsChanged();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Settings saved.'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
+
             }
           },
         ),

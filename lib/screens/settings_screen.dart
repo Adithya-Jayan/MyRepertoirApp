@@ -84,12 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() {
                       _changesMade = true;
                     });
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Settings saved.'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
+
                   }
                 },
               ),
