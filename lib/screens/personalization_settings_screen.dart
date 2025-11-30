@@ -129,7 +129,6 @@ class PersonalizationSettingsScreenState
               spacing: 8.0,
               runSpacing: 8.0,
               children: ThemeNotifier.availableAccentColors.map((color) {
-                final isNoAccent = color == Colors.black;
                 return GestureDetector(
                   onTap: () {
                     themeNotifier.setAccentColor(color);
@@ -147,9 +146,6 @@ class PersonalizationSettingsScreenState
                         width: 3.0,
                       ),
                     ),
-                    child: isNoAccent
-                        ? const Icon(Icons.block, color: Colors.white, size: 20)
-                        : null,
                   ),
                 );
               }).toList(),
