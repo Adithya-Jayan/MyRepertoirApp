@@ -144,10 +144,15 @@ class UpdateService {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('What\'s New in v$version'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: MarkdownBody(data: formattedBody),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: MarkdownBody(data: formattedBody),
+              ),
+            ],
           ),
         ),
         actions: [

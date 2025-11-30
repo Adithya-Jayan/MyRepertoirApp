@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_card.dart';
 import 'package:repertoire/screens/piece_detail_screen.dart';
+import '../utils/app_logger.dart';
 
 class MusicPieceGridView extends StatelessWidget {
   final List<MusicPiece> musicPieces;
@@ -104,11 +105,13 @@ class MusicPieceGridView extends StatelessWidget {
           onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
         } else {
           // Navigate to PieceDetailScreen in single-selection mode.
+          AppLogger.log('MusicPieceGridView: Navigating to detail screen for piece: ${piece.title} (${piece.id})');
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => PieceDetailScreen(musicPiece: piece),
             ),
           );
+          AppLogger.log('MusicPieceGridView: Returned from detail screen for piece: ${piece.title}');
           onReloadData(); // Reload data after returning from detail screen.
         }
       },

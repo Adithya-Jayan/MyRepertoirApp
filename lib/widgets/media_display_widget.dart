@@ -116,7 +116,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
     switch (currentMediaItem.type) {
       case MediaType.markdown:
-        content = Markdown(data: currentMediaItem.pathOrUrl);
+        content = MarkdownBody(data: currentMediaItem.pathOrUrl);
         break;
       case MediaType.pdf:
         content = ElevatedButton(

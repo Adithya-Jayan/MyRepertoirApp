@@ -288,6 +288,26 @@ class MusicPieceRepository {
     return mostCommonColor;
   }
 
+  /// Updates the color of all tag groups with the given name across all music pieces.
+  Future<void> updateTagGroupColor(String groupName, int newColor) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      bool changed = false;
+      final updatedTagGroups = <TagGroup>[];
+      for (var tagGroup in piece.tagGroups) {
+        if (tagGroup.name == groupName && tagGroup.color != newColor) {
+          updatedTagGroups.add(tagGroup.copyWith(color: newColor));
+          changed = true;
+        } else {
+          updatedTagGroups.add(tagGroup);
+        }
+      }
+      if (changed) {
+        await updateMusicPiece(piece.copyWith(tagGroups: updatedTagGroups));
+      }
+    }
+  }
+
   /// Exports all music piece, tag, and group data to a JSON file.
   /// Allows the user to choose the save location.
   /// Returns the path of the saved file if successful, otherwise null.

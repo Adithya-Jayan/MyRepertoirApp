@@ -73,7 +73,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Personalization'), // Title for the Personalization setting.
                 onTap: () async {
                   AppLogger.log('Navigating to Personalization Settings screen.');
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
                   final navigator = Navigator.of(context);
                   // Navigate to PersonalizationSettingsScreen and wait for any changes.
                   final bool? changes = await navigator.push<bool?>(

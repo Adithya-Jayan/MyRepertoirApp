@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'color_scheme_screen.dart';
+import 'library_screen.dart';
 import '../utils/app_logger.dart';
 import '../services/backup_restore_service.dart';
 import '../database/music_piece_repository.dart';
@@ -69,8 +70,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Existing Backup Found'),
         content: const Text(
-          'An automatic backup was found in the selected storage folder. ' 
-          'Would you like to restore it?\n\n' 
+          'An automatic backup was found in the selected storage folder. '
+          'Would you like to restore it?\n\n'
           'Note: This will replace any template data created during installation.',
         ),
         actions: [
@@ -93,22 +94,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (action == 'skip' || action == null || !mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return; // Added mounted check
     final service = BackupRestoreService(MusicPieceRepository(), prefs);
 
+    bool restoreSuccess = false;
     try {
       if (action == 'restore') {
-         await service.restoreData(
+         if (!mounted) return; // Added mounted check
+         restoreSuccess = await service.restoreData(
            context: context, 
            filePath: latestBackupPath, 
            isFreshRestore: true,
            shouldPop: false // Don't pop WelcomeScreen
          );
       } else if (action == 'manual') {
-         await service.restoreData(
+         restoreSuccess = await service.restoreData(
            context: context, 
            isFreshRestore: true,
            shouldPop: false // Don't pop WelcomeScreen
          );
+      }
+      
+      if (restoreSuccess && mounted) {
+          // Skip setup screens and go to home
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LibraryScreen()),
+          );
       }
     } catch (e) {
       AppLogger.log('WelcomeScreen: Restore error: $e');

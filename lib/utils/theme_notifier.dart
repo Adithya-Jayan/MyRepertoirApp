@@ -18,8 +18,8 @@ class ThemeNotifier with ChangeNotifier {
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
+    Colors.blue, // Default
     Colors.deepPurple,
-    Colors.blue,
     Colors.green,
     Colors.orange,
     Colors.red,
@@ -46,20 +46,20 @@ class ThemeNotifier with ChangeNotifier {
 
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
-  /// If no preference is found, it defaults to [ThemeMode.system] and [Colors.deepPurple].
+  /// If no preference is found, it defaults to [ThemeMode.system] and [Colors.blue].
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final themePreference = prefs.getString('appThemePreference') ?? 'System'; // Retrieve saved theme preference.
-    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.deepPurple.toARGB32(); // Retrieve saved accent color.
-    final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Outline';
+    final accentColorValue = prefs.getInt('appAccentColor') ?? Colors.blue.toARGB32(); // Retrieve saved accent color.
+    final thumbnailStyleString = prefs.getString('thumbnailStyle') ?? 'Gradient';
 
     _themeMode = _getThemeModeFromString(themePreference); // Convert string preference to ThemeMode.
     _accentColor = Color(accentColorValue); // Convert integer value to Color.
     _thumbnailStyle = _getThumbnailStyleFromString(thumbnailStyleString);
     _showPracticeCount = prefs.getBool('showPracticeCount') ?? true;
     _showLastPracticed = prefs.getBool('showLastPracticed') ?? true;
-    _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? false;
-    _showGradientBackground = prefs.getBool('showGradientBackground') ?? false;
+    _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? true;
+    _showGradientBackground = prefs.getBool('showGradientBackground') ?? true;
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 

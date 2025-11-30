@@ -33,28 +33,28 @@ class PracticeConfigService {
       PracticeStage(
         id: uuid.v4(),
         name: 'Recently practiced',
-        colorValue: Colors.green.value,
+        colorValue: Colors.green.toARGB32(),
         holdDays: greenPeriod,
         transitionDays: greenToYellow,
       ),
       PracticeStage(
         id: uuid.v4(),
         name: 'Been a while',
-        colorValue: Colors.yellow.value,
+        colorValue: Colors.yellow.toARGB32(),
         holdDays: 0,
         transitionDays: yellowToRed,
       ),
       PracticeStage(
         id: uuid.v4(),
         name: 'A long while',
-        colorValue: Colors.red.value,
+        colorValue: Colors.red.toARGB32(),
         holdDays: 0,
         transitionDays: redToBlack,
       ),
       PracticeStage(
         id: uuid.v4(),
         name: 'Been too long',
-        colorValue: Colors.black.value,
+        colorValue: Colors.black.toARGB32(),
         holdDays: 0,
         transitionDays: 0, // Last stage
       ),

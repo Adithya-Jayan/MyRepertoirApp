@@ -104,7 +104,33 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
+  Future<void> _handleUpdateTagGroup(TagGroup oldGroup, TagGroup newGroup) async {
+    if (oldGroup.color != newGroup.color && newGroup.color != null) {
+      final shouldUpdateAll = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Update All?'),
+          content: Text('Do you want to update the color of tag group "${newGroup.name}" across all pieces?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      );
 
+      if (shouldUpdateAll == true) {
+        final repository = MusicPieceRepository();
+        await repository.updateTagGroupColor(newGroup.name, newGroup.color!);
+      }
+    }
+    _tagManager.updateTagGroup(oldGroup, newGroup, _musicPiece.tagGroups);
+  }
 
   bool _isSaving = false;
 
@@ -195,8 +221,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               TagGroupsSection(
                 tagGroups: _musicPiece.tagGroups,
                 allTagGroupNames: _allTagGroupNames,
-                onUpdateTagGroup: (oldGroup, newGroup) => 
-                  _tagManager.updateTagGroup(oldGroup, newGroup, _musicPiece.tagGroups),
+                onUpdateTagGroup: _handleUpdateTagGroup,
                 onDeleteTagGroup: (tagGroup) => 
                   _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
                 onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,

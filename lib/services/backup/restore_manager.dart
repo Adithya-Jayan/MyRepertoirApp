@@ -548,7 +548,7 @@ class RestoreManager {
   }
 
   /// Performs the complete restore process
-  Future<void> performRestore({BuildContext? context, String? filePath, bool isFreshRestore = false, bool shouldPop = true}) async {
+  Future<bool> performRestore({BuildContext? context, String? filePath, bool isFreshRestore = false, bool shouldPop = true}) async {
     AppLogger.log('RestoreManager: Initiating data restore');
     final messenger = context != null ? ScaffoldMessenger.of(context) : null;
     final navigator = context != null ? Navigator.of(context) : null;
@@ -592,11 +592,11 @@ class RestoreManager {
         }
 
         final data = await _extractBackupData(backupPath);
-        if (data == null) return;
+        if (data == null) return false;
 
         if (storagePath == null) {
           _showRestoreMessage(messenger, false, 'Restore failed: Storage path not configured.');
-          return;
+          return false;
         }
 
         final int? backupVersion = data['backupVersion'] as int?;
@@ -630,13 +630,16 @@ class RestoreManager {
           // This will cause the library screen to reload when navigated back to
           navigator.pop(true);
         }
+        return true;
       } else {
         _showRestoreMessage(messenger, false, 'Restore cancelled.');
         AppLogger.log('RestoreManager: Restore cancelled by user');
+        return false;
       }
     } catch (e) {
       AppLogger.log('RestoreManager: Restore failed: $e');
       _showRestoreMessage(messenger, false, 'Restore failed: $e');
+      return false;
     }
   }
 } 
