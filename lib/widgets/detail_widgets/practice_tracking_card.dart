@@ -89,65 +89,50 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Practice Tracking',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          Switch(
-                            value: _musicPiece.enablePracticeTracking,
-                            onChanged: (bool value) async {
-                              setState(() {
-                                _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
-                              });
-                              await _repository.updateMusicPiece(_musicPiece);
-                              widget.onMusicPieceChanged(_musicPiece);
-                            },
-                          ),
-                        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Practice Tracking',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime)),
+                Text('Practice Count: ${_musicPiece.practiceCount}'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _logPractice,
+                        child: const Text('Log Practice'),
                       ),
-                      const SizedBox(height: 8.0),            if (_musicPiece.enablePracticeTracking)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime)),
-                  Text('Practice Count: ${_musicPiece.practiceCount}'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _logPractice,
-                          child: const Text('Log Practice'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => PracticeLogsScreen(
-                                  musicPiece: _musicPiece,
-                                ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PracticeLogsScreen(
+                                musicPiece: _musicPiece,
                               ),
-                            );
-                            // Refresh data when returning from practice logs screen
-                            await _refreshMusicPieceData();
-                          },
-                          icon: const Icon(Icons.history),
-                          label: const Text('View Logs'),
-                        ),
+                            ),
+                          );
+                          // Refresh data when returning from practice logs screen
+                          await _refreshMusicPieceData();
+                        },
+                        icon: const Icon(Icons.history),
+                        label: const Text('View Logs'),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),
