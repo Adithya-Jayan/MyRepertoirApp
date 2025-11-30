@@ -242,17 +242,19 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                           // Hold Days
                           Expanded(
                             flex: 1,
-                            child: TextFormField(
-                              initialValue: stage.holdDays.toString(),
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8)),
-                              onChanged: (val) {
-                                final days = int.tryParse(val) ?? 0;
-                                _stages[index].holdDays = days;
-                                _saveStages();
-                              },
-                            ),
+                            child: isLast
+                              ? const Center(child: Text('-'))
+                              : TextFormField(
+                                  initialValue: stage.holdDays.toString(),
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8)),
+                                  onChanged: (val) {
+                                    final days = int.tryParse(val) ?? 0;
+                                    _stages[index].holdDays = days;
+                                    _saveStages();
+                                  },
+                                ),
                           ),
                           const SizedBox(width: 8),
 
