@@ -188,7 +188,13 @@ class _MediaSectionState extends State<MediaSection> {
                     onTitleChanged: (newTitle) {
                       widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
                     },
-                    isEditable: true,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4.0, left: 4.0),
+                    child: Text(
+                      'Double tap title to edit',
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
+                    ),
                   ),
                   // Thumbnail controls
                   Wrap(

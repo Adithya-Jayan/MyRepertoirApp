@@ -51,18 +51,8 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
-          child: Text(
-            'Media',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-        ),
-        // Add a divider below the title for better visual separation
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Divider(),
-        ),
+        // Media title removed
+        // Divider below title removed
         widget.allowReordering
             ? ReorderableListView.builder(
                 buildDefaultDragHandles: false,
