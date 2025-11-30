@@ -48,7 +48,7 @@ class TagGroupsDisplay extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Text(': '), // Add a colon after the tag group name
+                const Text(' : '), // Add a colon after the tag group name
                 const SizedBox(width: 8.0),
                 Expanded(
                   child: Padding(
