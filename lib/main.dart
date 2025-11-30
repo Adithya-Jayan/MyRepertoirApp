@@ -36,8 +36,7 @@ Future<void> main() async {
   await AppLogger.init(); // Initialize the logger
   AppLogger.log('App started.');
 
-  await requestPermissions();
-
+  // await requestPermissions(); // Moved to _MyAppState.initState()
 
   // Initialize sqflite for desktop platforms (Windows, Linux, macOS).
   // This allows the app to use SQLite databases on these platforms.
@@ -108,6 +107,13 @@ class _MyAppState extends State<MyApp> {
       if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
       
+      // Request permissions after the first frame, when context is fully available
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted && navigatorKey.currentContext != null) {
+          await requestPermissions(navigatorKey.currentContext!);
+        }
+      });
+
       // Trigger auto-backup after app is fully initialized
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
