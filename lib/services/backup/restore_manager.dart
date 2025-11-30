@@ -548,7 +548,7 @@ class RestoreManager {
   }
 
   /// Performs the complete restore process
-  Future<void> performRestore({BuildContext? context}) async {
+  Future<void> performRestore({BuildContext? context, String? filePath, bool isFreshRestore = false, bool shouldPop = true}) async {
     AppLogger.log('RestoreManager: Initiating data restore');
     final messenger = context != null ? ScaffoldMessenger.of(context) : null;
     final navigator = context != null ? Navigator.of(context) : null;
@@ -559,25 +559,38 @@ class RestoreManager {
       final storagePath = prefs.getString('appStoragePath');
       AppLogger.log('RestoreManager: Storage path: $storagePath');
       
-      String? backupDir;
-      if (storagePath != null) {
-        final backupsDir = Directory(p.join(storagePath, 'Backups'));
-        if (await backupsDir.exists()) {
-          backupDir = backupsDir.path;
-          AppLogger.log('RestoreManager: Default restore directory: $backupDir');
+      String? backupPath = filePath;
+      
+      if (backupPath == null) {
+        String? backupDir;
+        if (storagePath != null) {
+          final backupsDir = Directory(p.join(storagePath, 'Backups'));
+          if (await backupsDir.exists()) {
+            backupDir = backupsDir.path;
+            AppLogger.log('RestoreManager: Default restore directory: $backupDir');
+          }
+        }
+
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['zip'],
+          initialDirectory: backupDir,
+        );
+        AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
+        
+        if (result != null && result.files.single.path != null) {
+          backupPath = result.files.single.path!;
         }
       }
 
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['zip'],
-        initialDirectory: backupDir,
-      );
-      AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
-
-      if (result != null && result.files.single.path != null) {
-        final backupPath = result.files.single.path!;
+      if (backupPath != null) {
         _showRestoreMessage(messenger, true, 'Restore in progress...');
+        
+        if (isFreshRestore) {
+          AppLogger.log('RestoreManager: Fresh restore detected. Clearing all existing music pieces.');
+          await _repository.deleteAllMusicPieces();
+        }
+
         final data = await _extractBackupData(backupPath);
         if (data == null) return;
 
@@ -612,7 +625,7 @@ class RestoreManager {
         AppLogger.log('RestoreManager: Data restored successfully');
         
         // Force a rebuild of the app to refresh all data
-        if (navigator != null && navigator.context.mounted) {
+        if (shouldPop && navigator != null && navigator.context.mounted) {
           AppLogger.log('RestoreManager: Triggering app rebuild after restore');
           // This will cause the library screen to reload when navigated back to
           navigator.pop(true);

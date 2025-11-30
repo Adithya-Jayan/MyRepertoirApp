@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'color_scheme_screen.dart';
 import '../utils/app_logger.dart';
+import '../services/backup_restore_service.dart';
+import '../database/music_piece_repository.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.
 ///
@@ -36,6 +40,78 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       setState(() {
         _storagePath = result; // Update the UI with the selected path.
       });
+
+      // Check for existing auto-backups
+      await _checkForExistingBackups(result);
+    }
+  }
+
+  Future<void> _checkForExistingBackups(String storagePath) async {
+    final backupsDir = Directory(p.join(storagePath, 'Backups', 'Autobackups'));
+    if (await backupsDir.exists()) {
+      final files = await backupsDir.list().toList();
+      final zipFiles = files.where((f) => f.path.endsWith('.zip')).toList();
+      
+      if (zipFiles.isNotEmpty && mounted) {
+        // Sort by modified date desc (newest first)
+        zipFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+        final latestBackup = zipFiles.first;
+        
+        await _showRestoreDialog(latestBackup.path);
+      }
+    }
+  }
+
+  Future<void> _showRestoreDialog(String latestBackupPath) async {
+    final action = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Existing Backup Found'),
+        content: const Text(
+          'An automatic backup was found in the selected storage folder. ' 
+          'Would you like to restore it?\n\n' 
+          'Note: This will replace any template data created during installation.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'skip'),
+            child: const Text('Skip'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'manual'),
+            child: const Text('Select Manually'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, 'restore'),
+            child: const Text('Restore Latest'),
+          ),
+        ],
+      ),
+    );
+
+    if (action == 'skip' || action == null || !mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final service = BackupRestoreService(MusicPieceRepository(), prefs);
+
+    try {
+      if (action == 'restore') {
+         await service.restoreData(
+           context: context, 
+           filePath: latestBackupPath, 
+           isFreshRestore: true,
+           shouldPop: false // Don't pop WelcomeScreen
+         );
+      } else if (action == 'manual') {
+         await service.restoreData(
+           context: context, 
+           isFreshRestore: true,
+           shouldPop: false // Don't pop WelcomeScreen
+         );
+      }
+    } catch (e) {
+      AppLogger.log('WelcomeScreen: Restore error: $e');
     }
   }
 
