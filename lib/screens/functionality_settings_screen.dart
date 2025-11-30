@@ -108,7 +108,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                   color: color,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: stage.colorValue == color.value ? Colors.black : Colors.transparent,
+                    color: stage.colorValue == color.toARGB32() ? Colors.black : Colors.transparent,
                     width: 2,
                   ),
                 ),
