@@ -39,7 +39,7 @@ class BackupRestoreService {
     await _backupManager.cleanupOldBackups(autoBackupCount);
   }
 
-  Future<void> restoreData({BuildContext? context}) async {
-    await _restoreManager.performRestore(context: context);
+  Future<void> restoreData({BuildContext? context, String? filePath, bool isFreshRestore = false, bool shouldPop = true}) async {
+    await _restoreManager.performRestore(context: context, filePath: filePath, isFreshRestore: isFreshRestore, shouldPop: shouldPop);
   }
 } 
