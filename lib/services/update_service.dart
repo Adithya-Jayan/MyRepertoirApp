@@ -10,7 +10,7 @@ import '../utils/app_logger.dart';
 
 class UpdateService {
   // TODO: Replace with your actual repository
-  static const String _githubRepo = 'Adithya-Mohan/MyRepertoirApp';
+  static const String _githubRepo = 'Adithya-Jayan/MyRepertoirApp';
   static const String _githubApiUrl =
       'https://api.github.com/repos/$_githubRepo/releases/latest';
   static const String _githubUrl = 'https://github.com/$_githubRepo/releases';
