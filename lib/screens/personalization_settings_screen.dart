@@ -69,23 +69,29 @@ class PersonalizationSettingsScreenState
     AppLogger.log('PersonalizationSettingsScreen: build called');
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
-    return SafeArea(
-      child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Personalization'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop(true); // Return true to indicate changes were made
-          },
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Navigator.of(context).pop(true);
+      },
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Personalization'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.of(context).pop(true); // Return true to indicate changes were made
+              },
+            ),
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             Text(
               'Theme Mode',
               style: Theme.of(context).textTheme.titleLarge,
@@ -216,6 +222,7 @@ class PersonalizationSettingsScreenState
         ),
       ),
       ),
+    ),
     ),
     );
   }

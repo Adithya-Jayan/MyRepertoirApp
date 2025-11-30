@@ -155,10 +155,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) {
-          await _saveGroupOrder();
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        await _saveGroupOrder();
+        if (context.mounted) {
+          Navigator.of(context).pop(_hasChanges);
         }
       },
       child: SafeArea(
