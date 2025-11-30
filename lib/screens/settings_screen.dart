@@ -102,12 +102,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ListTile(
                 leading: const Icon(Icons.backup),
                 title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
-                onTap: () {
+                onTap: () async {
                   AppLogger.log('Navigating to Backup & Restore screen.');
-                  Navigator.push(
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
                   );
+                  if (result == true) {
+                    setState(() {
+                      _changesMade = true;
+                    });
+                  }
                 },
               ),
               ListTile(
