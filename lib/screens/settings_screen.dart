@@ -24,6 +24,8 @@ class SettingsScreen extends StatefulWidget {
 /// The state class for [SettingsScreen].
 /// Builds the UI for the settings menu and handles navigation to sub-settings screens.
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _changesMade = false;
+
   @override
   void dispose() {
     AppLogger.log('SettingsScreen: dispose called');
@@ -33,112 +35,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('SettingsScreen: build called');
-    return SafeArea(
-      child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'), // Title of the settings screen.
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Navigator.of(context).pop(_changesMade);
+      },
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Settings'), // Title of the settings screen.
+          ),
+          body: ListView(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.folder_open), // Icon for the Groups setting.
+                title: const Text('Groups'), // Title for the Groups setting.
+                onTap: () async {
+                  AppLogger.log('Navigating to Group Management screen.');
+                  final navigator = Navigator.of(context);
+                  // Navigate to GroupManagementScreen and wait for any changes.
+                  final bool? changes = await navigator.push<bool?>(
+                    MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                  );
+                  if (!mounted) return;
+                  // If changes were made in GroupManagementScreen, update local state
+                  if (changes == true) {
+                    AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
+                    setState(() {
+                      _changesMade = true;
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.palette), // Icon for the Personalization setting.
+                title: const Text('Personalization'), // Title for the Personalization setting.
+                onTap: () async {
+                  AppLogger.log('Navigating to Personalization Settings screen.');
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final navigator = Navigator.of(context);
+                  // Navigate to PersonalizationSettingsScreen and wait for any changes.
+                  final bool? changes = await navigator.push<bool?>(
+                    MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
+                  );
+                  if (!mounted) return;
+                  if (changes == true) {
+                    setState(() {
+                      _changesMade = true;
+                    });
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(content: Text('Settings saved.')),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.tune),
+                title: const Text('Functionality'),
+                onTap: () {
+                  AppLogger.log('Navigating to Functionality Settings screen.');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.backup),
+                title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
+                onTap: () {
+                  AppLogger.log('Navigating to Backup & Restore screen.');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings_applications),
+                title: const Text('Advanced Settings'),
+                onTap: () {
+                  AppLogger.log('Navigating to Advanced Settings screen.');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info), // Icon for the About setting.
+                title: const Text('About'), // Title for the About setting.
+                onTap: () {
+                  AppLogger.log('Navigating to About screen.');
+                  // Navigate to AboutScreen.
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AboutScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.help), // Icon for the Help setting.
+                title: const Text('Help'), // Title for the Help setting.
+                onTap: () {
+                  AppLogger.log('Navigating to Help screen.');
+                  // Navigate to HelpScreen.
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HelpScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.folder_open), // Icon for the Groups setting.
-            title: const Text('Groups'), // Title for the Groups setting.
-            onTap: () async {
-              AppLogger.log('Navigating to Group Management screen.');
-              final navigator = Navigator.of(context);
-              // Navigate to GroupManagementScreen and wait for any changes.
-              final bool? changesMade = await navigator.push<bool?>(
-                MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
-              );
-              if (!mounted) return;
-              // If changes were made in GroupManagementScreen, pop this screen with true to indicate changes.
-              if (changesMade == true) {
-                AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
-                navigator.pop(true);
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.palette), // Icon for the Personalization setting.
-            title: const Text('Personalization'), // Title for the Personalization setting.
-            onTap: () async {
-              AppLogger.log('Navigating to Personalization Settings screen.');
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final navigator = Navigator.of(context);
-              // Navigate to PersonalizationSettingsScreen and wait for any changes.
-              final bool? changesMade = await navigator.push<bool?>(
-                MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
-              );
-              if (!mounted) return;
-              if (changesMade == true) {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Settings saved.')),
-                );
-                // Return true to indicate changes were made
-                navigator.pop(true);
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.tune),
-            title: const Text('Functionality'),
-            onTap: () {
-              AppLogger.log('Navigating to Functionality Settings screen.');
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.backup),
-            title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
-            onTap: () {
-              AppLogger.log('Navigating to Backup & Restore screen.');
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings_applications),
-            title: const Text('Advanced Settings'),
-            onTap: () {
-              AppLogger.log('Navigating to Advanced Settings screen.');
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info), // Icon for the About setting.
-            title: const Text('About'), // Title for the About setting.
-            onTap: () {
-              AppLogger.log('Navigating to About screen.');
-              // Navigate to AboutScreen.
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.help), // Icon for the Help setting.
-            title: const Text('Help'), // Title for the Help setting.
-            onTap: () {
-              AppLogger.log('Navigating to Help screen.');
-              // Navigate to HelpScreen.
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HelpScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-    ),
     );
   }
 }
