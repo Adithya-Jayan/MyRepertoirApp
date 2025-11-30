@@ -52,8 +52,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     final prefs = await SharedPreferences.getInstance();
     
     setState(() {
-      _speed = prefs.getDouble('audio_speed') ?? 1.0;
-      _pitch = prefs.getDouble('audio_pitch') ?? 0.0;
+      _speed = prefs.getDouble('audio_speed_${widget.musicPiece.id}') ?? 1.0;
+      _pitch = prefs.getDouble('audio_pitch_${widget.musicPiece.id}') ?? 0.0;
     });
     
     // Apply settings to the audio player
@@ -66,8 +66,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   /// Saves the current speed and pitch settings to [SharedPreferences].
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('audio_speed', _speed); // Save current playback speed.
-    await prefs.setDouble('audio_pitch', _pitch); // Save current pitch setting.
+    await prefs.setDouble('audio_speed_${widget.musicPiece.id}', _speed); // Save current playback speed.
+    await prefs.setDouble('audio_pitch_${widget.musicPiece.id}', _pitch); // Save current pitch setting.
     AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
   }
 
@@ -287,10 +287,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               const Text('Speed:'),
               Expanded(
                 child: Slider(
-                  min: 0.5,
-                  max: 2.0,
+                  min: 0.2,
+                  max: 2.5,
                   value: _speed,
-                  divisions: 15, // 0.5 to 2.0 in 0.1 increments
+                  divisions: 23, // 0.2 to 2.5 in 0.1 increments
                   label: _speed.toStringAsFixed(1),
                   onChanged: (value) async {
                     setState(() {
