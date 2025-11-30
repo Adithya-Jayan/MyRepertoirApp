@@ -94,6 +94,15 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
           filled: true,
           fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+          suffixIcon: widget.searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    widget.onSearchChanged('');
+                  },
+                )
+              : null,
         ),
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         onChanged: widget.onSearchChanged,
