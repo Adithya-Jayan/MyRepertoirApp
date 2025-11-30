@@ -94,11 +94,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (action == 'skip' || action == null || !mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return; // Added mounted check
     final service = BackupRestoreService(MusicPieceRepository(), prefs);
 
     bool restoreSuccess = false;
     try {
       if (action == 'restore') {
+         if (!mounted) return; // Added mounted check
          restoreSuccess = await service.restoreData(
            context: context, 
            filePath: latestBackupPath, 

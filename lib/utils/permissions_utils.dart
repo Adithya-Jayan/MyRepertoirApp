@@ -1,3 +1,4 @@
+import 'dart:io'; // Add this import
 import 'package:flutter/material.dart'; // Import for BuildContext, showDialog
 import 'package:permission_handler/permission_handler.dart';
 import 'package:repertoire/utils/app_logger.dart';
@@ -12,6 +13,7 @@ Future<void> requestPermissions(BuildContext context) async { // Pass BuildConte
     AppLogger.log("Current Manage External Storage status: $status");
 
     if (!status.isGranted) {
+      if (!context.mounted) return; // Add mounted check before using context
       final bool? shouldRequest = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
