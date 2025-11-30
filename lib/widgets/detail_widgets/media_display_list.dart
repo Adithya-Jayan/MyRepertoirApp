@@ -44,28 +44,37 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Media',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8.0),
-            widget.allowReordering
-                ? ReorderableListView.builder(
-                    buildDefaultDragHandles: false, // Disable default handles
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(), // to allow SingleChildScrollView to work
-                    itemCount: _musicPiece.mediaItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _musicPiece.mediaItems[index];
-                      return MediaDisplayWidget(
-                        key: ValueKey(item.id),
+    if (_musicPiece.mediaItems.isEmpty) {
+      return const SizedBox.shrink(); // Hide the entire widget if no media items
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+          child: Text(
+            'Media',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+        ),
+        // Add a divider below the title for better visual separation
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Divider(),
+        ),
+        widget.allowReordering
+            ? ReorderableListView.builder(
+                buildDefaultDragHandles: false,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _musicPiece.mediaItems.length,
+                itemBuilder: (context, index) {
+                  final item = _musicPiece.mediaItems[index];
+                  return Column( // Wrap in Column to add Divider below
+                    key: ValueKey(item.id),
+                    children: [
+                      MediaDisplayWidget(
                         musicPiece: _musicPiece,
                         mediaItemIndex: index,
                         isEditable: false,
@@ -73,38 +82,45 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                           index: index,
                           child: const Icon(Icons.drag_handle),
                         ),
-                      );
-                    },
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                        final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                        _musicPiece.mediaItems.insert(newIndex, item);
-                        // Persist the new order to the database
-                        _repository.updateMusicPiece(_musicPiece);
-                        widget.onMusicPieceChanged(_musicPiece);
-                      });
-                    },
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _musicPiece.mediaItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _musicPiece.mediaItems[index];
-                      return MediaDisplayWidget(
-                        key: ValueKey(item.id),
+                      ),
+                      if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
+                        const Divider(indent: 16, endIndent: 16),
+                    ],
+                  );
+                },
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
+                    _musicPiece.mediaItems.insert(newIndex, item);
+                    _repository.updateMusicPiece(_musicPiece);
+                    widget.onMusicPieceChanged(_musicPiece);
+                  });
+                },
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _musicPiece.mediaItems.length,
+                itemBuilder: (context, index) {
+                  final item = _musicPiece.mediaItems[index];
+                  return Column( // Wrap in Column to add Divider below
+                    key: ValueKey(item.id),
+                    children: [
+                      MediaDisplayWidget(
                         musicPiece: _musicPiece,
                         mediaItemIndex: index,
                         isEditable: false,
-                      );
-                    },
-                  ),
-          ],
-        ),
-      ),
+                      ),
+                      if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
+                        const Divider(indent: 16, endIndent: 16),
+                    ],
+                  );
+                },
+              ),
+      ],
     );
   }
 }
