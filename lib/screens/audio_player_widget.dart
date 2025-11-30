@@ -337,34 +337,32 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
         ),
         
-        // Pitch Control (temporarily disabled)
-        // The pitch shifting UI is hidden for now to stabilize playback.
-        // To re-enable later, restore the block below.
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        //   child: Row(
-        //     children: [
-        //       const Text('Pitch:'),
-        //       Expanded(
-        //         child: Slider(
-        //           min: -12.0, // One octave down
-        //           max: 12.0, // One octave up
-        //           value: _pitch,
-        //           divisions: 24,
-        //           label: _getPitchDisplayString(_pitch),
-        //           onChanged: (value) async {
-        //             setState(() {
-        //               _pitch = value;
-        //             });
-        //             await _player.setPitch(value); // Use new player's setPitch directly
-        //             await _saveSettings();
-        //           },
-        //         ),
-        //       ),
-        //       Text(_getPitchDisplayString(_pitch)),
-        //     ],
-        //   ),
-        // ),
+        // Pitch Control
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              const Text('Pitch:'),
+              Expanded(
+                child: Slider(
+                  min: -12.0, // One octave down
+                  max: 12.0, // One octave up
+                  value: _pitch,
+                  divisions: 24,
+                  label: _getPitchDisplayString(_pitch),
+                  onChanged: (value) async {
+                    setState(() {
+                      _pitch = value;
+                    });
+                    await _player.setPitch(value);
+                    await _saveSettings();
+                  },
+                ),
+              ),
+              Text(_getPitchDisplayString(_pitch)),
+            ],
+          ),
+        ),
         
         // Reset Controls Button
         Padding(
@@ -466,6 +464,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
       ],
     );
+  }
+
+  String _getPitchDisplayString(double semitones) {
+    if (semitones == 0) return 'Normal';
+    return '${semitones > 0 ? '+' : ''}${semitones.round()} st';
   }
 
   String _formatDuration(Duration duration) {
