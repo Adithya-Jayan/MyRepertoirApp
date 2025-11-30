@@ -197,26 +197,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   Text('Loading...'),
                 ],
               );
-            } 
-            // Show replay button if playback completed
-            else if (processingState == ja.ProcessingState.completed) {
-              return IconButton(
+            }
+            
+            // Define the main control button based on state
+            Widget mainButton;
+            if (processingState == ja.ProcessingState.completed) {
+              mainButton = IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
-                onPressed: () => _player.player.seek(Duration.zero), // Use new player's seek
+                onPressed: () => _player.player.seek(Duration.zero),
               );
-            } 
-            // Show pause button if it's playing
-            else if (playing == true) {
-              return IconButton(
+            } else if (playing == true) {
+              mainButton = IconButton(
                 icon: const Icon(Icons.pause),
                 iconSize: 64.0,
-                onPressed: _player.pause, // Use new player's pause
+                onPressed: _player.pause,
               );
-            } 
-            // Show play button for all other cases
-            else {
-              return IconButton(
+            } else {
+              mainButton = IconButton(
                 icon: const Icon(Icons.play_arrow),
                 iconSize: 64.0,
                 onPressed: () async {
@@ -236,6 +234,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 },
               );
             }
+
+            // Return the Row with Skip buttons and Main button
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Rewind 2s Button
+                IconButton(
+                  icon: const Icon(Icons.replay_5), // Using generic replay icon
+                  iconSize: 32.0,
+                  tooltip: 'Rewind 2s',
+                  onPressed: () {
+                    final current = _player.player.position;
+                    final newPos = current - const Duration(seconds: 2);
+                    _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
+                  },
+                ),
+                const SizedBox(width: 16), // Spacing
+                mainButton,
+                const SizedBox(width: 16), // Spacing
+                // Forward 2s Button
+                IconButton(
+                  icon: const Icon(Icons.forward_5), // Using generic forward icon
+                  iconSize: 32.0,
+                  tooltip: 'Forward 2s',
+                  onPressed: () {
+                    final current = _player.player.position;
+                    final duration = _player.player.duration ?? Duration.zero;
+                    final newPos = current + const Duration(seconds: 2);
+                    _player.player.seek(newPos > duration ? duration : newPos);
+                  },
+                ),
+              ],
+            );
           },
         ),
         
