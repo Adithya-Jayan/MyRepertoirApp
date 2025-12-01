@@ -13,7 +13,7 @@ class UpdateService {
   static const String _githubApiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
   static const String _githubTagsUrl = 'https://api.github.com/repos/$_githubRepo/releases/tags';
   static const String _githubUrl = 'https://github.com/$_githubRepo/releases';
-  static const String _fdroidUrl = 'https://f-droid.org/packages/com.example.repertoire/';
+  static const String _fdroidUrl = 'https://f-droid.org/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/';
 
   /// Checks for updates and shows a dialog if a new version is available.
   Future<void> checkForUpdates(BuildContext context, {bool manual = false}) async {
@@ -46,6 +46,11 @@ class UpdateService {
         AppLogger.log('UpdateService: Current: $currentBase, Latest: $latestBase');
 
         if (latestBase > currentBase) {
+          if (!manual) {
+            final dismissedVersion = prefs.getString('dismissed_update_version');
+            if (dismissedVersion == tagName) return;
+          }
+
           if (context.mounted) {
             _showUpdateAvailableDialog(context, tagName);
           }
@@ -128,7 +133,14 @@ class UpdateService {
         title: const Text('New Update Available!'),
         content: Text('Version $latestVersion is available.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Dismiss')),
+          TextButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('dismissed_update_version', latestVersion);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Dismiss'),
+          ),
           TextButton(onPressed: () => _launchUrl(_fdroidUrl), child: const Text('F-Droid')),
           FilledButton(onPressed: () => _launchUrl(_githubUrl), child: const Text('GitHub')),
         ],
