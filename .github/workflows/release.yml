@@ -96,7 +96,11 @@ jobs:
           }
           
           if [ "$PRERELEASE" = "true" ]; then
-            BASE_VERSION=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
+            if [ "$RELEASE_TYPE" = "stabilize" ]; then
+              BASE_VERSION="$CURRENT_SEMANTIC_VERSION"
+            else
+              BASE_VERSION=$(bump_version "$CURRENT_SEMANTIC_VERSION" "$RELEASE_TYPE")
+            fi
             EXISTING_PRERELEASE=$(git tag --list "v${BASE_VERSION}-prerelease.*" | grep -E "^v${BASE_VERSION}-prerelease\.[0-9]+" | sort -V | tail -n1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
               PRERELEASE_NUM=$(echo "$EXISTING_PRERELEASE" | sed -E 's/.*-prerelease\.([0-9]+)$/\1/')
