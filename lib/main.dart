@@ -13,6 +13,7 @@ import 'package:repertoire/utils/backup_utils.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
+import 'package:repertoire/services/practice_config_service.dart';
 
 
 
@@ -85,6 +86,14 @@ class _MyAppState extends State<MyApp> {
   /// in SharedPreferences.
   Future<bool> _isSetupComplete() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Preload practice stages
+    try {
+      await PracticeConfigService().loadStages();
+    } catch (e) {
+      AppLogger.log('Error preloading practice stages: $e');
+    }
+
     final hasRunBefore = prefs.getBool('hasRunBefore') ?? false;
     final storagePath = prefs.getString('appStoragePath');
     return hasRunBefore && storagePath != null && storagePath.isNotEmpty;

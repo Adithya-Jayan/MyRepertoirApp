@@ -6,19 +6,30 @@ import '../models/practice_stage.dart';
 
 class PracticeConfigService {
   static const String _stagesKey = 'practice_stages';
+  static List<PracticeStage>? _cachedStages;
+
+  static List<PracticeStage>? get cachedStages => _cachedStages;
 
   Future<List<PracticeStage>> loadStages() async {
+    // If already cached, return it (optional: add a forceRefresh parameter if needed)
+    // But we should probably refresh from disk to be safe, then update cache.
+    // For now, let's read from disk to ensure freshness but update the cache.
+    
     final prefs = await SharedPreferences.getInstance();
     final String? stagesJson = prefs.getString(_stagesKey);
 
+    List<PracticeStage> stages;
     if (stagesJson != null) {
       // Load from new format
       final List<dynamic> decoded = jsonDecode(stagesJson);
-      return decoded.map((e) => PracticeStage.fromJson(e)).toList();
+      stages = decoded.map((e) => PracticeStage.fromJson(e)).toList();
     } else {
       // Migrate from old format
-      return _migrateFromOldSettings(prefs);
+      stages = await _migrateFromOldSettings(prefs);
     }
+    
+    _cachedStages = stages;
+    return stages;
   }
 
   Future<List<PracticeStage>> _migrateFromOldSettings(SharedPreferences prefs) async {

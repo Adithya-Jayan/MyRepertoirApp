@@ -83,6 +83,8 @@ class MusicPieceCard extends StatelessWidget {
                     child: Image.file(
                       File(piece.thumbnailPath!),
                       fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      cacheWidth: 300,
                       errorBuilder: (context, error, stackTrace) {
                         AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
                         return Container();
@@ -117,32 +119,49 @@ class MusicPieceCard extends StatelessWidget {
                       if (piece.enablePracticeTracking)
                         Align(
                           alignment: Alignment.topRight,
-                          child: FutureBuilder<Color>(
-                            future: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                          child: Builder(
+                            builder: (context) {
+                              final syncColor = PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime);
+                              if (syncColor != null) {
                                 return Container(
                                   width: 12,
                                   height: 12,
                                   margin: const EdgeInsets.only(bottom: 4.0),
                                   decoration: BoxDecoration(
-                                    color: snapshot.data,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 1.5),
-                                  ),
-                                );
-                              } else {
-                                return Container(
-                                  width: 12,
-                                  height: 12,
-                                  margin: const EdgeInsets.only(bottom: 4.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
+                                    color: syncColor,
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.white, width: 1.5),
                                   ),
                                 );
                               }
+                              return FutureBuilder<Color>(
+                                future: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                                    return Container(
+                                      width: 12,
+                                      height: 12,
+                                      margin: const EdgeInsets.only(bottom: 4.0),
+                                      decoration: BoxDecoration(
+                                        color: snapshot.data,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 1.5),
+                                      ),
+                                    );
+                                  } else {
+                                    return Container(
+                                      width: 12,
+                                      height: 12,
+                                      margin: const EdgeInsets.only(bottom: 4.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 1.5),
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
                             },
                           ),
                         ),
