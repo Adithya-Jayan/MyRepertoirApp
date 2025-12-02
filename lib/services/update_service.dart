@@ -74,13 +74,12 @@ class UpdateService {
     final lastRunVersionStr = prefs.getString('last_run_version');
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersionStr = packageInfo.version;
-    
-    // Update stored version for next run
-    if (lastRunVersionStr != currentVersionStr) {
-        await prefs.setString('last_run_version', currentVersionStr);
-    }
 
-    if (lastRunVersionStr == null) return; // First run, skip changelog
+    if (lastRunVersionStr == null) {
+      // First run, just save current version and return
+      await prefs.setString('last_run_version', currentVersionStr);
+      return;
+    }
 
     try {
       final lastRunVersion = Version.parse(lastRunVersionStr);
@@ -92,20 +91,30 @@ class UpdateService {
       if (currentBase > lastRunBase) {
         // App updated
         final body = await _fetchChangelog(currentVersionStr);
-        if (context.mounted && body != null) {
-          _showWhatIsNewDialog(context, currentVersionStr, body);
+        if (context.mounted) {
+          if (body != null) {
+            _showWhatIsNewDialog(context, currentVersionStr, body);
+          } else {
+            // Fallback if we can't fetch the specific changelog
+            _showGenericUpdateDialog(context, currentVersionStr);
+          }
         }
       }
+      
+      // Update stored version after checking/showing dialog
+      await prefs.setString('last_run_version', currentVersionStr);
+
     } catch (e) {
       AppLogger.log('UpdateService: Error parsing version for changelog: $e');
+      // Even on error, update the version so we don't crash repeatedly or get stuck
+      await prefs.setString('last_run_version', currentVersionStr);
     }
   }
 
   Future<String?> _fetchChangelog(String version) async {
     try {
       // Try fetching specific tag
-      // Strip build number from version if present for tag search? 
-      // Usually tags are vX.Y.Z.
+      // Strip build number from version if present for tag search
       String cleanVersion = version;
       if (cleanVersion.contains('+')) cleanVersion = cleanVersion.split('+')[0];
 
@@ -148,6 +157,20 @@ class UpdateService {
     );
   }
 
+  void _showGenericUpdateDialog(BuildContext context, String version) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Updated to v$version'),
+        content: const Text('The app has been updated! Check the release notes on GitHub for details.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          FilledButton(onPressed: () => _launchUrl(_githubUrl), child: const Text('Release Notes')),
+        ],
+      ),
+    );
+  }
+
   void _showWhatIsNewDialog(BuildContext context, String version, String body) {
     // Fix newlines for Markdown
     final formattedBody = body.replaceAll(RegExp(r'\r\n|\r|\n'), '\n\n');
@@ -161,8 +184,10 @@ class UpdateService {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: MarkdownBody(data: formattedBody),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: MarkdownBody(data: formattedBody),
+                ),
               ),
             ],
           ),

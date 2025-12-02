@@ -7,12 +7,12 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Help & FAQ'), // Updated title for the Help screen.
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
                   child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +109,7 @@ class HelpScreen extends StatelessWidget {
           ],
         ),
       ),
-    ),
+      ),
     );
   }
 }

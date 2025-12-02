@@ -163,8 +163,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
           Navigator.of(context).pop(_hasChanges);
         }
       },
-      child: SafeArea(
-        child: Scaffold(
+      child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Groups'),
           leading: IconButton(
@@ -174,15 +173,17 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
             },
           ),
         ),
-        body: _isLoading
+        body: SafeArea(
+          child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _buildGroupList(),
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: _addGroup,
           child: const Icon(Icons.add),
         ),
+        ),
       ),
-    ),
     );
   }
 

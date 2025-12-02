@@ -41,12 +41,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (didPop) return;
         Navigator.of(context).pop(_changesMade);
       },
-      child: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Settings'), // Title of the settings screen.
-          ),
-          body: ListView(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Settings'), // Title of the settings screen.
+        ),
+        body: SafeArea(
+          child: ListView(
             children: [
               ListTile(
                 leading: const Icon(Icons.folder_open), // Icon for the Groups setting.

@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
 import '../services/practice_config_service.dart';
+import '../models/practice_stage.dart';
 
 class PracticeIndicatorUtils {
+
+  static Color? getPracticeIndicatorColorSync(DateTime? lastPracticeTime) {
+    if (lastPracticeTime == null) {
+      return Colors.black;
+    }
+
+    final stages = PracticeConfigService.cachedStages;
+    if (stages == null || stages.isEmpty) {
+        return null;
+    }
+
+    return _calculateColorForStages(lastPracticeTime, stages);
+  }
+
   static Future<Color> getPracticeIndicatorColor(DateTime? lastPracticeTime) async {
     if (lastPracticeTime == null) {
       return Colors.black;
+    }
+    
+    if (PracticeConfigService.cachedStages != null) {
+        final color = getPracticeIndicatorColorSync(lastPracticeTime);
+        if (color != null) return color;
     }
 
     final service = PracticeConfigService();
@@ -14,6 +34,10 @@ class PracticeIndicatorUtils {
         return Colors.black;
     }
 
+    return _calculateColorForStages(lastPracticeTime, stages);
+  }
+
+  static Color _calculateColorForStages(DateTime lastPracticeTime, List<PracticeStage> stages) {
     final now = DateTime.now();
     final difference = now.difference(lastPracticeTime);
     final daysSincePractice = difference.inDays;

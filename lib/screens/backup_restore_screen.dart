@@ -125,13 +125,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Backup & Restore'),
         ),
-        body: _buildBody(),
-      ),
+        body: SafeArea(
+          child: _buildBody(),
+        ),
     );
   }
 

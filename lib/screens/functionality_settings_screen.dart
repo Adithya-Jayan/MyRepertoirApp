@@ -136,8 +136,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Functionality'),
           leading: IconButton(
@@ -147,8 +146,9 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
             },
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
