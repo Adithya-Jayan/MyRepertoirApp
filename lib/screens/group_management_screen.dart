@@ -182,7 +182,6 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
           onPressed: _addGroup,
           child: const Icon(Icons.add),
         ),
-        ),
       ),
     );
   }
