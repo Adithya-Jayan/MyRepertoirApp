@@ -143,12 +143,12 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Advanced Settings'),
       ),
-      body: ListView(
+      body: SafeArea(
+        child: ListView(
         children: [
           SwitchListTile(
             title: const Text('Enable Debug Logs'),
@@ -369,7 +369,7 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
             ),
         ],
       ),
-    ),
+      ),
     );
   }
 }

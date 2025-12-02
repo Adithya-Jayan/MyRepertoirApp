@@ -75,18 +75,18 @@ class PersonalizationSettingsScreenState
         if (didPop) return;
         Navigator.of(context).pop(true);
       },
-      child: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Personalization'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.of(context).pop(true); // Return true to indicate changes were made
-              },
-            ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Personalization'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.of(context).pop(true); // Return true to indicate changes were made
+            },
           ),
-          body: SingleChildScrollView(
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(

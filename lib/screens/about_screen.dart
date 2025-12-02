@@ -37,12 +37,12 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('About'), // Title of the About screen.
       ),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +132,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ],
         ),
       ),
-    ),
+      ),
     );
   }
 }
@@ -197,8 +197,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Contributors'), // Title of the Contributors screen.
         actions: [
@@ -213,7 +212,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
             ),
         ],
       ),
-      body: _contributors == null
+      body: SafeArea(
+        child: _contributors == null
           ? const Center(child: CircularProgressIndicator()) // Show loading indicator.
           : _contributors!.isEmpty
               ? const Center(child: Text('No contributors found.')) // Message for no contributors.
@@ -253,7 +253,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     );
                   },
                 ),
-    ),
+      ),
     );
   }
 }
