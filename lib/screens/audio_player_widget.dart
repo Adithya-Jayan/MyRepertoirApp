@@ -239,29 +239,29 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Rewind 2s Button
+                // Rewind 5s Button
                 IconButton(
                   icon: const Icon(Icons.replay_5), // Using generic replay icon
                   iconSize: 32.0,
-                  tooltip: 'Rewind 2s',
+                  tooltip: 'Rewind 5s',
                   onPressed: () {
                     final current = _player.player.position;
-                    final newPos = current - const Duration(seconds: 2);
+                    final newPos = current - const Duration(seconds: 5);
                     _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
                   },
                 ),
                 const SizedBox(width: 16), // Spacing
                 mainButton,
                 const SizedBox(width: 16), // Spacing
-                // Forward 2s Button
+                // Forward 5s Button
                 IconButton(
                   icon: const Icon(Icons.forward_5), // Using generic forward icon
                   iconSize: 32.0,
-                  tooltip: 'Forward 2s',
+                  tooltip: 'Forward 5s',
                   onPressed: () {
                     final current = _player.player.position;
                     final duration = _player.player.duration ?? Duration.zero;
-                    final newPos = current + const Duration(seconds: 2);
+                    final newPos = current + const Duration(seconds: 5);
                     _player.player.seek(newPos > duration ? duration : newPos);
                   },
                 ),
