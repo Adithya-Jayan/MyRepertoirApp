@@ -187,21 +187,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             // Debug logging to help identify the issue
             AppLogger.log('AudioPlayerWidget: PlayerState - processing: $processingState, playing: $playing');
 
-            // Show loading only if it's loading/buffering
-            if (processingState == ja.ProcessingState.loading ||
-                processingState == ja.ProcessingState.buffering) {
-              return const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 8),
-                  Text('Loading...'),
-                ],
-              );
-            }
-            
             // Define the main control button based on state
             Widget mainButton;
-            if (processingState == ja.ProcessingState.completed) {
+            if (processingState == ja.ProcessingState.loading ||
+                processingState == ja.ProcessingState.buffering) {
+              mainButton = const SizedBox(
+                width: 80.0,
+                height: 80.0,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            } else if (processingState == ja.ProcessingState.completed) {
               mainButton = IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
