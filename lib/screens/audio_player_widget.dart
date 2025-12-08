@@ -31,7 +31,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   double _speed = 1.0; // Current playback speed.
   double _pitch = 0.0; // Current pitch in half-step units.
   bool _isInitialized = false; // Whether the audio source was successfully initialized.
-  bool _hasError = false; // Whether there was an error initializing the audio.
+  String? _errorMessage; // Specific error message if initialization fails.
   List<Bookmark> _bookmarks = []; // List of bookmarks for the current audio.
   final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for saving music piece.
   final Uuid _uuid = Uuid(); // For generating unique bookmark IDs.
@@ -102,7 +102,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       if (!await file.exists()) {
         AppLogger.log('AudioPlayerWidget: Audio file does not exist: $audioPath');
         setState(() {
-          _hasError = true;
+          _errorMessage = 'Audio file does not exist';
           _isInitialized = false;
         });
         return;
@@ -135,14 +135,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       if (mounted) {
         setState(() {
           _isInitialized = true;
-          _hasError = false;
+          _errorMessage = null;
         });
       }
     } catch (e) {
       AppLogger.log('AudioPlayerWidget: Error initializing audio: $e');
       if (mounted) {
         setState(() {
-          _hasError = true;
+          _errorMessage = 'Error initializing audio: $e';
           _isInitialized = false;
         });
       }
@@ -171,7 +171,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         }
 
         // Show error state if audio failed to initialize
-        if (_hasError) {
+        if (_errorMessage != null) {
           return Column(
             children: [
               const Icon(
@@ -180,9 +180,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 size: 64.0,
               ),
               const SizedBox(height: 8.0),
-              const Text(
-                'Audio file not found',
-                style: TextStyle(color: Colors.red),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8.0),
               Text(

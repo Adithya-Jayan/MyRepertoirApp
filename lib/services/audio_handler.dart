@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import '../utils/app_logger.dart';
 
 class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
@@ -35,8 +36,17 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     try {
       await _player.setFilePath(url);
     } catch (e) {
-      // Fallback for non-file URLs if needed, though app seems to use local files
-      await _player.setUrl(url);
+      AppLogger.log('AudioPlayerHandler: setFilePath failed: $e. Trying setUrl with URI.');
+      // Fallback for non-file URLs or if setFilePath fails
+      // Ensure we convert file path to proper URI if it's a file path
+      try {
+        final uri = Uri.file(url).toString();
+        await _player.setUrl(uri);
+      } catch (e2) {
+         // If that also fails, try raw url (maybe it was already a web URL)
+         AppLogger.log('AudioPlayerHandler: setUrl(Uri) failed: $e2. Trying raw setUrl.');
+         await _player.setUrl(url);
+      }
     }
   }
   
