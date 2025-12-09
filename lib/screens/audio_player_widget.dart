@@ -64,7 +64,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     
     // Apply settings to the audio player
     try {
-      await _player.player.setSpeed(_speed);
+      await _player.setSpeed(_speed);
       await _player.setPitch(_pitch); // Directly set semitones
       AppLogger.log('AudioPlayerWidget: Settings loaded - Speed: $_speed, Pitch: $_pitch');
     } catch (e) {
@@ -128,7 +128,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       if (!mounted) return;
 
       // Apply current speed and pitch settings after loading
-      await _player.player.setSpeed(_speed);
+      await _player.setSpeed(_speed);
       await _player.setPitch(_pitch); // Directly set semitones
 
       AppLogger.log('AudioPlayerWidget: Audio initialized successfully');
@@ -168,6 +168,19 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Error initializing player: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
         }
 
         // Show error state if audio failed to initialize
@@ -345,7 +358,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         setState(() {
                           _speed = value;
                         });
-                        await _player.player.setSpeed(value); // Use new player's setSpeed
+                        await _player.setSpeed(value); // Use new player's setSpeed
                         await _saveSettings();
                       },
                     ),
@@ -391,7 +404,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     _speed = 1.0;
                     _pitch = 0.0;
                   });
-                  await _player.player.setSpeed(1.0); // Use new player's setSpeed
+                  await _player.setSpeed(1.0); // Use new player's setSpeed
                   await _player.setPitch(0.0); // Use new player's setPitch
                   await _saveSettings();
                 },

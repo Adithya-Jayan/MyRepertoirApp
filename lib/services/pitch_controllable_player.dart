@@ -36,6 +36,11 @@ class PitchControllablePlayer {
     await _handler!.player.setPitch(pitchMultiplier);
   }
 
+  Future<void> setSpeed(double speed) async {
+    if (_handler == null) return;
+    await _handler!.player.setSpeed(speed);
+  }
+
   Future<void> setUrl(String url, {String? title, String? artist}) async {
     if (_handler == null) return;
     await _handler!.setUrl(url);
