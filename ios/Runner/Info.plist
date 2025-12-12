@@ -47,5 +47,9 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to backup and restore your data.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>

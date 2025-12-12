@@ -1,39 +1,77 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:just_audio/just_audio.dart';
+import 'package:audio_service/audio_service.dart';
+import 'audio_handler.dart';
 
 class PitchControllablePlayer {
-  final AudioPlayer _player = AudioPlayer();
-  double _currentPitch = 0.0;
+  static final PitchControllablePlayer _instance = PitchControllablePlayer._internal();
+  factory PitchControllablePlayer() => _instance;
+  
+  PitchControllablePlayer._internal();
 
+  static AudioPlayerHandler? _handler;
+  static Future<void>? _initFuture;
+  
+  AudioPlayer get player {
+    if (_handler == null) throw Exception("PitchControllablePlayer not initialized. Call initialize() first.");
+    return _handler!.player;
+  }
 
-  AudioPlayer get player => _player;
+  Future<void> initialize() async {
+    if (_handler != null) return;
 
-  Future<void> initialize() async {}
+    _initFuture ??= _initializeHandler();
+    await _initFuture;
+  }
+
+  Future<void> _initializeHandler() async {
+    _handler = await AudioService.init(
+      builder: () => AudioPlayerHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.repertoire.audio',
+        androidNotificationChannelName: 'Repertoire Audio',
+        androidNotificationOngoing: true,
+      ),
+    );
+  }
 
   Future<void> setPitch(double semitones) async {
-    _currentPitch = semitones;
+    if (_handler == null) return;
     final pitchMultiplier = pow(2.0, semitones / 12.0).toDouble();
-    await _player.setPitch(pitchMultiplier);
+    await _handler!.player.setPitch(pitchMultiplier);
   }
 
-  double get pitch => _currentPitch;
-
-  Future<void> setUrl(String url) async {
-    await _player.setFilePath(url);
+  Future<void> setSpeed(double speed) async {
+    if (_handler == null) return;
+    await _handler!.player.setSpeed(speed);
   }
 
-  Future<void> play() => _player.play();
-  Future<void> pause() => _player.pause();
-  Future<void> stop() async {
-    await _player.stop();
+  Future<void> setUrl(String url, {String? title, String? artist, Uri? artUri}) async {
+    if (_handler == null) return;
+    await _handler!.setUrl(url);
+    
+    // Update notification info
+    final item = MediaItem(
+      id: url,
+      title: title ?? url.split('/').last,
+      artist: artist,
+      artUri: artUri,
+      // Duration might not be available yet, but just_audio updates it in the stream
+    );
+    await _handler!.updateMediaItem(item);
   }
 
-  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
-  Stream<Duration?> get durationStream => _player.durationStream;
-  Stream<Duration> get positionStream => _player.positionStream;
+  Future<void> play() async => _handler?.play();
+  Future<void> pause() async => _handler?.pause();
+  Future<void> stop() async => _handler?.stop();
+
+  Stream<PlayerState> get playerStateStream => _handler?.player.playerStateStream ?? Stream.empty();
+  Stream<Duration?> get durationStream => _handler?.player.durationStream ?? Stream.empty();
+  Stream<Duration> get positionStream => _handler?.player.positionStream ?? Stream.empty();
+  Stream<MediaItem?> get mediaItemStream => _handler?.mediaItem ?? Stream.empty();
 
   Future<void> dispose() async {
-    await _player.dispose();
+    await stop();
   }
 }
-
