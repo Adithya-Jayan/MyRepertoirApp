@@ -139,6 +139,59 @@ jobs:
           yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
 
+      - name: Generate Release Notes
+        id: generate_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PREVIOUS_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"
+          TARGET_COMMITISH="${{ github.ref_name }}"
+          TAG_NAME="v${{ steps.final_version.outputs.final_version_string }}"
+          
+          echo "Generating notes for $TAG_NAME (previous: $PREVIOUS_TAG)"
+          
+          # Construct JSON payload
+          if [ -n "$PREVIOUS_TAG" ]; then
+            JSON_PAYLOAD=$(jq -n \
+              --arg tag "$TAG_NAME" \
+              --arg target "$TARGET_COMMITISH" \
+              --arg prev "$PREVIOUS_TAG" \
+              '{tag_name: $tag, target_commitish: $target, previous_tag_name: $prev}')
+          else
+             JSON_PAYLOAD=$(jq -n \
+              --arg tag "$TAG_NAME" \
+              --arg target "$TARGET_COMMITISH" \
+              '{tag_name: $tag, target_commitish: $target}')
+          fi
+
+          # Fetch generated notes
+          NOTES=$(gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/releases/generate-notes \
+            --input - <<< "$JSON_PAYLOAD" | jq -r .body)
+          
+          # Output multiline string
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create F-Droid Changelog
+        run: |
+          VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
+          # Combine user notes and generated notes for the file
+          USER_NOTES="${{ github.event.inputs.release_notes }}"
+          GEN_NOTES="${{ steps.generate_notes.outputs.notes }}"
+          
+          if [ -n "$USER_NOTES" ]; then
+            FULL_NOTES="$USER_NOTES"$'\n\n'"$GEN_NOTES"
+          else
+            FULL_NOTES="$GEN_NOTES"
+          fi
+          
+          mkdir -p fastlane/metadata/android/en-US/changelogs
+          echo "$FULL_NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
 
@@ -286,10 +339,14 @@ jobs:
       - name: Create Git Tag and Push Changes
         run: |
           TAG_NAME="v${{ steps.final_version.outputs.final_version_string }}"
+          VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
           
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add pubspec.yaml
+          
+          # Add pubspec.yaml and the new changelog file
+          git add pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
           git tag -a "$TAG_NAME" -m "$COMMIT_MSG"
@@ -300,36 +357,6 @@ jobs:
         id: get_build_date
         run: |
           echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
-
-      - name: Create Draft Release and Get Notes
-        id: create_draft_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create v${{ steps.final_version.outputs.final_version_string }} \
-            --generate-notes \
-            --notes-start-tag ${{ steps.get_latest_tag.outputs.latest_tag }} \
-            --title "Release v${{ steps.final_version.outputs.final_version_string }}" \
-            --draft \
-            --prerelease=${{ github.event.inputs.prerelease }}
-          
-          NOTES=$(gh release view v${{ steps.final_version.outputs.final_version_string }} --json body --jq .body)
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create F-Droid Changelog
-        run: |
-          VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
-          NOTES="${{ steps.create_draft_release.outputs.notes }}"
-          mkdir -p Repertoire/fastlane/metadata/android/en-US/changelogs
-          echo "$NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
-
-      - name: Delete Draft Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete v${{ steps.final_version.outputs.final_version_string }} --yes
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
@@ -354,7 +381,7 @@ jobs:
             </details>
 
             **Changes:**
-            ${{ steps.create_draft_release.outputs.notes }}
+            ${{ steps.generate_notes.outputs.notes }}
           files: |
             ./release_assets/app-*-fdroid-release.apk
             ./release_assets/app-*-fdroid-release.apk.sha256
