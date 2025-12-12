@@ -1,0 +1,9 @@
+Audio player improvements and bug fixes.
+
+## What's Changed
+* feat: Rename fastlane images to sequential numbers for F-Droid by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/158
+* Fix/GitHub actions by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/163
+* Fix/audio player by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/164
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.1.0+17...v4.2.0+18
