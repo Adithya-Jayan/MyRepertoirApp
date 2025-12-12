@@ -11,6 +11,7 @@ class PitchControllablePlayer {
   PitchControllablePlayer._internal();
 
   static AudioPlayerHandler? _handler;
+  static Future<void>? _initFuture;
   
   AudioPlayer get player {
     if (_handler == null) throw Exception("PitchControllablePlayer not initialized. Call initialize() first.");
@@ -18,16 +19,21 @@ class PitchControllablePlayer {
   }
 
   Future<void> initialize() async {
-    if (_handler == null) {
-      _handler = await AudioService.init(
-        builder: () => AudioPlayerHandler(),
-        config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.repertoire.audio',
-          androidNotificationChannelName: 'Repertoire Audio',
-          androidNotificationOngoing: true,
-        ),
-      );
-    }
+    if (_handler != null) return;
+
+    _initFuture ??= _initializeHandler();
+    await _initFuture;
+  }
+
+  Future<void> _initializeHandler() async {
+    _handler = await AudioService.init(
+      builder: () => AudioPlayerHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.repertoire.audio',
+        androidNotificationChannelName: 'Repertoire Audio',
+        androidNotificationOngoing: true,
+      ),
+    );
   }
 
   Future<void> setPitch(double semitones) async {
