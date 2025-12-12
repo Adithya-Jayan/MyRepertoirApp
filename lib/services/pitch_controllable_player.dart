@@ -41,7 +41,7 @@ class PitchControllablePlayer {
     await _handler!.player.setSpeed(speed);
   }
 
-  Future<void> setUrl(String url, {String? title, String? artist}) async {
+  Future<void> setUrl(String url, {String? title, String? artist, Uri? artUri}) async {
     if (_handler == null) return;
     await _handler!.setUrl(url);
     
@@ -50,6 +50,7 @@ class PitchControllablePlayer {
       id: url,
       title: title ?? url.split('/').last,
       artist: artist,
+      artUri: artUri,
       // Duration might not be available yet, but just_audio updates it in the stream
     );
     await _handler!.updateMediaItem(item);
@@ -62,6 +63,7 @@ class PitchControllablePlayer {
   Stream<PlayerState> get playerStateStream => _handler?.player.playerStateStream ?? Stream.empty();
   Stream<Duration?> get durationStream => _handler?.player.durationStream ?? Stream.empty();
   Stream<Duration> get positionStream => _handler?.player.positionStream ?? Stream.empty();
+  Stream<MediaItem?> get mediaItemStream => _handler?.mediaItem ?? Stream.empty();
 
   Future<void> dispose() async {
     await stop();
