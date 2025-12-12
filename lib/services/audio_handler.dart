@@ -50,8 +50,9 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     }
   }
   
-  Future<void> updateMediaItem(MediaItem item) async {
-    mediaItem.add(item);
+  @override
+  Future<void> updateMediaItem(MediaItem mediaItem) async {
+    this.mediaItem.add(mediaItem);
   }
 
   /// Transform just_audio events into audio_service states
