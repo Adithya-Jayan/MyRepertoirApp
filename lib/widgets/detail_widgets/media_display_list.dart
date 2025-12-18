@@ -72,6 +72,13 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                           index: index,
                           child: const Icon(Icons.drag_handle),
                         ),
+                        onMediaItemChanged: (newItem) {
+                          setState(() {
+                            _musicPiece.mediaItems[index] = newItem;
+                          });
+                          _repository.updateMusicPiece(_musicPiece);
+                          widget.onMusicPieceChanged(_musicPiece);
+                        },
                       ),
                       if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
                         const Divider(indent: 16, endIndent: 16),
@@ -103,6 +110,13 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                         musicPiece: _musicPiece,
                         mediaItemIndex: index,
                         isEditable: false,
+                        onMediaItemChanged: (newItem) {
+                          setState(() {
+                            _musicPiece.mediaItems[index] = newItem;
+                          });
+                          _repository.updateMusicPiece(_musicPiece);
+                          widget.onMusicPieceChanged(_musicPiece);
+                        },
                       ),
                       if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
                         const Divider(indent: 16, endIndent: 16),

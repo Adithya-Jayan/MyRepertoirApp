@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart'; // Added this import
+import 'package:repertoire/models/media_item.dart'; // Added for MediaItem
+import 'package:repertoire/models/learning_progress_config.dart'; // Added import
+import 'package:repertoire/widgets/learning_progress_widget.dart'; // Added import
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
@@ -15,6 +18,7 @@ class MediaDisplayWidget extends StatefulWidget {
 
   final Widget? trailing;
   final Function(String)? onTitleChanged;
+  final Function(MediaItem)? onMediaItemChanged; // Added callback
   final bool isEditable;
 
   const MediaDisplayWidget({
@@ -23,6 +27,7 @@ class MediaDisplayWidget extends StatefulWidget {
     required this.mediaItemIndex,
     this.trailing,
     this.onTitleChanged,
+    this.onMediaItemChanged,
     this.isEditable = false,
   });
 
@@ -284,6 +289,20 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ),
         );
         break;
+      case MediaType.learningProgress:
+        final config = LearningProgressConfig.decode(currentMediaItem.pathOrUrl);
+        content = LearningProgressWidget(
+          config: config,
+          isEditable: !widget.isEditable, // Can update progress only in View mode (not Edit Piece mode)
+          onProgressChanged: (newProgress) {
+            final newConfig = config.copyWith(current: newProgress);
+            final updatedItem = currentMediaItem.copyWith(
+              pathOrUrl: LearningProgressConfig.encode(newConfig),
+            );
+            widget.onMediaItemChanged?.call(updatedItem);
+          },
+        );
+        break;
       case MediaType.thumbnails:
         content = const SizedBox.shrink(); // Thumbnails are not displayed directly
         break;
@@ -337,7 +356,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ],
               ),
             ),
-            if (!widget.isEditable && currentMediaItem.type != MediaType.thumbnails)
+            if (!widget.isEditable && currentMediaItem.type != MediaType.thumbnails && currentMediaItem.type != MediaType.learningProgress)
               Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.share, size: 20),

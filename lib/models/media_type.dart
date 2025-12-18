@@ -15,5 +15,7 @@ enum MediaType {
   mediaLink,
   /// Represents a thumbnail image (for hierarchical storage of thumbnails)
   thumbnails,
+  /// Represents a learning progress tracker (percentage, count, or named stages).
+  learningProgress,
   // Add other types as needed, e.g., 'text' for plain text notes
 }

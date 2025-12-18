@@ -57,8 +57,8 @@ class MediaItem {
   Map<String, dynamic> toJsonForBackup(String storagePath) => {
         'id': id,
         'type': type.name,
-        // Only relativize local file paths. Leave external links and inline content (e.g., markdown) untouched
-        'pathOrUrl': (type == MediaType.mediaLink || type == MediaType.markdown)
+        // Only relativize local file paths. Leave external links, inline content, and config data untouched
+        'pathOrUrl': (type == MediaType.mediaLink || type == MediaType.markdown || type == MediaType.learningProgress)
             ? pathOrUrl
             : getRelativePath(pathOrUrl, storagePath),
         'title': title,
@@ -72,10 +72,10 @@ class MediaItem {
   factory MediaItem.fromJsonForBackup(Map<String, dynamic> json, String storagePath) => MediaItem(
         id: json['id'],
         type: MediaType.values.firstWhere((e) => e.name == json['type']),
-        // Leave media links and markdown content untouched; absolutize only local file paths
+        // Leave media links, markdown content, and config data untouched; absolutize only local file paths
         pathOrUrl: (() {
           final mediaType = MediaType.values.firstWhere((e) => e.name == json['type']);
-          if (mediaType == MediaType.mediaLink || mediaType == MediaType.markdown) {
+          if (mediaType == MediaType.mediaLink || mediaType == MediaType.markdown || mediaType == MediaType.learningProgress) {
             return json['pathOrUrl'];
           }
           return getAbsolutePath(json['pathOrUrl'], storagePath);
