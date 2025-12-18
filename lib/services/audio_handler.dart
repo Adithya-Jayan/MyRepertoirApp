@@ -7,6 +7,23 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   AudioPlayerHandler() {
     _player.playbackEventStream.listen(_broadcastState);
+    _player.durationStream.listen((duration) {
+      final index = _player.currentIndex;
+      final newQueue = List<MediaItem>.from(queue.value);
+      if (index != null && index < newQueue.length) {
+        final oldMediaItem = newQueue[index];
+        final newMediaItem = oldMediaItem.copyWith(duration: duration);
+        newQueue[index] = newMediaItem;
+        queue.add(newQueue);
+        mediaItem.add(newMediaItem);
+      } else {
+        // If queue is empty or index invalid, just update current mediaItem if it exists
+        final current = mediaItem.value;
+        if (current != null) {
+           mediaItem.add(current.copyWith(duration: duration));
+        }
+      }
+    });
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
         stop();

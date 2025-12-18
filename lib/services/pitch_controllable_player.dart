@@ -32,6 +32,7 @@ class PitchControllablePlayer {
         androidNotificationChannelId: 'com.repertoire.audio',
         androidNotificationChannelName: 'Repertoire Audio',
         androidNotificationOngoing: true,
+        androidNotificationIcon: 'mipmap/ic_launcher',
       ),
     );
   }
@@ -49,17 +50,17 @@ class PitchControllablePlayer {
 
   Future<void> setUrl(String url, {String? title, String? artist, Uri? artUri}) async {
     if (_handler == null) return;
-    await _handler!.setUrl(url);
     
-    // Update notification info
+    // Update notification info first so it's ready when duration is available
     final item = MediaItem(
       id: url,
       title: title ?? url.split('/').last,
       artist: artist,
       artUri: artUri,
-      // Duration might not be available yet, but just_audio updates it in the stream
     );
     await _handler!.updateMediaItem(item);
+
+    await _handler!.setUrl(url);
   }
 
   Future<void> play() async => _handler?.play();
