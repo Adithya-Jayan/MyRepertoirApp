@@ -3,6 +3,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
@@ -107,6 +108,53 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         );
       }
     });
+  }
+
+  Future<void> _shareMediaItem(MediaType type, String pathOrUrl, Rect? shareOrigin) async {
+    try {
+      ShareParams? params;
+      
+      switch (type) {
+        case MediaType.mediaLink:
+        case MediaType.markdown:
+          // Share the link or markdown content as text
+          params = ShareParams(
+            text: pathOrUrl,
+            sharePositionOrigin: shareOrigin,
+          );
+          break;
+        case MediaType.audio:
+        case MediaType.image:
+        case MediaType.pdf:
+          // Verify file exists before sharing
+          final file = File(pathOrUrl);
+          if (await file.exists()) {
+            params = ShareParams(
+              files: [XFile(pathOrUrl)],
+              sharePositionOrigin: shareOrigin,
+            );
+          } else {
+             if (mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 const SnackBar(content: Text('File not found to share.')),
+               );
+             }
+             return;
+          }
+          break;
+        default:
+          return;
+      }
+      
+      await SharePlus.instance.share(params);
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -246,6 +294,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align top to handle different content heights
           children: [
             Expanded(
               child: Column(
@@ -288,6 +337,18 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ],
               ),
             ),
+            if (!widget.isEditable && currentMediaItem.type != MediaType.thumbnails)
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.share, size: 20),
+                  tooltip: 'Share',
+                  onPressed: () {
+                    final box = ctx.findRenderObject() as RenderBox?;
+                    final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+                    _shareMediaItem(currentMediaItem.type, currentMediaItem.pathOrUrl, rect);
+                  },
+                ),
+              ),
             if (widget.trailing != null) widget.trailing!,
           ],
         ),
