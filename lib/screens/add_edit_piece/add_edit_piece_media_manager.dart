@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/media_item.dart';
 import '../../models/media_type.dart';
+import '../../models/learning_progress_config.dart'; // Import config
 import '../../services/media_storage_manager.dart';
 import '../../utils/app_logger.dart';
 
@@ -37,7 +38,8 @@ class AddEditPieceMediaManager {
         );
         break;
       case MediaType.mediaLink:
-        return; // Handled separately
+      case MediaType.learningProgress: // Handled separately
+        return; 
       case MediaType.thumbnails:
         return; // Thumbnails are not picked by user
     }
@@ -65,13 +67,21 @@ class AddEditPieceMediaManager {
     }
   }
 
-  void addMediaItem(MediaType type, List<MediaItem> currentMediaItems) {
+  void addMediaItem(MediaType type, List<MediaItem> currentMediaItems, {String? configData}) {
     final newMediaItems = List<MediaItem>.from(currentMediaItems);
     if (type == MediaType.mediaLink || type == MediaType.markdown) {
       newMediaItems.add(MediaItem(
         id: const Uuid().v4(),
         type: type,
         pathOrUrl: '',
+      ));
+      onMediaItemsChanged(newMediaItems);
+    } else if (type == MediaType.learningProgress) {
+      newMediaItems.add(MediaItem(
+        id: const Uuid().v4(),
+        type: type,
+        pathOrUrl: configData ?? LearningProgressConfig.encode(LearningProgressConfig(type: LearningProgressType.percentage)),
+        title: 'Learning Progress',
       ));
       onMediaItemsChanged(newMediaItems);
     } else {

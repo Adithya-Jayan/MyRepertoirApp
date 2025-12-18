@@ -5,6 +5,8 @@ import 'package:repertoire/models/music_piece.dart'; // Added this import
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/services/thumbnail_service.dart';
 import 'package:repertoire/utils/app_logger.dart';
+import 'package:repertoire/models/learning_progress_config.dart'; // Added
+import 'package:repertoire/widgets/add_edit_piece/learning_progress_config_dialog.dart'; // Added
 import 'dart:io';
 
 /// A widget for displaying and editing a single MediaItem.
@@ -185,8 +187,12 @@ class _MediaSectionState extends State<MediaSection> {
                   MediaDisplayWidget(
                     musicPiece: widget.musicPiece,
                     mediaItemIndex: widget.index,
+                    isEditable: true, // Allow title editing
                     onTitleChanged: (newTitle) {
                       widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
+                    },
+                    onMediaItemChanged: (newItem) {
+                      widget.onUpdateMediaItem(newItem);
                     },
                   ),
                   const Padding(
@@ -246,7 +252,25 @@ class _MediaSectionState extends State<MediaSection> {
                     ],
                   ),
                   // Display appropriate input field based on media type
-                  if (widget.item.type == MediaType.markdown)
+                  if (widget.item.type == MediaType.learningProgress)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.settings),
+                        label: const Text('Configure Progress Bar'),
+                        onPressed: () async {
+                           final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
+                           final newConfig = await showDialog<LearningProgressConfig>(
+                              context: context,
+                              builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
+                           );
+                           if (newConfig != null) {
+                              widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
+                           }
+                        },
+                      ),
+                    )
+                  else if (widget.item.type == MediaType.markdown)
                     TextFormField(
                       initialValue: widget.item.pathOrUrl,
                       decoration: const InputDecoration(

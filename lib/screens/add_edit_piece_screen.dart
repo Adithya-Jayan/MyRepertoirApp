@@ -2,6 +2,9 @@ import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
 import '../models/music_piece.dart';
 import '../models/media_item.dart';
+import '../models/media_type.dart'; // Added import
+import '../models/learning_progress_config.dart'; // Added import
+import '../widgets/add_edit_piece/learning_progress_config_dialog.dart'; // Added import
 
 
 import '../models/group.dart';
@@ -244,11 +247,22 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         ),
       ),
       floatingActionButton: SpeedDialWidget(
-        onAddMediaItem: (mediaType) => _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems)),
+        onAddMediaItem: (mediaType) async {
+          if (mediaType == MediaType.learningProgress) {
+            final config = await showDialog<LearningProgressConfig>(
+              context: context,
+              builder: (context) => const LearningProgressConfigDialog(),
+            );
+            if (config != null) {
+              final configJson = LearningProgressConfig.encode(config);
+              _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems), configData: configJson);
+            }
+          } else {
+            _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems));
+          }
+        },
       ),
     ),
     );
   }
-
-
 }
