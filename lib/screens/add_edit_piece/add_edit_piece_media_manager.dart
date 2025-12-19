@@ -20,6 +20,7 @@ class AddEditPieceMediaManager {
     
     switch (type) {
       case MediaType.image:
+      case MediaType.thumbnails:
         result = await FilePicker.platform.pickFiles(type: FileType.image);
         break;
       case MediaType.pdf:
@@ -40,8 +41,6 @@ class AddEditPieceMediaManager {
       case MediaType.mediaLink:
       case MediaType.learningProgress: // Handled separately
         return; 
-      case MediaType.thumbnails:
-        return; // Thumbnails are not picked by user
     }
 
     if (result != null && result.files.single.path != null) {

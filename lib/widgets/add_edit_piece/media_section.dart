@@ -18,6 +18,34 @@ class MediaSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Separate regular media items and thumbnail items
+    final regularItems = musicPiece.mediaItems.where((item) => item.type != MediaType.thumbnails).toList();
+    final thumbnailItems = musicPiece.mediaItems.where((item) => item.type == MediaType.thumbnails).toList();
+
+    void handleDelete(MediaItem deletedItem) {
+      final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+      updatedMediaItems.removeWhere((element) => element.id == deletedItem.id);
+      
+      // Check if we need to clear the thumbnail
+      String? newThumbnailPath = musicPiece.thumbnailPath;
+      
+      if (deletedItem.type == MediaType.image || deletedItem.type == MediaType.thumbnails) {
+          if (musicPiece.thumbnailPath == deletedItem.pathOrUrl) {
+            newThumbnailPath = null;
+          }
+      } else {
+          if (deletedItem.thumbnailPath != null && musicPiece.thumbnailPath == deletedItem.thumbnailPath) {
+            newThumbnailPath = null;
+          }
+      }
+      
+      onMusicPieceChanged(musicPiece.copyWith(
+        mediaItems: updatedMediaItems,
+        thumbnailPath: newThumbnailPath,
+        clearThumbnail: newThumbnailPath == null,
+      ));
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -30,64 +58,89 @@ class MediaSectionWidget extends StatelessWidget {
               child: Text("Use the '+' sign to add media"),
             ),
           )
-        else
-          ReorderableListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: musicPiece.mediaItems.length,
-            buildDefaultDragHandles: false,
-            itemBuilder: (context, index) {
-              final item = musicPiece.mediaItems[index];
-              return MediaSection(
-                key: ValueKey(item.id),
-                item: item,
-                index: index,
-                musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
-                musicPieceId: musicPiece.id,
-                onUpdateMediaItem: (updatedItem) {
-                  final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                  updatedMediaItems[index] = updatedItem;
-                  onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
-                },
-                onDeleteMediaItem: (deletedItem) {
-                  final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                  updatedMediaItems.removeWhere((element) => element.id == deletedItem.id);
-                  
-                  // Check if we need to clear the thumbnail
-                  String? newThumbnailPath = musicPiece.thumbnailPath;
-                  
-                  if (deletedItem.type == MediaType.image) {
-                     if (musicPiece.thumbnailPath == deletedItem.pathOrUrl) {
-                        newThumbnailPath = null;
-                     }
-                  } else {
-                     if (deletedItem.thumbnailPath != null && musicPiece.thumbnailPath == deletedItem.thumbnailPath) {
-                        newThumbnailPath = null;
-                     }
-                  }
-                  
-                  onMusicPieceChanged(musicPiece.copyWith(
-                    mediaItems: updatedMediaItems,
-                    thumbnailPath: newThumbnailPath,
-                    clearThumbnail: newThumbnailPath == null,
-                  ));
-                },
-                onSetThumbnail: (thumbnailPath) {
-                  onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
-                },
-                musicPiece: musicPiece,
-              );
-            },
-            onReorder: (oldIndex, newIndex) {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-              final item = updatedMediaItems.removeAt(oldIndex);
-              updatedMediaItems.insert(newIndex, item);
-              onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
-            },
-          ),
+        else ...[
+          if (regularItems.isNotEmpty)
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: regularItems.length,
+              buildDefaultDragHandles: false,
+              itemBuilder: (context, index) {
+                final item = regularItems[index];
+                // Find the index in the original list for updates
+                final originalIndex = musicPiece.mediaItems.indexWhere((element) => element.id == item.id);
+
+                return MediaSection(
+                  key: ValueKey(item.id),
+                  item: item,
+                  index: index,
+                  musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                  musicPieceId: musicPiece.id,
+                  onUpdateMediaItem: (updatedItem) {
+                    final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                    if (originalIndex != -1) {
+                      updatedMediaItems[originalIndex] = updatedItem;
+                      onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+                    }
+                  },
+                  onDeleteMediaItem: handleDelete,
+                  onSetThumbnail: (thumbnailPath) {
+                    onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
+                  },
+                  musicPiece: musicPiece,
+                );
+              },
+              onReorder: (oldIndex, newIndex) {
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                final newRegularItems = List<MediaItem>.from(regularItems);
+                final item = newRegularItems.removeAt(oldIndex);
+                newRegularItems.insert(newIndex, item);
+                
+                // Reconstruct the full list: newRegularItems + thumbnailItems
+                // Note: This assumes thumbnails were at the end. If they were mixed, this forces them to end.
+                // Which is desired behavior.
+                final updatedMediaItems = [...newRegularItems, ...thumbnailItems];
+                onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+              },
+            ),
+            
+          if (thumbnailItems.isNotEmpty) ...[
+             if (regularItems.isNotEmpty)
+               const Padding(
+                 padding: EdgeInsets.symmetric(vertical: 8.0),
+                 child: Divider(),
+               ),
+             const Padding(
+               padding: EdgeInsets.only(bottom: 8.0),
+               child: Text('Thumbnail Widget (Visible in Edit Mode only)', style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Colors.grey)),
+             ),
+             ...thumbnailItems.map((item) {
+                final originalIndex = musicPiece.mediaItems.indexWhere((element) => element.id == item.id);
+                return MediaSection(
+                  key: ValueKey(item.id),
+                  item: item,
+                  index: -1, // Not used for reordering
+                  isReorderable: false,
+                  musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                  musicPieceId: musicPiece.id,
+                  onUpdateMediaItem: (updatedItem) {
+                    final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                    if (originalIndex != -1) {
+                      updatedMediaItems[originalIndex] = updatedItem;
+                      onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+                    }
+                  },
+                  onDeleteMediaItem: handleDelete,
+                  onSetThumbnail: (thumbnailPath) {
+                    onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
+                  },
+                  musicPiece: musicPiece,
+                );
+             }),
+          ],
+        ],
       ],
     );
   }

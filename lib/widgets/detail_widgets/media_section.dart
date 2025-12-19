@@ -21,6 +21,7 @@ class MediaSection extends StatefulWidget {
   final Function(MediaItem) onDeleteMediaItem;
   final Function(String) onSetThumbnail;
   final MusicPiece musicPiece; // Added this
+  final bool isReorderable;
 
   const MediaSection({
     super.key,
@@ -32,6 +33,7 @@ class MediaSection extends StatefulWidget {
     required this.onDeleteMediaItem,
     required this.onSetThumbnail,
     required this.musicPiece,
+    this.isReorderable = true,
   });
 
   @override
@@ -279,13 +281,14 @@ class _MediaSectionState extends State<MediaSection> {
             ),
             Column(
               children: [
-                ReorderableDragStartListener(
-                  index: widget.index,
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.drag_handle), // Drag handle for reordering.
+                if (widget.isReorderable)
+                  ReorderableDragStartListener(
+                    index: widget.index,
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.drag_handle), // Drag handle for reordering.
+                    ),
                   ),
-                ),
                 IconButton(
                   icon: const Icon(Icons.delete), // Button to delete the media item.
                   onPressed: () => _deleteMediaItem(),
