@@ -369,14 +369,14 @@ class LibraryScreenNotifier extends ChangeNotifier {
     }
   }
 
-  void onGroupSelected(String? groupId) {
-    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId');
+  void onGroupSelected(String? groupId, {bool animate = true}) {
+    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId, animate: $animate');
     _selectedGroupId = groupId;
     final visibleGroups = getVisibleGroups();
     final index = visibleGroups.indexWhere((g) => g.id == groupId);
     AppLogger.log('LibraryScreenNotifier: Found group at index: $index in visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
     
-    if (pageController.hasClients && index != -1) {
+    if (animate && pageController.hasClients && index != -1) {
       // Use animateToPage for smoother transitions instead of jumpToPage
       pageController.animateToPage(
         index, 
