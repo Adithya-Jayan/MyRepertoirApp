@@ -69,6 +69,7 @@ class MediaSectionWidget extends StatelessWidget {
                   onMusicPieceChanged(musicPiece.copyWith(
                     mediaItems: updatedMediaItems,
                     thumbnailPath: newThumbnailPath,
+                    clearThumbnail: newThumbnailPath == null,
                   ));
                 },
                 onSetThumbnail: (thumbnailPath) {

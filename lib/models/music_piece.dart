@@ -167,6 +167,7 @@ class MusicPiece {
     List<TagGroup>? tagGroups,
     List<Bookmark>? bookmarks,
     String? thumbnailPath,
+    bool clearThumbnail = false,
   }) {
     return MusicPiece(
       id: id ?? this.id,
@@ -183,7 +184,7 @@ class MusicPiece {
       groupIds: groupIds ?? this.groupIds,
       tagGroups: tagGroups ?? this.tagGroups,
       bookmarks: bookmarks ?? this.bookmarks,
-      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      thumbnailPath: clearThumbnail ? null : (thumbnailPath ?? this.thumbnailPath),
     );
   }
 
