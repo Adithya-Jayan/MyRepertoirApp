@@ -10,7 +10,7 @@ class TagGroupSection extends StatefulWidget {
   final TagGroup tagGroup;
   final int index;
   final List<String> allTagGroupNames;
-  final Function(TagGroup, TagGroup) onUpdateTagGroup;
+  final Function(TagGroup, TagGroup, {bool isAutofill}) onUpdateTagGroup;
   final Function(TagGroup) onDeleteTagGroup;
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
   final Future<int?> Function(String) onFetchMostCommonColor;
@@ -187,7 +187,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                 onFieldSubmitted();
                                 final mostCommonColor = await widget.onFetchMostCommonColor(value);
                                 if (mostCommonColor != null) {
-                                  widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor));
+                                  widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor), isAutofill: true);
                                 }
                               },
                             );
@@ -207,7 +207,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                             widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
                             final mostCommonColor = await widget.onFetchMostCommonColor(selection);
                             if (mostCommonColor != null) {
-                              widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor));
+                              widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor), isAutofill: true);
                             }
                           },
                         ),

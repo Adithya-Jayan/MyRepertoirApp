@@ -6,7 +6,7 @@ import '../detail_widgets/tag_group_section.dart';
 class TagGroupsSection extends StatelessWidget {
   final List<TagGroup> tagGroups;
   final List<String> allTagGroupNames;
-  final Function(TagGroup, TagGroup) onUpdateTagGroup;
+  final Function(TagGroup, TagGroup, {bool isAutofill}) onUpdateTagGroup;
   final Function(TagGroup) onDeleteTagGroup;
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
   final Function(int, int) onReorderTagGroups;
