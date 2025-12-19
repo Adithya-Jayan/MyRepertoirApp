@@ -107,8 +107,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
-  Future<void> _handleUpdateTagGroup(TagGroup oldGroup, TagGroup newGroup) async {
-    if (oldGroup.color != newGroup.color && newGroup.color != null) {
+  Future<void> _handleUpdateTagGroup(TagGroup oldGroup, TagGroup newGroup, {bool isAutofill = false}) async {
+    if (!isAutofill && oldGroup.color != newGroup.color && newGroup.color != null) {
       final shouldUpdateAll = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
