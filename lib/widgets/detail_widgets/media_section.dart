@@ -203,13 +203,6 @@ class _MediaSectionState extends State<MediaSection> {
                       widget.onUpdateMediaItem(newItem);
                     },
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4.0, left: 4.0),
-                    child: Text(
-                      'Double tap title to edit',
-                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
-                    ),
-                  ),
                   // Thumbnail controls
                   Wrap(
                     spacing: 8.0,
