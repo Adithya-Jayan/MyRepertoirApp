@@ -20,6 +20,7 @@ class MediaDisplayWidget extends StatefulWidget {
   final Function(String)? onTitleChanged;
   final Function(MediaItem)? onMediaItemChanged; // Added callback
   final bool isEditable;
+  final bool isTitleEditable;
 
   const MediaDisplayWidget({
     super.key,
@@ -29,6 +30,7 @@ class MediaDisplayWidget extends StatefulWidget {
     this.onTitleChanged,
     this.onMediaItemChanged,
     this.isEditable = false,
+    this.isTitleEditable = false,
   });
 
   @override
@@ -93,7 +95,12 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     
     // Only call the callback if the title actually changed
     if (newTitle != widget.musicPiece.mediaItems[widget.mediaItemIndex].title) {
-      widget.onTitleChanged?.call(newTitle);
+      if (widget.onTitleChanged != null) {
+        widget.onTitleChanged!(newTitle);
+      } else if (widget.onMediaItemChanged != null) {
+        final updatedItem = widget.musicPiece.mediaItems[widget.mediaItemIndex].copyWith(title: newTitle);
+        widget.onMediaItemChanged!(updatedItem);
+      }
     }
   }
 
@@ -335,15 +342,30 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                             _saveTitle();
                           },
                         )
-                      : (widget.isEditable
+                      : ((widget.isTitleEditable || widget.isEditable)
                           ? GestureDetector(
                               onDoubleTap: _startEditing,
                               child: Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Text(
-                                  _currentTitle ?? currentMediaItem.type.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _currentTitle ?? currentMediaItem.type.name,
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                    const Text(
+                                      '(Double tap to edit)',
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             )
