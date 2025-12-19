@@ -237,15 +237,15 @@ class _MediaSectionState extends State<MediaSection> {
                                     : null,
                               ),
                       // Set as thumbnail switch
-                      if (widget.item.type == MediaType.image || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty))
+                      if (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty))
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text('Set as thumbnail'),
                             Switch(
-                              value: widget.musicPieceThumbnail == (widget.item.type == MediaType.image ? widget.item.pathOrUrl : _currentThumbnailPath),
+                              value: widget.musicPieceThumbnail == ((widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) ? widget.item.pathOrUrl : _currentThumbnailPath),
                               onChanged: (value) {
-                                widget.onSetThumbnail(value ? (widget.item.type == MediaType.image ? widget.item.pathOrUrl : _currentThumbnailPath!) : '');
+                                widget.onSetThumbnail(value ? ((widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) ? widget.item.pathOrUrl : _currentThumbnailPath!) : '');
                               },
                             ),
                           ],

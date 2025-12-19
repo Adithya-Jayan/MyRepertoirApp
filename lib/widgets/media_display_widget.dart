@@ -172,6 +172,12 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   Widget build(BuildContext context) {
     final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+
+    // Hide thumbnail widgets in non-editable (view) mode completely
+    if (currentMediaItem.type == MediaType.thumbnails && !widget.isEditable) {
+      return const SizedBox.shrink();
+    }
+
     Widget content;
 
     switch (currentMediaItem.type) {
@@ -311,7 +317,22 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         );
         break;
       case MediaType.thumbnails:
-        content = const SizedBox.shrink(); // Thumbnails are not displayed directly
+        content = GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
+              ),
+            );
+          },
+          child: SizedBox(
+            height: 200,
+            child: Image.file(
+              File(currentMediaItem.pathOrUrl),
+              fit: BoxFit.contain, // Maintain aspect ratio within the bounds
+            ),
+          ),
+        );
         break;
     }
 
