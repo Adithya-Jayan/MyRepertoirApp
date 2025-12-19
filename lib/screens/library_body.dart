@@ -23,7 +23,7 @@ class LibraryBody extends StatelessWidget {
   final Function(MusicPiece) onPieceSelected;
   final VoidCallback onReloadData;
   final VoidCallback onToggleMultiSelectMode;
-  final ValueChanged<String> onGroupSelected;
+  final void Function(String, {bool animate}) onGroupSelected;
   final String searchQuery;
   final Map<String, dynamic> filterOptions;
   final String sortOption;
@@ -82,14 +82,8 @@ class LibraryBody extends StatelessWidget {
                         selected: isSelected,
                         onSelected: (selected) {
                           if (selected) {
-                            final index = visibleGroups.indexOf(group);
-                            pageController.animateToPage(
-                              index, 
-                              duration: const Duration(milliseconds: 300), 
-                              curve: Curves.easeInOut
-                            );
-                            // Add a callback to notify the parent about the selected group change
-                            onGroupSelected(group.id);
+                            // Notify the parent about the selected group change and request animation
+                            onGroupSelected(group.id, animate: true);
                           }
                         },
                         showCheckmark: false,
@@ -111,7 +105,7 @@ class LibraryBody extends StatelessWidget {
               onPageChanged: (index) {
                 if (visibleGroups.isNotEmpty && index < visibleGroups.length) {
                   AppLogger.log('LibraryBody: Page changed to index: $index, group: ${visibleGroups[index].name}');
-                  onGroupSelected(visibleGroups[index].id);
+                  onGroupSelected(visibleGroups[index].id, animate: false);
                 }
               },
               itemBuilder: (context, pageIndex) {
