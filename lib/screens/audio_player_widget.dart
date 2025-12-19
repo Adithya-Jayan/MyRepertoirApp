@@ -93,6 +93,21 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       
       AppLogger.log('AudioPlayerWidget: Initializing audio with path: $audioPath');
 
+      // Validate file extension
+      final validExtensions = ['.mp3', '.wav', '.aac', '.m4a', '.ogg', '.flac', '.wma', '.amr'];
+      final hasValidExtension = validExtensions.any((ext) => audioPath.toLowerCase().endsWith(ext));
+
+      if (!hasValidExtension) {
+        AppLogger.log('AudioPlayerWidget: Invalid audio file extension: $audioPath');
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Invalid audio file type. Supported: ${validExtensions.join(", ")}';
+            _isInitialized = false;
+          });
+        }
+        return;
+      }
+
       // Validate file path for special characters that might cause issues
       if (audioPath.contains('*') || audioPath.contains('?') || audioPath.contains('<') || audioPath.contains('>')) {
         AppLogger.log('AudioPlayerWidget: Warning - File path contains special characters that may cause issues');
