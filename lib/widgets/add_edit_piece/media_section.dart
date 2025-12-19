@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/media_item.dart';
+import 'package:repertoire/models/media_type.dart';
 import '../detail_widgets/media_section.dart';
 
 /// A widget that displays and manages media items for a music piece.
@@ -51,7 +52,24 @@ class MediaSectionWidget extends StatelessWidget {
                 onDeleteMediaItem: (deletedItem) {
                   final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
                   updatedMediaItems.removeWhere((element) => element.id == deletedItem.id);
-                  onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+                  
+                  // Check if we need to clear the thumbnail
+                  String? newThumbnailPath = musicPiece.thumbnailPath;
+                  
+                  if (deletedItem.type == MediaType.image) {
+                     if (musicPiece.thumbnailPath == deletedItem.pathOrUrl) {
+                        newThumbnailPath = null;
+                     }
+                  } else {
+                     if (deletedItem.thumbnailPath != null && musicPiece.thumbnailPath == deletedItem.thumbnailPath) {
+                        newThumbnailPath = null;
+                     }
+                  }
+                  
+                  onMusicPieceChanged(musicPiece.copyWith(
+                    mediaItems: updatedMediaItems,
+                    thumbnailPath: newThumbnailPath,
+                  ));
                 },
                 onSetThumbnail: (thumbnailPath) {
                   onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));

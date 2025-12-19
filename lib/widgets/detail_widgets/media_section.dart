@@ -149,19 +149,6 @@ class _MediaSectionState extends State<MediaSection> {
   }
 
   void _deleteMediaItem() {
-    // Determine the effective thumbnail path being used
-    final effectiveThumbnailPath = widget.item.type == MediaType.image
-        ? widget.item.pathOrUrl
-        : _currentThumbnailPath;
-
-    // If this media item (or its thumbnail) is set as the piece thumbnail, clear it
-    if (effectiveThumbnailPath != null && 
-        effectiveThumbnailPath.isNotEmpty && 
-        widget.musicPieceThumbnail == effectiveThumbnailPath) {
-      widget.onSetThumbnail('');
-      AppLogger.log('MediaSection: Cleared piece thumbnail because source media was deleted');
-    }
-
     // Delete the thumbnail file if it exists
     if (_currentThumbnailPath != null) {
       try {
