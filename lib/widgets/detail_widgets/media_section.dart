@@ -15,6 +15,7 @@ import 'dart:io';
 class MediaSection extends StatefulWidget {
   final MediaItem item;
   final int index;
+  final int globalIndex;
   final String musicPieceThumbnail;
   final String musicPieceId;
   final Function(MediaItem) onUpdateMediaItem;
@@ -27,6 +28,7 @@ class MediaSection extends StatefulWidget {
     super.key,
     required this.item,
     required this.index,
+    required this.globalIndex,
     required this.musicPieceThumbnail,
     required this.musicPieceId,
     required this.onUpdateMediaItem,
@@ -183,7 +185,7 @@ class _MediaSectionState extends State<MediaSection> {
                 children: [
                   MediaDisplayWidget(
                     musicPiece: widget.musicPiece,
-                    mediaItemIndex: widget.index,
+                    mediaItemIndex: widget.globalIndex,
                     isEditable: true, // Allow title editing
                     onTitleChanged: (newTitle) {
                       widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));

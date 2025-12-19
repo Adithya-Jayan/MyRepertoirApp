@@ -74,6 +74,7 @@ class MediaSectionWidget extends StatelessWidget {
                   key: ValueKey(item.id),
                   item: item,
                   index: index,
+                  globalIndex: originalIndex,
                   musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
                   musicPieceId: musicPiece.id,
                   onUpdateMediaItem: (updatedItem) {
@@ -122,6 +123,7 @@ class MediaSectionWidget extends StatelessWidget {
                   key: ValueKey(item.id),
                   item: item,
                   index: -1, // Not used for reordering
+                  globalIndex: originalIndex,
                   isReorderable: false,
                   musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
                   musicPieceId: musicPiece.id,
