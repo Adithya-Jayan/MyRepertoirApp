@@ -168,6 +168,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('AddEditPieceScreen: build called');
+    final hasThumbnail = _musicPiece.mediaItems.any((item) => item.type == MediaType.thumbnails);
+
     return SafeArea(
       child: Scaffold(
       appBar: AppBar(
@@ -247,6 +249,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         ),
       ),
       floatingActionButton: SpeedDialWidget(
+        hasThumbnail: hasThumbnail,
         onAddMediaItem: (mediaType) async {
           if (mediaType == MediaType.learningProgress) {
             final config = await showDialog<LearningProgressConfig>(

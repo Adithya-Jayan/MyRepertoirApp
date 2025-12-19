@@ -5,10 +5,12 @@ import '../../models/media_type.dart';
 /// A widget that displays a speed dial for adding different types of media items.
 class SpeedDialWidget extends StatelessWidget {
   final Function(MediaType) onAddMediaItem;
+  final bool hasThumbnail;
 
   const SpeedDialWidget({
     super.key,
     required this.onAddMediaItem,
+    this.hasThumbnail = false,
   });
 
   @override
@@ -17,6 +19,13 @@ class SpeedDialWidget extends StatelessWidget {
       icon: Icons.add,
       activeIcon: Icons.close,
       children: [
+        SpeedDialChild(
+          child: const Icon(Icons.photo_size_select_actual),
+          label: 'Thumbnail',
+          onTap: hasThumbnail ? null : () => onAddMediaItem(MediaType.thumbnails),
+          backgroundColor: hasThumbnail ? Colors.grey : null,
+          labelStyle: hasThumbnail ? const TextStyle(color: Colors.grey) : null,
+        ),
         SpeedDialChild(
           child: const Icon(Icons.text_fields),
           label: 'Markdown Text',
