@@ -196,6 +196,7 @@ class RestoreManager {
         // Only update paths for local files (not media links or markdown)
         if (mediaItem.type != MediaType.mediaLink &&
             mediaItem.type != MediaType.markdown &&
+            mediaItem.type != MediaType.learningProgress &&
             mediaItem.pathOrUrl.isNotEmpty) {
           final oldPath = mediaItem.pathOrUrl;
           final newPath = _getCorrectedPath(oldPath, appDir.path);
