@@ -1,0 +1,19 @@
+New prerelease with performance optimization, thumbnail refactor and icon redesign for theming support.
+
+## What's Changed
+* Feature/audio player improvements by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/165
+* Share option for widget content. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/169
+* Implements learning bar widget. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/170
+* Fixes group navigation bug. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/173
+* Adds file type check to audio player. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/174
+* Fixes persistent thumbnail issue after image widget is deleted. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/175
+* Fix widget title editing by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/176
+* Fix: Suppress confirmation dialog on tag group autofill by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/177
+* Fix: Properly clear piece thumbnail when source media is deleted by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/178
+* Feat: Add dedicated Thumbnail widget by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/179
+* Fix: Enable clearing thumbnailPath in MusicPiece.copyWith by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/180
+* Fix: Implement Thumbnail widget functionality and separate rendering by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/181
+* Feature/adaptive icons by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/182
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.2.0+18...v4.4.0-prerelease.1+20
