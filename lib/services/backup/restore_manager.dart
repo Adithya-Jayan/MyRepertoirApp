@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
+import 'package:uuid/uuid.dart'; // Added import
 import '../../utils/app_logger.dart';
 
 import '../../database/music_piece_repository.dart';
@@ -243,6 +244,21 @@ class RestoreManager {
           AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
           AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
           updatedPieceThumb = newPieceThumbPath;
+          pieceUpdated = true;
+        }
+
+        // Backward compatibility: Ensure a MediaType.thumbnails widget exists
+        final hasThumbnailWidget = updatedMediaItems.any((item) => 
+            item.type == MediaType.thumbnails && item.pathOrUrl == updatedPieceThumb
+        );
+
+        if (!hasThumbnailWidget && updatedPieceThumb != null) {
+          AppLogger.log('RestoreManager: Creating missing thumbnail widget for piece ${piece.title}');
+          updatedMediaItems.add(MediaItem(
+            id: const Uuid().v4(),
+            type: MediaType.thumbnails,
+            pathOrUrl: updatedPieceThumb,
+          ));
           pieceUpdated = true;
         }
       }

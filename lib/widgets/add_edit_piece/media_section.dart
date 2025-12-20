@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import '../detail_widgets/media_section.dart';
-
-/// A widget that displays and manages media items for a music piece.
 import 'package:repertoire/models/music_piece.dart'; // Add this import
+import '../../utils/app_logger.dart';
 
 class MediaSectionWidget extends StatelessWidget {
   final MusicPiece musicPiece; // New parameter
@@ -46,6 +49,70 @@ class MediaSectionWidget extends StatelessWidget {
       ));
     }
 
+    Future<void> handleSetThumbnail(String thumbnailPath) async {
+      if (thumbnailPath.isEmpty) {
+        onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: null, clearThumbnail: true));
+        return;
+      }
+
+      // Check if this path is already from a thumbnail widget
+      final isFromThumbnailWidget = musicPiece.mediaItems.any((item) => 
+        item.type == MediaType.thumbnails && item.pathOrUrl == thumbnailPath
+      );
+
+      if (isFromThumbnailWidget) {
+        // Just set the path
+        onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
+        return;
+      }
+
+      // Copy the file to create a dedicated thumbnail source
+      try {
+        final appDir = await getApplicationDocumentsDirectory();
+        final pieceMediaDir = Directory(p.join(appDir.path, 'media', musicPiece.id));
+        if (!await pieceMediaDir.exists()) {
+          await pieceMediaDir.create(recursive: true);
+        }
+
+        final extension = p.extension(thumbnailPath);
+        final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+        final newFilePath = p.join(pieceMediaDir.path, newFileName);
+
+        final sourceFile = File(thumbnailPath);
+        if (await sourceFile.exists()) {
+          await sourceFile.copy(newFilePath);
+          AppLogger.log('MediaSectionWidget: Copied thumbnail to $newFilePath');
+
+          // Create or update thumbnail widget
+          final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+          final existingThumbnailIndex = updatedMediaItems.indexWhere((item) => item.type == MediaType.thumbnails);
+
+          if (existingThumbnailIndex != -1) {
+            // Update existing
+            final oldItem = updatedMediaItems[existingThumbnailIndex];
+            updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: newFilePath);
+            // Optional: Clean up old file if it was different?
+          } else {
+            // Create new
+            updatedMediaItems.add(MediaItem(
+              id: const Uuid().v4(),
+              type: MediaType.thumbnails,
+              pathOrUrl: newFilePath,
+            ));
+          }
+
+          onMusicPieceChanged(musicPiece.copyWith(
+            mediaItems: updatedMediaItems,
+            thumbnailPath: newFilePath,
+          ));
+        } else {
+          AppLogger.log('MediaSectionWidget: Source thumbnail file not found: $thumbnailPath');
+        }
+      } catch (e) {
+        AppLogger.log('MediaSectionWidget: Error setting thumbnail: $e');
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -85,9 +152,7 @@ class MediaSectionWidget extends StatelessWidget {
                     }
                   },
                   onDeleteMediaItem: handleDelete,
-                  onSetThumbnail: (thumbnailPath) {
-                    onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
-                  },
+                  onSetThumbnail: handleSetThumbnail,
                   musicPiece: musicPiece,
                 );
               },
@@ -135,9 +200,7 @@ class MediaSectionWidget extends StatelessWidget {
                     }
                   },
                   onDeleteMediaItem: handleDelete,
-                  onSetThumbnail: (thumbnailPath) {
-                    onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
-                  },
+                  onSetThumbnail: handleSetThumbnail,
                   musicPiece: musicPiece,
                 );
              }),
