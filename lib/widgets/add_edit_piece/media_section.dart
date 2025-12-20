@@ -147,8 +147,23 @@ class MediaSectionWidget extends StatelessWidget {
                   onUpdateMediaItem: (updatedItem) {
                     final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
                     if (originalIndex != -1) {
+                      final oldItem = updatedMediaItems[originalIndex];
                       updatedMediaItems[originalIndex] = updatedItem;
-                      onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+                      
+                      String? newPieceThumbnail = musicPiece.thumbnailPath;
+                      
+                      // If the piece thumbnail was pointing to the old item's path
+                      if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
+                          musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                          newPieceThumbnail = updatedItem.pathOrUrl;
+                      } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
+                          newPieceThumbnail = updatedItem.thumbnailPath;
+                      }
+
+                      onMusicPieceChanged(musicPiece.copyWith(
+                          mediaItems: updatedMediaItems,
+                          thumbnailPath: newPieceThumbnail
+                      ));
                     }
                   },
                   onDeleteMediaItem: handleDelete,
@@ -195,8 +210,23 @@ class MediaSectionWidget extends StatelessWidget {
                   onUpdateMediaItem: (updatedItem) {
                     final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
                     if (originalIndex != -1) {
+                      final oldItem = updatedMediaItems[originalIndex];
                       updatedMediaItems[originalIndex] = updatedItem;
-                      onMusicPieceChanged(musicPiece.copyWith(mediaItems: updatedMediaItems));
+                      
+                      String? newPieceThumbnail = musicPiece.thumbnailPath;
+                      
+                      // If the piece thumbnail was pointing to the old item's path
+                      if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
+                          musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                          newPieceThumbnail = updatedItem.pathOrUrl;
+                      } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
+                          newPieceThumbnail = updatedItem.thumbnailPath;
+                      }
+
+                      onMusicPieceChanged(musicPiece.copyWith(
+                          mediaItems: updatedMediaItems,
+                          thumbnailPath: newPieceThumbnail
+                      ));
                     }
                   },
                   onDeleteMediaItem: handleDelete,

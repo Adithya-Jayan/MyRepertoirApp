@@ -8,6 +8,10 @@ import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/models/learning_progress_config.dart'; // Added
 import 'package:repertoire/widgets/add_edit_piece/learning_progress_config_dialog.dart'; // Added
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 /// A widget for displaying and editing a single MediaItem.
 ///
@@ -169,6 +173,45 @@ class _MediaSectionState extends State<MediaSection> {
     widget.onDeleteMediaItem(widget.item);
   }
 
+  Future<void> _pickAndChangeImage() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.image);
+      if (result != null && result.files.single.path != null) {
+        final sourcePath = result.files.single.path!;
+        
+        // Copy to secure location
+        final appDir = await getApplicationDocumentsDirectory();
+        final pieceMediaDir = Directory(p.join(appDir.path, 'media', widget.musicPieceId));
+        if (!await pieceMediaDir.exists()) {
+          await pieceMediaDir.create(recursive: true);
+        }
+        
+        final extension = p.extension(sourcePath);
+        final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+        final newFilePath = p.join(pieceMediaDir.path, newFileName);
+        
+        await File(sourcePath).copy(newFilePath);
+        
+        // Update item
+        final updatedItem = widget.item.copyWith(pathOrUrl: newFilePath);
+        widget.onUpdateMediaItem(updatedItem);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image updated successfully')),
+          );
+        }
+      }
+    } catch (e) {
+      AppLogger.log('MediaSection: Error changing image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update image: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     AppLogger.log('MediaSection: build called for item: ${widget.item.title}, _currentThumbnailPath: "$_currentThumbnailPath"');
@@ -219,7 +262,7 @@ class _MediaSectionState extends State<MediaSection> {
                                     ? () => _removeThumbnail()
                                     : () => _fetchThumbnail(),
                                 icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image),
-                                label: Text((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : 'Get Thumbnail'),
+                                label: Text((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : 'Get link thumbnail'),
                                 style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
                                     ? ElevatedButton.styleFrom(
                                         backgroundColor: Colors.red[50],
@@ -227,7 +270,14 @@ class _MediaSectionState extends State<MediaSection> {
                                       )
                                     : null,
                               ),
-                      // Update Thumbnail button
+                      // Change Image button (for thumbnail widgets)
+                      if (widget.item.type == MediaType.thumbnails)
+                        ElevatedButton.icon(
+                          onPressed: _pickAndChangeImage,
+                          icon: const Icon(Icons.image),
+                          label: const Text('Change Image'),
+                        ),
+                      // Set as piece thumbnail button
                       if (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty))
                         ElevatedButton.icon(
                           onPressed: () {
@@ -240,7 +290,7 @@ class _MediaSectionState extends State<MediaSection> {
                             );
                           },
                           icon: const Icon(Icons.photo_camera_back),
-                          label: const Text('Update Thumbnail'),
+                          label: const Text('Set as piece thumbnail'),
                         ),
                     ],
                   ),
