@@ -172,12 +172,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                           valueListenable: notifier.galleryColumnsNotifier,
                           builder: (context, galleryColumns, child) {
                             AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
-                            return RefreshIndicator(
-                              onRefresh: () async {
-                                AppLogger.log('LibraryScreen: Swipe-to-refresh triggered');
-                                await notifier.reloadData();
-                              },
-                              child: LibraryBody(
+                            return LibraryBody(
                                 key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
                                 visibleGroups: visibleGroups,
                                 selectedGroupId: notifier.selectedGroupId,
@@ -200,8 +195,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                                 filterOptions: notifier.filterOptions,
                                 sortOption: notifier.sortOption,
                                 getFilteredPiecesForGroup: notifier.getFilteredPiecesForGroup,
-                              ),
-                            );
+                              );
                           },
                         ),
                         bottomNavigationBar: notifier.isMultiSelectMode
