@@ -14,6 +14,8 @@ import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
 import 'package:repertoire/services/practice_config_service.dart';
+import 'package:repertoire/services/migration_service.dart';
+import 'package:repertoire/database/music_piece_repository.dart';
 
 
 
@@ -92,6 +94,15 @@ class _MyAppState extends State<MyApp> {
       await PracticeConfigService().loadStages();
     } catch (e) {
       AppLogger.log('Error preloading practice stages: $e');
+    }
+
+    // Run data migrations
+    try {
+      final repository = MusicPieceRepository();
+      final migrationService = MigrationService(repository, prefs);
+      await migrationService.runMigrations();
+    } catch (e) {
+      AppLogger.log('Error running migrations: $e');
     }
 
     final hasRunBefore = prefs.getBool('hasRunBefore') ?? false;
