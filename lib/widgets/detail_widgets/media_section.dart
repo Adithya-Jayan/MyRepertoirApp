@@ -227,19 +227,20 @@ class _MediaSectionState extends State<MediaSection> {
                                       )
                                     : null,
                               ),
-                      // Set as thumbnail switch
+                      // Update Thumbnail button
                       if (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty))
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('Set as thumbnail'),
-                            Switch(
-                              value: widget.musicPieceThumbnail == ((widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) ? widget.item.pathOrUrl : _currentThumbnailPath),
-                              onChanged: (value) {
-                                widget.onSetThumbnail(value ? ((widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) ? widget.item.pathOrUrl : _currentThumbnailPath!) : '');
-                              },
-                            ),
-                          ],
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) 
+                                ? widget.item.pathOrUrl 
+                                : _currentThumbnailPath!;
+                            widget.onSetThumbnail(path);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Thumbnail updated successfully')),
+                            );
+                          },
+                          icon: const Icon(Icons.photo_camera_back),
+                          label: const Text('Update Thumbnail'),
                         ),
                     ],
                   ),
