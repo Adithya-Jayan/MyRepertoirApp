@@ -369,16 +369,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
     }
   }
 
-  bool _isAnimatingGroupSelection = false;
-
   void onGroupSelected(String? groupId, {bool animate = true}) {
     AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId, animate: $animate');
     
-    // Prevent intermediate updates during programmatic scrolling
-    if (!animate && _isAnimatingGroupSelection) {
-      return;
-    }
-
     // Avoid unnecessary updates if the group hasn't changed
     if (_selectedGroupId == groupId) {
       return;
@@ -390,15 +383,8 @@ class LibraryScreenNotifier extends ChangeNotifier {
     AppLogger.log('LibraryScreenNotifier: Found group at index: $index in visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
     
     if (animate && pageController.hasClients && index != -1) {
-      _isAnimatingGroupSelection = true;
-      // Use animateToPage for smoother transitions instead of jumpToPage
-      pageController.animateToPage(
-        index, 
-        duration: const Duration(milliseconds: 300), 
-        curve: Curves.easeInOut
-      ).then((_) {
-        _isAnimatingGroupSelection = false;
-      });
+      // Use jumpToPage for instant transition to avoid scrolling through intermediate pages
+      pageController.jumpToPage(index);
     }
     
     // Auto-scroll the group title into view
