@@ -47,16 +47,25 @@ class MusicPieceCard extends StatelessWidget {
                   ..strokeWidth = 3
                   ..color = brightness == Brightness.dark ? Colors.black : Colors.white,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
             // Solid text as fill.
             Text(
               text,
               style: style,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         );
       } else {
-        return Text(text, style: style);
+        return Text(
+          text,
+          style: style,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        );
       }
     }
 
@@ -110,134 +119,72 @@ class MusicPieceCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (piece.enablePracticeTracking)
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: Builder(
-                            builder: (context) {
-                              final syncColor = PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime);
-                              if (syncColor != null) {
-                                return Container(
-                                  width: 12,
-                                  height: 12,
-                                  margin: const EdgeInsets.only(bottom: 4.0),
-                                  decoration: BoxDecoration(
-                                    color: syncColor,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 1.5),
-                                  ),
-                                );
-                              }
-                              return FutureBuilder<Color>(
-                                future: PracticeIndicatorUtils.getPracticeIndicatorColor(piece.lastPracticeTime),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                                    return Container(
-                                      width: 12,
-                                      height: 12,
-                                      margin: const EdgeInsets.only(bottom: 4.0),
-                                      decoration: BoxDecoration(
-                                        color: snapshot.data,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 1.5),
-                                      ),
-                                    );
-                                  } else {
-                                    return Container(
-                                      width: 12,
-                                      height: 12,
-                                      margin: const EdgeInsets.only(bottom: 4.0),
-                                      decoration: BoxDecoration(
-                                        color: Colors.transparent,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 1.5),
-                                      ),
-                                    );
-                                  }
-                                },
-                              );
-                            },
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (piece.enablePracticeTracking)
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          margin: const EdgeInsets.only(bottom: 4.0),
+                          decoration: BoxDecoration(
+                            color: PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime) ?? Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
                           ),
                         ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: textWithOutline(
-                          piece.title,
-                          Theme.of(context).textTheme.titleLarge,
-                        ),
                       ),
-                      const SizedBox(height: 4.0),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: textWithOutline(
-                          piece.artistComposer,
-                          Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final minChips = 2;
-                          final spacing = 8.0;
-                          final maxChipWidth = (constraints.maxWidth - (minChips - 1) * spacing) / minChips;
-                          final tagWidgets = <Widget>[];
-                          if (piece.tagGroups.isNotEmpty) {
-                            for (final tg in piece.tagGroups) {
-                              for (final tag in tg.tags) {
-                                final color = tg.color != null ? Color(tg.color!) : null;
-                                tagWidgets.add(
-                                  ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: maxChipWidth),
-                                    child: Chip(
-                                      label: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
+                    textWithOutline(
+                      piece.title,
+                      Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4.0),
+                    textWithOutline(
+                      piece.artistComposer,
+                      Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8.0),
+                    if (piece.tagGroups.isNotEmpty)
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        clipBehavior: Clip.antiAlias, // Clip overflow
+                        children: [
+                           for (final tg in piece.tagGroups)
+                              for (final tag in tg.tags)
+                                Builder(
+                                  builder: (context) {
+                                      final color = tg.color != null ? Color(tg.color!) : null;
+                                      return Chip(
+                                        label: Text(
                                           tag,
-                                          style: TextStyle(fontSize: 13),
+                                          style: const TextStyle(fontSize: 10), // Smaller font for grid
                                         ),
-                                      ),
-                                      backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      visualDensity: VisualDensity.compact,
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                          return Wrap(
-                            spacing: spacing,
-                            runSpacing: 4.0,
-                            children: tagWidgets,
-                          );
-                        },
+                                        backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                      );
+                                  }
+                                )
+                        ],
                       ),
-                      const SizedBox(height: 8.0),
-                      if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: textWithOutline(
-                            PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
-                            Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: textWithOutline(
-                            'Practice count: ${piece.practiceCount}',
-                            Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                    ],
-                  ),
+                    const Spacer(), // Push bottom text down if space allows
+                    if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
+                      textWithOutline(
+                        PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
+                        Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
+                      textWithOutline(
+                        'Practice count: ${piece.practiceCount}',
+                        Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
                 ),
               ),
             ],
