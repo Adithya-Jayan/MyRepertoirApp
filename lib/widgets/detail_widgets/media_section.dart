@@ -85,7 +85,7 @@ class _MediaSectionState extends State<MediaSection> {
       
       AppLogger.log('MediaSection: Thumbnail fetch completed, path: $thumbnailPath');
       
-      if (mounted) {
+      if (thumbnailPath != null && mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
@@ -103,6 +103,13 @@ class _MediaSectionState extends State<MediaSection> {
         // Show success feedback
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thumbnail fetched successfully!')),
+        );
+      } else if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch thumbnail (not found)')),
         );
       }
     } catch (e) {
@@ -278,7 +285,7 @@ class _MediaSectionState extends State<MediaSection> {
                           label: const Text('Change Image'),
                         ),
                       // Set as piece thumbnail button
-                      if (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty))
+                      if ((widget.item.type == MediaType.image || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
                         ElevatedButton.icon(
                           onPressed: () {
                             final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) 
