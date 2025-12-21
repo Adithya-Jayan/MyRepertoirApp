@@ -254,11 +254,41 @@ class RestoreManager {
 
         if (!hasThumbnailWidget && updatedPieceThumb != null) {
           AppLogger.log('RestoreManager: Creating missing thumbnail widget for piece ${piece.title}');
+          
+          // Logic to copy the file to create a dedicated thumbnail source
+          String finalThumbnailPath = updatedPieceThumb;
+          
+          try {
+            final pieceMediaDir = Directory(p.join(appDir.path, 'media', piece.id));
+            if (!await pieceMediaDir.exists()) {
+              await pieceMediaDir.create(recursive: true);
+            }
+
+            final sourceFile = File(updatedPieceThumb);
+            if (await sourceFile.exists()) {
+              final extension = p.extension(updatedPieceThumb);
+              final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+              final newFilePath = p.join(pieceMediaDir.path, newFileName);
+              
+              await sourceFile.copy(newFilePath);
+              finalThumbnailPath = newFilePath;
+              AppLogger.log('RestoreManager: Copied thumbnail to $newFilePath');
+            } else {
+               AppLogger.log('RestoreManager: Source thumbnail file not found: $updatedPieceThumb. Using existing path.');
+            }
+          } catch (e) {
+             AppLogger.log('RestoreManager: Error copying thumbnail file: $e. Using existing path.');
+          }
+
           updatedMediaItems.add(MediaItem(
             id: const Uuid().v4(),
             type: MediaType.thumbnails,
-            pathOrUrl: updatedPieceThumb,
+            pathOrUrl: finalThumbnailPath,
           ));
+          
+          // Update the piece thumbnail to point to the new dedicated file
+          updatedPieceThumb = finalThumbnailPath;
+          
           pieceUpdated = true;
         }
       }

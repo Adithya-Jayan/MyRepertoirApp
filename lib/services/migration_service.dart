@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/music_piece_repository.dart';
@@ -35,6 +38,9 @@ class MigrationService {
     try {
       final allPieces = await _repository.getMusicPieces();
       int updatedCount = 0;
+      
+      // Get app directory for file operations
+      final appDir = await getApplicationDocumentsDirectory();
 
       for (final piece in allPieces) {
         if (piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty) {
@@ -48,18 +54,48 @@ class MigrationService {
           if (!hasThumbnailWidget) {
             AppLogger.log('MigrationService: Creating missing thumbnail widget for piece: ${piece.title}');
             
+            // Logic to copy the file, mimicking MediaSectionWidget.handleSetThumbnail
+            String finalThumbnailPath = thumbnailPath;
+            
+            try {
+              final pieceMediaDir = Directory(p.join(appDir.path, 'media', piece.id));
+              if (!await pieceMediaDir.exists()) {
+                await pieceMediaDir.create(recursive: true);
+              }
+
+              final sourceFile = File(thumbnailPath);
+              if (await sourceFile.exists()) {
+                final extension = p.extension(thumbnailPath);
+                final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+                final newFilePath = p.join(pieceMediaDir.path, newFileName);
+                
+                await sourceFile.copy(newFilePath);
+                finalThumbnailPath = newFilePath;
+                AppLogger.log('MigrationService: Copied thumbnail to $newFilePath');
+              } else {
+                 AppLogger.log('MigrationService: Source thumbnail file not found: $thumbnailPath. Using existing path.');
+              }
+            } catch (e) {
+               AppLogger.log('MigrationService: Error copying thumbnail file: $e. Using existing path.');
+            }
+
             final newThumbnailItem = MediaItem(
               id: const Uuid().v4(),
               type: MediaType.thumbnails,
-              pathOrUrl: thumbnailPath,
+              pathOrUrl: finalThumbnailPath,
             );
 
             // Create updated list of media items
             final updatedMediaItems = List<MediaItem>.from(piece.mediaItems);
             updatedMediaItems.add(newThumbnailItem);
 
-            // Update the piece
-            final updatedPiece = piece.copyWith(mediaItems: updatedMediaItems);
+            // Update the piece - also update the piece's thumbnailPath to the new copied file
+            // so that if the original is deleted, the piece still has its thumbnail.
+            final updatedPiece = piece.copyWith(
+              mediaItems: updatedMediaItems,
+              thumbnailPath: finalThumbnailPath
+            );
+            
             await _repository.updateMusicPiece(updatedPiece);
             updatedCount++;
           }
