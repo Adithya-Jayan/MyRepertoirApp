@@ -10,9 +10,9 @@ import 'package:repertoire/utils/theme_notifier.dart';
 
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
-import 'package:repertoire/utils/permissions_utils.dart';
-import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/screens/welcome_screen.dart';
+
+import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/services/practice_config_service.dart';
 import 'package:repertoire/services/migration_service.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
