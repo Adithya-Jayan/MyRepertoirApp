@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
 import 'package:uuid/uuid.dart'; // Added import
+import '../../services/migration_service.dart';
 import '../../utils/app_logger.dart';
 
 import '../../database/music_piece_repository.dart';
@@ -244,21 +245,6 @@ class RestoreManager {
           AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
           AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
           updatedPieceThumb = newPieceThumbPath;
-          pieceUpdated = true;
-        }
-
-        // Backward compatibility: Ensure a MediaType.thumbnails widget exists
-        final hasThumbnailWidget = updatedMediaItems.any((item) => 
-            item.type == MediaType.thumbnails && item.pathOrUrl == updatedPieceThumb
-        );
-
-        if (!hasThumbnailWidget && updatedPieceThumb != null) {
-          AppLogger.log('RestoreManager: Creating missing thumbnail widget for piece ${piece.title}');
-          updatedMediaItems.add(MediaItem(
-            id: const Uuid().v4(),
-            type: MediaType.thumbnails,
-            pathOrUrl: updatedPieceThumb,
-          ));
           pieceUpdated = true;
         }
       }
@@ -626,6 +612,12 @@ class RestoreManager {
         AppLogger.log('RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}');
 
         await _restoreMusicPieces(musicPiecesJson, storagePath, backupVersion);
+        
+        // Extract media files EARLY so they exist for path updates/copying
+        final inputStream = InputFileStream(backupPath);
+        final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
+        await _restoreMediaFiles(archive, storagePath);
+
         await _updateMediaFilePaths(storagePath);
         await _restoreTags(tagsJson);
         await _restoreGroups(groupsJson);
@@ -633,10 +625,11 @@ class RestoreManager {
         await _recalculatePracticeTracking(); // Recalculate practice tracking after restoring practice logs
         await _restoreAppSettings(appSettingsJson);
 
-        // Extract media files
-        final inputStream = InputFileStream(backupPath);
-        final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
-        await _restoreMediaFiles(archive, storagePath);
+        // Run migrations (to convert old-style thumbnails to dedicated widgets)
+        // We reset the flag to ensure migration runs on this newly restored data
+        await prefs.setBool('migration_thumbnail_widgets_created', false);
+        AppLogger.log('RestoreManager: Triggering migrations after restore...');
+        await MigrationService(_repository, prefs).runMigrations();
 
         _showRestoreMessage(messenger, true, 'Data restored successfully!');
         AppLogger.log('RestoreManager: Data restored successfully');

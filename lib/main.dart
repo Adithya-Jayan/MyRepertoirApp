@@ -116,7 +116,6 @@ class _MyAppState extends State<MyApp> {
     if (!hasRunBefore) {
       await prefs.setInt('galleryColumns', 2);
       await prefs.setBool('all_group_isHidden', true);
-      await prefs.setBool('hasRunBefore', true);
     }
   }
 
@@ -128,12 +127,8 @@ class _MyAppState extends State<MyApp> {
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
       
       // Request permissions after the first frame, when context is fully available
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (mounted && navigatorKey.currentContext != null) {
-          await requestPermissions(navigatorKey.currentContext!);
-        }
-      });
-
+      // Moved to WelcomeScreen and LibraryScreen
+      
       // Trigger auto-backup after app is fully initialized
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {

@@ -22,6 +22,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPre
 import 'package:repertoire/widgets/dot_pattern_background.dart';
 import 'package:repertoire/widgets/gradient_background.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
+import '../utils/permissions_utils.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -41,10 +42,15 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
     WidgetsBinding.instance.addObserver(this);
     _initialize();
     
-    // Check for updates after the first frame
+    // Check for updates and permissions after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        await requestPermissions(context);
+      }
       final updateService = UpdateService();
-      await updateService.showChangelogOnStartup(context);
+      if (mounted) {
+        await updateService.showChangelogOnStartup(context);
+      }
       if (!mounted) return;
       await updateService.checkForUpdates(context);
     });
