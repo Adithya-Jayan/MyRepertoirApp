@@ -9,6 +9,7 @@ import 'library_screen.dart';
 import '../utils/app_logger.dart';
 import '../services/backup_restore_service.dart';
 import '../database/music_piece_repository.dart';
+import '../utils/permissions_utils.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.
 ///
@@ -25,6 +26,16 @@ class WelcomeScreen extends StatefulWidget {
 /// Manages the UI and logic for the initial setup process.
 class _WelcomeScreenState extends State<WelcomeScreen> {
   String? _storagePath; // Stores the selected storage path for app files.
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        await requestPermissions(context);
+      }
+    });
+  }
 
   /// Opens a directory picker for the user to select a storage folder.
   ///

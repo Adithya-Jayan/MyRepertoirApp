@@ -47,12 +47,38 @@ class MigrationService {
           final thumbnailPath = piece.thumbnailPath!;
           
           // Check if a corresponding MediaType.thumbnails widget exists
-          final hasThumbnailWidget = piece.mediaItems.any((item) => 
+          int thumbnailWidgetIndex = piece.mediaItems.indexWhere((item) => 
             item.type == MediaType.thumbnails && item.pathOrUrl == thumbnailPath
           );
+          
+          bool needsMigration = false;
+          
+          if (thumbnailWidgetIndex == -1) {
+            // No thumbnail widget exists at all
+            needsMigration = true;
+          } else {
+            // Widget exists, but check if it shares a path with another item (e.g. the original image or a media link's thumbnail)
+            // This indicates it's not a dedicated file and needs to be split
+            final isShared = piece.mediaItems.any((item) {
+              // Skip the thumbnail widget itself when checking for sharing
+              if (item.type == MediaType.thumbnails && item.pathOrUrl == thumbnailPath) {
+                return false;
+              }
+              
+              // Check if the path is used as a primary path (images) or a secondary thumbnail path (media links)
+              return item.pathOrUrl == thumbnailPath || item.thumbnailPath == thumbnailPath;
+            });
+            
+            if (isShared) {
+               AppLogger.log('MigrationService: Found shared thumbnail widget for piece: ${piece.title}. Migrating to dedicated file.');
+               needsMigration = true;
+            }
+          }
 
-          if (!hasThumbnailWidget) {
-            AppLogger.log('MigrationService: Creating missing thumbnail widget for piece: ${piece.title}');
+          if (needsMigration) {
+            if (thumbnailWidgetIndex == -1) {
+               AppLogger.log('MigrationService: Creating missing thumbnail widget for piece: ${piece.title}');
+            }
             
             // Logic to copy the file, mimicking MediaSectionWidget.handleSetThumbnail
             String finalThumbnailPath = thumbnailPath;
@@ -63,9 +89,24 @@ class MigrationService {
                 await pieceMediaDir.create(recursive: true);
               }
 
-              final sourceFile = File(thumbnailPath);
+              // Handle potential URL encoding in legacy paths (e.g. %20 for spaces)
+              String sourcePath = thumbnailPath;
+              File sourceFile = File(sourcePath);
+              
+              if (!await sourceFile.exists()) {
+                final decodedPath = Uri.decodeFull(thumbnailPath);
+                if (decodedPath != thumbnailPath) {
+                  final decodedFile = File(decodedPath);
+                  if (await decodedFile.exists()) {
+                    AppLogger.log('MigrationService: Found source file after decoding path: $decodedPath');
+                    sourcePath = decodedPath;
+                    sourceFile = decodedFile;
+                  }
+                }
+              }
+
               if (await sourceFile.exists()) {
-                final extension = p.extension(thumbnailPath);
+                final extension = p.extension(sourcePath); // Use sourcePath for extension to avoid %20
                 final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
                 final newFilePath = p.join(pieceMediaDir.path, newFileName);
                 
@@ -73,21 +114,28 @@ class MigrationService {
                 finalThumbnailPath = newFilePath;
                 AppLogger.log('MigrationService: Copied thumbnail to $newFilePath');
               } else {
-                 AppLogger.log('MigrationService: Source thumbnail file not found: $thumbnailPath. Using existing path.');
+                 AppLogger.log('MigrationService: Source thumbnail file not found: $thumbnailPath (checked decoded: $sourcePath). Using existing path.');
               }
             } catch (e) {
                AppLogger.log('MigrationService: Error copying thumbnail file: $e. Using existing path.');
             }
 
-            final newThumbnailItem = MediaItem(
-              id: const Uuid().v4(),
-              type: MediaType.thumbnails,
-              pathOrUrl: finalThumbnailPath,
-            );
-
             // Create updated list of media items
             final updatedMediaItems = List<MediaItem>.from(piece.mediaItems);
-            updatedMediaItems.add(newThumbnailItem);
+
+            if (thumbnailWidgetIndex != -1) {
+                // Update existing shared widget to point to new dedicated file
+                final oldItem = updatedMediaItems[thumbnailWidgetIndex];
+                updatedMediaItems[thumbnailWidgetIndex] = oldItem.copyWith(pathOrUrl: finalThumbnailPath);
+            } else {
+                // Create new widget
+                final newThumbnailItem = MediaItem(
+                  id: const Uuid().v4(),
+                  type: MediaType.thumbnails,
+                  pathOrUrl: finalThumbnailPath,
+                );
+                updatedMediaItems.add(newThumbnailItem);
+            }
 
             // Update the piece - also update the piece's thumbnailPath to the new copied file
             // so that if the original is deleted, the piece still has its thumbnail.
