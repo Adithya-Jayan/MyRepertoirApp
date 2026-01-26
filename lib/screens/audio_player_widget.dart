@@ -41,7 +41,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _bookmarks = List.from(widget.musicPiece.bookmarks); // Initialize bookmarks from music piece.
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null).toList();
     _playerInitFuture = _initializeSequence();
   }
 
@@ -575,11 +576,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       }
     	return;
     }
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     final currentPosition = _player.player.position; // Use new player's position
     final newBookmark = Bookmark(
       id: _uuid.v4(),
       timestamp: currentPosition,
       name: 'Bookmark ${_bookmarks.length + 1}',
+      mediaItemId: currentMediaId,
     );
 
     setState(() {
@@ -611,7 +614,23 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   Future<void> _saveBookmarks() async {
-    final updatedMusicPiece = widget.musicPiece.copyWith(bookmarks: _bookmarks);
+    // Fetch latest piece to avoid overwriting other widgets' changes
+    final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+    if (latestPiece == null) return;
+
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    
+    // Get bookmarks that do NOT belong to this audio file (preserve them)
+    // We are managing bookmarks with (id == current OR id == null).
+    // So "others" are those where (id != current AND id != null).
+    final otherBookmarks = latestPiece.bookmarks.where((b) => 
+      b.mediaItemId != currentMediaId && b.mediaItemId != null
+    ).toList();
+
+    // Combine with our current list (which includes new ones and legacy ones)
+    final allBookmarks = [...otherBookmarks, ..._bookmarks];
+
+    final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
     AppLogger.log('AudioPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
   }

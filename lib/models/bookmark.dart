@@ -5,12 +5,14 @@ class Bookmark {
   final Duration timestamp;
   String name;
   final Color? color; // Optional color for the bookmark
+  final String? mediaItemId; // Optional ID of the media item this bookmark belongs to
 
   Bookmark({
     required this.id,
     required this.timestamp,
     required this.name,
     this.color,
+    this.mediaItemId,
   });
 
   // Convert Bookmark object to a JSON-compatible Map
@@ -19,6 +21,7 @@ class Bookmark {
         'timestamp': timestamp.inMilliseconds, // Store as milliseconds
         'name': name,
         'color': color?.toARGB32(), // Store color as int value
+        'mediaItemId': mediaItemId,
       };
 
   // Create a Bookmark object from a JSON-compatible Map
@@ -27,6 +30,7 @@ class Bookmark {
         timestamp: Duration(milliseconds: json['timestamp']),
         name: json['name'],
         color: json['color'] != null ? Color(json['color']) : null,
+        mediaItemId: json['mediaItemId'],
       );
 
   // copyWith method for immutably updating properties
@@ -35,12 +39,14 @@ class Bookmark {
     Duration? timestamp,
     String? name,
     Color? color,
+    String? mediaItemId,
   }) {
     return Bookmark(
       id: id ?? this.id,
       timestamp: timestamp ?? this.timestamp,
       name: name ?? this.name,
       color: color ?? this.color,
+      mediaItemId: mediaItemId ?? this.mediaItemId,
     );
   }
 }

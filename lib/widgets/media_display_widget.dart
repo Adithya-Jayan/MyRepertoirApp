@@ -267,7 +267,10 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             },
           );
         } else {
-          content = VideoPlayerWidget(videoPath: currentMediaItem.pathOrUrl);
+          content = VideoPlayerWidget(
+            musicPiece: widget.musicPiece,
+            mediaItemIndex: widget.mediaItemIndex,
+          );
         }
         break;
       case MediaType.audio:
