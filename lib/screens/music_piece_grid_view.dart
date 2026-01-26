@@ -56,10 +56,7 @@ class MusicPieceGridView extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (context, index) {
              final piece = musicPieces[index];
-             return ConstrainedBox(
-               constraints: const BoxConstraints(maxHeight: 400),
-               child: _buildMusicPieceCard(context, piece),
-             );
+             return _buildMusicPieceCard(context, piece);
           },
         ),
       );
@@ -95,6 +92,7 @@ class MusicPieceGridView extends StatelessWidget {
       key: ValueKey('card_${piece.id}_$isSelected'), // Add key for better performance
       piece: piece,
       isSelected: isSelected,
+      isListView: galleryColumns == 1,
       onTap: () async {
         // Check if Shift key is pressed for multi-selection.
         final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
