@@ -1,0 +1,8 @@
+New Release! This version adds support for Video widgets - which allows you to add videos to your pieces. It also fixes the viewing in list view (When number of columns is set to 1) so it looks better.
+
+## What's Changed
+* Fixes: Card height too big when single gallery column - List View #186 by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/188
+* Feature/video support by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/189
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.5.0+21...v4.6.0+22
