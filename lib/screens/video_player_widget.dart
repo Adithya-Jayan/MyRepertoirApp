@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:repertoire/models/music_piece.dart';
@@ -36,6 +37,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   final MusicPieceRepository _repository = MusicPieceRepository();
   final Uuid _uuid = const Uuid();
   double _playbackSpeed = 1.0;
+  double? _dragValue;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -43,7 +45,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     super.initState();
     _enableWakelock();
     _initializeBookmarks();
-    _initializePlayer();
+    _initializePlayer().then((_) => _loadPlaybackSpeed());
   }
 
   void _enableWakelock() {
@@ -60,11 +62,39 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
+  Future<void> _loadPlaybackSpeed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedSpeed = prefs.getDouble('video_playback_speed');
+      if (savedSpeed != null) {
+        if (mounted) {
+          setState(() {
+            _playbackSpeed = savedSpeed;
+          });
+        }
+        if (_isInitialized) {
+          await _controller.setPlaybackSpeed(savedSpeed);
+        }
+      }
+    } catch (e) {
+      AppLogger.log('Error loading playback speed: $e');
+    }
+  }
+
+  Future<void> _savePlaybackSpeed(double speed) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('video_playback_speed', speed);
+    } catch (e) {
+      AppLogger.log('Error saving playback speed: $e');
+    }
+  }
+
   Future<void> _initializePlayer() async {
     if (widget.controller != null) {
       _controller = widget.controller!;
       _isInitialized = true;
-      _playbackSpeed = _controller.value.playbackSpeed;
+      // Don't overwrite speed here, let _loadPlaybackSpeed handle it or keep controller's default
     } else {
       _controllerIsLocal = true;
       final videoPath = widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
@@ -256,6 +286,84 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     );
   }
 
+  Future<void> _reinitializeController({Duration? startAt, bool autoPlay = true}) async {
+    if (_controllerIsLocal) {
+      AppLogger.log('[VideoPlayer] Re-initializing controller...');
+      
+      final videoPath = widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
+      final newController = videoPath.startsWith('http') 
+          ? VideoPlayerController.networkUrl(Uri.parse(videoPath))
+          : VideoPlayerController.file(File(videoPath));
+      
+      try {
+        await newController.initialize();
+        if (_playbackSpeed != 1.0) {
+          await newController.setPlaybackSpeed(_playbackSpeed);
+        }
+
+        if (startAt != null) {
+          await newController.seekTo(startAt);
+        }
+
+        final oldController = _controller;
+        oldController.removeListener(_onControllerUpdate);
+        
+        setState(() {
+          _controller = newController;
+          _controller.addListener(_onControllerUpdate);
+        });
+        
+        await oldController.dispose();
+        
+        AppLogger.log('[VideoPlayer] Controller re-initialized.');
+        if (autoPlay) {
+          await _controller.play();
+        }
+      } catch (e) {
+        AppLogger.log('[VideoPlayer] Error re-initializing player: $e');
+      }
+    } else {
+      AppLogger.log('[VideoPlayer] External controller. Using fallback seek...');
+      if (startAt != null) {
+        await _controller.seekTo(startAt);
+        if (autoPlay) await _controller.play();
+      } else {
+        await _controller.seekTo(const Duration(milliseconds: 10));
+        await Future.delayed(const Duration(milliseconds: 100));
+        await _controller.play();
+      }
+    }
+  }
+
+  Future<void> _onReplay() async {
+    // Replay implies starting from 0 and playing
+    await _reinitializeController(startAt: Duration.zero, autoPlay: true);
+  }
+
+  Future<void> _onSeekBack() async {
+    final newPos = _controller.value.position - const Duration(seconds: 5);
+    final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
+    
+    // Check if we are finished or very close to end (stale state risk)
+    bool isFinished = _controller.value.isInitialized && 
+        (_controller.value.position >= _controller.value.duration ||
+         (_controller.value.duration - _controller.value.position).inMilliseconds < 200);
+
+    if (isFinished && _controllerIsLocal) {
+        AppLogger.log('[VideoPlayer] Seek back from finished state. Re-initializing to prevent freeze...');
+        // Don't auto-play on seek back, just show the frame
+        await _reinitializeController(startAt: targetPos, autoPlay: false);
+    } else {
+        await _controller.seekTo(targetPos);
+    }
+  }
+
+  Future<void> _onSeekForward() async {
+    final newPos = _controller.value.position + const Duration(seconds: 5);
+    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    await _controller.seekTo(targetPos);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -273,15 +381,19 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           controller: _controller,
           isFullscreen: widget.isFullscreen,
           onToggleFullscreen: _toggleFullscreen,
+          onReplay: _onReplay,
+          onSeekBack: _onSeekBack,
+          onSeekForward: _onSeekForward,
           onOpenBookmarks: () {
             _scaffoldKey.currentState?.openEndDrawer();
           },
           playbackSpeed: _playbackSpeed,
-          onSpeedChanged: (speed) {
+          onSpeedChanged: (speed) async {
             setState(() {
               _playbackSpeed = speed;
               _controller.setPlaybackSpeed(speed);
             });
+            await _savePlaybackSpeed(speed);
           },
         ),
       ],
@@ -322,6 +434,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
+    final duration = _controller.value.duration.inMilliseconds.toDouble();
+    final position = _dragValue ?? _controller.value.position.inMilliseconds.toDouble();
+
     return Column(
       children: [
         AspectRatio(
@@ -333,11 +448,24 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         Column(
           children: [
             Slider(
-              value: _controller.value.position.inMilliseconds.toDouble(),
+              value: position.clamp(0.0, duration),
               min: 0.0,
-              max: _controller.value.duration.inMilliseconds.toDouble(),
+              max: duration,
               onChanged: (value) {
+                setState(() {
+                  _dragValue = value;
+                });
                 _controller.seekTo(Duration(milliseconds: value.toInt()));
+              },
+              onChangeStart: (_) {
+                setState(() {
+                  _dragValue = position;
+                });
+              },
+              onChangeEnd: (_) {
+                setState(() {
+                  _dragValue = null;
+                });
               },
             ),
             Padding(
@@ -375,6 +503,9 @@ class _ControlsOverlay extends StatelessWidget {
     required this.controller,
     required this.isFullscreen,
     required this.onToggleFullscreen,
+    required this.onReplay,
+    required this.onSeekBack,
+    required this.onSeekForward,
     required this.onOpenBookmarks,
     required this.playbackSpeed,
     required this.onSpeedChanged,
@@ -383,9 +514,31 @@ class _ControlsOverlay extends StatelessWidget {
   final VideoPlayerController controller;
   final bool isFullscreen;
   final VoidCallback onToggleFullscreen;
+  final VoidCallback onReplay;
+  final VoidCallback onSeekBack;
+  final VoidCallback onSeekForward;
   final VoidCallback onOpenBookmarks;
   final double playbackSpeed;
   final Function(double) onSpeedChanged;
+
+  bool get _isFinished {
+    if (!controller.value.isInitialized) return false;
+    // Check if position is at or very close to the end (within 200ms)
+    return controller.value.position >= controller.value.duration ||
+           (controller.value.duration - controller.value.position).inMilliseconds < 200;
+  }
+
+  void _togglePlay() {
+    AppLogger.log('[VideoPlayer] Toggle play called. isFinished: $_isFinished, isPlaying: ${controller.value.isPlaying}');
+
+    if (_isFinished) {
+      onReplay();
+    } else if (controller.value.isPlaying) {
+      controller.pause();
+    } else {
+      controller.play();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -393,17 +546,27 @@ class _ControlsOverlay extends StatelessWidget {
       children: <Widget>[
         // Tap to play/pause
         GestureDetector(
-          onTap: () {
-            controller.value.isPlaying ? controller.pause() : controller.play();
-          },
+          onTap: _togglePlay,
+          behavior: HitTestBehavior.opaque,
         ),
         
-        // Semi-transparent background when paused
-        if (!controller.value.isPlaying)
-          const ColoredBox(
-            color: Colors.black26,
-            child: Center(
-              child: Icon(Icons.play_arrow, color: Colors.white, size: 80.0),
+        // Semi-transparent background when paused or finished
+        if (_isFinished)
+          const IgnorePointer(
+            child: ColoredBox(
+              color: Colors.black26,
+              child: Center(
+                child: Icon(Icons.replay, color: Colors.white, size: 80.0),
+              ),
+            ),
+          )
+        else if (!controller.value.isPlaying)
+          const IgnorePointer(
+            child: ColoredBox(
+              color: Colors.black26,
+              child: Center(
+                child: Icon(Icons.play_arrow, color: Colors.white, size: 80.0),
+              ),
             ),
           ),
 
@@ -482,26 +645,23 @@ class _ControlsOverlay extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.replay_5, color: Colors.white),
-                      onPressed: () {
-                        final newPos = controller.value.position - const Duration(seconds: 5);
-                        controller.seekTo(newPos < Duration.zero ? Duration.zero : newPos);
-                      },
+                      onPressed: onSeekBack,
                     ),
                     const SizedBox(width: 20),
                     IconButton(
-                      icon: Icon(controller.value.isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
+                      icon: Icon(
+                        _isFinished 
+                            ? Icons.replay 
+                            : (controller.value.isPlaying ? Icons.pause : Icons.play_arrow),
+                        color: Colors.white,
+                      ),
                       iconSize: 40,
-                      onPressed: () {
-                        controller.value.isPlaying ? controller.pause() : controller.play();
-                      },
+                      onPressed: _togglePlay,
                     ),
                     const SizedBox(width: 20),
                     IconButton(
                       icon: const Icon(Icons.forward_5, color: Colors.white),
-                      onPressed: () {
-                        final newPos = controller.value.position + const Duration(seconds: 5);
-                        controller.seekTo(newPos > controller.value.duration ? controller.value.duration : newPos);
-                      },
+                      onPressed: onSeekForward,
                     ),
                   ],
                 ),
