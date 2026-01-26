@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:io';
 
 /// A widget that provides video playback functionality.
 ///
@@ -19,8 +20,13 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoPath))
-      ..initialize().then((_) {
+    if (widget.videoPath.startsWith('http')) {
+        _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoPath));
+    } else {
+        _controller = VideoPlayerController.file(File(widget.videoPath));
+    }
+    
+    _controller.initialize().then((_) {
         setState(() {});
       });
   }

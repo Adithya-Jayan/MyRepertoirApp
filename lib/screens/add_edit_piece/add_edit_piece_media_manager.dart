@@ -32,6 +32,12 @@ class AddEditPieceMediaManager {
       case MediaType.audio:
         result = await FilePicker.platform.pickFiles(type: FileType.audio);
         break;
+      case MediaType.localVideo:
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp4', 'mov', 'avi', 'mkv'],
+        );
+        break;
       case MediaType.markdown:
         result = await FilePicker.platform.pickFiles(
           type: FileType.custom, 

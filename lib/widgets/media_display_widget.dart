@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
+import '../screens/video_player_widget.dart';
 import 'dart:io';
 
 class MediaDisplayWidget extends StatefulWidget {
@@ -138,6 +139,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         case MediaType.audio:
         case MediaType.image:
         case MediaType.pdf:
+        case MediaType.localVideo:
           // Verify file exists before sharing
           final file = File(pathOrUrl);
           if (await file.exists()) {
@@ -213,6 +215,60 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             ),
           ),
         );
+        break;
+      case MediaType.localVideo:
+        if (widget.isEditable) {
+          content = FutureBuilder<bool>(
+            future: File(currentMediaItem.pathOrUrl).exists(),
+            builder: (context, snapshot) {
+              final fileExists = snapshot.data ?? false;
+              return Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: fileExists ? Colors.grey[100] : Colors.red[50],
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      fileExists ? Icons.video_file : Icons.error_outline,
+                      color: fileExists ? Colors.blue[600] : Colors.red[600],
+                      size: 32.0,
+                    ),
+                    const SizedBox(width: 12.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Video File',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            fileExists 
+                              ? 'File loaded'
+                              : 'Video file not found',
+                            style: TextStyle(
+                              color: fileExists ? Colors.grey[600] : Colors.red[600],
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        } else {
+          content = VideoPlayerWidget(videoPath: currentMediaItem.pathOrUrl);
+        }
         break;
       case MediaType.audio:
         if (widget.isEditable) {

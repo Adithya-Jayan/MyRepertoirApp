@@ -17,5 +17,7 @@ enum MediaType {
   thumbnails,
   /// Represents a learning progress tracker (percentage, count, or named stages).
   learningProgress,
+  /// Represents a local video file.
+  localVideo,
   // Add other types as needed, e.g., 'text' for plain text notes
 }

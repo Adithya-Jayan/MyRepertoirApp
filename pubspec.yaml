@@ -58,6 +58,7 @@ dependencies:
   flutter_markdown: ^0.7.1
   pub_semver: ^2.2.0
   audio_service: ^0.18.18
+  video_player_win: ^3.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
