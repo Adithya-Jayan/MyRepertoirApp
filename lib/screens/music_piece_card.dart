@@ -15,6 +15,7 @@ import '../models/music_piece.dart';
 class MusicPieceCard extends StatelessWidget {
   final MusicPiece piece; // The music piece data to display.
   final bool isSelected; // Whether the card is currently selected.
+  final bool isListView; // Whether the card is displayed in a list view (compact).
   final VoidCallback? onTap; // Callback function when the card is tapped.
   final VoidCallback? onLongPress; // Callback function when the card is long-pressed.
 
@@ -22,6 +23,7 @@ class MusicPieceCard extends StatelessWidget {
     super.key,
     required this.piece,
     this.isSelected = false,
+    this.isListView = false,
     this.onTap,
     this.onLongPress,
   });
@@ -93,7 +95,7 @@ class MusicPieceCard extends StatelessWidget {
                       File(piece.thumbnailPath!),
                       fit: BoxFit.cover,
                       gaplessPlayback: true,
-                      cacheWidth: 300,
+                      cacheWidth: isListView ? 800 : 300,
                       errorBuilder: (context, error, stackTrace) {
                         AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
                         return Container();
@@ -123,6 +125,7 @@ class MusicPieceCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: isListView ? MainAxisSize.min : MainAxisSize.max,
                   children: [
                     if (piece.enablePracticeTracking)
                       Align(
@@ -173,7 +176,10 @@ class MusicPieceCard extends StatelessWidget {
                                 )
                         ],
                       ),
-                    const Spacer(), // Push bottom text down if space allows
+                    if (isListView)
+                      const SizedBox(height: 8.0)
+                    else
+                      const Spacer(), // Push bottom text down if space allows
                     if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
                       textWithOutline(
                         PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
