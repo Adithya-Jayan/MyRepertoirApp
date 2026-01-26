@@ -52,6 +52,11 @@ class SpeedDialWidget extends StatelessWidget {
           onTap: () => onAddMediaItem(MediaType.mediaLink),
         ),
         SpeedDialChild(
+          child: const Icon(Icons.movie_creation),
+          label: 'Local Video',
+          onTap: () => onAddMediaItem(MediaType.localVideo),
+        ),
+        SpeedDialChild(
           child: const Icon(Icons.bar_chart),
           label: 'Learning Progress',
           onTap: () => onAddMediaItem(MediaType.learningProgress),
