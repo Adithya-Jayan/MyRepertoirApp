@@ -1,4 +1,5 @@
 import 'dart:io'; // Add this import
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Import for BuildContext, showDialog
 import 'package:permission_handler/permission_handler.dart';
 import 'package:repertoire/utils/app_logger.dart';
@@ -7,6 +8,12 @@ import 'package:repertoire/utils/app_logger.dart';
 /// Handles storage permissions for Android and iOS.
 Future<void> requestPermissions(BuildContext context) async { // Pass BuildContext
   AppLogger.log("Attempting to request permissions...");
+  
+  if (kIsWeb) {
+    AppLogger.log("Platform is Web. Skipping permission requests.");
+    return;
+  }
+
   if (Platform.isAndroid) {
     AppLogger.log("Platform is Android.");
     var status = await Permission.manageExternalStorage.status;

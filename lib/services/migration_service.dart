@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -18,6 +19,11 @@ class MigrationService {
 
   /// Runs all pending data migrations.
   Future<void> runMigrations() async {
+    if (kIsWeb) {
+      AppLogger.log('MigrationService: Running on Web. Skipping migrations.');
+      return;
+    }
+
     AppLogger.log('MigrationService: Checking for pending migrations...');
     
     await _migrateThumbnailWidgets();
