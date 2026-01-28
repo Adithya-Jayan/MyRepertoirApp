@@ -30,6 +30,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      final_version_string: ${{ steps.final_version.outputs.final_version_string }}
+      build_number: ${{ steps.final_version.outputs.build_number }}
     
     steps:
       - name: Checkout code
@@ -382,6 +385,20 @@ jobs:
 
             **Changes:**
             ${{ steps.generate_notes.outputs.notes }}
+
+            ---
+            ### File Guide (What should I download?)
+            
+            - **Android Users:**
+              - `app-armeabi-v7a-fdroid-release.apk` (Older phones)
+              - `app-arm64-v8a-fdroid-release.apk` (Newer phones - Most common)
+              - `app-x86_64-fdroid-release.apk` (Emulators/Intel based tablets)
+            - **Web Users:**
+              - `web_build.zip` (For hosting on a web server)
+            - **Windows Users:**
+              - `repertoire-windows-v...zip` (Extract and run `repertoire.exe`)
+            - **Linux Users:**
+              - `repertoire-linux-v...zip` (Extract and run `./repertoire`)
           files: |
             ./release_assets/app-*-fdroid-release.apk
             ./release_assets/app-*-fdroid-release.apk.sha256
@@ -407,3 +424,58 @@ jobs:
             echo "🏷️  Git tag v${FINAL_VERSION_STRING} created"
             echo "📦 Official GitHub release created"
           fi
+
+  build-desktop:
+    needs: release
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+            build_cmd: flutter build windows --release
+            asset_path: build/windows/runner/Release
+            zip_name: repertoire-windows
+          - os: ubuntu-latest
+            target: linux
+            build_cmd: flutter build linux --release
+            asset_path: build/linux/x64/release/bundle
+            zip_name: repertoire-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: 'stable'
+      
+      - name: Install Linux Dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Desktop App
+        run: ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.final_version_string }}" --build-number="${{ needs.release.outputs.build_number }}"
+
+      - name: Zip Release
+        shell: bash
+        run: |
+          cd ${{ matrix.asset_path }}
+          # Zip the contents of the build directory
+          if [ "${{ matrix.target }}" == "windows" ]; then
+             powershell Compress-Archive -Path * -DestinationPath ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip
+          else
+             zip -r ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip .
+          fi
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.release.outputs.final_version_string }}
+          files: ${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip
