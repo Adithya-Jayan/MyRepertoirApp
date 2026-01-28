@@ -1,0 +1,7 @@
+Test release with linux and windows builds.
+
+## What's Changed
+* Feature: Desktop builds for Linux and windows. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/190
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.6.0+22...v4.6.1-prerelease.1+23
