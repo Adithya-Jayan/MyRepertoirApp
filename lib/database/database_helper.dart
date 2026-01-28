@@ -1,4 +1,5 @@
 // Core Dart and Flutter imports
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,6 +37,9 @@ class DatabaseHelper {
   /// Initializes the database.
   /// Opens the database, creates tables if they don't exist, and handles upgrades.
   Future<Database> _initDB(String filePath) async {
+    if (kIsWeb) {
+      throw UnsupportedError('SQLite database is not supported on Web in this configuration.');
+    }
     // Get the application's documents directory for storing the database file.
     final dbPath = await getApplicationDocumentsDirectory();
     // Join the directory path and the database file name.

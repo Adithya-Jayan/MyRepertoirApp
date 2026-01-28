@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // Import kIsWeb
 
 import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -43,7 +44,7 @@ Future<void> main() async {
 
   // Initialize sqflite for desktop platforms (Windows, Linux, macOS).
   // This allows the app to use SQLite databases on these platforms.
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }

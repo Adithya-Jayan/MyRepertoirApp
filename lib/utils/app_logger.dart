@@ -14,6 +14,11 @@ class AppLogger {
     final prefs = await SharedPreferences.getInstance();
     _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? true; // Enable by default for testing
 
+    if (kIsWeb) {
+      debugPrint('AppLogger: Running on Web. File logging disabled.');
+      return;
+    }
+
     try {
       // Try to use the user-selected storage path first
       final appStoragePath = prefs.getString('appStoragePath');
@@ -51,7 +56,7 @@ class AppLogger {
     }
 
     // Write to file if debug logs are enabled and log file is available
-    if (_debugLogsEnabled && _logFile != null) {
+    if (!kIsWeb && _debugLogsEnabled && _logFile != null) {
       try {
         _logFile!.writeAsStringSync('$logMessage\n', mode: FileMode.append);
       } catch (e) {

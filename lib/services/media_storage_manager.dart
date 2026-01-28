@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import '../models/media_type.dart';
@@ -11,6 +12,9 @@ import '../models/media_type.dart';
 class MediaStorageManager {
   /// Returns the application's documents directory.
   static Future<Directory> get _appDirectory async {
+    if (kIsWeb) {
+      throw UnsupportedError('Local storage is not supported on Web');
+    }
     return await getApplicationDocumentsDirectory();
   }
 
