@@ -469,7 +469,7 @@ jobs:
           cd ${{ matrix.asset_path }}
           # Zip the contents of the build directory
           if [ "${{ matrix.target }}" == "windows" ]; then
-             powershell Compress-Archive -Path * -DestinationPath ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip
+             powershell "Get-ChildItem -Path . | Compress-Archive -DestinationPath ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip"
           else
              zip -r ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip .
           fi
