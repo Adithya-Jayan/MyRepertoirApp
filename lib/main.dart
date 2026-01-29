@@ -18,6 +18,7 @@ import 'package:repertoire/screens/library_screen.dart';
 import 'package:repertoire/services/practice_config_service.dart';
 import 'package:repertoire/services/migration_service.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
+import 'package:repertoire/services/share_handler_service.dart';
 
 
 
@@ -85,6 +86,8 @@ class MyApp extends StatefulWidget {
 /// Manages the logic for determining the initial screen (Welcome or Library)
 /// and loading the user's theme preference.
 class _MyAppState extends State<MyApp> {
+  final ShareHandlerService _shareHandler = ShareHandlerService();
+
   /// Asynchronously checks if the app has been launched before and if the storage path is set.
   ///
   /// This is determined by the presence of a 'hasRunBefore' flag and a valid 'appStoragePath'
@@ -125,6 +128,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _shareHandler.init(navigatorKey);
     _setInitialDefaults().then((_) {
       if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
@@ -148,6 +152,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     AppLogger.log('MyApp: dispose called');
+    _shareHandler.dispose();
     super.dispose();
   }
 
