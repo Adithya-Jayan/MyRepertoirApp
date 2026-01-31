@@ -13,6 +13,9 @@ class ShareHandlerService {
   StreamSubscription? _intentDataStreamSubscription;
   final MusicPieceRepository _repository = MusicPieceRepository();
 
+  // Static notifier to signal data changes to other parts of the app (e.g., LibraryScreen)
+  static final ValueNotifier<bool> dataChangeNotifier = ValueNotifier(false);
+
   void init(GlobalKey<NavigatorState> navigatorKey) {
     // For sharing images coming from outside the app while the app is in the memory
     _intentDataStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
@@ -108,6 +111,10 @@ class ShareHandlerService {
 
     if (anySuccess) {
       await _repository.updateMusicPiece(currentPiece);
+      
+      // Notify listeners (like LibraryScreen) that data has changed
+      dataChangeNotifier.value = !dataChangeNotifier.value;
+      
       if (mountedContext.mounted) {
         ScaffoldMessenger.of(mountedContext).showSnackBar(SnackBar(content: Text('Media added to "${currentPiece.title}"')));
       }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/media_type.dart';
 
 /// Manages the storage of media files associated with music pieces.
@@ -47,8 +48,8 @@ class MediaStorageManager {
     final originalName = path.basename(originalPath); // Get the base name of the original file.
     final extension = path.extension(originalName); // Get the file extension.
     final nameWithoutExt = path.basenameWithoutExtension(originalName); // Get the file name without extension.
-    final timestamp = DateTime.now().millisecondsSinceEpoch; // Generate a timestamp for uniqueness.
-    final newFileName = '${nameWithoutExt}_$timestamp$extension'; // Construct a new unique file name.
+    final uniqueId = const Uuid().v4(); // Generate a UUID for guaranteed uniqueness.
+    final newFileName = '${nameWithoutExt}_$uniqueId$extension'; // Construct a new unique file name.
 
     final newPath = path.join(pieceMediaDir.path, newFileName); // Construct the full new path for the copied file.
 

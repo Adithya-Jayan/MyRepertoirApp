@@ -23,6 +23,7 @@ import 'package:repertoire/widgets/dot_pattern_background.dart';
 import 'package:repertoire/widgets/gradient_background.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
 import '../utils/permissions_utils.dart';
+import '../services/share_handler_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -40,6 +41,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Listen for data changes from external sources (like ShareHandlerService)
+    ShareHandlerService.dataChangeNotifier.addListener(_onExternalDataChanged);
     _initialize();
     
     // Check for updates and permissions after the first frame
@@ -56,6 +59,13 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
     });
   }
 
+  void _onExternalDataChanged() {
+    AppLogger.log('LibraryScreen: External data change detected, reloading data');
+    if (mounted) {
+      _notifier?.reloadData();
+    }
+  }
+
   Future<void> _initialize() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -68,6 +78,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ShareHandlerService.dataChangeNotifier.removeListener(_onExternalDataChanged);
     _notifier?.dispose();
     super.dispose();
   }
