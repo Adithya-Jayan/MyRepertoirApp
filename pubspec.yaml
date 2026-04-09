@@ -64,6 +64,7 @@ dependencies:
   receive_sharing_intent: ^1.8.1
   dart_melty_soundfont: ^2.0.0
   flutter_pcm_sound: ^1.0.2
+  dart_midi_pro: ^1.0.4+2
 
 dev_dependencies:
   flutter_test:

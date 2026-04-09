@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
+import 'package:dart_midi_pro/dart_midi_pro.dart' as midi_parser;
 import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
 import '../models/bookmark.dart';
@@ -27,7 +28,7 @@ class MidiPlayerWidget extends StatefulWidget {
 class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Synthesizer? _synth;
   MidiFileSequencer? _sequencer;
-  MidiFile? _midi;
+  MidiFile? _meltyMidi;
   bool _isInitialized = false;
   bool _isPlaying = false;
   String? _errorMessage;
@@ -54,38 +55,26 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _initMidi();
   }
 
-  Duration _calculateMidiDuration(dynamic midiFile) {
+  Duration _calculateMidiDuration(midi_parser.MidiFile midiFile) {
     try {
-      final int division = midiFile.division;
-      final List<dynamic> tracks = midiFile.tracks;
+      final int division = midiFile.header.ticksPerBeat ?? 480;
       
-      final List<dynamic> allEvents = [];
-      for (var track in tracks) {
+      int maxTick = 0;
+      int currentTempo = 500000; // Default: 120 BPM (microseconds per beat)
+
+      for (var track in midiFile.tracks) {
+        int trackTick = 0;
         for (var event in track) {
-          allEvents.add(event);
+          trackTick += event.deltaTime;
+          
+          if (event is midi_parser.SetTempoEvent) {
+             currentTempo = event.microsecondsPerBeat;
+          }
         }
-      }
-      allEvents.sort((a, b) => (a.tick as int).compareTo(b.tick as int));
-
-      double totalMicroseconds = 0;
-      int lastTick = 0;
-      int currentTempo = 500000; // Default: 120 BPM
-
-      for (final event in allEvents) {
-        final int tick = event.tick;
-        final int deltaTicks = tick - lastTick;
-        if (deltaTicks > 0) {
-          totalMicroseconds += deltaTicks * (currentTempo / division);
-        }
-        lastTick = tick;
-
-        final msg = event.message;
-        if (msg.type == 255 && msg.data1 == 81) {
-          currentTempo = (msg.data2 << 16) | (msg.data3 << 8) | msg.data4;
-        }
+        if (trackTick > maxTick) maxTick = trackTick;
       }
 
-      return Duration(microseconds: totalMicroseconds.round());
+      return Duration(microseconds: (maxTick * (currentTempo / division)).round());
     } catch (e) {
       AppLogger.log('Error calculating duration: $e');
       return const Duration(minutes: 5);
@@ -106,26 +95,28 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       // Load MIDI file
       final midiData = await midiFile.readAsBytes();
-      _midi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
+      
+      // For synthesis (MeltySynth)
+      _meltyMidi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
+      
+      // For metadata (dart_midi_pro)
+      final parsedMidi = midi_parser.MidiParser().parseMidiFromBuffer(midiData);
       
       _sequencer = MidiFileSequencer(_synth!);
       
       // Calculate duration and identify active channels
-      _duration = _calculateMidiDuration(_midi!);
+      _duration = _calculateMidiDuration(parsedMidi);
       
-      final List<dynamic> tracks = (_midi as dynamic).tracks;
-      for (var track in tracks) {
+      for (var track in parsedMidi.tracks) {
         for (var event in track) {
-          final msg = event.message;
-          if (msg.type >= 0x80 && msg.type <= 0xEF) {
-            final channel = msg.type & 0x0F;
-            _activeChannels[channel] = true;
+          if (event is midi_parser.NoteOnEvent) {
+            _activeChannels[event.channel] = true;
           }
         }
       }
 
       // Initial play to "load" the midi but immediately stop
-      _sequencer!.play(_midi!, loop: false);
+      _sequencer!.play(_meltyMidi!, loop: false);
       _sequencer!.stop();
 
       // Setup audio output
@@ -165,7 +156,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       if (_isPlaying && _sequencer != null) {
         _sequencer!.renderMonoInt16(buffer);
-        // Copy to Int16List for feed
+        // Direct buffer conversion
         final int16List = Int16List(bufferSize);
         for(int i=0; i<bufferSize; i++) {
           int16List[i] = buffer[i];
@@ -193,9 +184,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
-      // If we are at the end, restart
       if (_position >= _duration) {
-        _sequencer!.play(_midi!, loop: false);
+        _sequencer!.play(_meltyMidi!, loop: false);
       }
       await FlutterPcmSound.play();
     } else {
@@ -208,7 +198,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   }
 
   void _seek(double value) {
-    if (_sequencer == null || _midi == null) return;
+    if (_sequencer == null || _meltyMidi == null) return;
     
     final targetPos = Duration(milliseconds: value.toInt());
     
@@ -217,7 +207,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     
     _sequencer!.stop();
     _clearSynthSounds();
-    _sequencer!.play(_midi!, loop: false);
+    _sequencer!.play(_meltyMidi!, loop: false);
     
     final originalSpeed = _sequencer!.speed;
     _sequencer!.speed = 1000.0;
@@ -225,7 +215,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     const int fastForwardStep = 1024;
     final dummyBuffer = ArrayInt16.zeros(numShorts: fastForwardStep);
     
-    // Efficiently skip to target position
     while (_sequencer!.position < targetPos) {
       _sequencer!.renderMonoInt16(dummyBuffer);
     }
@@ -246,7 +235,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
-      // CC 7 is main volume. 0 for mute, 127 for max.
       _synth!.processMidiMessage(
         channel: channel, 
         command: 0xB0, 
