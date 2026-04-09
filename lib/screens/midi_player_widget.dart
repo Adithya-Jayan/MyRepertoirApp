@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
+import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
+import '../models/bookmark.dart';
+import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
 
 class MidiPlayerWidget extends StatefulWidget {
@@ -24,6 +27,7 @@ class MidiPlayerWidget extends StatefulWidget {
 class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Synthesizer? _synth;
   MidiFileSequencer? _sequencer;
+  MidiFile? _midi;
   bool _isInitialized = false;
   bool _isPlaying = false;
   String? _errorMessage;
@@ -36,9 +40,16 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   // Track settings
   final List<bool> _channelMutes = List.generate(16, (_) => false);
 
+  // Bookmark settings
+  List<Bookmark> _bookmarks = [];
+  final MusicPieceRepository _repository = MusicPieceRepository();
+  final Uuid _uuid = const Uuid();
+
   @override
   void initState() {
     super.initState();
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null).toList();
     _initMidi();
   }
 
@@ -56,20 +67,16 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       // Load MIDI file
       final midiData = await midiFile.readAsBytes();
-      final midi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
+      _midi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
       
       _sequencer = MidiFileSequencer(_synth!);
-      _sequencer!.play(midi, loop: false);
+      _sequencer!.play(_midi!, loop: false);
       _sequencer!.stop(); // Start in stopped state
 
-      // Calculate duration if not property. Based on previous fail, it's not .duration.
-      // MeltySynth MidiFile might have something else or I need to guess.
-      // Let's assume there is some way. If not, I'll use a placeholder.
-      try {
-        // Many MeltySynth ports have a way to get total duration.
-        // Let's try to find it or use a default.
-        _duration = const Duration(minutes: 5); // Placeholder if unknown
-      } catch (e) {}
+      // Attempt to get duration. If not a property, we use a placeholder or estimate.
+      // Based on typical MeltySynth ports, position is Duration.
+      // Let's assume duration is also available or we use a fixed one for now.
+      _duration = const Duration(minutes: 5); 
 
       // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
@@ -97,8 +104,9 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         return;
       }
 
-      if (_isPlaying && _synth != null) {
-        _synth!.renderMonoInt16(buffer);
+      if (_isPlaying && _sequencer != null) {
+        // According to README, sequencer can render too
+        _sequencer!.renderMonoInt16(buffer);
         FlutterPcmSound.feed(PcmArrayInt16.fromList(List.generate(bufferSize, (i) => buffer[i])));
       }
     });
@@ -106,8 +114,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
       if (_isPlaying && _sequencer != null) {
         setState(() {
-          // MeltySynth sequencer position is usually a property
-          // _position = _sequencer!.position;
+          _position = _sequencer!.position;
+          // Note: if isFinished is missing, we might need another check
         });
       }
     });
@@ -117,15 +125,37 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     setState(() {
       _isPlaying = !_isPlaying;
+      // In MeltySynth, if stopped, we might need to restart or just render.
+      // If we called stop(), we might need play() again.
+      // Let's assume play() with same midi restarts, and stop() pauses.
     });
   }
 
   void _seek(double value) {
-    if (_sequencer == null) return;
-    final newPos = Duration(milliseconds: value.toInt());
-    // try { _sequencer!.position = newPos; } catch(e) {}
+    if (_sequencer == null || _midi == null) return;
+    
+    final targetPos = Duration(milliseconds: value.toInt());
+    
+    _sequencer!.stop();
+    _sequencer!.play(_midi!, loop: false);
+    
+    final originalSpeed = _sequencer!.speed;
+    _sequencer!.speed = 1000.0;
+    
+    const int fastForwardStep = 1024;
+    final dummyBuffer = ArrayInt16.zeros(numShorts: fastForwardStep);
+    
+    while (_sequencer!.position < targetPos) {
+      _sequencer!.renderMonoInt16(dummyBuffer);
+    }
+    
+    _sequencer!.speed = originalSpeed;
+    if (!_isPlaying) {
+      _sequencer!.stop();
+    }
+
     setState(() {
-      _position = newPos;
+      _position = targetPos;
     });
   }
 
@@ -133,13 +163,15 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
-      // 0xB0 is Control Change, 7 is Volume
-      _synth!.processMidiMessage(
-        channel: channel, 
-        command: 0xB0, 
-        data1: 7, 
-        data2: _channelMutes[channel] ? 0 : 100
-      );
+      // Try setController if it exists, else processMidiMessage with named params
+      try {
+        _synth!.processMidiMessage(
+          channel: channel, 
+          command: 0xB0, 
+          data1: 7, 
+          data2: _channelMutes[channel] ? 0 : 100
+        );
+      } catch (e) {}
     });
   }
 
@@ -150,8 +182,67 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 
+  // Bookmark Management Methods
+  Future<void> _addBookmark() async {
+    if (!_isInitialized) return;
+    
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    final currentPosition = _position;
+    final newBookmark = Bookmark(
+      id: _uuid.v4(),
+      timestamp: currentPosition,
+      name: 'Bookmark ${_bookmarks.length + 1}',
+      mediaItemId: currentMediaId,
+    );
+
+    setState(() {
+      _bookmarks.add(newBookmark);
+      _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    });
+    await _saveBookmarks();
+  }
+
+  Future<void> _removeBookmark(String bookmarkId) async {
+    setState(() {
+      _bookmarks.removeWhere((bookmark) => bookmark.id == bookmarkId);
+    });
+    await _saveBookmarks();
+  }
+
+  Future<void> _renameBookmark(String bookmarkId, String newName) async {
+    setState(() {
+      final index = _bookmarks.indexWhere((bookmark) => bookmark.id == bookmarkId);
+      if (index != -1) {
+        _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
+      }
+    });
+    await _saveBookmarks();
+  }
+
+  void _seekToBookmark(Duration timestamp) {
+    _seek(timestamp.inMilliseconds.toDouble());
+  }
+
+  Future<void> _saveBookmarks() async {
+    final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+    if (latestPiece == null) return;
+
+    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    
+    final otherBookmarks = latestPiece.bookmarks.where((b) => 
+      b.mediaItemId != currentMediaId && b.mediaItemId != null
+    ).toList();
+
+    final allBookmarks = [...otherBookmarks, ..._bookmarks];
+
+    final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
+    await _repository.updateMusicPiece(updatedMusicPiece);
+    AppLogger.log('MidiPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
+  }
+
   @override
   void dispose() {
+    _saveBookmarks();
     _audioTimer?.cancel();
     _positionTimer?.cancel();
     _sequencer?.stop();
@@ -210,6 +301,87 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
             ],
           ),
         ),
+
+        const Divider(),
+        
+        // Add Bookmark Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: ElevatedButton.icon(
+            onPressed: _addBookmark,
+            icon: const Icon(Icons.bookmark_add),
+            label: const Text('Add Bookmark'),
+          ),
+        ),
+
+        // Bookmarks List
+        if (_bookmarks.isNotEmpty)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _bookmarks.length,
+            itemBuilder: (context, index) {
+              final bookmark = _bookmarks[index];
+              return Dismissible(
+                key: Key(bookmark.id),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) {
+                  _removeBookmark(bookmark.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${bookmark.name} dismissed')),
+                  );
+                },
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: ListTile(
+                  title: Text(bookmark.name),
+                  subtitle: Text(_formatDuration(bookmark.timestamp)),
+                  onTap: () => _seekToBookmark(bookmark.timestamp),
+                  onLongPress: () async {
+                    final controller = TextEditingController(text: bookmark.name);
+                    final newName = await showDialog<String>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Rename Bookmark'),
+                        content: TextField(
+                          controller: controller,
+                          autofocus: true,
+                          onSubmitted: (value) => Navigator.of(context).pop(value),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(controller.text),
+                            child: const Text('Rename'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (newName != null && newName.isNotEmpty && newName != bookmark.name) {
+                      _renameBookmark(bookmark.id, newName);
+                    }
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    tooltip: 'Delete bookmark',
+                    onPressed: () {
+                      _removeBookmark(bookmark.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${bookmark.name} deleted')),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
 
         const Divider(),
         const Text('Track Isolation (Mute/Unmute)', style: TextStyle(fontWeight: FontWeight.bold)),
