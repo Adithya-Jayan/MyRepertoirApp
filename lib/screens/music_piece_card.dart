@@ -16,6 +16,7 @@ class MusicPieceCard extends StatelessWidget {
   final MusicPiece piece; // The music piece data to display.
   final bool isSelected; // Whether the card is currently selected.
   final bool isListView; // Whether the card is displayed in a list view (compact).
+  final int galleryColumns; // Current number of gallery columns
   final VoidCallback? onTap; // Callback function when the card is tapped.
   final VoidCallback? onLongPress; // Callback function when the card is long-pressed.
 
@@ -24,9 +25,33 @@ class MusicPieceCard extends StatelessWidget {
     required this.piece,
     this.isSelected = false,
     this.isListView = false,
+    this.galleryColumns = 2,
     this.onTap,
     this.onLongPress,
   });
+
+  Widget _buildTagChip(dynamic tg, String tag, Brightness brightness, {double scale = 1.0}) {
+    final color = tg.color != null ? Color(tg.color!) : null;
+    Widget chip = Chip(
+      label: Text(
+        tag,
+        style: TextStyle(fontSize: 10 * scale),
+      ),
+      backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 0),
+    );
+
+    if (scale != 1.0) {
+      return Transform.scale(
+        scale: scale,
+        alignment: Alignment.centerLeft,
+        child: chip,
+      );
+    }
+    return chip;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,30 +177,42 @@ class MusicPieceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8.0),
                     if (piece.tagGroups.isNotEmpty)
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        clipBehavior: Clip.antiAlias, // Clip overflow
-                        children: [
-                           for (final tg in piece.tagGroups)
-                              for (final tag in tg.tags)
-                                Builder(
-                                  builder: (context) {
-                                      final color = tg.color != null ? Color(tg.color!) : null;
-                                      return Chip(
-                                        label: Text(
-                                          tag,
-                                          style: const TextStyle(fontSize: 10), // Smaller font for grid
-                                        ),
-                                        backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
-                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        visualDensity: VisualDensity.compact,
-                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                      );
-                                  }
+                      isListView
+                          ? Wrap(
+                              spacing: 8.0,
+                              runSpacing: 4.0,
+                              clipBehavior: Clip.antiAlias,
+                              children: [
+                                for (final tg in piece.tagGroups)
+                                  for (final tag in tg.tags)
+                                    _buildTagChip(tg, tag, brightness),
+                              ],
+                            )
+                          : galleryColumns <= 4
+                              ? SizedBox(
+                                  height: 32, // Fixed height for chips row
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        for (final tg in piece.tagGroups)
+                                          for (final tag in tg.tags)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 4.0),
+                                              child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
+                                            ),
+                                      ],
+                                    ),
+                                  ),
                                 )
-                        ],
-                      ),
+                              : Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Icon(
+                                    Icons.label_outline, 
+                                    size: 14, 
+                                    color: (brightness == Brightness.dark ? Colors.white70 : Colors.black54)
+                                  ),
+                                ), // Show indicator icon when tags are hidden due to density
                     if (isListView)
                       const SizedBox(height: 8.0)
                     else
