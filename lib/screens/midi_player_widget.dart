@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
@@ -166,7 +165,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       if (_isPlaying && _sequencer != null) {
         _sequencer!.renderMonoInt16(buffer);
-        // Direct conversion if possible, else manual
+        // Copy to Int16List for feed
         final int16List = Int16List(bufferSize);
         for(int i=0; i<bufferSize; i++) {
           int16List[i] = buffer[i];
@@ -179,7 +178,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       if (_isPlaying && _sequencer != null) {
         setState(() {
           _position = _sequencer!.position;
-          if (_sequencer!.isFinished) {
+          if (_position >= _duration) {
             _isPlaying = false;
             _sequencer!.stop();
             FlutterPcmSound.pause();
@@ -194,7 +193,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
-      if (_sequencer!.isFinished) {
+      // If we are at the end, restart
+      if (_position >= _duration) {
         _sequencer!.play(_midi!, loop: false);
       }
       await FlutterPcmSound.play();
@@ -225,7 +225,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     const int fastForwardStep = 1024;
     final dummyBuffer = ArrayInt16.zeros(numShorts: fastForwardStep);
     
-    while (_sequencer!.position < targetPos && !_sequencer!.isFinished) {
+    // Efficiently skip to target position
+    while (_sequencer!.position < targetPos) {
       _sequencer!.renderMonoInt16(dummyBuffer);
     }
     
@@ -245,6 +246,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
+      // CC 7 is main volume. 0 for mute, 127 for max.
       _synth!.processMidiMessage(
         channel: channel, 
         command: 0xB0, 
