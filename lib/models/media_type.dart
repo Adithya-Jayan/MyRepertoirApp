@@ -19,5 +19,7 @@ enum MediaType {
   learningProgress,
   /// Represents a local video file.
   localVideo,
+  /// Represents a MIDI file.
+  midi,
   // Add other types as needed, e.g., 'text' for plain text notes
 }
