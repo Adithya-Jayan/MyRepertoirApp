@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as path;
 import '../database/music_piece_repository.dart';
 import '../models/music_piece.dart';
 import '../models/media_item.dart';
@@ -12,6 +14,7 @@ import '../utils/app_logger.dart';
 class ShareHandlerService {
   StreamSubscription? _intentDataStreamSubscription;
   final MusicPieceRepository _repository = MusicPieceRepository();
+  bool _isHandling = false;
 
   // Static notifier to signal data changes to other parts of the app (e.g., LibraryScreen)
   static final ValueNotifier<bool> dataChangeNotifier = ValueNotifier(false);
@@ -40,84 +43,146 @@ class ShareHandlerService {
   }
 
   Future<void> _handleSharedFiles(GlobalKey<NavigatorState> navigatorKey, List<SharedMediaFile> files) async {
+    if (_isHandling) {
+      AppLogger.log('ShareHandlerService: Already handling a share intent. Skipping.');
+      return;
+    }
+
     final context = navigatorKey.currentContext;
-    if (context == null) return;
-
-    if (files.isEmpty) return;
-
-    // Filter out items that are essentially empty (sometimes happens with text shares)
-    final validFiles = files.where((f) => f.path.isNotEmpty || (f.type == SharedMediaType.text || f.type == SharedMediaType.url)).toList();
-
-    if (validFiles.isEmpty) return;
-
-    // Show dialog to select music piece
-    final MusicPiece? selectedPiece = await _showMusicPieceSelectionDialog(navigatorKey);
-    if (selectedPiece == null) return;
-
-    bool anySuccess = false;
-    MusicPiece currentPiece = selectedPiece; // Keep track of updates
-
-    // Re-fetch piece to ensure we have latest version (especially if coming from background)
-    final freshPiece = await _repository.getMusicPieceById(selectedPiece.id);
-    if (freshPiece != null) {
-      currentPiece = freshPiece;
+    if (context == null) {
+      // If context is null, the app might still be initializing. 
+      // We wait a bit and try again, but only for initial media which might trigger very early.
+      AppLogger.log('ShareHandlerService: Navigator context is null. Retrying in 1 second...');
+      await Future.delayed(const Duration(seconds: 1));
+      if (navigatorKey.currentContext == null) return;
     }
 
-    // Refresh context check
-    if (navigatorKey.currentContext == null || !navigatorKey.currentContext!.mounted) return;
-    final mountedContext = navigatorKey.currentContext!;
+    _isHandling = true;
+    try {
+      if (files.isEmpty) return;
 
-    for (var file in validFiles) {
-      try {
-        final MediaType? type = _mapSharedTypeToMediaType(file);
-        if (type == null) continue;
+      // Filter out items that are essentially empty (sometimes happens with text shares)
+      final validFiles = files.where((f) => f.path.isNotEmpty || (f.type == SharedMediaType.text || f.type == SharedMediaType.url)).toList();
 
-        String pathOrUrl = file.path;
-        
-        // Handling for Text/URL
-        if (file.type == SharedMediaType.text || file.type == SharedMediaType.url) {
-           // file.path contains the text/url
-           pathOrUrl = file.path;
-           // Basic heuristic
-           if (pathOrUrl.startsWith('http')) {
-             // likely URL
-           } 
-        } else {
-           // It's a file, we need to copy it
-           pathOrUrl = await MediaStorageManager.copyMediaToLocal(
-              file.path, 
-              currentPiece.id, 
-              type
-            );
+      if (validFiles.isEmpty) return;
+
+      // Show dialog to select music piece or create new
+      final dynamic selectionResult = await _showMusicPieceSelectionDialog(navigatorKey);
+      if (selectionResult == null) return;
+
+      bool anySuccess = false;
+      MusicPiece? currentPiece;
+
+      if (selectionResult is MusicPiece) {
+        // Adding to existing piece
+        // Re-fetch piece to ensure we have latest version
+        currentPiece = await _repository.getMusicPieceById(selectionResult.id);
+        if (currentPiece == null) {
+          _showError(navigatorKey, 'Selected piece no longer exists.');
+          return;
         }
+      } else if (selectionResult == 'create_new') {
+        // Creating a new piece
+        final String? newTitle = await _showNewPieceTitleDialog(navigatorKey);
+        if (newTitle == null || newTitle.trim().isEmpty) return;
 
-        final newMediaItem = MediaItem(
+        currentPiece = MusicPiece(
           id: const Uuid().v4(),
-          type: type,
-          pathOrUrl: pathOrUrl,
-          title: file.type == SharedMediaType.text || file.type == SharedMediaType.url ? 'Shared Link/Text' : null, 
+          title: newTitle.trim(),
+          artistComposer: 'Unknown Artist',
+          lastAccessed: DateTime.now(),
         );
+      }
 
-        final updatedMediaItems = List<MediaItem>.from(currentPiece.mediaItems)..add(newMediaItem);
-        currentPiece = currentPiece.copyWith(mediaItems: updatedMediaItems);
-        anySuccess = true;
-      } catch (e) {
-        AppLogger.log('Error processing shared file: $e');
-        if (mountedContext.mounted) {
-           ScaffoldMessenger.of(mountedContext).showSnackBar(SnackBar(content: Text('Error adding media: $e')));
+      if (currentPiece == null) return;
+
+      // Refresh context check
+      if (navigatorKey.currentContext == null || !navigatorKey.currentContext!.mounted) return;
+      final mountedContext = navigatorKey.currentContext!;
+
+      List<MediaItem> newItems = [];
+
+      for (var file in validFiles) {
+        try {
+          final MediaType? type = _mapSharedTypeToMediaType(file);
+          if (type == null) {
+             AppLogger.log('ShareHandlerService: Unsupported shared file type: ${file.type} for path: ${file.path}');
+             continue;
+          }
+
+          String pathOrUrl = file.path;
+          
+          // Handling for Text/URL
+          if (file.type == SharedMediaType.text || file.type == SharedMediaType.url) {
+             pathOrUrl = file.path;
+          } else if (type == MediaType.markdown) {
+             // For markdown files, we read the content instead of copying the file
+             try {
+               final fileObj = File(file.path);
+               if (await fileObj.exists()) {
+                 pathOrUrl = await fileObj.readAsString();
+               }
+             } catch (e) {
+               AppLogger.log('Error reading markdown file: $e');
+               // Fallback to path if reading fails (though widget might not show it)
+               pathOrUrl = file.path;
+             }
+          } else {
+             // It's a binary file, we need to copy it
+             pathOrUrl = await MediaStorageManager.copyMediaToLocal(
+                file.path, 
+                currentPiece.id, 
+                type
+              );
+          }
+
+          final newMediaItem = MediaItem(
+            id: const Uuid().v4(),
+            type: type,
+            pathOrUrl: pathOrUrl,
+            title: (file.type == SharedMediaType.text || file.type == SharedMediaType.url) 
+                ? 'Shared Link/Text' 
+                : (file.path.isNotEmpty ? path.basename(file.path) : 'Shared Media'), 
+          );
+
+          newItems.add(newMediaItem);
+          anySuccess = true;
+        } catch (e) {
+          AppLogger.log('Error processing shared file: $e');
+          _showError(navigatorKey, 'Error adding media: $e');
         }
       }
-    }
 
-    if (anySuccess) {
-      await _repository.updateMusicPiece(currentPiece);
-      
-      // Notify listeners (like LibraryScreen) that data has changed
-      dataChangeNotifier.value = !dataChangeNotifier.value;
-      
-      if (mountedContext.mounted) {
-        ScaffoldMessenger.of(mountedContext).showSnackBar(SnackBar(content: Text('Media added to "${currentPiece.title}"')));
+      if (anySuccess) {
+        final updatedMediaItems = List<MediaItem>.from(currentPiece.mediaItems)..addAll(newItems);
+        currentPiece = currentPiece.copyWith(mediaItems: updatedMediaItems);
+
+        if (selectionResult == 'create_new') {
+          await _repository.insertMusicPiece(currentPiece);
+        } else {
+          await _repository.updateMusicPiece(currentPiece);
+        }
+        
+        // Notify listeners (like LibraryScreen) that data has changed
+        dataChangeNotifier.value = !dataChangeNotifier.value;
+        
+        if (mountedContext.mounted) {
+          ScaffoldMessenger.of(mountedContext).showSnackBar(
+            SnackBar(content: Text(selectionResult == 'create_new' 
+              ? 'New piece "${currentPiece.title}" created with shared media'
+              : 'Media added to "${currentPiece.title}"'))
+          );
+        }
       }
+    } finally {
+      _isHandling = false;
+    }
+  }
+
+  void _showError(GlobalKey<NavigatorState> navigatorKey, String message) {
+    final context = navigatorKey.currentContext;
+    if (context != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -128,9 +193,9 @@ class ShareHandlerService {
       case SharedMediaType.video:
         return MediaType.localVideo;
       case SharedMediaType.file:
-        if (file.path.toLowerCase().endsWith('.pdf')) return MediaType.pdf;
-        if (file.path.toLowerCase().endsWith('.md')) return MediaType.markdown;
-        if (file.path.toLowerCase().endsWith('.txt')) return MediaType.markdown;
+        final ext = path.extension(file.path).toLowerCase();
+        if (ext == '.pdf') return MediaType.pdf;
+        if (ext == '.md' || ext == '.txt') return MediaType.markdown;
         return null; 
       case SharedMediaType.text:
          if (Uri.tryParse(file.path)?.hasAbsolutePath ?? false) {
@@ -142,18 +207,41 @@ class ShareHandlerService {
     }
   }
 
-  Future<MusicPiece?> _showMusicPieceSelectionDialog(GlobalKey<NavigatorState> navigatorKey) async {
+  Future<dynamic> _showMusicPieceSelectionDialog(GlobalKey<NavigatorState> navigatorKey) async {
     final pieces = await _repository.getMusicPieces();
-    pieces.sort((a, b) => a.title.compareTo(b.title));
+    pieces.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
 
     final context = navigatorKey.currentContext;
     if (context == null || !context.mounted) return null;
 
-    return showDialog<MusicPiece>(
+    return showDialog<dynamic>(
       context: context,
       builder: (BuildContext context) {
         return _MusicPieceSelectionDialog(pieces: pieces);
       },
+    );
+  }
+
+  Future<String?> _showNewPieceTitleDialog(GlobalKey<NavigatorState> navigatorKey) async {
+    final context = navigatorKey.currentContext;
+    if (context == null || !context.mounted) return null;
+
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Piece Title'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Enter title for the new piece'),
+          autofocus: true,
+          onSubmitted: (val) => Navigator.pop(context, val),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Create')),
+        ],
+      ),
     );
   }
 }
@@ -195,17 +283,25 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.add_box, color: Colors.blue),
+              title: const Text('Create New Piece', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.of(context).pop('create_new');
+              },
+            ),
+            const Divider(),
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                labelText: 'Search Piece',
+                labelText: 'Search Existing Piece',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: _filterPieces,
             ),
             const SizedBox(height: 10),
             Flexible(
-              child: _filteredPieces.isEmpty 
+              child: _filteredPieces.isEmpty && _searchController.text.isNotEmpty
               ? const Padding(
                   padding: EdgeInsets.all(20.0),
                   child: Text('No pieces found.'),
