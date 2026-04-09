@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
@@ -11,6 +12,20 @@ import '../models/music_piece.dart';
 import '../models/bookmark.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
+
+class MidiNote {
+  final int pitch;
+  final double startTimeSeconds;
+  final double durationSeconds;
+  final int channel;
+
+  MidiNote({
+    required this.pitch,
+    required this.startTimeSeconds,
+    required this.durationSeconds,
+    required this.channel,
+  });
+}
 
 class MidiPlayerWidget extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -42,6 +57,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   // Track settings
   final List<bool> _channelMutes = List.generate(16, (_) => false);
   final List<bool> _activeChannels = List.generate(16, (_) => false);
+  List<MidiNote> _extractedNotes = [];
 
   // Bookmark settings
   List<Bookmark> _bookmarks = [];
@@ -59,7 +75,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Duration _calculateMidiDuration(midi_parser.MidiFile midiFile) {
     try {
       final int division = midiFile.header.ticksPerBeat ?? 480;
-      
       int maxTick = 0;
       int currentTempo = 500000; // Default: 120 BPM
 
@@ -81,6 +96,54 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     }
   }
 
+  List<MidiNote> _extractNotes(midi_parser.MidiFile midiFile) {
+    final List<MidiNote> notes = [];
+    final int division = midiFile.header.ticksPerBeat ?? 480;
+    int currentTempo = 500000;
+
+    for (var track in midiFile.tracks) {
+      int trackTick = 0;
+      double trackTimeSeconds = 0;
+      final Map<int, double> pendingNoteStarts = {};
+
+      for (var event in track) {
+        // Update time
+        trackTimeSeconds += event.deltaTime * (currentTempo / division) / 1000000;
+        trackTick += event.deltaTime;
+
+        if (event is midi_parser.SetTempoEvent) {
+          currentTempo = event.microsecondsPerBeat;
+        } else if (event is midi_parser.NoteOnEvent) {
+          if (event.velocity > 0) {
+            pendingNoteStarts[event.noteNumber] = trackTimeSeconds;
+          } else {
+            // Velocity 0 is often used as Note Off
+            if (pendingNoteStarts.containsKey(event.noteNumber)) {
+              final start = pendingNoteStarts.remove(event.noteNumber)!;
+              notes.add(MidiNote(
+                pitch: event.noteNumber,
+                startTimeSeconds: start,
+                durationSeconds: trackTimeSeconds - start,
+                channel: event.channel,
+              ));
+            }
+          }
+        } else if (event is midi_parser.NoteOffEvent) {
+          if (pendingNoteStarts.containsKey(event.noteNumber)) {
+            final start = pendingNoteStarts.remove(event.noteNumber)!;
+            notes.add(MidiNote(
+              pitch: event.noteNumber,
+              startTimeSeconds: start,
+              durationSeconds: trackTimeSeconds - start,
+              channel: event.channel,
+            ));
+          }
+        }
+      }
+    }
+    return notes..sort((a, b) => a.startTimeSeconds.compareTo(b.startTimeSeconds));
+  }
+
   Future<void> _initMidi() async {
     try {
       final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
@@ -95,29 +158,19 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       // Load MIDI file
       final midiData = await midiFile.readAsBytes();
-      
-      // For synthesis (MeltySynth)
       _meltyMidi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
-      
-      // For metadata (dart_midi_pro)
       final parsedMidi = midi_parser.MidiParser().parseMidiFromBuffer(midiData);
       
       _sequencer = MidiFileSequencer(_synth!);
-      
-      // Calculate duration and identify active channels
       _duration = _calculateMidiDuration(parsedMidi);
+      _extractedNotes = _extractNotes(parsedMidi);
       
-      for (var track in parsedMidi.tracks) {
-        for (var event in track) {
-          if (event is midi_parser.NoteOnEvent && event.velocity > 0) {
-            _activeChannels[event.channel] = true;
-          }
-        }
+      // Identify active channels
+      for (var note in _extractedNotes) {
+        _activeChannels[note.channel] = true;
       }
 
-      // Prepare the sequencer but don't call stop() which can reset it
       _sequencer!.play(_meltyMidi!, loop: false);
-      // We keep it "playing" internally at position 0, our timer handles actual render output
 
       // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
@@ -139,15 +192,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   void _clearSynthSounds() {
     if (_synth == null) return;
     for (int i = 0; i < 16; i++) {
-      // CC 123: All Notes Off, CC 120: All Sound Off
       _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 120, data2: 0);
       _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 123, data2: 0);
     }
   }
 
   void _startAudioLoop() {
-    // 44100 Hz = 44.1 samples per ms. 2048 / 44.1 = ~46ms.
-    // Feed slightly faster than needed to prevent underruns.
     const int bufferSize = 2048;
     final buffer = ArrayInt16.zeros(numShorts: bufferSize);
 
@@ -167,7 +217,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       }
     });
 
-    _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+    _positionTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (_isPlaying && _sequencer != null) {
         setState(() {
           _position = _sequencer!.position;
@@ -187,7 +237,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
-      // If we are at the start or end, ensure play() is called
       if (_position == Duration.zero || _position >= _duration) {
         _sequencer!.play(_meltyMidi!, loop: false);
       }
@@ -209,7 +258,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     
     setState(() { _isPlaying = false; });
     
-    // Stop resets to 0
     _sequencer!.stop();
     _clearSynthSounds();
     _sequencer!.play(_meltyMidi!, loop: false);
@@ -220,7 +268,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     const int skipChunkSize = 1024;
     final dummyBuffer = ArrayInt16.zeros(numShorts: skipChunkSize);
     
-    // Skip to target
     int safety = 0;
     while (_sequencer!.position < targetPos && safety < 10000) {
       _sequencer!.renderMonoInt16(dummyBuffer);
@@ -228,7 +275,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     }
     
     _sequencer!.speed = originalSpeed;
-    _clearSynthSounds(); // Kill all notes triggered during the fast-forward
+    _clearSynthSounds();
 
     setState(() {
       _position = _sequencer!.position;
@@ -240,7 +287,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
-      // CC 7 is main volume.
       _synth!.processMidiMessage(
         channel: channel, 
         command: 0xB0, 
@@ -257,15 +303,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 
-  // Bookmark Management Methods
   Future<void> _addBookmark() async {
     if (!_isInitialized) return;
     
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    final currentPosition = _position;
     final newBookmark = Bookmark(
       id: _uuid.v4(),
-      timestamp: currentPosition,
+      timestamp: _position,
       name: 'Bookmark ${_bookmarks.length + 1}',
       mediaItemId: currentMediaId,
     );
@@ -303,16 +347,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (latestPiece == null) return;
 
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    
     final otherBookmarks = latestPiece.bookmarks.where((b) => 
       b.mediaItemId != currentMediaId && b.mediaItemId != null
     ).toList();
 
     final allBookmarks = [...otherBookmarks, ..._bookmarks];
-
     final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
-    AppLogger.log('MidiPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
   }
 
   @override
@@ -343,6 +384,26 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
     return Column(
       children: [
+        // Visualization
+        Container(
+          height: 120,
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: ClipRect(
+            child: CustomPaint(
+              size: const Size(double.infinity, 120),
+              painter: MidiVisualizerPainter(
+                notes: _extractedNotes,
+                currentPosition: _position,
+                channelMutes: _channelMutes,
+              ),
+            ),
+          ),
+        ),
+
         // Controls
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -367,7 +428,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           ],
         ),
         
-        // Seek bar
         Slider(
           min: 0,
           max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
@@ -386,8 +446,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         ),
 
         const Divider(),
-        
-        // Add Bookmark Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: ElevatedButton.icon(
@@ -397,7 +455,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           ),
         ),
 
-        // Bookmarks List
         if (_bookmarks.isNotEmpty)
           ListView.builder(
             shrinkWrap: true,
@@ -405,62 +462,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
             itemCount: _bookmarks.length,
             itemBuilder: (context, index) {
               final bookmark = _bookmarks[index];
-              return Dismissible(
-                key: Key(bookmark.id),
-                direction: DismissDirection.endToStart,
-                onDismissed: (direction) {
-                  _removeBookmark(bookmark.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${bookmark.name} dismissed')),
-                  );
-                },
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                child: ListTile(
-                  title: Text(bookmark.name),
-                  subtitle: Text(_formatDuration(bookmark.timestamp)),
-                  onTap: () => _seekToBookmark(bookmark.timestamp),
-                  onLongPress: () async {
-                    final controller = TextEditingController(text: bookmark.name);
-                    final newName = await showDialog<String>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Rename Bookmark'),
-                        content: TextField(
-                          controller: controller,
-                          autofocus: true,
-                          onSubmitted: (value) => Navigator.of(context).pop(value),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(controller.text),
-                            child: const Text('Rename'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (newName != null && newName.isNotEmpty && newName != bookmark.name) {
-                      _renameBookmark(bookmark.id, newName);
-                    }
-                  },
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    tooltip: 'Delete bookmark',
-                    onPressed: () {
-                      _removeBookmark(bookmark.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${bookmark.name} deleted')),
-                      );
-                    },
-                  ),
+              return ListTile(
+                title: Text(bookmark.name),
+                subtitle: Text(_formatDuration(bookmark.timestamp)),
+                onTap: () => _seekToBookmark(bookmark.timestamp),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _removeBookmark(bookmark.id),
                 ),
               );
             },
@@ -468,27 +476,23 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
         if (activeChannelIndices.isNotEmpty) ...[
           const Divider(),
-          const Text('Track Isolation (Mute/Unmute)', style: TextStyle(fontWeight: FontWeight.bold)),
-          
-          // Channel/Track list
+          const Text('Track Isolation', style: TextStyle(fontWeight: FontWeight.bold)),
           SizedBox(
-            height: 100,
+            height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: activeChannelIndices.length,
               itemBuilder: (context, index) {
-                final channelIndex = activeChannelIndices[index];
+                final ch = activeChannelIndices[index];
                 return Padding(
-                  padding: const EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Column(
                     children: [
-                      Text('Ch ${channelIndex + 1}', style: const TextStyle(fontSize: 10)),
+                      Text('Ch ${ch + 1}', style: const TextStyle(fontSize: 10)),
                       IconButton(
-                        icon: Icon(
-                          _channelMutes[channelIndex] ? Icons.volume_off : Icons.volume_up,
-                          color: _channelMutes[channelIndex] ? Colors.red : Colors.green,
-                        ),
-                        onPressed: () => _toggleMute(channelIndex),
+                        icon: Icon(_channelMutes[ch] ? Icons.volume_off : Icons.volume_up),
+                        color: _channelMutes[ch] ? Colors.red : Colors.green,
+                        onPressed: () => _toggleMute(ch),
                       ),
                     ],
                   ),
@@ -499,5 +503,78 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         ],
       ],
     );
+  }
+}
+
+class MidiVisualizerPainter extends CustomPainter {
+  final List<MidiNote> notes;
+  final Duration currentPosition;
+  final List<bool> channelMutes;
+
+  MidiVisualizerPainter({
+    required this.notes,
+    required this.currentPosition,
+    required this.channelMutes,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double windowSeconds = 6.0; // Show 6 seconds of music
+    const double playheadX = 40.0; // Playhead position from left
+    final double pixelsPerSecond = (size.width - playheadX) / (windowSeconds - 1.0);
+    
+    final currentSec = currentPosition.inMilliseconds / 1000.0;
+    
+    // Determine pitch range to auto-scale vertically
+    int minPitch = 127;
+    int maxPitch = 0;
+    for (var n in notes) {
+      if (n.pitch < minPitch) minPitch = n.pitch;
+      if (n.pitch > maxPitch) maxPitch = n.pitch;
+    }
+    if (maxPitch <= minPitch) { minPitch = 40; maxPitch = 80; }
+    final pitchRange = (maxPitch - minPitch).toDouble() + 4.0;
+
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Draw playhead line
+    canvas.drawLine(
+      Offset(playheadX, 0),
+      Offset(playheadX, size.height),
+      Paint()..color = Colors.red.withOpacity(0.5)..strokeWidth = 2,
+    );
+
+    for (final note in notes) {
+      final relativeStart = note.startTimeSeconds - currentSec;
+      final relativeEnd = relativeStart + note.durationSeconds;
+
+      // Only draw if within visual window
+      if (relativeEnd < -1.0 || relativeStart > windowSeconds) continue;
+
+      final x = playheadX + (relativeStart * pixelsPerSecond);
+      final w = note.durationSeconds * pixelsPerSecond;
+      
+      // Vertical position (inverted so higher pitch is higher up)
+      final y = size.height - ((note.pitch - minPitch + 2) / pitchRange * size.height);
+      const h = 6.0;
+
+      // Color by channel
+      paint.color = Colors.accents[note.channel % Colors.accents.length].withOpacity(
+        channelMutes[note.channel] ? 0.1 : 0.8
+      );
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, y, max(w, 2.0), h),
+          const Radius.circular(2),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant MidiVisualizerPainter oldDelegate) {
+    return oldDelegate.currentPosition != currentPosition || oldDelegate.channelMutes != channelMutes;
   }
 }
