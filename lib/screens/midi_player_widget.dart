@@ -13,6 +13,21 @@ import '../models/bookmark.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
 
+/// Global controller to ensure only one MIDI player is active at a time.
+class MidiPlayerController {
+  static final MidiPlayerController _instance = MidiPlayerController._internal();
+  factory MidiPlayerController() => _instance;
+  MidiPlayerController._internal();
+
+  String? _activePlayerId;
+
+  void setActive(String id) {
+    _activePlayerId = id;
+  }
+
+  bool isActive(String id) => _activePlayerId == id;
+}
+
 class MidiNote {
   final int pitch;
   final double startTimeSeconds;
@@ -48,6 +63,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   bool _isInitialized = false;
   bool _isPlaying = false;
   String? _errorMessage;
+  final String _playerId = const Uuid().v4();
   
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
@@ -76,7 +92,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     try {
       final int division = midiFile.header.ticksPerBeat ?? 480;
       int maxTick = 0;
-      int currentTempo = 500000; // Default: 120 BPM
+      int currentTempo = 500000;
 
       for (var track in midiFile.tracks) {
         int trackTick = 0;
@@ -205,9 +221,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   }
 
   void _startAudioLoop() {
-    // 44100 Hz = 44.1 samples per ms.
-    // 1024 samples / 44.1 = 23.22 ms of audio.
-    // We feed 1024 samples exactly every 23ms to match real-time playback.
     const int bufferSize = 1024;
     final buffer = ArrayInt16.zeros(numShorts: bufferSize);
 
@@ -217,13 +230,16 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         return;
       }
 
-      if (_isPlaying && _sequencer != null) {
+      if (_isPlaying && _sequencer != null && MidiPlayerController().isActive(_playerId)) {
         _sequencer!.renderMonoInt16(buffer);
         final int16List = Int16List(bufferSize);
         for(int i=0; i<bufferSize; i++) {
           int16List[i] = buffer[i];
         }
         FlutterPcmSound.feed(PcmArrayInt16.fromList(int16List));
+      } else if (_isPlaying && !MidiPlayerController().isActive(_playerId)) {
+        // Another player took over, pause this one
+        _togglePlay();
       }
     });
 
@@ -247,6 +263,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
+      MidiPlayerController().setActive(_playerId);
       if (_position == Duration.zero || _position >= _duration) {
         _sequencer!.play(_meltyMidi!, loop: false);
       }
@@ -275,11 +292,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     final originalSpeed = _sequencer!.speed;
     _sequencer!.speed = 1000.0;
     
-    const int skipChunkSize = 1024;
+    // Large skip chunks for faster seeking
+    const int skipChunkSize = 4096;
     final dummyBuffer = ArrayInt16.zeros(numShorts: skipChunkSize);
     
     int safety = 0;
-    while (_sequencer!.position < targetPos && safety < 10000) {
+    while (_sequencer!.position < targetPos && safety < 5000) {
       _sequencer!.renderMonoInt16(dummyBuffer);
       safety++;
     }
@@ -291,6 +309,10 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _position = _sequencer!.position;
       _isPlaying = wasPlaying;
     });
+    
+    if (wasPlaying) {
+      FlutterPcmSound.play();
+    }
   }
 
   void _toggleMute(int channel) {
@@ -315,7 +337,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   Future<void> _addBookmark() async {
     if (!_isInitialized) return;
-    
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     final newBookmark = Bookmark(
       id: _uuid.v4(),
@@ -323,7 +344,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       name: 'Bookmark ${_bookmarks.length + 1}',
       mediaItemId: currentMediaId,
     );
-
     setState(() {
       _bookmarks.add(newBookmark);
       _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -345,12 +365,10 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Future<void> _saveBookmarks() async {
     final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
     if (latestPiece == null) return;
-
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     final otherBookmarks = latestPiece.bookmarks.where((b) => 
       b.mediaItemId != currentMediaId && b.mediaItemId != null
     ).toList();
-
     final allBookmarks = [...otherBookmarks, ..._bookmarks];
     final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
@@ -476,12 +494,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           const Divider(),
           const Text('Track Isolation', style: TextStyle(fontWeight: FontWeight.bold)),
           SizedBox(
-            height: 80,
+            height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: activeChannelIndices.length,
               itemBuilder: (context, index) {
                 final ch = activeChannelIndices[index];
+                final channelColor = Colors.accents[ch % Colors.accents.length];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Column(
@@ -489,9 +508,17 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                       Text('Ch ${ch + 1}', style: const TextStyle(fontSize: 10)),
                       IconButton(
                         icon: Icon(_channelMutes[ch] ? Icons.volume_off : Icons.volume_up),
-                        color: _channelMutes[ch] ? Colors.red : Colors.green,
+                        color: _channelMutes[ch] ? Colors.grey : channelColor,
                         onPressed: () => _toggleMute(ch),
                       ),
+                      Container(
+                        width: 20,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: channelColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      )
                     ],
                   ),
                 );
