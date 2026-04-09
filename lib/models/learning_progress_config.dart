@@ -12,8 +12,10 @@ class LearningProgressConfig {
     required this.type,
     this.current = 0.0,
     this.maxCount = 10,
-    this.stages = const [],
-  });
+    List<String>? stages,
+  }) : stages = (type == LearningProgressType.stages && (stages == null || stages.isEmpty)) 
+            ? ['Started'] 
+            : (stages ?? const []);
 
   Map<String, dynamic> toJson() => {
     'type': type.name,

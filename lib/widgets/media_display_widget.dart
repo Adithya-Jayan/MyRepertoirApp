@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Add for kIsWeb
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart'; // Added this import
@@ -395,6 +396,11 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         break;
     }
 
+    final bool showShareButton = !widget.isEditable && 
+                                currentMediaItem.type != MediaType.thumbnails && 
+                                currentMediaItem.type != MediaType.learningProgress &&
+                                (kIsWeb || (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS));
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
@@ -458,7 +464,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 ],
               ),
             ),
-            if (!widget.isEditable && currentMediaItem.type != MediaType.thumbnails && currentMediaItem.type != MediaType.learningProgress)
+            if (showShareButton)
               Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.share, size: 20),

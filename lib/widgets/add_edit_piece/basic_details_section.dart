@@ -20,13 +20,15 @@ class BasicDetailsSection extends StatelessWidget {
         TextFormField(
           initialValue: musicPiece.title,
           decoration: const InputDecoration(labelText: 'Title'),
+          textInputAction: TextInputAction.next,
           validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
           onChanged: onTitleChanged,
           onSaved: (value) => onTitleChanged(value!),
         ),
         TextFormField(
           initialValue: musicPiece.artistComposer,
-          decoration: const InputDecoration(labelText: 'Subtitle (Artist/Composer)'),
+          decoration: const InputDecoration(labelText: 'Artist / Composer'),
+          textInputAction: TextInputAction.done,
           onChanged: onArtistComposerChanged,
           onSaved: (value) => onArtistComposerChanged(value!),
         ),
