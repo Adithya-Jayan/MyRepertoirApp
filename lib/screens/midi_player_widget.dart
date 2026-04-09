@@ -100,7 +100,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     final List<MidiNote> notes = [];
     final int division = midiFile.header.ticksPerBeat ?? 480;
     
-    // We need to merge all tracks to handle tempo changes correctly across tracks
     final List<dynamic> allEvents = [];
     for (var track in midiFile.tracks) {
       int absoluteTick = 0;
@@ -120,7 +119,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       final int tick = entry['tick'];
       final dynamic event = entry['event'];
       
-      // Update elapsed time since last tick
       currentTimeSeconds += (tick - lastTick) * (currentTempo / division) / 1000000;
       lastTick = tick;
 
@@ -165,11 +163,9 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         throw Exception('MIDI file not found at ${mediaItem.pathOrUrl}');
       }
 
-      // Load SoundFont from assets
       final sf2Data = await rootBundle.load('assets/soundfonts/TimGM6mb.sf2');
       _synth = Synthesizer.loadByteData(sf2Data, SynthesizerSettings(sampleRate: 44100));
 
-      // Load MIDI file
       final midiData = await midiFile.readAsBytes();
       _meltyMidi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
       final parsedMidi = midi_parser.MidiParser().parseMidiFromBuffer(midiData);
@@ -178,16 +174,14 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _duration = _calculateMidiDuration(parsedMidi);
       _extractedNotes = _extractNotes(parsedMidi);
       
-      // Identify active channels
       for (var note in _extractedNotes) {
         _activeChannels[note.channel] = true;
       }
 
       _sequencer!.play(_meltyMidi!, loop: false);
 
-      // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
-      await FlutterPcmSound.setFeedThreshold(8192);
+      await FlutterPcmSound.setFeedThreshold(4096);
       
       _startAudioLoop();
 
@@ -211,10 +205,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   }
 
   void _startAudioLoop() {
-    const int bufferSize = 2048;
+    // 44100 Hz = 44.1 samples per ms.
+    // 1024 samples / 44.1 = 23.22 ms of audio.
+    // We feed 1024 samples exactly every 23ms to match real-time playback.
+    const int bufferSize = 1024;
     final buffer = ArrayInt16.zeros(numShorts: bufferSize);
 
-    _audioTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+    _audioTimer = Timer.periodic(const Duration(milliseconds: 23), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -387,7 +384,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
     return Column(
       children: [
-        // Visualization
         Container(
           height: 120,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -407,7 +403,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           ),
         ),
 
-        // Controls
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -522,13 +517,12 @@ class MidiVisualizerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double windowSeconds = 4.0; // Show 4 seconds of music
-    const double playheadX = 60.0; // Playhead position from left
+    const double windowSeconds = 4.0;
+    const double playheadX = 60.0;
     final double pixelsPerSecond = (size.width - playheadX) / (windowSeconds - 1.0);
     
     final currentSec = currentPosition.inMilliseconds / 1000.0;
     
-    // Pitch scaling
     int minPitch = 127;
     int maxPitch = 0;
     for (var n in notes) {
@@ -540,7 +534,6 @@ class MidiVisualizerPainter extends CustomPainter {
 
     final paint = Paint()..style = PaintingStyle.fill;
 
-    // Draw playhead line
     canvas.drawLine(
       Offset(playheadX, 0),
       Offset(playheadX, size.height),
