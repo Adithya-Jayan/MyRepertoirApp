@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
@@ -60,13 +61,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       final int division = midiFile.header.ticksPerBeat ?? 480;
       
       int maxTick = 0;
-      int currentTempo = 500000; // Default: 120 BPM (microseconds per beat)
+      int currentTempo = 500000; // Default: 120 BPM
 
       for (var track in midiFile.tracks) {
         int trackTick = 0;
         for (var event in track) {
           trackTick += event.deltaTime;
-          
           if (event is midi_parser.SetTempoEvent) {
              currentTempo = event.microsecondsPerBeat;
           }
@@ -109,15 +109,15 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       
       for (var track in parsedMidi.tracks) {
         for (var event in track) {
-          if (event is midi_parser.NoteOnEvent) {
+          if (event is midi_parser.NoteOnEvent && event.velocity > 0) {
             _activeChannels[event.channel] = true;
           }
         }
       }
 
-      // Initial play to "load" the midi but immediately stop
+      // Prepare the sequencer but don't call stop() which can reset it
       _sequencer!.play(_meltyMidi!, loop: false);
-      _sequencer!.stop();
+      // We keep it "playing" internally at position 0, our timer handles actual render output
 
       // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
@@ -139,16 +139,19 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   void _clearSynthSounds() {
     if (_synth == null) return;
     for (int i = 0; i < 16; i++) {
+      // CC 123: All Notes Off, CC 120: All Sound Off
       _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 120, data2: 0);
       _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 123, data2: 0);
     }
   }
 
   void _startAudioLoop() {
+    // 44100 Hz = 44.1 samples per ms. 2048 / 44.1 = ~46ms.
+    // Feed slightly faster than needed to prevent underruns.
     const int bufferSize = 2048;
     final buffer = ArrayInt16.zeros(numShorts: bufferSize);
 
-    _audioTimer = Timer.periodic(const Duration(milliseconds: 40), (timer) {
+    _audioTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -156,7 +159,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       if (_isPlaying && _sequencer != null) {
         _sequencer!.renderMonoInt16(buffer);
-        // Direct buffer conversion
         final int16List = Int16List(bufferSize);
         for(int i=0; i<bufferSize; i++) {
           int16List[i] = buffer[i];
@@ -171,9 +173,10 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           _position = _sequencer!.position;
           if (_position >= _duration) {
             _isPlaying = false;
-            _sequencer!.stop();
             FlutterPcmSound.pause();
             _position = Duration.zero;
+            _sequencer!.stop();
+            _clearSynthSounds();
           }
         });
       }
@@ -184,7 +187,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
-      if (_position >= _duration) {
+      // If we are at the start or end, ensure play() is called
+      if (_position == Duration.zero || _position >= _duration) {
         _sequencer!.play(_meltyMidi!, loop: false);
       }
       await FlutterPcmSound.play();
@@ -201,10 +205,11 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null || _meltyMidi == null) return;
     
     final targetPos = Duration(milliseconds: value.toInt());
-    
     final wasPlaying = _isPlaying;
+    
     setState(() { _isPlaying = false; });
     
+    // Stop resets to 0
     _sequencer!.stop();
     _clearSynthSounds();
     _sequencer!.play(_meltyMidi!, loop: false);
@@ -212,21 +217,21 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     final originalSpeed = _sequencer!.speed;
     _sequencer!.speed = 1000.0;
     
-    const int fastForwardStep = 1024;
-    final dummyBuffer = ArrayInt16.zeros(numShorts: fastForwardStep);
+    const int skipChunkSize = 1024;
+    final dummyBuffer = ArrayInt16.zeros(numShorts: skipChunkSize);
     
-    while (_sequencer!.position < targetPos) {
+    // Skip to target
+    int safety = 0;
+    while (_sequencer!.position < targetPos && safety < 10000) {
       _sequencer!.renderMonoInt16(dummyBuffer);
+      safety++;
     }
     
     _sequencer!.speed = originalSpeed;
-    if (!wasPlaying) {
-      _sequencer!.stop();
-    }
-    _clearSynthSounds();
+    _clearSynthSounds(); // Kill all notes triggered during the fast-forward
 
     setState(() {
-      _position = targetPos;
+      _position = _sequencer!.position;
       _isPlaying = wasPlaying;
     });
   }
@@ -235,6 +240,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
+      // CC 7 is main volume.
       _synth!.processMidiMessage(
         channel: channel, 
         command: 0xB0, 
@@ -315,6 +321,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _audioTimer?.cancel();
     _positionTimer?.cancel();
     _sequencer?.stop();
+    _clearSynthSounds();
     FlutterPcmSound.stop();
     super.dispose();
   }
