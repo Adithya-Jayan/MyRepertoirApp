@@ -238,7 +238,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           );
 
           if (shouldPop == true && mounted) {
-            Navigator.of(context).pop();
+            final navigator = Navigator.of(context);
+            navigator.pop();
           }
         },
         child: Scaffold(

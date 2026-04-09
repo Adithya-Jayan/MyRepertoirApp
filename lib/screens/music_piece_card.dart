@@ -191,18 +191,19 @@ class MusicPieceCard extends StatelessWidget {
                           : galleryColumns <= 4
                               ? SizedBox(
                                   height: 32, // Fixed height for chips row
-                                  child: SingleChildScrollView(
+                                  child: ListView(
                                     scrollDirection: Axis.horizontal,
-                                    child: Row(
-                                      children: [
-                                        for (final tg in piece.tagGroups)
-                                          for (final tag in tg.tags)
-                                            Padding(
-                                              padding: const EdgeInsets.only(right: 4.0),
-                                              child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
-                                            ),
-                                      ],
-                                    ),
+                                    shrinkWrap: true,
+                                    primary: false,
+                                    physics: const ClampingScrollPhysics(), // Snappier scrolling
+                                    children: [
+                                      for (final tg in piece.tagGroups)
+                                        for (final tag in tg.tags)
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 4.0),
+                                            child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
+                                          ),
+                                    ],
                                   ),
                                 )
                               : Padding(

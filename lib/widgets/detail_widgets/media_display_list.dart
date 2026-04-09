@@ -104,13 +104,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                     final originalNewIndex = visibleItemsIndices[newIndex];
                     
                     final item = _musicPiece.mediaItems.removeAt(originalOldIndex);
-                    // Re-calculate new index after removal if it was ahead
-                    int adjustedNewIndex = _musicPiece.mediaItems.indexOf(_musicPiece.mediaItems[originalNewIndex > originalOldIndex ? originalNewIndex - 1 : originalNewIndex]);
-                    if (originalNewIndex > originalOldIndex) {
-                       _musicPiece.mediaItems.insert(originalNewIndex, item);
-                    } else {
-                       _musicPiece.mediaItems.insert(originalNewIndex, item);
-                    }
+                    _musicPiece.mediaItems.insert(originalNewIndex, item);
                     
                     _repository.updateMusicPiece(_musicPiece);
                     widget.onMusicPieceChanged(_musicPiece);

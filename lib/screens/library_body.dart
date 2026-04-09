@@ -137,7 +137,7 @@ class LibraryBody extends StatelessWidget {
                   }
 
                   return MusicPieceGridView(
-                    key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}_${searchQuery.hashCode}_${filterOptions.hashCode}_${sortOption.hashCode}_$pageIndex'),
+                    key: ValueKey('grid_${currentPageGroupId}_${galleryColumns}_$pageIndex'),
                     musicPieces: filteredAndSortedPieces,
                     isLoading: isLoading,
                     errorMessage: errorMessage,
