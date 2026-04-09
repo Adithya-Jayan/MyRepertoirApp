@@ -142,6 +142,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         case MediaType.image:
         case MediaType.pdf:
         case MediaType.localVideo:
+        case MediaType.midi:
           // Verify file exists before sharing
           final file = File(pathOrUrl);
           if (await file.exists()) {
