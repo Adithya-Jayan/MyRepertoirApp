@@ -39,6 +39,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   
   // Track settings
   final List<bool> _channelMutes = List.generate(16, (_) => false);
+  final List<bool> _activeChannels = List.generate(16, (_) => false);
 
   // Bookmark settings
   List<Bookmark> _bookmarks = [];
@@ -73,13 +74,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _sequencer!.play(_midi!, loop: false);
       _sequencer!.stop(); // Start in stopped state
 
-      // Attempt to get duration. If not a property, we use a placeholder or estimate.
-      // Based on typical MeltySynth ports, position is Duration.
-      // Let's assume duration is also available or we use a fixed one for now.
+      // Attempt to get duration. Placeholder for now.
       _duration = const Duration(minutes: 5); 
 
       // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
+      await FlutterPcmSound.setFeedThreshold(4096);
       
       _startAudioLoop();
 
@@ -105,7 +105,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       }
 
       if (_isPlaying && _sequencer != null) {
-        // According to README, sequencer can render too
         _sequencer!.renderMonoInt16(buffer);
         FlutterPcmSound.feed(PcmArrayInt16.fromList(List.generate(bufferSize, (i) => buffer[i])));
       }
@@ -115,20 +114,22 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       if (_isPlaying && _sequencer != null) {
         setState(() {
           _position = _sequencer!.position;
-          // Note: if isFinished is missing, we might need another check
         });
       }
     });
   }
 
-  void _togglePlay() {
+  void _togglePlay() async {
     if (_sequencer == null) return;
     setState(() {
       _isPlaying = !_isPlaying;
-      // In MeltySynth, if stopped, we might need to restart or just render.
-      // If we called stop(), we might need play() again.
-      // Let's assume play() with same midi restarts, and stop() pauses.
     });
+    
+    if (_isPlaying) {
+      await FlutterPcmSound.play();
+    } else {
+      await FlutterPcmSound.pause();
+    }
   }
 
   void _seek(double value) {
@@ -163,7 +164,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
-      // Try setController if it exists, else processMidiMessage with named params
       try {
         _synth!.processMidiMessage(
           channel: channel, 
@@ -277,6 +277,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                 setState(() {
                   _isPlaying = false;
                   _sequencer?.stop();
+                  FlutterPcmSound.stop();
                   _position = Duration.zero;
                 });
               },
@@ -386,7 +387,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         const Divider(),
         const Text('Track Isolation (Mute/Unmute)', style: TextStyle(fontWeight: FontWeight.bold)),
         
-        // Channel/Track list
+        // Channel/Track list - for now showing all 16 since we removed active check
         SizedBox(
           height: 100,
           child: ListView.builder(
