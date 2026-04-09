@@ -99,45 +99,58 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   List<MidiNote> _extractNotes(midi_parser.MidiFile midiFile) {
     final List<MidiNote> notes = [];
     final int division = midiFile.header.ticksPerBeat ?? 480;
-    int currentTempo = 500000;
-
+    
+    // We need to merge all tracks to handle tempo changes correctly across tracks
+    final List<dynamic> allEvents = [];
     for (var track in midiFile.tracks) {
-      int trackTick = 0;
-      double trackTimeSeconds = 0;
-      final Map<int, double> pendingNoteStarts = {};
-
+      int absoluteTick = 0;
       for (var event in track) {
-        // Update time
-        trackTimeSeconds += event.deltaTime * (currentTempo / division) / 1000000;
-        trackTick += event.deltaTime;
+        absoluteTick += event.deltaTime;
+        allEvents.add({'tick': absoluteTick, 'event': event});
+      }
+    }
+    allEvents.sort((a, b) => (a['tick'] as int).compareTo(b['tick'] as int));
 
-        if (event is midi_parser.SetTempoEvent) {
-          currentTempo = event.microsecondsPerBeat;
-        } else if (event is midi_parser.NoteOnEvent) {
-          if (event.velocity > 0) {
-            pendingNoteStarts[event.noteNumber] = trackTimeSeconds;
-          } else {
-            // Velocity 0 is often used as Note Off
-            if (pendingNoteStarts.containsKey(event.noteNumber)) {
-              final start = pendingNoteStarts.remove(event.noteNumber)!;
-              notes.add(MidiNote(
-                pitch: event.noteNumber,
-                startTimeSeconds: start,
-                durationSeconds: trackTimeSeconds - start,
-                channel: event.channel,
-              ));
-            }
-          }
-        } else if (event is midi_parser.NoteOffEvent) {
-          if (pendingNoteStarts.containsKey(event.noteNumber)) {
-            final start = pendingNoteStarts.remove(event.noteNumber)!;
+    int lastTick = 0;
+    double currentTimeSeconds = 0;
+    int currentTempo = 500000;
+    final Map<String, double> pendingNoteStarts = {};
+
+    for (var entry in allEvents) {
+      final int tick = entry['tick'];
+      final dynamic event = entry['event'];
+      
+      // Update elapsed time since last tick
+      currentTimeSeconds += (tick - lastTick) * (currentTempo / division) / 1000000;
+      lastTick = tick;
+
+      if (event is midi_parser.SetTempoEvent) {
+        currentTempo = event.microsecondsPerBeat;
+      } else if (event is midi_parser.NoteOnEvent) {
+        final key = '${event.channel}_${event.noteNumber}';
+        if (event.velocity > 0) {
+          pendingNoteStarts[key] = currentTimeSeconds;
+        } else {
+          if (pendingNoteStarts.containsKey(key)) {
+            final start = pendingNoteStarts.remove(key)!;
             notes.add(MidiNote(
               pitch: event.noteNumber,
               startTimeSeconds: start,
-              durationSeconds: trackTimeSeconds - start,
+              durationSeconds: currentTimeSeconds - start,
               channel: event.channel,
             ));
           }
+        }
+      } else if (event is midi_parser.NoteOffEvent) {
+        final key = '${event.channel}_${event.noteNumber}';
+        if (pendingNoteStarts.containsKey(key)) {
+          final start = pendingNoteStarts.remove(key)!;
+          notes.add(MidiNote(
+            pitch: event.noteNumber,
+            startTimeSeconds: start,
+            durationSeconds: currentTimeSeconds - start,
+            channel: event.channel,
+          ));
         }
       }
     }
@@ -328,16 +341,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     await _saveBookmarks();
   }
 
-  Future<void> _renameBookmark(String bookmarkId, String newName) async {
-    setState(() {
-      final index = _bookmarks.indexWhere((bookmark) => bookmark.id == bookmarkId);
-      if (index != -1) {
-        _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
-      }
-    });
-    await _saveBookmarks();
-  }
-
   void _seekToBookmark(Duration timestamp) {
     _seek(timestamp.inMilliseconds.toDouble());
   }
@@ -519,13 +522,13 @@ class MidiVisualizerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double windowSeconds = 6.0; // Show 6 seconds of music
-    const double playheadX = 40.0; // Playhead position from left
+    const double windowSeconds = 4.0; // Show 4 seconds of music
+    const double playheadX = 60.0; // Playhead position from left
     final double pixelsPerSecond = (size.width - playheadX) / (windowSeconds - 1.0);
     
     final currentSec = currentPosition.inMilliseconds / 1000.0;
     
-    // Determine pitch range to auto-scale vertically
+    // Pitch scaling
     int minPitch = 127;
     int maxPitch = 0;
     for (var n in notes) {
@@ -533,7 +536,7 @@ class MidiVisualizerPainter extends CustomPainter {
       if (n.pitch > maxPitch) maxPitch = n.pitch;
     }
     if (maxPitch <= minPitch) { minPitch = 40; maxPitch = 80; }
-    final pitchRange = (maxPitch - minPitch).toDouble() + 4.0;
+    final pitchRange = (maxPitch - minPitch).toDouble() + 10.0;
 
     final paint = Paint()..style = PaintingStyle.fill;
 
@@ -541,31 +544,28 @@ class MidiVisualizerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(playheadX, 0),
       Offset(playheadX, size.height),
-      Paint()..color = Colors.red.withOpacity(0.5)..strokeWidth = 2,
+      Paint()..color = Colors.red.withValues(alpha: 0.5)..strokeWidth = 2,
     );
 
     for (final note in notes) {
       final relativeStart = note.startTimeSeconds - currentSec;
       final relativeEnd = relativeStart + note.durationSeconds;
 
-      // Only draw if within visual window
       if (relativeEnd < -1.0 || relativeStart > windowSeconds) continue;
 
       final x = playheadX + (relativeStart * pixelsPerSecond);
       final w = note.durationSeconds * pixelsPerSecond;
       
-      // Vertical position (inverted so higher pitch is higher up)
-      final y = size.height - ((note.pitch - minPitch + 2) / pitchRange * size.height);
-      const h = 6.0;
+      final y = size.height - ((note.pitch - minPitch + 5) / pitchRange * size.height);
+      const h = 8.0;
 
-      // Color by channel
-      paint.color = Colors.accents[note.channel % Colors.accents.length].withOpacity(
-        channelMutes[note.channel] ? 0.1 : 0.8
+      paint.color = Colors.accents[note.channel % Colors.accents.length].withValues(
+        alpha: channelMutes[note.channel] ? 0.1 : 0.8
       );
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, y, max(w, 2.0), h),
+          Rect.fromLTWH(x, y, max(w, 4.0), h),
           const Radius.circular(2),
         ),
         paint,
