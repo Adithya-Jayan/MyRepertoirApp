@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
@@ -54,6 +55,44 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _initMidi();
   }
 
+  Duration _calculateMidiDuration(dynamic midiFile) {
+    try {
+      final int division = midiFile.division;
+      final List<dynamic> tracks = midiFile.tracks;
+      
+      final List<dynamic> allEvents = [];
+      for (var track in tracks) {
+        for (var event in track) {
+          allEvents.add(event);
+        }
+      }
+      allEvents.sort((a, b) => (a.tick as int).compareTo(b.tick as int));
+
+      double totalMicroseconds = 0;
+      int lastTick = 0;
+      int currentTempo = 500000; // Default: 120 BPM
+
+      for (final event in allEvents) {
+        final int tick = event.tick;
+        final int deltaTicks = tick - lastTick;
+        if (deltaTicks > 0) {
+          totalMicroseconds += deltaTicks * (currentTempo / division);
+        }
+        lastTick = tick;
+
+        final msg = event.message;
+        if (msg.type == 255 && msg.data1 == 81) {
+          currentTempo = (msg.data2 << 16) | (msg.data3 << 8) | msg.data4;
+        }
+      }
+
+      return Duration(microseconds: totalMicroseconds.round());
+    } catch (e) {
+      AppLogger.log('Error calculating duration: $e');
+      return const Duration(minutes: 5);
+    }
+  }
+
   Future<void> _initMidi() async {
     try {
       final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
@@ -71,15 +110,28 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _midi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
       
       _sequencer = MidiFileSequencer(_synth!);
-      _sequencer!.play(_midi!, loop: false);
-      _sequencer!.stop(); // Start in stopped state
+      
+      // Calculate duration and identify active channels
+      _duration = _calculateMidiDuration(_midi!);
+      
+      final List<dynamic> tracks = (_midi as dynamic).tracks;
+      for (var track in tracks) {
+        for (var event in track) {
+          final msg = event.message;
+          if (msg.type >= 0x80 && msg.type <= 0xEF) {
+            final channel = msg.type & 0x0F;
+            _activeChannels[channel] = true;
+          }
+        }
+      }
 
-      // Attempt to get duration. Placeholder for now.
-      _duration = const Duration(minutes: 5); 
+      // Initial play to "load" the midi but immediately stop
+      _sequencer!.play(_midi!, loop: false);
+      _sequencer!.stop();
 
       // Setup audio output
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
-      await FlutterPcmSound.setFeedThreshold(4096);
+      await FlutterPcmSound.setFeedThreshold(8192);
       
       _startAudioLoop();
 
@@ -94,11 +146,19 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     }
   }
 
+  void _clearSynthSounds() {
+    if (_synth == null) return;
+    for (int i = 0; i < 16; i++) {
+      _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 120, data2: 0);
+      _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 123, data2: 0);
+    }
+  }
+
   void _startAudioLoop() {
     const int bufferSize = 2048;
     final buffer = ArrayInt16.zeros(numShorts: bufferSize);
 
-    _audioTimer = Timer.periodic(const Duration(milliseconds: 20), (timer) {
+    _audioTimer = Timer.periodic(const Duration(milliseconds: 40), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -106,7 +166,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       if (_isPlaying && _sequencer != null) {
         _sequencer!.renderMonoInt16(buffer);
-        FlutterPcmSound.feed(PcmArrayInt16.fromList(List.generate(bufferSize, (i) => buffer[i])));
+        // Direct conversion if possible, else manual
+        final int16List = Int16List(bufferSize);
+        for(int i=0; i<bufferSize; i++) {
+          int16List[i] = buffer[i];
+        }
+        FlutterPcmSound.feed(PcmArrayInt16.fromList(int16List));
       }
     });
 
@@ -114,6 +179,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       if (_isPlaying && _sequencer != null) {
         setState(() {
           _position = _sequencer!.position;
+          if (_sequencer!.isFinished) {
+            _isPlaying = false;
+            _sequencer!.stop();
+            FlutterPcmSound.pause();
+            _position = Duration.zero;
+          }
         });
       }
     });
@@ -121,15 +192,19 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   void _togglePlay() async {
     if (_sequencer == null) return;
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
     
-    if (_isPlaying) {
+    if (!_isPlaying) {
+      if (_sequencer!.isFinished) {
+        _sequencer!.play(_midi!, loop: false);
+      }
       await FlutterPcmSound.play();
     } else {
       await FlutterPcmSound.pause();
     }
+
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
   }
 
   void _seek(double value) {
@@ -137,7 +212,11 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     
     final targetPos = Duration(milliseconds: value.toInt());
     
+    final wasPlaying = _isPlaying;
+    setState(() { _isPlaying = false; });
+    
     _sequencer!.stop();
+    _clearSynthSounds();
     _sequencer!.play(_midi!, loop: false);
     
     final originalSpeed = _sequencer!.speed;
@@ -146,17 +225,19 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     const int fastForwardStep = 1024;
     final dummyBuffer = ArrayInt16.zeros(numShorts: fastForwardStep);
     
-    while (_sequencer!.position < targetPos) {
+    while (_sequencer!.position < targetPos && !_sequencer!.isFinished) {
       _sequencer!.renderMonoInt16(dummyBuffer);
     }
     
     _sequencer!.speed = originalSpeed;
-    if (!_isPlaying) {
+    if (!wasPlaying) {
       _sequencer!.stop();
     }
+    _clearSynthSounds();
 
     setState(() {
       _position = targetPos;
+      _isPlaying = wasPlaying;
     });
   }
 
@@ -164,14 +245,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
-      try {
-        _synth!.processMidiMessage(
-          channel: channel, 
-          command: 0xB0, 
-          data1: 7, 
-          data2: _channelMutes[channel] ? 0 : 100
-        );
-      } catch (e) {}
+      _synth!.processMidiMessage(
+        channel: channel, 
+        command: 0xB0, 
+        data1: 7, 
+        data2: _channelMutes[channel] ? 0 : 127
+      );
     });
   }
 
@@ -260,6 +339,11 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final activeChannelIndices = <int>[];
+    for (int i = 0; i < 16; i++) {
+      if (_activeChannels[i]) activeChannelIndices.add(i);
+    }
+
     return Column(
       children: [
         // Controls
@@ -277,6 +361,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                 setState(() {
                   _isPlaying = false;
                   _sequencer?.stop();
+                  _clearSynthSounds();
                   FlutterPcmSound.stop();
                   _position = Duration.zero;
                 });
@@ -384,34 +469,37 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
             },
           ),
 
-        const Divider(),
-        const Text('Track Isolation (Mute/Unmute)', style: TextStyle(fontWeight: FontWeight.bold)),
-        
-        // Channel/Track list - for now showing all 16 since we removed active check
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 16,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Column(
-                  children: [
-                    Text('Ch ${index + 1}', style: const TextStyle(fontSize: 10)),
-                    IconButton(
-                      icon: Icon(
-                        _channelMutes[index] ? Icons.volume_off : Icons.volume_up,
-                        color: _channelMutes[index] ? Colors.red : Colors.green,
+        if (activeChannelIndices.isNotEmpty) ...[
+          const Divider(),
+          const Text('Track Isolation (Mute/Unmute)', style: TextStyle(fontWeight: FontWeight.bold)),
+          
+          // Channel/Track list
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: activeChannelIndices.length,
+              itemBuilder: (context, index) {
+                final channelIndex = activeChannelIndices[index];
+                return Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Column(
+                    children: [
+                      Text('Ch ${channelIndex + 1}', style: const TextStyle(fontSize: 10)),
+                      IconButton(
+                        icon: Icon(
+                          _channelMutes[channelIndex] ? Icons.volume_off : Icons.volume_up,
+                          color: _channelMutes[channelIndex] ? Colors.red : Colors.green,
+                        ),
+                        onPressed: () => _toggleMute(channelIndex),
                       ),
-                      onPressed: () => _toggleMute(index),
-                    ),
-                  ],
-                ),
-              );
-            },
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
