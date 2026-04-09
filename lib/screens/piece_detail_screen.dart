@@ -5,6 +5,7 @@ import 'package:repertoire/screens/add_edit_piece_screen.dart';
 import 'package:repertoire/widgets/detail_widgets/practice_tracking_card.dart';
 import 'package:repertoire/widgets/detail_widgets/tag_groups_display.dart';
 import 'package:repertoire/widgets/detail_widgets/media_display_list.dart';
+import 'package:repertoire/models/media_type.dart';
 import '../utils/app_logger.dart';
 
 class PieceDetailScreen extends StatefulWidget {
@@ -136,7 +137,10 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 ),
               if (_musicPiece.tagGroups.isNotEmpty)
                 TagGroupsDisplay(musicPiece: _musicPiece),
-              if (_musicPiece.mediaItems.isNotEmpty) ...[ // Only show divider if there's media
+              
+              // Only show divider if there's a top section AND there is visible media to show below it
+              if ((_musicPiece.enablePracticeTracking || _musicPiece.tagGroups.isNotEmpty) && 
+                  _musicPiece.mediaItems.any((item) => item.type != MediaType.thumbnails)) ...[
                 const Divider(),
                 const SizedBox(height: 16.0),
               ],
