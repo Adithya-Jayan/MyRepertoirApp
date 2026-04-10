@@ -39,6 +39,7 @@ dependencies:
   just_audio: ^0.10.5 # For audio playback
   just_audio_platform_interface: ^4.5.0
   just_audio_windows: ^0.2.0 # Added for Windows support
+  just_audio_mpv: ^0.1.1 # Added for Linux support
   video_player: ^2.10.1 # For video playback
   url_launcher: ^6.3.0 # For opening URLs
   shared_preferences: ^2.2.3 # For storing simple key-value pairs

@@ -285,7 +285,7 @@ class _MediaSectionState extends State<MediaSection> {
                           label: const Text('Change Image'),
                         ),
                       // Use as piece thumbnail checkbox
-                      if ((widget.item.type == MediaType.image || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
+                      if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
                         SizedBox(
                           width: 250,
                           child: CheckboxListTile(
@@ -295,7 +295,7 @@ class _MediaSectionState extends State<MediaSection> {
                                     widget.musicPieceThumbnail == _currentThumbnailPath),
                             onChanged: (bool? value) {
                               if (value == true) {
-                                final path = (widget.item.type == MediaType.image) 
+                                final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo) 
                                     ? widget.item.pathOrUrl 
                                     : _currentThumbnailPath!;
                                 widget.onSetThumbnail(path);

@@ -126,6 +126,8 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 _musicPiece.artistComposer,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
+              const SizedBox(height: 8.0),
+              GroupsDisplay(musicPiece: _musicPiece),
               const SizedBox(height: 16.0),
               if (_musicPiece.enablePracticeTracking)
                 PracticeTrackingCard(
@@ -136,7 +138,6 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                     });
                   },
                 ),
-              GroupsDisplay(musicPiece: _musicPiece),
               if (_musicPiece.tagGroups.isNotEmpty)
                 TagGroupsDisplay(musicPiece: _musicPiece),
               

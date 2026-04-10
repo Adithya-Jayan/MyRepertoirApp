@@ -272,6 +272,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     musicPiece: _musicPiece,
                     onTitleChanged: (value) => _musicPiece.title = value,
                     onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
+                    onSaveRequested: _savePiece,
                   ),
                   const SizedBox(height: 20),
                   GroupsSection(

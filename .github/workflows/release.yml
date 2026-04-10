@@ -479,9 +479,6 @@ jobs:
           else
              zip -r "${STAGING_DIR}.zip" "$STAGING_DIR"
           fi
-          
-          # Move zip back to root for upload
-          mv "${STAGING_DIR}.zip" ../../../../../
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2

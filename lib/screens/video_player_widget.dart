@@ -594,7 +594,7 @@ class _ControlsOverlay extends StatelessWidget {
                   initialValue: playbackSpeed,
                   tooltip: 'Playback Speed',
                   onSelected: onSpeedChanged,
-                  itemBuilder: (context) => [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+                  itemBuilder: (context) => [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0]
                       .map((speed) => PopupMenuItem(value: speed, child: Text('${speed}x')))
                       .toList(),
                   child: Padding(

@@ -23,6 +23,9 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
     _type = config.type;
     _maxCountController = TextEditingController(text: config.maxCount.toString());
     _stages = List.from(config.stages);
+    if (_stages.isEmpty && _type == LearningProgressType.stages) {
+      _stages.add('Stage 1');
+    }
     _stageController = TextEditingController();
   }
 

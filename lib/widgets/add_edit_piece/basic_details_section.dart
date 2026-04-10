@@ -5,12 +5,14 @@ class BasicDetailsSection extends StatelessWidget {
   final MusicPiece musicPiece;
   final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onArtistComposerChanged;
+  final VoidCallback? onSaveRequested;
 
   const BasicDetailsSection({
     super.key,
     required this.musicPiece,
     required this.onTitleChanged,
     required this.onArtistComposerChanged,
+    this.onSaveRequested,
   });
 
   @override
@@ -31,6 +33,7 @@ class BasicDetailsSection extends StatelessWidget {
           textInputAction: TextInputAction.done,
           onChanged: onArtistComposerChanged,
           onSaved: (value) => onArtistComposerChanged(value!),
+          onFieldSubmitted: (_) => onSaveRequested?.call(),
         ),
       ],
     );
