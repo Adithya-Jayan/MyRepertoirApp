@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 import 'package:dart_midi_pro/dart_midi_pro.dart' as midi_parser;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
 import '../models/bookmark.dart';
@@ -62,6 +64,8 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   MidiFile? _meltyMidi;
   bool _isInitialized = false;
   bool _isPlaying = false;
+  bool _isScrubbing = false;
+  bool _wasPlayingBeforeScrub = false;
   String? _errorMessage;
   final String _playerId = const Uuid().v4();
   
@@ -88,24 +92,52 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _initMidi();
   }
 
+  // Improved duration calculation that accounts for tempo changes
   Duration _calculateMidiDuration(midi_parser.MidiFile midiFile) {
     try {
       final int division = midiFile.header.ticksPerBeat ?? 480;
-      int maxTick = 0;
-      int currentTempo = 500000;
+      
+      // Collect all tempo events
+      final List<dynamic> tempoEvents = [];
+      for (var track in midiFile.tracks) {
+        int absTick = 0;
+        for (var event in track) {
+          absTick += event.deltaTime;
+          if (event is midi_parser.SetTempoEvent) {
+            tempoEvents.add({'tick': absTick, 'event': event});
+          }
+        }
+      }
+      tempoEvents.sort((a, b) => (a['tick'] as int).compareTo(b['tick'] as int));
 
+      // Find the absolute maximum tick across all tracks
+      int maxTick = 0;
       for (var track in midiFile.tracks) {
         int trackTick = 0;
         for (var event in track) {
           trackTick += event.deltaTime;
-          if (event is midi_parser.SetTempoEvent) {
-             currentTempo = event.microsecondsPerBeat;
-          }
         }
         if (trackTick > maxTick) maxTick = trackTick;
       }
 
-      return Duration(microseconds: (maxTick * (currentTempo / division)).round());
+      double totalSeconds = 0;
+      int lastTick = 0;
+      int currentMicrosecondsPerBeat = 500000; // Default 120 BPM
+
+      for (var entry in tempoEvents) {
+        final int tick = entry['tick'];
+        final int delta = tick - lastTick;
+        totalSeconds += (delta * currentMicrosecondsPerBeat) / (division * 1000000);
+        lastTick = tick;
+        currentMicrosecondsPerBeat = (entry['event'] as midi_parser.SetTempoEvent).microsecondsPerBeat;
+      }
+
+      // Add remaining time until maxTick
+      if (maxTick > lastTick) {
+        totalSeconds += ((maxTick - lastTick) * currentMicrosecondsPerBeat) / (division * 1000000);
+      }
+
+      return Duration(milliseconds: (totalSeconds * 1000).round());
     } catch (e) {
       AppLogger.log('Error calculating duration: $e');
       return const Duration(minutes: 5);
@@ -116,6 +148,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     final List<MidiNote> notes = [];
     final int division = midiFile.header.ticksPerBeat ?? 480;
     
+    // Merge events from all tracks to handle tempo correctly
     final List<dynamic> allEvents = [];
     for (var track in midiFile.tracks) {
       int absoluteTick = 0;
@@ -135,6 +168,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       final int tick = entry['tick'];
       final dynamic event = entry['event'];
       
+      // Update time using delta from last event globally
       currentTimeSeconds += (tick - lastTick) * (currentTempo / division) / 1000000;
       lastTick = tick;
 
@@ -179,8 +213,18 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         throw Exception('MIDI file not found at ${mediaItem.pathOrUrl}');
       }
 
-      final sf2Data = await rootBundle.load('assets/soundfonts/TimGM6mb.sf2');
-      _synth = Synthesizer.loadByteData(sf2Data, SynthesizerSettings(sampleRate: 44100));
+      _synth = Synthesizer.loadByteData(await rootBundle.load('assets/soundfonts/TimGM6mb.sf2'), SynthesizerSettings(sampleRate: 44100));
+
+      // Load saved mute states
+      final prefs = await SharedPreferences.getInstance();
+      final muteStatesJson = prefs.getString('midi_mutes_${mediaItem.id}');
+      if (muteStatesJson != null) {
+        final List<dynamic> decoded = jsonDecode(muteStatesJson);
+        for (int i = 0; i < 16 && i < decoded.length; i++) {
+          _channelMutes[i] = decoded[i] as bool;
+          _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 7, data2: _channelMutes[i] ? 0 : 127);
+        }
+      }
 
       final midiData = await midiFile.readAsBytes();
       _meltyMidi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
@@ -230,7 +274,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         return;
       }
 
-      if (_isPlaying && _sequencer != null && MidiPlayerController().isActive(_playerId)) {
+      if (_isPlaying && !_isScrubbing && _sequencer != null && MidiPlayerController().isActive(_playerId)) {
         _sequencer!.renderMonoInt16(buffer);
         final int16List = Int16List(bufferSize);
         for(int i=0; i<bufferSize; i++) {
@@ -238,13 +282,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         }
         FlutterPcmSound.feed(PcmArrayInt16.fromList(int16List));
       } else if (_isPlaying && !MidiPlayerController().isActive(_playerId)) {
-        // Another player took over, pause this one
-        _togglePlay();
+        // Another player took over. Stop rendering but DON'T pause the global engine.
+        _stopLocally();
       }
     });
 
     _positionTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (_isPlaying && _sequencer != null) {
+      if (_isPlaying && !_isScrubbing && _sequencer != null) {
         setState(() {
           _position = _sequencer!.position;
           if (_position >= _duration) {
@@ -259,31 +303,47 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     });
   }
 
+  void _stopLocally() {
+    if (mounted) {
+      setState(() {
+        _isPlaying = false;
+      });
+    }
+    _clearSynthSounds();
+  }
+
   void _togglePlay() async {
     if (_sequencer == null) return;
     
     if (!_isPlaying) {
+      // Clear any stale audio from previous players
+      await FlutterPcmSound.clear();
       MidiPlayerController().setActive(_playerId);
+      
       if (_position == Duration.zero || _position >= _duration) {
         _sequencer!.play(_meltyMidi!, loop: false);
       }
       await FlutterPcmSound.play();
     } else {
-      await FlutterPcmSound.pause();
+      // Only pause the hardware if we are still the active owner
+      if (MidiPlayerController().isActive(_playerId)) {
+        await FlutterPcmSound.pause();
+      }
+      _clearSynthSounds();
     }
 
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
+    if (mounted) {
+      setState(() {
+        _isPlaying = !_isPlaying;
+      });
+    }
   }
 
   void _seek(double value) {
     if (_sequencer == null || _meltyMidi == null) return;
     
     final targetPos = Duration(milliseconds: value.toInt());
-    final wasPlaying = _isPlaying;
-    
-    setState(() { _isPlaying = false; });
+    AppLogger.log('MIDI Seek: Target ${targetPos.inMilliseconds}ms');
     
     _sequencer!.stop();
     _clearSynthSounds();
@@ -292,30 +352,28 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     final originalSpeed = _sequencer!.speed;
     _sequencer!.speed = 1000.0;
     
-    // Large skip chunks for faster seeking
-    const int skipChunkSize = 4096;
-    final dummyBuffer = ArrayInt16.zeros(numShorts: skipChunkSize);
+    // Smaller chunk size for better precision during seeking
+    const int seekChunkSize = 512; 
+    final dummyBuffer = ArrayInt16.zeros(numShorts: seekChunkSize);
     
     int safety = 0;
-    while (_sequencer!.position < targetPos && safety < 5000) {
+    // We render until sequencer position catches up to targetPos
+    while (_sequencer!.position < targetPos && safety < 100000) {
       _sequencer!.renderMonoInt16(dummyBuffer);
       safety++;
     }
+    
+    AppLogger.log('MIDI Seek Done: Final ${_sequencer!.position.inMilliseconds}ms (safety: $safety)');
     
     _sequencer!.speed = originalSpeed;
     _clearSynthSounds();
 
     setState(() {
       _position = _sequencer!.position;
-      _isPlaying = wasPlaying;
     });
-    
-    if (wasPlaying) {
-      FlutterPcmSound.play();
-    }
   }
 
-  void _toggleMute(int channel) {
+  void _toggleMute(int channel) async {
     if (_synth == null) return;
     setState(() {
       _channelMutes[channel] = !_channelMutes[channel];
@@ -326,6 +384,10 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         data2: _channelMutes[channel] ? 0 : 127
       );
     });
+
+    final prefs = await SharedPreferences.getInstance();
+    final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    await prefs.setString('midi_mutes_${mediaItem.id}', jsonEncode(_channelMutes));
   }
 
   String _formatDuration(Duration duration) {
@@ -448,7 +510,30 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           min: 0,
           max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
           value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
-          onChanged: _seek,
+          onChangeStart: (value) {
+            _wasPlayingBeforeScrub = _isPlaying;
+            if (_isPlaying) {
+              FlutterPcmSound.pause();
+              _clearSynthSounds();
+            }
+            setState(() {
+              _isScrubbing = true;
+            });
+          },
+          onChanged: (value) {
+            setState(() {
+              _position = Duration(milliseconds: value.toInt());
+            });
+          },
+          onChangeEnd: (value) {
+            _seek(value);
+            setState(() {
+              _isScrubbing = false;
+              if (_wasPlayingBeforeScrub) {
+                FlutterPcmSound.play();
+              }
+            });
+          },
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
