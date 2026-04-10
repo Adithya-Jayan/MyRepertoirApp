@@ -342,7 +342,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     if (_sequencer == null || _meltyMidi == null) return;
     
     final targetPos = Duration(milliseconds: value.toInt());
-    AppLogger.log('MIDI Seek: Target ${targetPos.inMilliseconds}ms');
     
     _sequencer!.stop();
     _clearSynthSounds();
@@ -359,8 +358,6 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _sequencer!.renderMonoInt16(dummyBuffer);
       safety++;
     }
-    
-    AppLogger.log('MIDI Seek Done: Final ${_sequencer!.position.inMilliseconds}ms (safety: $safety)');
     
     _sequencer!.speed = originalSpeed;
     _clearSynthSounds();

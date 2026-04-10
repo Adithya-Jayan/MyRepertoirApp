@@ -190,7 +190,6 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                           builder: (context, galleryColumns, child) {
                             AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
                             return LibraryBody(
-                                key: ValueKey('library_body_$galleryColumns'), // Force rebuild when columns change
                                 visibleGroups: visibleGroups,
                                 selectedGroupId: notifier.selectedGroupId,
                                 allMusicPieces: notifier.allMusicPiecesNotifier.value,

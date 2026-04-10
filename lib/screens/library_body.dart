@@ -97,10 +97,9 @@ class LibraryBody extends StatelessWidget {
             // PageView to display music pieces for each selected group.
             child: PageView.builder(
               controller: pageController,
-              itemCount: visibleGroups.isEmpty ? 1 : visibleGroups.length,
-              // Add page caching to reduce flickering
-              allowImplicitScrolling: true,
-              // Cache more pages to reduce flickering
+              itemCount: visibleGroups.length,
+              // Disable implicit scrolling to avoid pre-rendering heavy grids
+              allowImplicitScrolling: false,
               padEnds: false,
               onPageChanged: (index) {
                 if (visibleGroups.isNotEmpty && index < visibleGroups.length) {
