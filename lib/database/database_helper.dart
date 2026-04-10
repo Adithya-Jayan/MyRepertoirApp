@@ -12,6 +12,10 @@ import '../models/practice_log.dart';
 import 'database_schema.dart';
 import 'database_operations.dart';
 
+// Note: For Web support, we'd need sqflite_common_ffi_web, but to keep Android builds clean,
+// we are currently prioritizing the Android/Desktop path.
+// If web support is needed, consider using a separate helper or conditional exports.
+
 /// A singleton helper class for managing the SQLite database.
 /// Provides methods for database initialization, table creation, and CRUD operations
 /// for MusicPiece, Tag, and Group objects.

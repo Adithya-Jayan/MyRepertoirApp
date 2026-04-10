@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
+import 'package:repertoire/models/media_type.dart';
 
 /// A widget that displays a reorderable list of media items associated with a music piece.
 ///
@@ -44,29 +45,36 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
 
   @override
   Widget build(BuildContext context) {
-    if (_musicPiece.mediaItems.isEmpty) {
-      return const SizedBox.shrink(); // Hide the entire widget if no media items
+    // Filter out thumbnails for the display list in view mode
+    final visibleItemsIndices = _musicPiece.mediaItems
+        .asMap()
+        .entries
+        .where((e) => e.value.type != MediaType.thumbnails)
+        .map((e) => e.key)
+        .toList();
+
+    if (visibleItemsIndices.isEmpty) {
+      return const SizedBox.shrink(); // Hide the entire widget if no visible media items
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Media title removed
-        // Divider below title removed
         widget.allowReordering
             ? ReorderableListView.builder(
                 buildDefaultDragHandles: false,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _musicPiece.mediaItems.length,
+                itemCount: visibleItemsIndices.length,
                 itemBuilder: (context, index) {
-                  final item = _musicPiece.mediaItems[index];
+                  final mediaIndex = visibleItemsIndices[index];
+                  final item = _musicPiece.mediaItems[mediaIndex];
                   return Column( // Wrap in Column to add Divider below
                     key: ValueKey(item.id),
                     children: [
                       MediaDisplayWidget(
                         musicPiece: _musicPiece,
-                        mediaItemIndex: index,
+                        mediaItemIndex: mediaIndex,
                         isEditable: false,
                         trailing: ReorderableDragStartListener(
                           index: index,
@@ -74,13 +82,13 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                         ),
                         onMediaItemChanged: (newItem) {
                           setState(() {
-                            _musicPiece.mediaItems[index] = newItem;
+                            _musicPiece.mediaItems[mediaIndex] = newItem;
                           });
                           _repository.updateMusicPiece(_musicPiece);
                           widget.onMusicPieceChanged(_musicPiece);
                         },
                       ),
-                      if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
+                      if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
                         const Divider(indent: 16, endIndent: 16),
                     ],
                   );
@@ -90,8 +98,14 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                     if (newIndex > oldIndex) {
                       newIndex -= 1;
                     }
-                    final item = _musicPiece.mediaItems.removeAt(oldIndex);
-                    _musicPiece.mediaItems.insert(newIndex, item);
+                    
+                    // Map visual indices back to original indices
+                    final originalOldIndex = visibleItemsIndices[oldIndex];
+                    final originalNewIndex = visibleItemsIndices[newIndex];
+                    
+                    final item = _musicPiece.mediaItems.removeAt(originalOldIndex);
+                    _musicPiece.mediaItems.insert(originalNewIndex, item);
+                    
                     _repository.updateMusicPiece(_musicPiece);
                     widget.onMusicPieceChanged(_musicPiece);
                   });
@@ -100,25 +114,26 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
             : ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _musicPiece.mediaItems.length,
+                itemCount: visibleItemsIndices.length,
                 itemBuilder: (context, index) {
-                  final item = _musicPiece.mediaItems[index];
+                  final mediaIndex = visibleItemsIndices[index];
+                  final item = _musicPiece.mediaItems[mediaIndex];
                   return Column( // Wrap in Column to add Divider below
                     key: ValueKey(item.id),
                     children: [
                       MediaDisplayWidget(
                         musicPiece: _musicPiece,
-                        mediaItemIndex: index,
+                        mediaItemIndex: mediaIndex,
                         isEditable: false,
                         onMediaItemChanged: (newItem) {
                           setState(() {
-                            _musicPiece.mediaItems[index] = newItem;
+                            _musicPiece.mediaItems[mediaIndex] = newItem;
                           });
                           _repository.updateMusicPiece(_musicPiece);
                           widget.onMusicPieceChanged(_musicPiece);
                         },
                       ),
-                      if (index < _musicPiece.mediaItems.length - 1) // Add Divider if not the last item
+                      if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
                         const Divider(indent: 16, endIndent: 16),
                     ],
                   );

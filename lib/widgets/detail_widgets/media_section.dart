@@ -284,20 +284,29 @@ class _MediaSectionState extends State<MediaSection> {
                           icon: const Icon(Icons.image),
                           label: const Text('Change Image'),
                         ),
-                      // Set as piece thumbnail button
+                      // Use as piece thumbnail checkbox
                       if ((widget.item.type == MediaType.image || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.thumbnails) 
-                                ? widget.item.pathOrUrl 
-                                : _currentThumbnailPath!;
-                            widget.onSetThumbnail(path);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Thumbnail updated successfully')),
-                            );
-                          },
-                          icon: const Icon(Icons.photo_camera_back),
-                          label: const Text('Set as piece thumbnail'),
+                        SizedBox(
+                          width: 250,
+                          child: CheckboxListTile(
+                            title: const Text('Use as piece thumbnail', style: TextStyle(fontSize: 14)),
+                            value: widget.musicPieceThumbnail.isNotEmpty && 
+                                   (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                                    widget.musicPieceThumbnail == _currentThumbnailPath),
+                            onChanged: (bool? value) {
+                              if (value == true) {
+                                final path = (widget.item.type == MediaType.image) 
+                                    ? widget.item.pathOrUrl 
+                                    : _currentThumbnailPath!;
+                                widget.onSetThumbnail(path);
+                              } else {
+                                widget.onSetThumbnail('');
+                              }
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
                         ),
                     ],
                   ),

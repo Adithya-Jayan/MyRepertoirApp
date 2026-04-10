@@ -165,107 +165,179 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     }
   }
 
+  bool _hasChanges() {
+    // Basic fields
+    if (_musicPiece.title != (widget.musicPiece?.title ?? '') ||
+        _musicPiece.artistComposer != (widget.musicPiece?.artistComposer ?? 'Unknown Artist') ||
+        _musicPiece.enablePracticeTracking != (widget.musicPiece?.enablePracticeTracking ?? true)) {
+      return true;
+    }
+
+    // Groups
+    final originalGroupIds = widget.musicPiece?.groupIds.toSet() ?? (widget.selectedGroupId != null ? {widget.selectedGroupId!} : <String>{});
+    if (_selectedGroupIds.length != originalGroupIds.length || !_selectedGroupIds.containsAll(originalGroupIds)) {
+      return true;
+    }
+
+    // Tag groups (Deep compare)
+    final originalTagGroups = widget.musicPiece?.tagGroups ?? [];
+    if (_musicPiece.tagGroups.length != originalTagGroups.length) return true;
+    for (int i = 0; i < _musicPiece.tagGroups.length; i++) {
+      if (_musicPiece.tagGroups[i].name != originalTagGroups[i].name ||
+          _musicPiece.tagGroups[i].color != originalTagGroups[i].color ||
+          _musicPiece.tagGroups[i].tags.join(',') != originalTagGroups[i].tags.join(',')) {
+        return true;
+      }
+    }
+
+    // Media items
+    final originalMediaItems = widget.musicPiece?.mediaItems ?? [];
+    if (_musicPiece.mediaItems.length != originalMediaItems.length) return true;
+    for (int i = 0; i < _musicPiece.mediaItems.length; i++) {
+      if (_musicPiece.mediaItems[i].id != originalMediaItems[i].id ||
+          _musicPiece.mediaItems[i].pathOrUrl != originalMediaItems[i].pathOrUrl) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     AppLogger.log('AddEditPieceScreen: build called');
     final hasThumbnail = _musicPiece.mediaItems.any((item) => item.type == MediaType.thumbnails);
 
     return SafeArea(
-      child: Scaffold(
-      appBar: AppBar(
-        title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _savePiece,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          
+          if (!_hasChanges()) {
+            if (mounted) Navigator.of(context).pop();
+            return;
+          }
+
+          final shouldPop = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Unsaved Changes'),
+              content: const Text('You have unsaved changes. Are you sure you want to discard them?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Stay'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Discard'),
+                ),
+              ],
             ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              BasicDetailsSection(
-                musicPiece: _musicPiece,
-                onTitleChanged: (value) => _musicPiece.title = value,
-                onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
-              ),
-              const SizedBox(height: 20),
-              GroupsSection(
-                availableGroups: _availableGroups,
-                selectedGroupIds: _selectedGroupIds,
-                onGroupIdsChanged: (newGroupIds) {
-                  setState(() {
-                    _selectedGroupIds = newGroupIds;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              SwitchListTile(
-                title: const Text('Enable Practice Tracking'),
-                value: _musicPiece.enablePracticeTracking,
-                onChanged: (bool value) {
-                  setState(() {
-                    _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              TagGroupsSection(
-                tagGroups: _musicPiece.tagGroups,
-                allTagGroupNames: _allTagGroupNames,
-                onUpdateTagGroup: _handleUpdateTagGroup,
-                onDeleteTagGroup: (tagGroup) => 
-                  _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
-                onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
-                onReorderTagGroups: (oldIndex, newIndex) => 
-                  _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
-                onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
-                onFetchMostCommonColor: _fetchMostCommonColor,
-              ),
-              const SizedBox(height: 20),
-              MediaSectionWidget(
-                musicPiece: _musicPiece,
-                onMusicPieceChanged: (updatedMusicPiece) {
-                  setState(() {
-                    _musicPiece = updatedMusicPiece;
-                  });
-                },
-              ),
+          );
+
+          if (shouldPop == true && mounted) {
+            final navigator = Navigator.of(context);
+            navigator.pop();
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
+            actions: [
+              if (_isSaving)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.save),
+                  onPressed: _savePiece,
+                ),
             ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  BasicDetailsSection(
+                    musicPiece: _musicPiece,
+                    onTitleChanged: (value) => _musicPiece.title = value,
+                    onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
+                  ),
+                  const SizedBox(height: 20),
+                  GroupsSection(
+                    availableGroups: _availableGroups,
+                    selectedGroupIds: _selectedGroupIds,
+                    onGroupIdsChanged: (newGroupIds) {
+                      setState(() {
+                        _selectedGroupIds = newGroupIds;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  SwitchListTile(
+                    title: const Text('Enable Practice Tracking'),
+                    value: _musicPiece.enablePracticeTracking,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TagGroupsSection(
+                    tagGroups: _musicPiece.tagGroups,
+                    allTagGroupNames: _allTagGroupNames,
+                    onUpdateTagGroup: _handleUpdateTagGroup,
+                    onDeleteTagGroup: (tagGroup) => 
+                      _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
+                    onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
+                    onReorderTagGroups: (oldIndex, newIndex) => 
+                      _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
+                    onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+                    onFetchMostCommonColor: _fetchMostCommonColor,
+                  ),
+                  const SizedBox(height: 20),
+                  MediaSectionWidget(
+                    musicPiece: _musicPiece,
+                    onMusicPieceChanged: (updatedMusicPiece) {
+                      setState(() {
+                        _musicPiece = updatedMusicPiece;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          floatingActionButton: SpeedDialWidget(
+            hasThumbnail: hasThumbnail,
+            onAddMediaItem: (mediaType) async {
+              if (mediaType == MediaType.learningProgress) {
+                final config = await showDialog<LearningProgressConfig>(
+                  context: context,
+                  builder: (context) => const LearningProgressConfigDialog(),
+                );
+                if (config != null) {
+                  final configJson = LearningProgressConfig.encode(config);
+                  _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems), configData: configJson);
+                }
+              } else {
+                _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems));
+              }
+            },
           ),
         ),
       ),
-      floatingActionButton: SpeedDialWidget(
-        hasThumbnail: hasThumbnail,
-        onAddMediaItem: (mediaType) async {
-          if (mediaType == MediaType.learningProgress) {
-            final config = await showDialog<LearningProgressConfig>(
-              context: context,
-              builder: (context) => const LearningProgressConfigDialog(),
-            );
-            if (config != null) {
-              final configJson = LearningProgressConfig.encode(config);
-              _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems), configData: configJson);
-            }
-          } else {
-            _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems));
-          }
-        },
-      ),
-    ),
     );
   }
 }

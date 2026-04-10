@@ -93,6 +93,7 @@ class MusicPieceGridView extends StatelessWidget {
       piece: piece,
       isSelected: isSelected,
       isListView: galleryColumns == 1,
+      galleryColumns: galleryColumns,
       onTap: () async {
         // Check if Shift key is pressed for multi-selection.
         final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||

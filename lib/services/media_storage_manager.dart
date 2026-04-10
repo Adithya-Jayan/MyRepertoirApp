@@ -12,9 +12,9 @@ import '../models/media_type.dart';
 /// local storage, and deleting media files and their directories.
 class MediaStorageManager {
   /// Returns the application's documents directory.
-  static Future<Directory> get _appDirectory async {
+  static Future<Directory?> get _appDirectory async {
     if (kIsWeb) {
-      throw UnsupportedError('Local storage is not supported on Web');
+      return null;
     }
     return await getApplicationDocumentsDirectory();
   }
@@ -24,8 +24,10 @@ class MediaStorageManager {
   /// Creates the directory if it doesn't already exist.
   ///
   /// If [mediaType] is MediaType.thumbnails, this returns the hierarchical thumbnail directory for the piece.
-  static Future<Directory> getPieceMediaDirectory(String pieceId, MediaType mediaType) async {
+  static Future<Directory?> getPieceMediaDirectory(String pieceId, MediaType mediaType) async {
     final appDir = await _appDirectory;
+    if (appDir == null) return null;
+    
     final mediaTypeString = mediaType.toString().split('.').last; // Extract media type string (e.g., 'image', 'pdf').
     final pieceMediaDir = Directory(path.join(appDir.path, 'media', pieceId, mediaTypeString)); // Construct the full path.
     if (!await pieceMediaDir.exists()) {
@@ -39,7 +41,16 @@ class MediaStorageManager {
   /// The file is copied into a specific directory structured by piece ID and media type.
   /// A unique filename is generated to prevent conflicts.
   static Future<String> copyMediaToLocal(String originalPath, String pieceId, MediaType mediaType) async {
+    if (kIsWeb) {
+      // On web, we cannot copy files to a local filesystem.
+      // For now, we return the original path (if it's a URL) or throw.
+      if (originalPath.startsWith('http')) return originalPath;
+      return originalPath; // Return as is, web might use blobs or URLs directly
+    }
+
     final pieceMediaDir = await getPieceMediaDirectory(pieceId, mediaType); // Get the target directory for the media file.
+    if (pieceMediaDir == null) return originalPath;
+
     final originalFile = File(originalPath);
     if (!await originalFile.exists()) {
       throw Exception('Original file does not exist: $originalPath'); // Throw an error if the original file is not found.
@@ -59,13 +70,16 @@ class MediaStorageManager {
 
   /// Checks if a given file path is within the application's local storage directory.
   static Future<bool> isFileInLocalStorage(String filePath) async {
+    if (kIsWeb) return false;
     final appDir = await _appDirectory;
+    if (appDir == null) return false;
     final mediaDir = path.join(appDir.path, 'media'); // Construct the base media directory path.
     return filePath.startsWith(mediaDir); // Check if the file path starts with the media directory path.
   }
 
   /// Deletes a local media file if it exists within the application's storage.
   static Future<void> deleteLocalMediaFile(String filePath) async {
+    if (kIsWeb) return;
     if (!await isFileInLocalStorage(filePath)) {
       return; // Do nothing if the file is not in local storage.
     }
@@ -80,7 +94,9 @@ class MediaStorageManager {
   ///
   /// This removes all media files (images, PDFs, audio, etc.) for that piece.
   static Future<void> deletePieceMediaDirectory(String pieceId) async {
+    if (kIsWeb) return;
     final appDir = await _appDirectory;
+    if (appDir == null) return;
     final pieceDir = Directory(path.join(appDir.path, 'media', pieceId)); // Construct the music piece's media directory path.
     if (await pieceDir.exists()) {
         await pieceDir.delete(recursive: true); // Delete the directory and its contents recursively.
