@@ -161,6 +161,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  dart_melty_soundfont:
+    dependency: "direct main"
+    description:
+      name: dart_melty_soundfont
+      sha256: ed961db658b588da49ae1d9e21ebb3b725677f2d78721a80c5e47cddde72a5d0
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
+  dart_midi_pro:
+    dependency: "direct main"
+    description:
+      name: dart_midi_pro
+      sha256: "9a0273c92c0336e5694c7318fd936f64f06e938a936dd5fac6563c39954b7f6d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4+2"
   dart_pubspec_licenses:
     dependency: transitive
     description:
@@ -270,6 +286,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  flutter_pcm_sound:
+    dependency: "direct main"
+    description:
+      name: flutter_pcm_sound
+      sha256: e963b3a0c7658d57255f6e44fceddff6c7751dff82b7bcd561cfc1d5478d4e20
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.7"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:

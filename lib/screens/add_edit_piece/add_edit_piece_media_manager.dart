@@ -38,6 +38,12 @@ class AddEditPieceMediaManager {
           allowedExtensions: ['mp4', 'mov', 'avi', 'mkv'],
         );
         break;
+      case MediaType.midi:
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mid', 'midi'],
+        );
+        break;
       case MediaType.markdown:
         result = await FilePicker.platform.pickFiles(
           type: FileType.custom, 

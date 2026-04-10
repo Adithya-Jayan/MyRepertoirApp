@@ -196,6 +196,7 @@ class ShareHandlerService {
         final ext = path.extension(file.path).toLowerCase();
         if (ext == '.pdf') return MediaType.pdf;
         if (ext == '.md' || ext == '.txt') return MediaType.markdown;
+        if (ext == '.mid' || ext == '.midi') return MediaType.midi;
         return null; 
       case SharedMediaType.text:
          if (Uri.tryParse(file.path)?.hasAbsolutePath ?? false) {
