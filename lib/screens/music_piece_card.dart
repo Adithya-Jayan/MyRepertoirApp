@@ -63,28 +63,30 @@ class MusicPieceCard extends StatelessWidget {
 
     Widget textWithOutline(String text, TextStyle? style) {
       if (hasThumbnail && thumbnailStyle == ThumbnailStyle.outline) {
-        return Stack(
-          children: <Widget>[
-            // Stroked text as border.
-            Text(
-              text,
-              style: style?.copyWith(
-                foreground: Paint()
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 3
-                  ..color = brightness == Brightness.dark ? Colors.black : Colors.white,
+        return Text(
+          text,
+          style: style?.copyWith(
+            shadows: [
+              Shadow(
+                offset: const Offset(-1.5, -1.5),
+                color: brightness == Brightness.dark ? Colors.black : Colors.white,
               ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-            // Solid text as fill.
-            Text(
-              text,
-              style: style,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
+              Shadow(
+                offset: const Offset(1.5, -1.5),
+                color: brightness == Brightness.dark ? Colors.black : Colors.white,
+              ),
+              Shadow(
+                offset: const Offset(1.5, 1.5),
+                color: brightness == Brightness.dark ? Colors.black : Colors.white,
+              ),
+              Shadow(
+                offset: const Offset(-1.5, 1.5),
+                color: brightness == Brightness.dark ? Colors.black : Colors.white,
+              ),
+            ],
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         );
       } else {
         return Text(
@@ -113,21 +115,22 @@ class MusicPieceCard extends StatelessWidget {
           child: Stack(
             children: [
               if (hasThumbnail)
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.file(
-                      File(piece.thumbnailPath!),
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                      cacheWidth: isListView ? 800 : 300,
-                      errorBuilder: (context, error, stackTrace) {
-                        AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
-                        return Container();
-                      },
-                    ),
-                  ),
-                ),
+              Positioned.fill(
+              child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.file(
+                File(piece.thumbnailPath!),
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: isListView ? 300 : 250,
+                errorBuilder: (context, error, stackTrace) {
+                  AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
+                  return Container();
+                },
+              ),
+              ),
+              ),
+
               if (hasThumbnail && thumbnailStyle == ThumbnailStyle.gradient)
                  Positioned.fill(
                   child: ClipRRect(
@@ -191,19 +194,20 @@ class MusicPieceCard extends StatelessWidget {
                           : galleryColumns <= 4
                               ? SizedBox(
                                   height: 32, // Fixed height for chips row
-                                  child: ListView(
+                                  child: SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
-                                    shrinkWrap: true,
                                     primary: false,
                                     physics: const ClampingScrollPhysics(), // Snappier scrolling
-                                    children: [
-                                      for (final tg in piece.tagGroups)
-                                        for (final tag in tg.tags)
-                                          Padding(
-                                            padding: const EdgeInsets.only(right: 4.0),
-                                            child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
-                                          ),
-                                    ],
+                                    child: Row(
+                                      children: [
+                                        for (final tg in piece.tagGroups)
+                                          for (final tag in tg.tags)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 4.0),
+                                              child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
+                                            ),
+                                      ],
+                                    ),
                                   ),
                                 )
                               : Padding(

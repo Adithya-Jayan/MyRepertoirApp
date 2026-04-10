@@ -52,7 +52,8 @@ class MusicPieceGridView extends StatelessWidget {
           key: ValueKey('list_${currentPageGroupId}_$galleryColumns'),
           padding: const EdgeInsets.all(8.0),
           itemCount: musicPieces.length,
-          cacheExtent: 300,
+          cacheExtent: 500,
+          addRepaintBoundaries: false,
           physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (context, index) {
              final piece = musicPieces[index];
@@ -69,7 +70,8 @@ class MusicPieceGridView extends StatelessWidget {
       child: GridView.builder(
         key: ValueKey('grid_${currentPageGroupId}_$galleryColumns'), // More stable key
         padding: const EdgeInsets.all(8.0),
-        cacheExtent: 300,
+        cacheExtent: 500,
+        addRepaintBoundaries: false,
         physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: galleryColumns, // Number of columns in the grid.
