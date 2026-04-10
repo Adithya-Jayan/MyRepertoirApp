@@ -466,13 +466,22 @@ jobs:
       - name: Zip Release
         shell: bash
         run: |
-          cd ${{ matrix.asset_path }}
-          # Zip the contents of the build directory
+          # Create a temporary staging directory with the versioned name
+          STAGING_DIR="${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}"
+          mkdir -p "$STAGING_DIR"
+          
+          # Copy contents to staging
+          cp -r ${{ matrix.asset_path }}/* "$STAGING_DIR/"
+          
+          # Zip the staging directory
           if [ "${{ matrix.target }}" == "windows" ]; then
-             powershell "Get-ChildItem -Path . | Compress-Archive -DestinationPath ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip"
+             powershell "Compress-Archive -Path $STAGING_DIR -DestinationPath ${STAGING_DIR}.zip"
           else
-             zip -r ../../../../../${{ matrix.zip_name }}-v${{ needs.release.outputs.final_version_string }}.zip .
+             zip -r "${STAGING_DIR}.zip" "$STAGING_DIR"
           fi
+          
+          # Move zip back to root for upload
+          mv "${STAGING_DIR}.zip" ../../../../../
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
