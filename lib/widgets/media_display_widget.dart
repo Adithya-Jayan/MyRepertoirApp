@@ -12,8 +12,9 @@ import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
 import '../screens/video_player_widget.dart';
-import '../screens/midi_player_widget.dart';
-import 'dart:io';
+import '../screens/midi_player_widget.dart'
+    if (dart.library.html) '../screens/midi_player_widget_web.dart';
+import 'dart:io' as io;
 
 class MediaDisplayWidget extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -144,19 +145,26 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         case MediaType.localVideo:
         case MediaType.midi:
           // Verify file exists before sharing
-          final file = File(pathOrUrl);
-          if (await file.exists()) {
-            params = ShareParams(
-              files: [XFile(pathOrUrl)],
-              sharePositionOrigin: shareOrigin,
-            );
+          if (kIsWeb) {
+             params = ShareParams(
+               text: pathOrUrl,
+               sharePositionOrigin: shareOrigin,
+             );
           } else {
-             if (mounted) {
-               ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('File not found to share.')),
-               );
-             }
-             return;
+            final file = io.File(pathOrUrl);
+            if (await file.exists()) {
+              params = ShareParams(
+                files: [XFile(pathOrUrl)],
+                sharePositionOrigin: shareOrigin,
+              );
+            } else {
+               if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   const SnackBar(content: Text('File not found to share.')),
+                 );
+               }
+               return;
+            }
           }
           break;
         default:
@@ -212,17 +220,19 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           },
           child: SizedBox(
             height: 200,
-            child: Image.file(
-              File(currentMediaItem.pathOrUrl),
-              fit: BoxFit.contain, // Maintain aspect ratio within the bounds
-            ),
+            child: kIsWeb 
+              ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
+              : Image.file(
+                  io.File(currentMediaItem.pathOrUrl),
+                  fit: BoxFit.contain, // Maintain aspect ratio within the bounds
+                ),
           ),
         );
         break;
       case MediaType.localVideo:
         if (widget.isEditable) {
           content = FutureBuilder<bool>(
-            future: File(currentMediaItem.pathOrUrl).exists(),
+            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
             builder: (context, snapshot) {
               final fileExists = snapshot.data ?? false;
               return Container(
@@ -279,7 +289,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       case MediaType.midi:
         if (widget.isEditable) {
           content = FutureBuilder<bool>(
-            future: File(currentMediaItem.pathOrUrl).exists(),
+            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
             builder: (context, snapshot) {
               final fileExists = snapshot.data ?? false;
               return Container(
@@ -337,7 +347,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         if (widget.isEditable) {
           // In edit mode, show a simple file status instead of full audio player
           content = FutureBuilder<bool>(
-            future: File(currentMediaItem.pathOrUrl).exists(),
+            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
             builder: (context, snapshot) {
               final fileExists = snapshot.data ?? false;
               return Container(
@@ -403,11 +413,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           child: (currentMediaItem.thumbnailPath != null &&
                   currentMediaItem.thumbnailPath!.isNotEmpty &&
                   currentMediaItem.thumbnailPath != '')
-              ? Image.file(
-                  File(currentMediaItem.thumbnailPath!),
-                  height: 200,
-                  fit: BoxFit.contain,
-                )
+              ? (kIsWeb 
+                  ? Image.network(currentMediaItem.thumbnailPath!, height: 200, fit: BoxFit.contain)
+                  : Image.file(
+                      io.File(currentMediaItem.thumbnailPath!),
+                      height: 200,
+                      fit: BoxFit.contain,
+                    ))
               : Container(
                   height: 200,
                   color: Colors.blueGrey,
@@ -446,10 +458,12 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           },
           child: SizedBox(
             height: 200,
-            child: Image.file(
-              File(currentMediaItem.pathOrUrl),
-              fit: BoxFit.contain, // Maintain aspect ratio within the bounds
-            ),
+            child: kIsWeb 
+              ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
+              : Image.file(
+                  io.File(currentMediaItem.pathOrUrl),
+                  fit: BoxFit.contain, // Maintain aspect ratio within the bounds
+                ),
           ),
         );
         break;
@@ -458,7 +472,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     final bool showShareButton = !widget.isEditable && 
                                 currentMediaItem.type != MediaType.thumbnails && 
                                 currentMediaItem.type != MediaType.learningProgress &&
-                                (kIsWeb || (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS));
+                                (kIsWeb || (defaultTargetPlatform != TargetPlatform.windows && 
+                                            defaultTargetPlatform != TargetPlatform.linux && 
+                                            defaultTargetPlatform != TargetPlatform.macOS));
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
