@@ -69,6 +69,7 @@ jobs:
         with:
           flutter-version: '3.35.1'
           channel: 'stable'
+          cache: true
 
       - name: Install yq
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'

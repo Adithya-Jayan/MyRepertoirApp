@@ -52,6 +52,7 @@ jobs:
         with:
           flutter-version: '3.35.1'
           channel: 'stable'
+          cache: true
 
       - name: Install yq
         run: |
@@ -379,7 +380,7 @@ jobs:
             **Previous Version:** ${{ steps.version_calc.outputs.CURRENT_VERSION }}
             
             ### Build Information
-            - Flutter Version: 3.32.5
+            - Flutter Version: 3.35.1
             - Build Date: ${{ steps.get_build_date.outputs.build_date }}
             </details>
 
@@ -450,6 +451,7 @@ jobs:
         with:
           flutter-version: '3.35.1'
           channel: 'stable'
+          cache: true
       
       - name: Install Linux Dependencies
         if: matrix.target == 'linux'
