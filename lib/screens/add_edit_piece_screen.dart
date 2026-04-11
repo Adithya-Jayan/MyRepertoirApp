@@ -219,6 +219,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             return;
           }
 
+          final navigator = Navigator.of(context);
           final shouldPop = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
@@ -238,7 +239,6 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           );
 
           if (shouldPop == true && mounted) {
-            final navigator = Navigator.of(context);
             navigator.pop();
           }
         },

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -465,7 +464,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           height: 120,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: ClipRect(
