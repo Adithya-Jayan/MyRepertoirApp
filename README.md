@@ -5,9 +5,9 @@
 [![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml)
 [![Nightly Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml)
 
-[![Github All Releases](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/total.svg)]()
-[![Github Lastest Releases](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/latest/total.svg)]()
-
+[![GitHub Downloads](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/total.svg?label=GitHub%20Downloads&logo=github)]()
+[![Latest Release Downloads](https://img.shields.io/github/downloads/Adithya-Jayan/MyRepertoirApp/latest/total.svg?label=Latest%20Release%20Downloads&logo=github)]()
+![F-Droid Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2Fio.github.adithya_jayan.myrepertoirapp.fdroid.json&query=%24.total_downloads&logo=fdroid&label=F-Droid%20Downloads)
 
 [![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
 
