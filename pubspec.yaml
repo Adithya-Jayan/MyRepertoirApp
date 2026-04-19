@@ -33,7 +33,7 @@ dependencies:
   uuid: ^4.4.0 # For generating unique IDs
   http: ^1.2.1 # For making HTTP requests
   file_picker: ^10.3.6 # For picking files from local storage
-  pdfrx: ^2.2.16 # Or another PDF viewer
+  pdfx: ^2.5.0 # F-Droid compatible PDF viewer
   flutter_markdown_plus: ^1.0.5 # For rendering markdown
   photo_view: ^0.15.0 # For zoomable images
   just_audio: ^0.10.5 # For audio playback
