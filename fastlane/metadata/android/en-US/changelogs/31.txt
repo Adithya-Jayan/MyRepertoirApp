@@ -1,0 +1,3 @@
+Patch to update the pdf library so fdroid build can go through.
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.8.0+30...v4.8.1+31
