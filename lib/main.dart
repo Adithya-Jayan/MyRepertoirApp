@@ -126,6 +126,7 @@ class _MyAppState extends State<MyApp> {
     if (!hasRunBefore) {
       await prefs.setInt('galleryColumns', 2);
       await prefs.setBool('all_group_isHidden', true);
+      await prefs.setBool('notifyNewReleases', true);
     }
   }
 
