@@ -111,6 +111,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
     // Load saved sort option
     _sortOption = _settingsManager.loadSortOption();
     AppLogger.log('LibraryScreenNotifier: Loaded saved sort option: $_sortOption');
+
+    // Load saved filter options
+    _filterOptions = _settingsManager.loadFilterOptions();
+    AppLogger.log('LibraryScreenNotifier: Loaded saved filter options');
     
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
@@ -179,11 +183,15 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   void setFilterOptions(Map<String, dynamic> newFilterOptions) {
     _filterOptions = newFilterOptions;
+    // Save filter options to persistent storage
+    _settingsManager.saveFilterOptions(newFilterOptions);
     notifyListeners();
   }
 
   void clearFilter() {
     _filterOptions = {'orderedTags': <String, List<String>>{}};
+    // Save filter options to persistent storage
+    _settingsManager.saveFilterOptions(_filterOptions);
     notifyListeners();
     _updateFilteredResultsCache();
     loadMusicPieces();

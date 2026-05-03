@@ -1,4 +1,5 @@
 
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_logger.dart';
@@ -74,4 +75,44 @@ class SettingsManager {
     await prefs.setString('sortOption', sortOption);
     AppLogger.log('SettingsManager: Sort option saved: $sortOption');
   }
-} 
+
+  /// Loads filter options from SharedPreferences.
+  Map<String, dynamic> loadFilterOptions() {
+    final filterJson = prefs.getString('filterOptions');
+    if (filterJson != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(filterJson);
+
+        // Specially handle orderedTags to ensure correct types
+        if (decoded.containsKey('orderedTags')) {
+          final Map<String, dynamic> rawTags = decoded['orderedTags'];
+          final Map<String, List<String>> orderedTags = {};
+          rawTags.forEach((key, value) {
+            if (value is List) {
+              orderedTags[key] = List<String>.from(value);
+            }
+          });
+          decoded['orderedTags'] = orderedTags;
+        }
+
+        AppLogger.log('SettingsManager: Filter options loaded');
+        return decoded;
+      } catch (e) {
+        AppLogger.log('SettingsManager: Error decoding filter options: $e');
+      }
+    }
+    return {'orderedTags': <String, List<String>>{}};
+  }
+
+  /// Saves filter options to SharedPreferences.
+  Future<void> saveFilterOptions(Map<String, dynamic> filterOptions) async {
+    try {
+      final jsonStr = jsonEncode(filterOptions);
+      await prefs.setString('filterOptions', jsonStr);
+      AppLogger.log('SettingsManager: Filter options saved');
+    } catch (e) {
+      AppLogger.log('SettingsManager: Error encoding filter options: $e');
+    }
+  }
+}
+ 
