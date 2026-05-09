@@ -18,7 +18,7 @@ class UpdateService {
   /// Checks for updates and shows a dialog if a new version is available.
   Future<void> checkForUpdates(BuildContext context, {bool manual = false}) async {
     final prefs = await SharedPreferences.getInstance();
-    final shouldNotify = prefs.getBool('notifyNewReleases') ?? false;
+    final shouldNotify = prefs.getBool('notifyNewReleases') ?? true;
 
     if (!manual && !shouldNotify) return;
 

@@ -35,7 +35,7 @@ class AddEditPieceTagManager {
   void addTagGroup(List<TagGroup> currentTagGroups) {
     final newTagGroups = List<TagGroup>.from(currentTagGroups);
     final newTagGroup = TagGroup(id: const Uuid().v4(), name: '', tags: []);
-    newTagGroups.add(newTagGroup);
+    newTagGroups.insert(0, newTagGroup);
     onTagGroupsChanged(newTagGroups);
   }
 

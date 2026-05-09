@@ -36,7 +36,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     setState(() {
       _stages = stages;
       _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
-      _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? false;
+      _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? true;
       _isLoading = false;
     });
   }
