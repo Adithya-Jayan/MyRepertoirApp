@@ -89,6 +89,24 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   final Uuid _uuid = const Uuid();
 
   @override
+  void didUpdateWidget(MidiPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldMediaItem = oldWidget.musicPiece.mediaItems[oldWidget.mediaItemIndex];
+    final newMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    
+    if (oldMediaItem.configData != newMediaItem.configData) {
+      setState(() {
+        _trackConfig = MidiTrackConfig.fromJson(newMediaItem.configData ?? '{}');
+        // Re-apply track settings to the synthesizer
+        for (int i = 0; i < 16; i++) {
+          final config = _trackConfig.channels[i] ?? ChannelConfig();
+          _applyTrackSettings(i, config);
+        }
+      });
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
