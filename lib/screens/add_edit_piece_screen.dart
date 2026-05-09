@@ -231,7 +231,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     if (_musicPiece.mediaItems.length != originalMediaItems.length) return true;
     for (int i = 0; i < _musicPiece.mediaItems.length; i++) {
       if (_musicPiece.mediaItems[i].id != originalMediaItems[i].id ||
-          _musicPiece.mediaItems[i].pathOrUrl != originalMediaItems[i].pathOrUrl) {
+          _musicPiece.mediaItems[i].pathOrUrl != originalMediaItems[i].pathOrUrl ||
+          _musicPiece.mediaItems[i].configData != originalMediaItems[i].configData) {
         return true;
       }
     }

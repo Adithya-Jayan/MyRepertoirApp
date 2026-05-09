@@ -668,7 +668,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                             Expanded(
                               flex: 3,
                               child: Text(
-                                config.name ?? 'Channel ${ch + 1}',
+                                config.name?.isNotEmpty == true ? config.name! : 'Channel ${ch + 1}',
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                                 overflow: TextOverflow.ellipsis,
                               ),

@@ -36,7 +36,8 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
       setState(() {
         _activeChannels = active;
         for (var ch in _activeChannels) {
-          final existingName = widget.initialConfig.channels[ch]?.name ?? names[ch] ?? '';
+          final existing = widget.initialConfig.channels[ch]?.name;
+          final existingName = (existing != null && existing.isNotEmpty) ? existing : (names[ch] ?? '');
           _controllers[ch] = TextEditingController(text: existingName);
         }
         _isLoading = false;
@@ -71,6 +72,7 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
                       controller: _controllers[ch],
                       decoration: InputDecoration(
                         labelText: 'Channel ${ch + 1}',
+                        hintText: 'Enter name for channel ${ch + 1}',
                         border: const OutlineInputBorder(),
                         isDense: true,
                       ),
@@ -89,7 +91,9 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
             final Map<int, ChannelConfig> updatedChannels = Map.from(widget.initialConfig.channels);
             _controllers.forEach((ch, controller) {
               final existing = updatedChannels[ch] ?? ChannelConfig();
-              updatedChannels[ch] = existing.copyWith(name: controller.text);
+              // Save as null if empty to allow fallback to default names
+              final newName = controller.text.trim();
+              updatedChannels[ch] = existing.copyWith(name: newName.isNotEmpty ? newName : null);
             });
             Navigator.pop(context, widget.initialConfig.copyWith(channels: updatedChannels));
           },
