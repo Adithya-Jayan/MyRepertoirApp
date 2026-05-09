@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/tag_group.dart';
 import '../detail_widgets/tag_group_section.dart';
+import './highlightable_widget.dart';
 
 /// A widget that displays and manages tag groups for a music piece.
 class TagGroupsSection extends StatelessWidget {
@@ -12,6 +13,9 @@ class TagGroupsSection extends StatelessWidget {
   final Function(int, int) onReorderTagGroups;
   final VoidCallback onAddTagGroup;
   final Future<int?> Function(String) onFetchMostCommonColor;
+  final String? newlyAddedId;
+  final VoidCallback? onHighlightComplete;
+  final Map<String, GlobalKey> itemKeys;
 
   const TagGroupsSection({
     super.key,
@@ -23,6 +27,9 @@ class TagGroupsSection extends StatelessWidget {
     required this.onReorderTagGroups,
     required this.onAddTagGroup,
     required this.onFetchMostCommonColor,
+    this.newlyAddedId,
+    this.onHighlightComplete,
+    required this.itemKeys,
   });
 
   @override
@@ -48,15 +55,22 @@ class TagGroupsSection extends StatelessWidget {
           buildDefaultDragHandles: false,
           itemBuilder: (context, index) {
             final tagGroup = tagGroups[index];
-            return TagGroupSection(
+            final itemKey = itemKeys.putIfAbsent(tagGroup.id, () => GlobalKey());
+            
+            return HighlightableWidget(
               key: ValueKey(tagGroup.id),
-              tagGroup: tagGroup,
-              index: index,
-              allTagGroupNames: allTagGroupNames,
-              onUpdateTagGroup: onUpdateTagGroup,
-              onDeleteTagGroup: onDeleteTagGroup,
-              onGetAllTagsForTagGroup: onGetAllTagsForTagGroup,
-              onFetchMostCommonColor: onFetchMostCommonColor,
+              isHighlighted: newlyAddedId == tagGroup.id,
+              onHighlightComplete: onHighlightComplete,
+              child: TagGroupSection(
+                key: itemKey,
+                tagGroup: tagGroup,
+                index: index,
+                allTagGroupNames: allTagGroupNames,
+                onUpdateTagGroup: onUpdateTagGroup,
+                onDeleteTagGroup: onDeleteTagGroup,
+                onGetAllTagsForTagGroup: onGetAllTagsForTagGroup,
+                onFetchMostCommonColor: onFetchMostCommonColor,
+              ),
             );
           },
           onReorder: onReorderTagGroups,

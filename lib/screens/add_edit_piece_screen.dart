@@ -2,10 +2,9 @@ import 'package:repertoire/models/tag_group.dart';
 import 'package:flutter/material.dart';
 import '../models/music_piece.dart';
 import '../models/media_item.dart';
-import '../models/media_type.dart'; // Added import
-import '../models/learning_progress_config.dart'; // Added import
-import '../widgets/add_edit_piece/learning_progress_config_dialog.dart'; // Added import
-
+import '../models/media_type.dart';
+import '../models/learning_progress_config.dart';
+import '../widgets/add_edit_piece/learning_progress_config_dialog.dart';
 
 import '../models/group.dart';
 import '../database/music_piece_repository.dart';
@@ -40,12 +39,22 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   late final AddEditPieceTagManager _tagManager;
   late final AddEditPieceFormHandler _formHandler;
 
+  final ScrollController _scrollController = ScrollController();
+  String? _newlyAddedId;
+  final Map<String, GlobalKey> _itemKeys = {};
+
   @override
   void initState() {
     super.initState();
     _initializeManagers();
     _initializeMusicPiece();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _initializeManagers() {
@@ -94,16 +103,43 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     return await _tagManager.getMostCommonColorForTagGroup(tagName);
   }
 
+  void _scrollToItem(String id) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _itemKeys[id];
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
   void _onMediaItemsChanged(List<MediaItem> newMediaItems) {
+    final currentIds = _musicPiece.mediaItems.map((e) => e.id).toSet();
+    final newId = newMediaItems.map((e) => e.id).firstWhere((id) => !currentIds.contains(id), orElse: () => '');
+
     setState(() {
       _musicPiece = _musicPiece.copyWith(mediaItems: newMediaItems);
+      if (newId.isNotEmpty) {
+        _newlyAddedId = newId;
+        _scrollToItem(newId);
+      }
     });
   }
 
   void _onTagGroupsChanged(List<TagGroup> newTagGroups) {
     AppLogger.log('AddEditPieceScreen: Tag groups updated - ${newTagGroups.length} groups');
+    final currentIds = _musicPiece.tagGroups.map((e) => e.id).toSet();
+    final newId = newTagGroups.map((e) => e.id).firstWhere((id) => !currentIds.contains(id), orElse: () => '');
+
     setState(() {
       _musicPiece = _musicPiece.copyWith(tagGroups: newTagGroups);
+      if (newId.isNotEmpty) {
+        _newlyAddedId = newId;
+        _scrollToItem(newId);
+      }
     });
   }
 
@@ -267,6 +303,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
+                controller: _scrollController,
                 children: [
                   BasicDetailsSection(
                     musicPiece: _musicPiece,
@@ -306,6 +343,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
                     onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
                     onFetchMostCommonColor: _fetchMostCommonColor,
+                    newlyAddedId: _newlyAddedId,
+                    onHighlightComplete: () {
+                      setState(() {
+                        _newlyAddedId = null;
+                      });
+                    },
+                    itemKeys: _itemKeys,
                   ),
                   const SizedBox(height: 20),
                   MediaSectionWidget(
@@ -315,6 +359,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         _musicPiece = updatedMusicPiece;
                       });
                     },
+                    newlyAddedId: _newlyAddedId,
+                    onHighlightComplete: () {
+                      setState(() {
+                        _newlyAddedId = null;
+                      });
+                    },
+                    itemKeys: _itemKeys,
                   ),
                 ],
               ),

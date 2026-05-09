@@ -8,15 +8,22 @@ import 'package:repertoire/models/media_type.dart';
 import '../detail_widgets/media_section.dart';
 import 'package:repertoire/models/music_piece.dart'; // Add this import
 import '../../utils/app_logger.dart';
+import './highlightable_widget.dart';
 
 class MediaSectionWidget extends StatelessWidget {
   final MusicPiece musicPiece; // New parameter
   final Function(MusicPiece) onMusicPieceChanged; // New parameter
+  final String? newlyAddedId;
+  final VoidCallback? onHighlightComplete;
+  final Map<String, GlobalKey> itemKeys;
 
   const MediaSectionWidget({
     super.key,
     required this.musicPiece,
     required this.onMusicPieceChanged,
+    this.newlyAddedId,
+    this.onHighlightComplete,
+    required this.itemKeys,
   });
 
   @override
@@ -136,39 +143,45 @@ class MediaSectionWidget extends StatelessWidget {
                 final item = regularItems[index];
                 // Find the index in the original list for updates
                 final originalIndex = musicPiece.mediaItems.indexWhere((element) => element.id == item.id);
+                final itemKey = itemKeys.putIfAbsent(item.id, () => GlobalKey());
 
-                return MediaSection(
+                return HighlightableWidget(
                   key: ValueKey(item.id),
-                  item: item,
-                  index: index,
-                  globalIndex: originalIndex,
-                  musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
-                  musicPieceId: musicPiece.id,
-                  onUpdateMediaItem: (updatedItem) {
-                    final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                    if (originalIndex != -1) {
-                      final oldItem = updatedMediaItems[originalIndex];
-                      updatedMediaItems[originalIndex] = updatedItem;
-                      
-                      String? newPieceThumbnail = musicPiece.thumbnailPath;
-                      
-                      // If the piece thumbnail was pointing to the old item's path
-                      if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
-                          musicPiece.thumbnailPath == oldItem.pathOrUrl) {
-                          newPieceThumbnail = updatedItem.pathOrUrl;
-                      } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
-                          newPieceThumbnail = updatedItem.thumbnailPath;
-                      }
+                  isHighlighted: newlyAddedId == item.id,
+                  onHighlightComplete: onHighlightComplete,
+                  child: MediaSection(
+                    key: itemKey,
+                    item: item,
+                    index: index,
+                    globalIndex: originalIndex,
+                    musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                    musicPieceId: musicPiece.id,
+                    onUpdateMediaItem: (updatedItem) {
+                      final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                      if (originalIndex != -1) {
+                        final oldItem = updatedMediaItems[originalIndex];
+                        updatedMediaItems[originalIndex] = updatedItem;
+                        
+                        String? newPieceThumbnail = musicPiece.thumbnailPath;
+                        
+                        // If the piece thumbnail was pointing to the old item's path
+                        if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
+                            musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                            newPieceThumbnail = updatedItem.pathOrUrl;
+                        } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
+                            newPieceThumbnail = updatedItem.thumbnailPath;
+                        }
 
-                      onMusicPieceChanged(musicPiece.copyWith(
-                          mediaItems: updatedMediaItems,
-                          thumbnailPath: newPieceThumbnail
-                      ));
-                    }
-                  },
-                  onDeleteMediaItem: handleDelete,
-                  onSetThumbnail: handleSetThumbnail,
-                  musicPiece: musicPiece,
+                        onMusicPieceChanged(musicPiece.copyWith(
+                            mediaItems: updatedMediaItems,
+                            thumbnailPath: newPieceThumbnail
+                        ));
+                      }
+                    },
+                    onDeleteMediaItem: handleDelete,
+                    onSetThumbnail: handleSetThumbnail,
+                    musicPiece: musicPiece,
+                  ),
                 );
               },
               onReorder: (oldIndex, newIndex) {
@@ -199,39 +212,46 @@ class MediaSectionWidget extends StatelessWidget {
              ),
              ...thumbnailItems.map((item) {
                 final originalIndex = musicPiece.mediaItems.indexWhere((element) => element.id == item.id);
-                return MediaSection(
-                  key: ValueKey(item.id),
-                  item: item,
-                  index: -1, // Not used for reordering
-                  globalIndex: originalIndex,
-                  isReorderable: false,
-                  musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
-                  musicPieceId: musicPiece.id,
-                  onUpdateMediaItem: (updatedItem) {
-                    final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                    if (originalIndex != -1) {
-                      final oldItem = updatedMediaItems[originalIndex];
-                      updatedMediaItems[originalIndex] = updatedItem;
-                      
-                      String? newPieceThumbnail = musicPiece.thumbnailPath;
-                      
-                      // If the piece thumbnail was pointing to the old item's path
-                      if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
-                          musicPiece.thumbnailPath == oldItem.pathOrUrl) {
-                          newPieceThumbnail = updatedItem.pathOrUrl;
-                      } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
-                          newPieceThumbnail = updatedItem.thumbnailPath;
-                      }
+                final itemKey = itemKeys.putIfAbsent(item.id, () => GlobalKey());
 
-                      onMusicPieceChanged(musicPiece.copyWith(
-                          mediaItems: updatedMediaItems,
-                          thumbnailPath: newPieceThumbnail
-                      ));
-                    }
-                  },
-                  onDeleteMediaItem: handleDelete,
-                  onSetThumbnail: handleSetThumbnail,
-                  musicPiece: musicPiece,
+                return HighlightableWidget(
+                  key: ValueKey(item.id),
+                  isHighlighted: newlyAddedId == item.id,
+                  onHighlightComplete: onHighlightComplete,
+                  child: MediaSection(
+                    key: itemKey,
+                    item: item,
+                    index: -1, // Not used for reordering
+                    globalIndex: originalIndex,
+                    isReorderable: false,
+                    musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                    musicPieceId: musicPiece.id,
+                    onUpdateMediaItem: (updatedItem) {
+                      final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                      if (originalIndex != -1) {
+                        final oldItem = updatedMediaItems[originalIndex];
+                        updatedMediaItems[originalIndex] = updatedItem;
+                        
+                        String? newPieceThumbnail = musicPiece.thumbnailPath;
+                        
+                        // If the piece thumbnail was pointing to the old item's path
+                        if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
+                            musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                            newPieceThumbnail = updatedItem.pathOrUrl;
+                        } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
+                            newPieceThumbnail = updatedItem.thumbnailPath;
+                        }
+
+                        onMusicPieceChanged(musicPiece.copyWith(
+                            mediaItems: updatedMediaItems,
+                            thumbnailPath: newPieceThumbnail
+                        ));
+                      }
+                    },
+                    onDeleteMediaItem: handleDelete,
+                    onSetThumbnail: handleSetThumbnail,
+                    musicPiece: musicPiece,
+                  ),
                 );
              }),
           ],
@@ -239,4 +259,4 @@ class MediaSectionWidget extends StatelessWidget {
       ],
     );
   }
-} 
+}
