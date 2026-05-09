@@ -12,6 +12,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import 'package:repertoire/models/midi_track_config.dart';
+import 'package:repertoire/widgets/add_edit_piece/midi_track_config_dialog.dart';
 
 /// A widget for displaying and editing a single MediaItem.
 ///
@@ -325,6 +327,27 @@ class _MediaSectionState extends State<MediaSection> {
                            );
                            if (newConfig != null) {
                               widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
+                           }
+                        },
+                      ),
+                    )
+                  else if (widget.item.type == MediaType.midi)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.settings),
+                        label: const Text('Configure MIDI Tracks'),
+                        onPressed: () async {
+                           final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
+                           final newConfig = await showDialog<MidiTrackConfig>(
+                              context: context,
+                              builder: (context) => MidiTrackConfigDialog(
+                                midiPath: widget.item.pathOrUrl,
+                                initialConfig: currentConfig,
+                              ),
+                           );
+                           if (newConfig != null) {
+                              widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
                            }
                         },
                       ),

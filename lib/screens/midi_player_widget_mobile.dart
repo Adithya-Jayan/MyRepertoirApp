@@ -11,8 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/music_piece.dart';
 import '../models/bookmark.dart';
+import '../models/media_item.dart';
+import '../models/midi_track_config.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
+import '../utils/midi_utils.dart';
 
 /// Global controller to ensure only one MIDI player is active at a time.
 class MidiPlayerController {
@@ -46,11 +49,13 @@ class MidiNote {
 class MidiPlayerWidget extends StatefulWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
+  final Function(MediaItem)? onMediaItemChanged;
 
   const MidiPlayerWidget({
     super.key,
     required this.musicPiece,
     required this.mediaItemIndex,
+    this.onMediaItemChanged,
   });
 
   @override
@@ -74,7 +79,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Timer? _positionTimer;
   
   // Track settings
-  final List<bool> _channelMutes = List.generate(16, (_) => false);
+  MidiTrackConfig _trackConfig = MidiTrackConfig(channels: {});
   final List<bool> _activeChannels = List.generate(16, (_) => false);
   List<MidiNote> _extractedNotes = [];
 
@@ -214,14 +219,20 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       _synth = Synthesizer.loadByteData(await rootBundle.load('assets/soundfonts/TimGM6mb.sf2'), SynthesizerSettings(sampleRate: 44100));
 
-      // Load saved mute states
-      final prefs = await SharedPreferences.getInstance();
-      final muteStatesJson = prefs.getString('midi_mutes_${mediaItem.id}');
-      if (muteStatesJson != null) {
-        final List<dynamic> decoded = jsonDecode(muteStatesJson);
-        for (int i = 0; i < 16 && i < decoded.length; i++) {
-          _channelMutes[i] = decoded[i] as bool;
-          _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 7, data2: _channelMutes[i] ? 0 : 127);
+      // Load track config
+      _trackConfig = MidiTrackConfig.fromJson(mediaItem.configData ?? '{}');
+      
+      // Load legacy mutes if config was empty
+      if (mediaItem.configData == null || mediaItem.configData!.isEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final muteStatesJson = prefs.getString('midi_mutes_${mediaItem.id}');
+        if (muteStatesJson != null) {
+          final List<dynamic> decoded = jsonDecode(muteStatesJson);
+          final Map<int, ChannelConfig> channels = {};
+          for (int i = 0; i < 16 && i < decoded.length; i++) {
+            channels[i] = ChannelConfig(mute: decoded[i] as bool);
+          }
+          _trackConfig = _trackConfig.copyWith(channels: channels);
         }
       }
 
@@ -233,8 +244,28 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       _duration = _calculateMidiDuration(parsedMidi);
       _extractedNotes = _extractNotes(parsedMidi);
       
+      final detectedNames = await MidiUtils.getChannelNames(mediaItem.pathOrUrl);
+
       for (var note in _extractedNotes) {
         _activeChannels[note.channel] = true;
+      }
+
+      // Ensure all active channels have a config, and fill names if missing
+      final updatedChannels = Map<int, ChannelConfig>.from(_trackConfig.channels);
+      for (int i = 0; i < 16; i++) {
+        if (_activeChannels[i]) {
+          final existing = updatedChannels[i] ?? ChannelConfig();
+          updatedChannels[i] = existing.copyWith(
+            name: existing.name ?? detectedNames[i],
+          );
+        }
+      }
+      _trackConfig = _trackConfig.copyWith(channels: updatedChannels);
+
+      // Apply initial volumes and mutes
+      for (int i = 0; i < 16; i++) {
+        final config = _trackConfig.channels[i] ?? ChannelConfig();
+        _applyTrackSettings(i, config);
       }
 
       _sequencer!.play(_meltyMidi!, loop: false);
@@ -253,6 +284,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         _errorMessage = e.toString();
       });
     }
+  }
+
+  void _applyTrackSettings(int channel, ChannelConfig config) {
+    if (_synth == null) return;
+    // Volume (CC 7)
+    final int volByte = (config.mute ? 0 : (config.volume * 127).round()).clamp(0, 127);
+    _synth!.processMidiMessage(channel: channel, command: 0xB0, data1: 7, data2: volByte);
   }
 
   void _clearSynthSounds() {
@@ -366,21 +404,32 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     });
   }
 
-  void _toggleMute(int channel) async {
-    if (_synth == null) return;
-    setState(() {
-      _channelMutes[channel] = !_channelMutes[channel];
-      _synth!.processMidiMessage(
-        channel: channel, 
-        command: 0xB0, 
-        data1: 7, 
-        data2: _channelMutes[channel] ? 0 : 127
-      );
-    });
+  void _toggleMute(int channel) {
+    final config = _trackConfig.channels[channel] ?? ChannelConfig();
+    final newConfig = config.copyWith(mute: !config.mute);
+    _updateTrackConfig(channel, newConfig);
+  }
 
-    final prefs = await SharedPreferences.getInstance();
+  void _updateVolume(int channel, double volume) {
+    final config = _trackConfig.channels[channel] ?? ChannelConfig();
+    final newConfig = config.copyWith(volume: volume);
+    _updateTrackConfig(channel, newConfig);
+  }
+
+  void _updateTrackConfig(int channel, ChannelConfig newConfig) {
+    setState(() {
+      final updatedChannels = Map<int, ChannelConfig>.from(_trackConfig.channels);
+      updatedChannels[channel] = newConfig;
+      _trackConfig = _trackConfig.copyWith(channels: updatedChannels);
+      _applyTrackSettings(channel, newConfig);
+    });
+    _saveTrackConfig();
+  }
+
+  Future<void> _saveTrackConfig() async {
     final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
-    await prefs.setString('midi_mutes_${mediaItem.id}', jsonEncode(_channelMutes));
+    final updatedItem = mediaItem.copyWith(configData: _trackConfig.toJson());
+    widget.onMediaItemChanged?.call(updatedItem);
   }
 
   String _formatDuration(Duration duration) {
@@ -470,7 +519,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
               painter: MidiVisualizerPainter(
                 notes: _extractedNotes,
                 currentPosition: _position,
-                channelMutes: _channelMutes,
+                trackConfig: _trackConfig,
               ),
             ),
           ),
@@ -570,39 +619,65 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
         if (activeChannelIndices.isNotEmpty) ...[
           const Divider(),
-          const Text('Track Isolation', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: activeChannelIndices.length,
-              itemBuilder: (context, index) {
-                final ch = activeChannelIndices[index];
-                final channelColor = Colors.accents[ch % Colors.accents.length];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ExpansionTile(
+              title: const Text('Track Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: const Icon(Icons.settings_input_component),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: Column(
-                    children: [
-                      Text('Ch ${ch + 1}', style: const TextStyle(fontSize: 10)),
-                      IconButton(
-                        icon: Icon(_channelMutes[ch] ? Icons.volume_off : Icons.volume_up),
-                        color: _channelMutes[ch] ? Colors.grey : channelColor,
-                        onPressed: () => _toggleMute(ch),
-                      ),
-                      Container(
-                        width: 20,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: channelColor,
-                          borderRadius: BorderRadius.circular(2),
+                    children: activeChannelIndices.map((ch) {
+                      final config = _trackConfig.channels[ch] ?? ChannelConfig();
+                      final channelColor = Colors.accents[ch % Colors.accents.length];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: channelColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                config.name ?? 'Channel ${ch + 1}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(config.mute ? Icons.volume_off : Icons.volume_up, size: 20),
+                              color: config.mute ? Colors.grey : channelColor,
+                              onPressed: () => _toggleMute(ch),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            Expanded(
+                              flex: 5,
+                              child: Slider(
+                                value: config.volume,
+                                onChanged: (val) => _updateVolume(ch, val),
+                                activeColor: channelColor,
+                                inactiveColor: channelColor.withOpacity(0.2),
+                              ),
+                            ),
+                          ],
                         ),
-                      )
-                    ],
+                      );
+                    }).toList(),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 16),
         ],
       ],
     );
@@ -612,12 +687,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 class MidiVisualizerPainter extends CustomPainter {
   final List<MidiNote> notes;
   final Duration currentPosition;
-  final List<bool> channelMutes;
+  final MidiTrackConfig trackConfig;
 
   MidiVisualizerPainter({
     required this.notes,
     required this.currentPosition,
-    required this.channelMutes,
+    required this.trackConfig,
   });
 
   @override
@@ -646,6 +721,7 @@ class MidiVisualizerPainter extends CustomPainter {
     );
 
     for (final note in notes) {
+      final config = trackConfig.channels[note.channel] ?? ChannelConfig();
       final relativeStart = note.startTimeSeconds - currentSec;
       final relativeEnd = relativeStart + note.durationSeconds;
 
@@ -658,7 +734,7 @@ class MidiVisualizerPainter extends CustomPainter {
       const h = 8.0;
 
       paint.color = Colors.accents[note.channel % Colors.accents.length].withValues(
-        alpha: channelMutes[note.channel] ? 0.1 : 0.8
+        alpha: config.mute ? 0.1 : 0.8 * config.volume
       );
 
       canvas.drawRRect(
@@ -673,6 +749,6 @@ class MidiVisualizerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant MidiVisualizerPainter oldDelegate) {
-    return oldDelegate.currentPosition != currentPosition || oldDelegate.channelMutes != channelMutes;
+    return oldDelegate.currentPosition != currentPosition || oldDelegate.trackConfig != trackConfig;
   }
 }

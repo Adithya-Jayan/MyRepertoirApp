@@ -342,6 +342,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           content = MidiPlayerWidget(
             musicPiece: widget.musicPiece,
             mediaItemIndex: widget.mediaItemIndex,
+            onMediaItemChanged: widget.onMediaItemChanged,
           );
         }
         break;

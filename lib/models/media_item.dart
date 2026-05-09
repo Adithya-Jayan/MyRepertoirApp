@@ -13,6 +13,7 @@ class MediaItem {
   String? description; // Optional description of the media content
   String? googleDriveFileId; // Google Drive file ID if the media is synced to Drive (nullable)
   String? thumbnailPath; // Local path to the thumbnail for video links
+  String? configData; // JSON string for complex configurations (e.g., MIDI tracks)
 
   /// Constructor for the MediaItem class.
   MediaItem({
@@ -23,6 +24,7 @@ class MediaItem {
     this.description,
     this.googleDriveFileId,
     this.thumbnailPath,
+    this.configData,
   });
 
   /// Converts a [MediaItem] object into a JSON-compatible Map.
@@ -37,6 +39,7 @@ class MediaItem {
         'description': description,
         'googleDriveFileId': googleDriveFileId,
         'thumbnailPath': thumbnailPath,
+        'configData': configData,
       };
 
   /// Creates a [MediaItem] object from a JSON-compatible Map.
@@ -51,6 +54,7 @@ class MediaItem {
         description: json['description'],
         googleDriveFileId: json['googleDriveFileId'],
         thumbnailPath: json['thumbnailPath'],
+        configData: json['configData'],
       );
 
   /// Converts a [MediaItem] object into a JSON-compatible Map for backup.
@@ -66,6 +70,7 @@ class MediaItem {
         'googleDriveFileId': googleDriveFileId,
         // Thumbnails are always local files; keep conversion
         'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
+        'configData': configData,
       };
 
   /// Creates a [MediaItem] object from a JSON-compatible Map for backup.
@@ -85,6 +90,7 @@ class MediaItem {
         googleDriveFileId: json['googleDriveFileId'],
         // Thumbnails are local files
         thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
+        configData: json['configData'],
       );
 
   MediaItem copyWith({
@@ -95,6 +101,7 @@ class MediaItem {
     String? description,
     String? googleDriveFileId,
     String? thumbnailPath,
+    String? configData,
   }) {
     return MediaItem(
       id: id ?? this.id,
@@ -104,6 +111,7 @@ class MediaItem {
       description: description ?? this.description,
       googleDriveFileId: googleDriveFileId ?? this.googleDriveFileId,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      configData: configData ?? this.configData,
     );
   }
 }
