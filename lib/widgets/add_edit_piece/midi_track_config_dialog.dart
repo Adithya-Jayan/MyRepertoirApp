@@ -17,28 +17,37 @@ class MidiTrackConfigDialog extends StatefulWidget {
 }
 
 class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
-  late Map<int, TextEditingController> _controllers;
+  late Map<int, String?> _channelNames;
   List<int> _activeChannels = [];
   bool _isLoading = true;
+  int? _editingChannel;
+  final TextEditingController _editController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _controllers = {};
+    _channelNames = {};
     _initData();
   }
 
   Future<void> _initData() async {
     final active = await MidiUtils.getActiveChannels(widget.midiPath);
-    final names = await MidiUtils.getChannelNames(widget.midiPath);
+    final fileNames = await MidiUtils.getChannelNames(widget.midiPath);
 
     if (mounted) {
       setState(() {
         _activeChannels = active;
         for (var ch in _activeChannels) {
-          final existing = widget.initialConfig.channels[ch]?.name;
-          final existingName = (existing != null && existing.isNotEmpty) ? existing : (names[ch] ?? '');
-          _controllers[ch] = TextEditingController(text: existingName);
+          // Priority: 1. Existing custom name from initialConfig, 2. Name from MIDI file, 3. null
+          final existingConfig = widget.initialConfig.channels[ch];
+          final customName = existingConfig?.name;
+          
+          if (customName != null && customName.trim().isNotEmpty) {
+            _channelNames[ch] = customName.trim();
+          } else {
+            _channelNames[ch] = fileNames[ch];
+          }
         }
         _isLoading = false;
       });
@@ -47,10 +56,35 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
 
   @override
   void dispose() {
-    for (var controller in _controllers.values) {
-      controller.dispose();
-    }
+    _editController.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _startEditing(int ch) {
+    setState(() {
+      _editingChannel = ch;
+      _editController.text = _channelNames[ch] ?? '';
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_focusNode.canRequestFocus) {
+        _focusNode.requestFocus();
+        _editController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _editController.text.length,
+        );
+      }
+    });
+  }
+
+  void _saveEdit() {
+    if (_editingChannel != null) {
+      setState(() {
+        final newName = _editController.text.trim();
+        _channelNames[_editingChannel!] = newName.isNotEmpty ? newName : null;
+        _editingChannel = null;
+      });
+    }
   }
 
   @override
@@ -62,23 +96,81 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
               height: 100,
               child: Center(child: CircularProgressIndicator()),
             )
-          : SingleChildScrollView(
+          : SizedBox(
+              width: double.maxFinite,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: _activeChannels.map((ch) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: TextField(
-                      controller: _controllers[ch],
-                      decoration: InputDecoration(
-                        labelText: 'Channel ${ch + 1}',
-                        hintText: 'Enter name for channel ${ch + 1}',
-                        border: const OutlineInputBorder(),
-                        isDense: true,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      '(Double tap name to edit)',
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _activeChannels.length,
+                      itemBuilder: (context, index) {
+                        final ch = _activeChannels[index];
+                        final name = _channelNames[ch];
+                        final bool isEditing = _editingChannel == ch;
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: InkWell( // Use InkWell for better touch feedback
+                            onDoubleTap: () => _startEditing(ch),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 60,
+                                  child: Text(
+                                    'Ch ${ch + 1} : ',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: isEditing
+                                      ? TextField(
+                                          controller: _editController,
+                                          focusNode: _focusNode,
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                            border: OutlineInputBorder(),
+                                          ),
+                                          onSubmitted: (_) => _saveEdit(),
+                                          onEditingComplete: () => _saveEdit(),
+                                          autofocus: true,
+                                        )
+                                      : Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.03),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            (name != null && name.isNotEmpty) ? name : 'Blank',
+                                            style: TextStyle(
+                                              color: (name != null && name.isNotEmpty) ? null : Colors.grey,
+                                              fontStyle: (name != null && name.isNotEmpty) ? null : FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
       actions: [
@@ -88,16 +180,22 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
         ),
         ElevatedButton(
           onPressed: () {
+            // Save current edit if any
+            if (_editingChannel != null) _saveEdit();
+
             final Map<int, ChannelConfig> updatedChannels = Map.from(widget.initialConfig.channels);
-            _controllers.forEach((ch, controller) {
+            _channelNames.forEach((ch, name) {
               final existing = updatedChannels[ch] ?? ChannelConfig();
-              // Save as null if empty to allow fallback to default names
-              final newName = controller.text.trim();
-              updatedChannels[ch] = existing.copyWith(name: newName.isNotEmpty ? newName : null);
+              // Explicitly set the name to allow clearing (setting to null)
+              updatedChannels[ch] = ChannelConfig(
+                name: name,
+                volume: existing.volume,
+                mute: existing.mute,
+              );
             });
             Navigator.pop(context, widget.initialConfig.copyWith(channels: updatedChannels));
           },
-          child: const Text('Save'),
+          child: const Text('Save All'),
         ),
       ],
     );

@@ -21,7 +21,7 @@ class CollapsibleSection extends StatefulWidget {
 
 class _CollapsibleSectionState extends State<CollapsibleSection> {
   late final SectionStateService _stateService;
-  final ExpansionTileController _controller = ExpansionTileController();
+  final ExpansibleController _controller = ExpansibleController();
 
   @override
   void initState() {

@@ -7,12 +7,12 @@ class MidiTrackConfig {
 
   factory MidiTrackConfig.fromJson(String jsonStr) {
     try {
-      final Map<String, dynamic> data = jsonDecode(jsonStr);
-      final Map<String, dynamic> channelsData = data['channels'] ?? {};
+      final Map<String, dynamic> data = Map<String, dynamic>.from(jsonDecode(jsonStr));
+      final Map<String, dynamic> channelsData = Map<String, dynamic>.from(data['channels'] ?? {});
       final Map<int, ChannelConfig> channels = {};
       channelsData.forEach((key, value) {
-        final int ch = int.tryParse(key) ?? 0;
-        channels[ch] = ChannelConfig.fromMap(value);
+        final int ch = int.tryParse(key.toString()) ?? 0;
+        channels[ch] = ChannelConfig.fromMap(Map<String, dynamic>.from(value));
       });
       return MidiTrackConfig(channels: channels);
     } catch (e) {
@@ -47,9 +47,9 @@ class ChannelConfig {
 
   factory ChannelConfig.fromMap(Map<String, dynamic> map) {
     return ChannelConfig(
-      name: map['name'],
+      name: map['name'] as String?,
       volume: (map['volume'] as num?)?.toDouble() ?? 1.0,
-      mute: map['mute'] ?? false,
+      mute: map['mute'] as bool? ?? false,
     );
   }
 
@@ -65,9 +65,10 @@ class ChannelConfig {
     String? name,
     double? volume,
     bool? mute,
+    bool nameWasSet = false,
   }) {
     return ChannelConfig(
-      name: name ?? this.name,
+      name: nameWasSet ? name : (name ?? this.name),
       volume: volume ?? this.volume,
       mute: mute ?? this.mute,
     );

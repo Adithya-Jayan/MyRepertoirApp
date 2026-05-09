@@ -683,7 +683,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                                 value: config.volume,
                                 onChanged: (val) => _updateVolume(ch, val),
                                 activeColor: channelColor,
-                                inactiveColor: channelColor.withOpacity(0.2),
+                                inactiveColor: channelColor.withValues(alpha: 0.2),
                               ),
                             ),
                           ],

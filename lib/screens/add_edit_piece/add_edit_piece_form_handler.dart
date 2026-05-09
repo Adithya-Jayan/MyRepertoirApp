@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/music_piece.dart';
-import '../../models/media_item.dart';
-import '../../models/tag_group.dart';
 import '../../models/group.dart';
 import '../../database/music_piece_repository.dart';
 
@@ -20,23 +18,8 @@ class AddEditPieceFormHandler {
   MusicPiece createInitialMusicPiece(String? selectedGroupId) {
     if (originalMusicPiece != null) {
       return originalMusicPiece!.copyWith(
-        mediaItems: originalMusicPiece!.mediaItems.map((item) => 
-          MediaItem(
-            id: item.id,
-            type: item.type,
-            pathOrUrl: item.pathOrUrl,
-            title: item.title,
-            thumbnailPath: item.thumbnailPath,
-          )
-        ).toList(),
-        tagGroups: originalMusicPiece!.tagGroups.map((tagGroup) => 
-          TagGroup(
-            id: tagGroup.id,
-            name: tagGroup.name,
-            tags: List<String>.from(tagGroup.tags),
-            color: tagGroup.color,
-          )
-        ).toList(),
+        mediaItems: originalMusicPiece!.mediaItems.map((item) => item.copyWith()).toList(),
+        tagGroups: originalMusicPiece!.tagGroups.map((tagGroup) => tagGroup.copyWith()).toList(),
         groupIds: List<String>.from(originalMusicPiece!.groupIds),
       );
     } else {
