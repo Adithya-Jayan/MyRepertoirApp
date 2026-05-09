@@ -11,11 +11,15 @@ import '../../screens/practice_logs_screen.dart';
 class PracticeTrackingCard extends StatefulWidget {
   final MusicPiece musicPiece;
   final Function(MusicPiece) onMusicPieceChanged;
+  final bool showTitle;
+  final bool useCard;
 
   const PracticeTrackingCard({
     super.key,
     required this.musicPiece,
     required this.onMusicPieceChanged,
+    this.showTitle = true,
+    this.useCard = true,
   });
 
   @override
@@ -85,57 +89,65 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+    Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.showTitle) ...[
+          Text(
+            'Practice Tracking',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8.0),
+        ],
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Practice Tracking',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Text(PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime)),
+            Text('Practice Count: ${_musicPiece.practiceCount}'),
+            const SizedBox(height: 8),
+            Row(
               children: [
-                Text(PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime)),
-                Text('Practice Count: ${_musicPiece.practiceCount}'),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _logPractice,
-                        child: const Text('Log Practice'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => PracticeLogsScreen(
-                                musicPiece: _musicPiece,
-                              ),
-                            ),
-                          );
-                          // Refresh data when returning from practice logs screen
-                          await _refreshMusicPieceData();
-                        },
-                        icon: const Icon(Icons.history),
-                        label: const Text('View Logs'),
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _logPractice,
+                    child: const Text('Log Practice'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PracticeLogsScreen(
+                            musicPiece: _musicPiece,
+                          ),
+                        ),
+                      );
+                      // Refresh data when returning from practice logs screen
+                      await _refreshMusicPieceData();
+                    },
+                    icon: const Icon(Icons.history),
+                    label: const Text('View Logs'),
+                  ),
                 ),
               ],
             ),
           ],
         ),
-      ),
+      ],
     );
+
+    if (widget.useCard) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: content,
+        ),
+      );
+    }
+
+    return content;
   }
 }

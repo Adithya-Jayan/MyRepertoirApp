@@ -25,6 +25,7 @@ class MediaDisplayWidget extends StatefulWidget {
   final Function(MediaItem)? onMediaItemChanged; // Added callback
   final bool isEditable;
   final bool isTitleEditable;
+  final bool showTitle;
 
   const MediaDisplayWidget({
     super.key,
@@ -35,6 +36,7 @@ class MediaDisplayWidget extends StatefulWidget {
     this.onMediaItemChanged,
     this.isEditable = false,
     this.isTitleEditable = false,
+    this.showTitle = true,
   });
 
   @override
@@ -487,54 +489,56 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _isEditingTitle
-                      ? TextFormField(
-                          controller: _titleController,
-                          focusNode: _focusNode,
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-                            border: OutlineInputBorder(),
-                          ),
-                          onFieldSubmitted: (newValue) {
-                            _saveTitle();
-                          },
-                          onEditingComplete: () {
-                            _saveTitle();
-                          },
-                        )
-                      : ((widget.isTitleEditable || widget.isEditable)
-                          ? GestureDetector(
-                              onDoubleTap: _startEditing,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _currentTitle ?? currentMediaItem.type.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                  if (widget.showTitle) ...[
+                    _isEditingTitle
+                        ? TextFormField(
+                            controller: _titleController,
+                            focusNode: _focusNode,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                              border: OutlineInputBorder(),
+                            ),
+                            onFieldSubmitted: (newValue) {
+                              _saveTitle();
+                            },
+                            onEditingComplete: () {
+                              _saveTitle();
+                            },
+                          )
+                        : ((widget.isTitleEditable || widget.isEditable)
+                            ? GestureDetector(
+                                onDoubleTap: _startEditing,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _currentTitle ?? currentMediaItem.type.name,
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8.0),
-                                    const Text(
-                                      '(Double tap to edit)',
-                                      style: TextStyle(
-                                        fontSize: 12.0,
-                                        color: Colors.grey,
-                                        fontStyle: FontStyle.italic,
+                                      const SizedBox(width: 8.0),
+                                      const Text(
+                                        '(Double tap to edit)',
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
-                          : Text(
-                              _currentTitle ?? currentMediaItem.type.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            )),
-                  const SizedBox(height: 8.0),
+                              )
+                            : Text(
+                                _currentTitle ?? currentMediaItem.type.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              )),
+                    const SizedBox(height: 8.0),
+                  ],
                   content,
                 ],
               ),

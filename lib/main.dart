@@ -20,6 +20,7 @@ import 'package:repertoire/services/practice_config_service.dart';
 import 'package:repertoire/services/migration_service.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/services/share_handler_service.dart';
+import 'package:repertoire/services/section_state_service.dart';
 
 
 
@@ -65,7 +66,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => ThemeNotifier(ThemeMode.system, Colors.blue),
         ),
-        
+        ChangeNotifierProvider(
+          create: (_) => SectionStateService(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -98,6 +101,13 @@ class _MyAppState extends State<MyApp> {
   /// in SharedPreferences.
   Future<bool> _isSetupComplete() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Initialize SectionStateService
+    try {
+      await SectionStateService().init();
+    } catch (e) {
+      AppLogger.log('Error initializing SectionStateService: $e');
+    }
 
     // Preload practice stages
     try {

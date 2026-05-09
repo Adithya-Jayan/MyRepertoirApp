@@ -3,6 +3,7 @@ import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/media_type.dart';
+import 'package:repertoire/widgets/detail_widgets/collapsible_section.dart';
 
 /// A widget that displays a reorderable list of media items associated with a music piece.
 ///
@@ -72,21 +73,26 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                   return Column( // Wrap in Column to add Divider below
                     key: ValueKey(item.id),
                     children: [
-                      MediaDisplayWidget(
-                        musicPiece: _musicPiece,
-                        mediaItemIndex: mediaIndex,
-                        isEditable: false,
-                        trailing: ReorderableDragStartListener(
-                          index: index,
-                          child: const Icon(Icons.drag_handle),
+                      CollapsibleSection(
+                        title: item.title ?? item.type.name,
+                        persistenceKey: 'media_item_${item.id}',
+                        child: MediaDisplayWidget(
+                          musicPiece: _musicPiece,
+                          mediaItemIndex: mediaIndex,
+                          isEditable: false,
+                          showTitle: false,
+                          trailing: ReorderableDragStartListener(
+                            index: index,
+                            child: const Icon(Icons.drag_handle),
+                          ),
+                          onMediaItemChanged: (newItem) {
+                            setState(() {
+                              _musicPiece.mediaItems[mediaIndex] = newItem;
+                            });
+                            _repository.updateMusicPiece(_musicPiece);
+                            widget.onMusicPieceChanged(_musicPiece);
+                          },
                         ),
-                        onMediaItemChanged: (newItem) {
-                          setState(() {
-                            _musicPiece.mediaItems[mediaIndex] = newItem;
-                          });
-                          _repository.updateMusicPiece(_musicPiece);
-                          widget.onMusicPieceChanged(_musicPiece);
-                        },
                       ),
                       if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
                         const Divider(indent: 16, endIndent: 16),
@@ -121,17 +127,22 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                   return Column( // Wrap in Column to add Divider below
                     key: ValueKey(item.id),
                     children: [
-                      MediaDisplayWidget(
-                        musicPiece: _musicPiece,
-                        mediaItemIndex: mediaIndex,
-                        isEditable: false,
-                        onMediaItemChanged: (newItem) {
-                          setState(() {
-                            _musicPiece.mediaItems[mediaIndex] = newItem;
-                          });
-                          _repository.updateMusicPiece(_musicPiece);
-                          widget.onMusicPieceChanged(_musicPiece);
-                        },
+                      CollapsibleSection(
+                        title: item.title ?? item.type.name,
+                        persistenceKey: 'media_item_${item.id}',
+                        child: MediaDisplayWidget(
+                          musicPiece: _musicPiece,
+                          mediaItemIndex: mediaIndex,
+                          isEditable: false,
+                          showTitle: false,
+                          onMediaItemChanged: (newItem) {
+                            setState(() {
+                              _musicPiece.mediaItems[mediaIndex] = newItem;
+                            });
+                            _repository.updateMusicPiece(_musicPiece);
+                            widget.onMusicPieceChanged(_musicPiece);
+                          },
+                        ),
                       ),
                       if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
                         const Divider(indent: 16, endIndent: 16),

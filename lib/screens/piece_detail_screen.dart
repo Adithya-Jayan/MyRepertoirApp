@@ -8,6 +8,9 @@ import 'package:repertoire/widgets/detail_widgets/groups_display.dart';
 import 'package:repertoire/widgets/detail_widgets/media_display_list.dart';
 import 'package:repertoire/models/media_type.dart';
 import '../utils/app_logger.dart';
+import 'package:repertoire/widgets/detail_widgets/collapsible_section.dart';
+import 'package:repertoire/services/section_state_service.dart';
+import 'package:provider/provider.dart';
 
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -21,6 +24,22 @@ class PieceDetailScreen extends StatefulWidget {
 class _PieceDetailScreenState extends State<PieceDetailScreen> {
   late MusicPiece _musicPiece;
   final MusicPieceRepository _repository = MusicPieceRepository();
+
+  List<String> _getSectionKeys() {
+    final keys = <String>[];
+    if (_musicPiece.enablePracticeTracking) {
+      keys.add('practice_tracking_${_musicPiece.id}');
+    }
+    if (_musicPiece.tagGroups.isNotEmpty) {
+      keys.add('tag_groups_${_musicPiece.id}');
+    }
+    for (final item in _musicPiece.mediaItems) {
+      if (item.type != MediaType.thumbnails) {
+        keys.add('media_item_${item.id}');
+      }
+    }
+    return keys;
+  }
 
   @override
   void initState() {
@@ -38,11 +57,22 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('PieceDetailScreen: build called for piece: ${_musicPiece.title}');
+    final stateService = Provider.of<SectionStateService>(context);
+    final sectionKeys = _getSectionKeys();
+    final allExpanded = sectionKeys.every((key) => stateService.isExpanded(key));
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
           title: Text(_musicPiece.title),
           actions: [
+            IconButton(
+              icon: Icon(allExpanded ? Icons.unfold_less : Icons.unfold_more),
+              tooltip: allExpanded ? 'Fold All' : 'Show All',
+              onPressed: () {
+                stateService.toggleAll(sectionKeys, !allExpanded);
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () async {
@@ -130,16 +160,29 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               GroupsDisplay(musicPiece: _musicPiece),
               const SizedBox(height: 16.0),
               if (_musicPiece.enablePracticeTracking)
-                PracticeTrackingCard(
-                  musicPiece: _musicPiece,
-                  onMusicPieceChanged: (updatedPiece) {
-                    setState(() {
-                      _musicPiece = updatedPiece;
-                    });
-                  },
+                CollapsibleSection(
+                  title: 'Practice Tracking',
+                  persistenceKey: 'practice_tracking_${_musicPiece.id}',
+                  child: PracticeTrackingCard(
+                    musicPiece: _musicPiece,
+                    onMusicPieceChanged: (updatedPiece) {
+                      setState(() {
+                        _musicPiece = updatedPiece;
+                      });
+                    },
+                    showTitle: false,
+                    useCard: false,
+                  ),
                 ),
               if (_musicPiece.tagGroups.isNotEmpty)
-                TagGroupsDisplay(musicPiece: _musicPiece),
+                CollapsibleSection(
+                  title: 'Tag Groups',
+                  persistenceKey: 'tag_groups_${_musicPiece.id}',
+                  child: TagGroupsDisplay(
+                    musicPiece: _musicPiece,
+                    showTitle: false,
+                  ),
+                ),
               
               // Only show divider if there's a top section AND there is visible media to show below it
               if ((_musicPiece.enablePracticeTracking || _musicPiece.tagGroups.isNotEmpty || _musicPiece.groupIds.isNotEmpty) && 

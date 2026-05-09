@@ -4,8 +4,13 @@ import 'package:repertoire/utils/color_utils.dart';
 
 class TagGroupsDisplay extends StatelessWidget {
   final MusicPiece musicPiece;
+  final bool showTitle;
 
-  const TagGroupsDisplay({super.key, required this.musicPiece});
+  const TagGroupsDisplay({
+    super.key, 
+    required this.musicPiece,
+    this.showTitle = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,11 +18,13 @@ class TagGroupsDisplay extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tag Groups:',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8.0),
+        if (showTitle) ...[
+          const Text(
+            'Tag Groups:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+        ],
         ...musicPiece.tagGroups.map((tagGroup) {
           final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
           final backgroundColor = color != null 

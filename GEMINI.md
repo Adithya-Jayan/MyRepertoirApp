@@ -6,4 +6,4 @@ To maintain clean and functional code, always perform a build and static analysi
 - **Build Web:** `flutter build web --base-href /`
 - **Analyze:** `flutter analyze`
 
-These steps must be completed to verify structural integrity and identify potential regressions before concluding a task. Always use the `fdroid` flavor for builds.
+These steps must be completed to verify structural integrity and identify potential regressions before concluding a task, Make sure all warnings and errors are always cleaned up after all tasks. Always use the `fdroid` flavor for builds.
