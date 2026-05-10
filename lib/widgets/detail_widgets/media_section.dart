@@ -280,29 +280,45 @@ class _MediaSectionState extends State<MediaSection> {
                           icon: const Icon(Icons.image),
                           label: const Text('Change Image'),
                         ),
-                      // Use as piece thumbnail checkbox
+                      // Update piece thumbnail button
                       if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
-                        SizedBox(
-                          width: 250,
-                          child: CheckboxListTile(
-                            title: const Text('Use as piece thumbnail', style: TextStyle(fontSize: 14)),
-                            value: widget.musicPieceThumbnail.isNotEmpty && 
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            final isCurrentlyThumbnail = widget.musicPieceThumbnail.isNotEmpty && 
                                    (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                                    widget.musicPieceThumbnail == _currentThumbnailPath),
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo) 
-                                    ? widget.item.pathOrUrl 
-                                    : _currentThumbnailPath!;
-                                widget.onSetThumbnail(path);
-                              } else {
-                                widget.onSetThumbnail('');
-                              }
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
+                                    widget.musicPieceThumbnail == _currentThumbnailPath);
+                            
+                            if (isCurrentlyThumbnail) {
+                              widget.onSetThumbnail('');
+                            } else {
+                              final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo) 
+                                  ? widget.item.pathOrUrl 
+                                  : _currentThumbnailPath!;
+                              widget.onSetThumbnail(path);
+                            }
+                          },
+                          icon: Icon(
+                            (widget.musicPieceThumbnail.isNotEmpty && 
+                             (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                              widget.musicPieceThumbnail == _currentThumbnailPath))
+                                ? Icons.star
+                                : Icons.star_border,
                           ),
+                          label: Text(
+                            (widget.musicPieceThumbnail.isNotEmpty && 
+                             (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                              widget.musicPieceThumbnail == _currentThumbnailPath))
+                                ? 'Is Piece Thumbnail'
+                                : 'Set as Piece Thumbnail',
+                          ),
+                          style: (widget.musicPieceThumbnail.isNotEmpty && 
+                                  (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                                   widget.musicPieceThumbnail == _currentThumbnailPath))
+                              ? ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.amber[50],
+                                  foregroundColor: Colors.amber[800],
+                                )
+                              : null,
                         ),
                     ],
                   ),

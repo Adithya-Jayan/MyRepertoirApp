@@ -16,6 +16,7 @@ class MediaSectionWidget extends StatelessWidget {
   final String? newlyAddedId;
   final VoidCallback? onHighlightComplete;
   final Map<String, GlobalKey> itemKeys;
+  final Function(String)? onThumbnailSet; // New callback
 
   const MediaSectionWidget({
     super.key,
@@ -24,6 +25,7 @@ class MediaSectionWidget extends StatelessWidget {
     this.newlyAddedId,
     this.onHighlightComplete,
     required this.itemKeys,
+    this.onThumbnailSet,
   });
 
   @override
@@ -62,6 +64,8 @@ class MediaSectionWidget extends StatelessWidget {
         return;
       }
 
+      String? thumbnailId;
+
       // Check if this path is already from a thumbnail widget
       final isFromThumbnailWidget = musicPiece.mediaItems.any((item) => 
         item.type == MediaType.thumbnails && item.pathOrUrl == thumbnailPath
@@ -69,7 +73,11 @@ class MediaSectionWidget extends StatelessWidget {
 
       if (isFromThumbnailWidget) {
         // Just set the path
+        final widgetId = musicPiece.mediaItems.firstWhere((item) => 
+          item.type == MediaType.thumbnails && item.pathOrUrl == thumbnailPath
+        ).id;
         onMusicPieceChanged(musicPiece.copyWith(thumbnailPath: thumbnailPath));
+        onThumbnailSet?.call(widgetId);
         return;
       }
 
@@ -98,11 +106,12 @@ class MediaSectionWidget extends StatelessWidget {
             // Update existing
             final oldItem = updatedMediaItems[existingThumbnailIndex];
             updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: newFilePath);
-            // Optional: Clean up old file if it was different?
+            thumbnailId = oldItem.id;
           } else {
             // Create new
+            thumbnailId = const Uuid().v4();
             updatedMediaItems.add(MediaItem(
-              id: const Uuid().v4(),
+              id: thumbnailId,
               type: MediaType.thumbnails,
               pathOrUrl: newFilePath,
             ));
@@ -112,6 +121,7 @@ class MediaSectionWidget extends StatelessWidget {
             mediaItems: updatedMediaItems,
             thumbnailPath: newFilePath,
           ));
+          onThumbnailSet?.call(thumbnailId);
         } else {
           AppLogger.log('MediaSectionWidget: Source thumbnail file not found: $thumbnailPath');
         }

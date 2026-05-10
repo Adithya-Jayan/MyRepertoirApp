@@ -121,6 +121,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
+  void _triggerScrollAndHighlight(String id) {
+    setState(() {
+      _newlyAddedId = id;
+    });
+    _scrollToItem(id);
+  }
+
   void _onMediaItemsChanged(List<MediaItem> newMediaItems) {
     final currentIds = _musicPiece.mediaItems.map((e) => e.id).toSet();
     final newId = newMediaItems.map((e) => e.id).firstWhere((id) => !currentIds.contains(id), orElse: () => '');
@@ -372,6 +379,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       });
                     },
                     itemKeys: _itemKeys,
+                    onThumbnailSet: _triggerScrollAndHighlight,
                   ),
                 ],
               ),
