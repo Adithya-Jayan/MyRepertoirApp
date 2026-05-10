@@ -17,6 +17,8 @@ import '../screens/midi_player_widget.dart'
 import 'dart:io' as io;
 import '../utils/app_logger.dart';
 
+import 'package:repertoire/models/pdf_config.dart';
+
 class MediaDisplayWidget extends StatefulWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
@@ -229,9 +231,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       case MediaType.pdf:
         content = ElevatedButton(
           onPressed: () {
+            final pdfConfig = PdfConfig.fromJson(currentMediaItem.configData ?? '{}');
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => PdfViewerScreen(pdfPath: currentMediaItem.pathOrUrl),
+                builder: (context) => PdfViewerScreen(
+                  pdfPath: currentMediaItem.pathOrUrl,
+                  config: pdfConfig,
+                ),
               ),
             );
           },
