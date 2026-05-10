@@ -10,6 +10,7 @@ import '../models/media_item.dart';
 import '../models/media_type.dart';
 import '../services/media_storage_manager.dart';
 import '../utils/app_logger.dart';
+import '../screens/add_edit_piece_screen.dart';
 
 class ShareHandlerService {
   StreamSubscription? _intentDataStreamSubscription;
@@ -171,6 +172,17 @@ class ShareHandlerService {
             SnackBar(content: Text(selectionResult == 'create_new' 
               ? 'New piece "${currentPiece.title}" created with shared media'
               : 'Media added to "${currentPiece.title}"'))
+          );
+
+          // Open the piece in edit mode so the user can see/configure the new items
+          final firstNewId = newItems.isNotEmpty ? newItems.first.id : null;
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => AddEditPieceScreen(
+                musicPiece: currentPiece,
+                newlyAddedId: firstNewId,
+              ),
+            ),
           );
         }
       }

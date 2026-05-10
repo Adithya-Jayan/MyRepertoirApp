@@ -21,8 +21,9 @@ import 'add_edit_piece/add_edit_piece_form_handler.dart';
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
   final String? selectedGroupId;
+  final String? newlyAddedId;
 
-  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId});
+  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId, this.newlyAddedId});
 
   @override
   State<AddEditPieceScreen> createState() => _AddEditPieceScreenState();
@@ -49,6 +50,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     _initializeManagers();
     _initializeMusicPiece();
     _loadData();
+    if (widget.newlyAddedId != null) {
+      _newlyAddedId = widget.newlyAddedId;
+      _scrollToItem(widget.newlyAddedId!);
+    }
   }
 
   @override
