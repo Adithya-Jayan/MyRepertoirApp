@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:pdfx/pdfx.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/models/pdf_config.dart';
+import 'dart:math' as math;
 
 /// A screen for viewing PDF documents with optional auto-scroll.
 class PdfViewerScreen extends StatefulWidget {
@@ -19,37 +24,114 @@ class PdfViewerScreen extends StatefulWidget {
   State<PdfViewerScreen> createState() => _PdfViewerScreenState();
 }
 
-class _PdfViewerScreenState extends State<PdfViewerScreen> {
-  final ScrollController _scrollController = ScrollController();
+class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProviderStateMixin {
+  final TransformationController _transformationController = TransformationController();
+  final GlobalKey _contentKey = GlobalKey();
+  late Ticker _ticker;
   bool _isAutoScrolling = false;
   double _scrollSpeed = 1.0; // Base speed
-  Timer? _scrollTimer;
   bool _showControls = true;
   PdfDocument? _document;
   bool _isLoaded = false;
+  double? _defaultAspectRatio;
+  Duration _lastElapsed = Duration.zero;
 
   @override
   void initState() {
     super.initState();
     _scrollSpeed = widget.config.defaultSpeed;
+    _ticker = createTicker(_onTick);
     _loadDocument();
+    _loadSavedSpeed();
+  }
+
+  void _onTick(Duration elapsed) {
+    if (!_isAutoScrolling) return;
+
+    final Duration delta = elapsed - _lastElapsed;
+    _lastElapsed = elapsed;
+
+    if (delta == Duration.zero) return;
+
+    // 1.0 speed = 40 pixels per second
+    final double pixelsPerSecond = _scrollSpeed * 40.0;
+    final double moveAmount = pixelsPerSecond * (delta.inMicroseconds / 1000000.0);
+
+    final Matrix4 matrix = _transformationController.value.clone();
+    final Vector3 translation = matrix.getTranslation();
+    
+    // Note: InteractiveViewer translation is negative of scroll offset
+    final double newY = translation.y - moveAmount;
+    
+    // Boundary check using the content size
+    final RenderBox? contentBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? viewerBox = context.findRenderObject() as RenderBox?;
+    
+    if (contentBox != null && viewerBox != null) {
+      final double contentHeight = contentBox.size.height;
+      final double viewerHeight = viewerBox.size.height;
+      final double scale = matrix.getMaxScaleOnAxis();
+      
+      // The maximum translation is -(totalScaledHeight - viewerHeight)
+      // We add a small buffer (5 pixels) to ensure we stop reliably
+      final double maxScroll = math.max(0.0, (contentHeight * scale) - viewerHeight);
+      
+      if (-newY >= maxScroll - 5) {
+        debugPrint('[PDFScroll] End reached. Stopping.');
+        _toggleAutoScroll(false);
+        matrix.setTranslationRaw(translation.x, -maxScroll, 0);
+      } else {
+        matrix.setTranslationRaw(translation.x, newY, 0);
+      }
+    } else {
+      matrix.setTranslationRaw(translation.x, newY, 0);
+    }
+    
+    _transformationController.value = matrix;
+  }
+
+  Future<void> _loadSavedSpeed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedSpeed = prefs.getDouble('pdf_scroll_speed_${widget.pdfPath.hashCode}');
+      if (savedSpeed != null && mounted) {
+        setState(() {
+          _scrollSpeed = savedSpeed;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading saved PDF speed: $e');
+    }
+  }
+
+  Future<void> _saveSpeed(double speed) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('pdf_scroll_speed_${widget.pdfPath.hashCode}', speed);
+    } catch (e) {
+      debugPrint('Error saving PDF speed: $e');
+    }
   }
 
   Future<void> _loadDocument() async {
     try {
       final doc = await PdfDocument.openFile(widget.pdfPath);
+      
+      double? ratio;
+      try {
+        final page1 = await doc.getPage(1);
+        ratio = page1.width / page1.height;
+        await page1.close();
+      } catch (e) {
+        debugPrint('Error getting first page aspect ratio: $e');
+      }
+
       if (mounted) {
         setState(() {
           _document = doc;
+          _defaultAspectRatio = ratio;
           _isLoaded = true;
         });
-        
-        // Auto-start if configured
-        if (widget.config.autoScrollEnabled) {
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) _toggleAutoScroll(true);
-          });
-        }
       }
     } catch (e) {
       debugPrint('Error loading PDF: $e');
@@ -57,47 +139,90 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   }
 
   void _toggleAutoScroll(bool enable) {
+    if (!mounted) return;
+    if (_isAutoScrolling == enable) return;
+
     setState(() {
       _isAutoScrolling = enable;
     });
 
-    _scrollTimer?.cancel();
     if (_isAutoScrolling) {
-      // Use a higher frequency for smoother scrolling
-      _scrollTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
-        if (_scrollController.hasClients) {
-          final maxScroll = _scrollController.position.maxScrollExtent;
-          final currentScroll = _scrollController.offset;
-          
-          // Stop if we reached the end (with a small tolerance)
-          if (currentScroll >= maxScroll - 5) {
-            _toggleAutoScroll(false);
-            return;
-          }
-          
-          // Smooth scroll increment
-          final nextScroll = (currentScroll + (_scrollSpeed * 0.5)).clamp(0.0, maxScroll);
-          _scrollController.jumpTo(nextScroll);
-        }
-      });
+      _lastElapsed = Duration.zero;
+      if (!_ticker.isActive) {
+        _ticker.start();
+      }
+    } else {
+      if (_ticker.isActive) {
+        _ticker.stop();
+      }
     }
+  }
+
+  void _updateZoom(double factor) {
+    final double currentScale = _transformationController.value.getMaxScaleOnAxis();
+    final double newScale = (currentScale * factor).clamp(1.0, 4.0);
+    
+    final Matrix4 matrix = _transformationController.value.clone();
+    final Vector3 translation = matrix.getTranslation();
+    
+    // Update scale while preserving translation
+    // Note: We use identity and then scale/translate to ensure a clean matrix
+    matrix.setIdentity();
+    matrix.scaleByVector3(Vector3(newScale, newScale, 1.0));
+    matrix.setTranslation(translation);
+    
+    setState(() {
+      _transformationController.value = matrix;
+    });
+  }
+
+  void _resetZoom() {
+    setState(() {
+      _transformationController.value = Matrix4.identity();
+    });
   }
 
   @override
   void dispose() {
-    _scrollTimer?.cancel();
+    if (_ticker.isActive) {
+      _ticker.stop();
+    }
+    _ticker.dispose();
     _document?.close();
-    _scrollController.dispose();
+    _transformationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
         title: const Text('PDF Viewer'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.zoom_out),
+            onPressed: () => _updateZoom(0.8),
+            tooltip: 'Zoom Out',
+          ),
+          IconButton(
+            icon: const Icon(Icons.zoom_in),
+            onPressed: () => _updateZoom(1.2),
+            tooltip: 'Zoom In',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_backup_restore),
+            onPressed: _resetZoom,
+            tooltip: 'Reset Zoom',
+          ),
+          if (widget.config.autoScrollEnabled && !_showControls)
+            IconButton(
+              icon: Icon(_isAutoScrolling ? Icons.pause : Icons.play_arrow),
+              onPressed: () => _toggleAutoScroll(!_isAutoScrolling),
+              tooltip: _isAutoScrolling ? 'Pause' : 'Play',
+            ),
           if (widget.config.autoScrollEnabled)
             IconButton(
               icon: Icon(_showControls ? Icons.visibility : Icons.visibility_off),
@@ -109,24 +234,38 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       body: Stack(
         children: [
           if (_isLoaded && _document != null)
-            NotificationListener<UserScrollNotification>(
-              onNotification: (notification) {
-                // If user starts manual scrolling, stop auto-scroll
-                if (notification.direction != ScrollDirection.idle && _isAutoScrolling) {
-                  _toggleAutoScroll(false);
+            Listener(
+              onPointerSignal: (pointerSignal) {
+                if (pointerSignal is PointerScrollEvent) {
+                  final isControlPressed = HardwareKeyboard.instance.isControlPressed;
+                  if (isControlPressed) {
+                    final zoomDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+                    _updateZoom(zoomDelta);
+                  }
                 }
-                return false;
               },
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _document!.pagesCount,
-                itemBuilder: (context, index) {
-                  return _PdfPageWidget(
-                    document: _document!,
-                    pageNumber: index + 1,
-                  );
+              child: InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: 1.0,
+                maxScale: 4.0,
+                constrained: false, // Allows the Column to be its natural size
+                onInteractionStart: (_) {
+                  _toggleAutoScroll(false);
                 },
+                child: SizedBox(
+                  width: screenWidth,
+                  child: Column(
+                    key: _contentKey,
+                    children: List.generate(_document!.pagesCount, (index) {
+                      return _PdfPageWidget(
+                        document: _document!,
+                        pageNumber: index + 1,
+                        defaultAspectRatio: _defaultAspectRatio,
+                        transformationController: _transformationController,
+                      );
+                    }),
+                  ),
+                ),
               ),
             )
           else
@@ -143,6 +282,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       ),
     );
   }
+
 
   Widget _buildScrollOverlay() {
     return Card(
@@ -168,6 +308,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   setState(() {
                     _scrollSpeed = value;
                   });
+                  _saveSpeed(value);
                   if (_isAutoScrolling) _toggleAutoScroll(true);
                 },
               ),
@@ -186,10 +327,14 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 class _PdfPageWidget extends StatefulWidget {
   final PdfDocument document;
   final int pageNumber;
+  final double? defaultAspectRatio;
+  final TransformationController transformationController;
 
   const _PdfPageWidget({
     required this.document,
     required this.pageNumber,
+    this.defaultAspectRatio,
+    required this.transformationController,
   });
 
   @override
@@ -198,54 +343,113 @@ class _PdfPageWidget extends StatefulWidget {
 
 class _PdfPageWidgetState extends State<_PdfPageWidget> {
   PdfPageImage? _image;
+  double? _aspectRatio;
+  bool _isRendering = false;
 
   @override
   void initState() {
     super.initState();
-    _renderPage();
+    widget.transformationController.addListener(_checkVisibility);
+    // Initial check after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
+  }
+
+  @override
+  void dispose() {
+    widget.transformationController.removeListener(_checkVisibility);
+    super.dispose();
+  }
+
+  void _checkVisibility() {
+    if (!mounted || _isRendering || _image != null) return;
+
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final Offset position = box.localToGlobal(Offset.zero);
+    final double screenHeight = MediaQuery.of(context).size.height;
+    
+    // Add a buffer of one screen height above and below
+    if (position.dy < screenHeight * 2 && position.dy + box.size.height > -screenHeight) {
+      _renderPage();
+    }
   }
 
   Future<void> _renderPage() async {
-    final page = await widget.document.getPage(widget.pageNumber);
-    // Render at a decent resolution
-    final image = await page.render(
-      width: page.width * 1.5,
-      height: page.height * 1.5,
-      format: PdfPageImageFormat.jpeg,
-      quality: 80,
-    );
-    await page.close();
-    if (mounted) {
-      setState(() {
-        _image = image;
-      });
+    if (_isRendering || _image != null) return;
+    
+    setState(() => _isRendering = true);
+    
+    try {
+      final page = await widget.document.getPage(widget.pageNumber);
+      
+      if (mounted) {
+        setState(() {
+          _aspectRatio = page.width / page.height;
+        });
+      }
+
+      if (!mounted) {
+        await page.close();
+        return;
+      }
+      
+      final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+      final double renderScale = math.max(2.0, devicePixelRatio);
+
+      final image = await page.render(
+        width: page.width * renderScale,
+        height: page.height * renderScale,
+        format: PdfPageImageFormat.jpeg,
+        quality: 90,
+      );
+      await page.close();
+      if (mounted) {
+        setState(() {
+          _image = image;
+          _isRendering = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error rendering page ${widget.pageNumber}: $e');
+      if (mounted) setState(() => _isRendering = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget content;
     if (_image == null) {
-      return const SizedBox(
-        height: 500,
-        child: Center(child: CircularProgressIndicator()),
+      content = const Center(child: CircularProgressIndicator());
+    } else {
+      content = Image.memory(
+        _image!.bytes,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
       );
     }
+
+    final ratio = _aspectRatio ?? widget.defaultAspectRatio ?? 0.707;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(51), // Approximately 0.2 opacity
+            color: Colors.black.withAlpha(51),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Image.memory(
-        _image!.bytes,
-        fit: BoxFit.contain,
+      child: AspectRatio(
+        aspectRatio: ratio,
+        child: content,
       ),
     );
   }
 }
+
+
+
