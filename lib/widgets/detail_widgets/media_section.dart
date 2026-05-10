@@ -291,10 +291,22 @@ class _MediaSectionState extends State<MediaSection> {
                             if (isCurrentlyThumbnail) {
                               widget.onSetThumbnail('');
                             } else {
-                              final path = (widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo) 
-                                  ? widget.item.pathOrUrl 
-                                  : _currentThumbnailPath!;
-                              widget.onSetThumbnail(path);
+                              // Fix: For local videos, we MUST use the generated thumbnail path, not the video path.
+                              // For images, we use the item path.
+                              String? path;
+                              if (widget.item.type == MediaType.image) {
+                                path = widget.item.pathOrUrl;
+                              } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink) {
+                                path = _currentThumbnailPath;
+                              }
+                              
+                              if (path != null && path.isNotEmpty) {
+                                widget.onSetThumbnail(path);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please generate a thumbnail first.')),
+                                );
+                              }
                             }
                           },
                           icon: Icon(

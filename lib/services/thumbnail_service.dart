@@ -1,6 +1,8 @@
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
 import 'package:video_player/video_player.dart';
@@ -29,8 +31,8 @@ class ThumbnailService {
             }
             final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
             await thumbnailFile.writeAsBytes(response.bodyBytes);
+            AppLogger.log('ThumbnailService: Link thumbnail saved to ${thumbnailFile.path} (${response.bodyBytes.length} bytes)');
           }
-          // Do not mutate the passed MediaItem here; let callers update state immutably
         }
       } catch (e) {
         AppLogger.log('Error fetching or saving thumbnail: $e');
@@ -45,10 +47,12 @@ class ThumbnailService {
       try {
         final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
         if (thumbnailDir != null) {
-          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
-          if (await thumbnailFile.exists()) {
-            return thumbnailFile.path;
-          }
+          // Check for both .jpg (web links) and .png (video frames)
+          final jpgFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
+          if (await jpgFile.exists()) return jpgFile.path;
+          
+          final pngFile = File(p.join(thumbnailDir.path, '${item.id}.png'));
+          if (await pngFile.exists()) return pngFile.path;
         }
       } catch (e) {
         AppLogger.log('Error getting thumbnail path: $e');
@@ -68,31 +72,34 @@ class ThumbnailService {
       controller = VideoPlayerController.file(File(item.pathOrUrl));
       await controller.initialize();
       
+      // Target a reasonable thumbnail size (e.g. max 720 width)
+      double width = controller.value.size.width;
+      double height = controller.value.size.height;
+      const double maxDimension = 720.0;
+      
+      if (width > maxDimension || height > maxDimension) {
+        final double scale = maxDimension / (width > height ? width : height);
+        width *= scale;
+        height *= scale;
+      }
+      
+      final int iWidth = width.toInt();
+      final int iHeight = height.toInt();
+      
+      if (iWidth <= 0 || iHeight <= 0) {
+        AppLogger.log('ThumbnailService: Invalid calculated video size: $iWidth x $iHeight');
+        return null;
+      }
+
       // Seek to 1 second (or 10% of duration) to avoid black frames at start
       final duration = controller.value.duration;
       final seekPos = duration.inSeconds > 1 ? const Duration(seconds: 1) : Duration.zero;
       await controller.seekTo(seekPos);
       
-      // Small delay to ensure frame is loaded
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Wait for seek to complete and frame to be ready
+      await Future.delayed(const Duration(milliseconds: 1000));
 
-      // Use fvp extension to take a snapshot
-      final snapshot = await fvp.FVPControllerExtensions(controller).snapshot();
-      
-      if (snapshot != null) {
-        final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
-        if (thumbnailDir != null) {
-          if (!await thumbnailDir.exists()) {
-            await thumbnailDir.create(recursive: true);
-          }
-          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
-          await thumbnailFile.writeAsBytes(snapshot);
-          AppLogger.log('ThumbnailService: Video thumbnail saved to ${thumbnailFile.path}');
-          return thumbnailFile.path;
-        }
-      } else {
-        AppLogger.log('ThumbnailService: Failed to take snapshot from video.');
-      }
+      return await captureFrameFromController(controller, musicPieceId, item.id);
     } catch (e) {
       AppLogger.log('ThumbnailService: Error generating video thumbnail: $e');
     } finally {
@@ -100,4 +107,80 @@ class ThumbnailService {
     }
     return null;
   }
+
+  static Future<String?> captureFrameFromController(VideoPlayerController controller, String musicPieceId, String mediaItemId) async {
+    if (kIsWeb) return null;
+    if (!controller.value.isInitialized) return null;
+
+    try {
+      // Target a reasonable thumbnail size (e.g. max 720 width)
+      double width = controller.value.size.width;
+      double height = controller.value.size.height;
+      const double maxDimension = 720.0;
+      
+      if (width > maxDimension || height > maxDimension) {
+        final double scale = maxDimension / (width > height ? width : height);
+        width *= scale;
+        height *= scale;
+      }
+      
+      final int iWidth = width.toInt();
+      final int iHeight = height.toInt();
+      
+      if (iWidth <= 0 || iHeight <= 0) {
+        AppLogger.log('ThumbnailService: Invalid video size for snapshot: $iWidth x $iHeight');
+        return null;
+      }
+
+      // Use fvp extension to take a snapshot (returns raw pixel data)
+      AppLogger.log('ThumbnailService: Requesting snapshot from active controller at $iWidth x $iHeight...');
+      final rawPixels = await fvp.FVPControllerExtensions(controller).snapshot(
+        width: iWidth,
+        height: iHeight,
+      );
+      
+      if (rawPixels != null && rawPixels.isNotEmpty) {
+        AppLogger.log('ThumbnailService: Captured raw frame (${rawPixels.length} bytes). Encoding to PNG...');
+        
+        final completer = Completer<ui.Image>();
+        ui.decodeImageFromPixels(
+          rawPixels,
+          iWidth,
+          iHeight,
+          ui.PixelFormat.rgba8888,
+          (ui.Image img) => completer.complete(img),
+        );
+        
+        final uiImage = await completer.future;
+        final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+        
+        if (byteData != null) {
+          final pngBytes = byteData.buffer.asUint8List();
+          
+          if (pngBytes.isEmpty) {
+             AppLogger.log('ThumbnailService: Encoded PNG is empty!');
+             return null;
+          }
+
+          final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+          if (thumbnailDir != null) {
+            if (!await thumbnailDir.exists()) {
+              await thumbnailDir.create(recursive: true);
+            }
+            // Use a unique filename if capturing manually to avoid cache issues, 
+            // but for automatic generation we can stick to item ID.
+            final fileName = 'thumb_${mediaItemId}_${DateTime.now().millisecondsSinceEpoch}.png';
+            final thumbnailFile = File(p.join(thumbnailDir.path, fileName));
+            await thumbnailFile.writeAsBytes(pngBytes);
+            AppLogger.log('ThumbnailService: Captured frame saved to ${thumbnailFile.path}');
+            return thumbnailFile.path;
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.log('ThumbnailService: Error capturing frame: $e');
+    }
+    return null;
+  }
+
 }

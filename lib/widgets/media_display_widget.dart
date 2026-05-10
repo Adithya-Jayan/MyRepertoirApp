@@ -15,6 +15,7 @@ import '../screens/video_player_widget.dart';
 import '../screens/midi_player_widget.dart'
     if (dart.library.html) '../screens/midi_player_widget_web.dart';
 import 'dart:io' as io;
+import '../utils/app_logger.dart';
 
 class MediaDisplayWidget extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -193,6 +194,32 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       return const SizedBox.shrink();
     }
 
+    Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
+      final file = io.File(path);
+      // Use the file's last modified time as a key to break cache when updated
+      return FutureBuilder<DateTime>(
+        future: file.lastModified(),
+        builder: (context, snapshot) {
+          return Image.file(
+            file,
+            key: ValueKey('${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}'),
+            height: height,
+            width: width,
+            fit: fit,
+            errorBuilder: (context, error, stackTrace) {
+              AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
+              return Container(
+                height: height ?? 200,
+                width: width,
+                color: Colors.grey[300],
+                child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
+              );
+            },
+          );
+        },
+      );
+    }
+
     Widget content;
 
     switch (currentMediaItem.type) {
@@ -224,60 +251,77 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             height: 200,
             child: kIsWeb 
               ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-              : Image.file(
-                  io.File(currentMediaItem.pathOrUrl),
-                  fit: BoxFit.contain, // Maintain aspect ratio within the bounds
-                ),
+              : buildFileImage(currentMediaItem.pathOrUrl),
           ),
         );
         break;
       case MediaType.localVideo:
+        final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
+        
         if (widget.isEditable) {
           content = FutureBuilder<bool>(
             future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
             builder: (context, snapshot) {
               final fileExists = snapshot.data ?? false;
-              return Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: fileExists ? Colors.grey[100] : Colors.red[50],
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      fileExists ? Icons.video_file : Icons.error_outline,
-                      color: fileExists ? Colors.blue[600] : Colors.red[600],
-                      size: 32.0,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Video File',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            fileExists 
-                              ? 'File loaded'
-                              : 'Video file not found',
-                            style: TextStyle(
-                              color: fileExists ? Colors.grey[600] : Colors.red[600],
-                              fontSize: 14.0,
-                            ),
-                          ),
-                        ],
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasThumbnail)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: buildFileImage(
+                          currentMediaItem.thumbnailPath!,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: fileExists ? Colors.grey[100] : Colors.red[50],
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          fileExists ? Icons.video_file : Icons.error_outline,
+                          color: fileExists ? Colors.blue[600] : Colors.red[600],
+                          size: 32.0,
+                        ),
+                        const SizedBox(width: 12.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Video File',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(height: 4.0),
+                              Text(
+                                fileExists 
+                                  ? 'File loaded'
+                                  : 'Video file not found',
+                                style: TextStyle(
+                                  color: fileExists ? Colors.grey[600] : Colors.red[600],
+                                  fontSize: 14.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
           );
@@ -418,11 +462,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   currentMediaItem.thumbnailPath != '')
               ? (kIsWeb 
                   ? Image.network(currentMediaItem.thumbnailPath!, height: 200, fit: BoxFit.contain)
-                  : Image.file(
-                      io.File(currentMediaItem.thumbnailPath!),
-                      height: 200,
-                      fit: BoxFit.contain,
-                    ))
+                  : buildFileImage(currentMediaItem.thumbnailPath!, height: 200))
               : Container(
                   height: 200,
                   color: Colors.blueGrey,
@@ -463,10 +503,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             height: 200,
             child: kIsWeb 
               ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-              : Image.file(
-                  io.File(currentMediaItem.pathOrUrl),
-                  fit: BoxFit.contain, // Maintain aspect ratio within the bounds
-                ),
+              : buildFileImage(currentMediaItem.pathOrUrl),
           ),
         );
         break;

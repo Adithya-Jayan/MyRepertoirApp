@@ -54,11 +54,26 @@ Future<void> main() async {
       databaseFactory = databaseFactoryFfi;
     }
     
+    final Map<String, String> playerOptions = {
+      "audio.resample": "1",
+    };
+    
+    if (Platform.isAndroid) {
+      playerOptions["audio.backend"] = "null"; // Disable audio output
+      playerOptions["audio.decoders"] = "0";   // Disable audio decoding if possible
+      playerOptions["audio.filter"] = "0";     // Disable audio filters
+      playerOptions["audio.buffer"] = "0";     // Eliminate audio buffer allocation
+      playerOptions["audio.period"] = "0";
+    } else {
+      playerOptions["audio.buffer"] = "100";
+      playerOptions["audio.period"] = "20";
+    }
+
     fvp.registerWith(options: {
-      "player": {
-        "audio.backend": "ffmpeg",
-        "audio.resample": "1",
-      }
+      "video.decoders": Platform.isAndroid 
+          ? ["MediaCodec", "FFmpeg"] 
+          : (Platform.isWindows ? ["D3D11", "FFmpeg"] : ["FFmpeg"]),
+      "player": playerOptions,
     }); // Initialize fvp for video playback on all native platforms
     
     if (Platform.isLinux || Platform.isWindows) {
