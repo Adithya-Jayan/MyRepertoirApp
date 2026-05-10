@@ -69,23 +69,24 @@ class _MediaSectionState extends State<MediaSection> {
   }
 
   Future<void> _fetchThumbnail() async {
+// ... (omitted unchanged fetch)
+  }
+
+  Future<void> _generateVideoThumbnail() async {
     if (widget.item.pathOrUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a URL first')),
+        const SnackBar(content: Text('Video file path is empty')),
       );
       return;
     }
 
-    AppLogger.log('MediaSection: Starting thumbnail fetch for URL: ${widget.item.pathOrUrl}');
+    AppLogger.log('MediaSection: Generating thumbnail for video: ${widget.item.pathOrUrl}');
     setState(() {
       _isLoadingThumbnail = true;
     });
 
     try {
-      await ThumbnailService.fetchAndSaveThumbnail(widget.item, widget.musicPieceId);
-      final thumbnailPath = await ThumbnailService.getThumbnailPath(widget.item, widget.musicPieceId);
-      
-      AppLogger.log('MediaSection: Thumbnail fetch completed, path: $thumbnailPath');
+      final thumbnailPath = await ThumbnailService.generateVideoThumbnail(widget.item, widget.musicPieceId);
       
       if (thumbnailPath != null && mounted) {
         setState(() {
@@ -93,35 +94,28 @@ class _MediaSectionState extends State<MediaSection> {
           _isLoadingThumbnail = false;
         });
         
-        // Defensive: ensure we never alter the media link URL when setting a thumbnail
-        final updatedItem = widget.item.copyWith(
-          thumbnailPath: thumbnailPath,
-          pathOrUrl: widget.item.pathOrUrl,
-        );
+        final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
         widget.onUpdateMediaItem(updatedItem);
         
-        AppLogger.log('Thumbnail fetched for media item: ${widget.item.title}');
-        
-        // Show success feedback
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thumbnail fetched successfully!')),
+          const SnackBar(content: Text('Video thumbnail generated successfully!')),
         );
       } else if (mounted) {
         setState(() {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to fetch thumbnail (not found)')),
+          const SnackBar(content: Text('Failed to generate video thumbnail.')),
         );
       }
     } catch (e) {
-      AppLogger.log('Error fetching thumbnail: $e');
+      AppLogger.log('Error generating video thumbnail: $e');
       if (mounted) {
         setState(() {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch thumbnail: $e')),
+          SnackBar(content: Text('Error generating thumbnail: $e')),
         );
       }
     }
@@ -251,8 +245,8 @@ class _MediaSectionState extends State<MediaSection> {
                     spacing: 8.0,
                     runSpacing: 8.0,
                     children: [
-                      // Get/Remove thumbnail button (for media links)
-                      if (widget.item.type == MediaType.mediaLink)
+                      // Get/Remove thumbnail button (for media links and local video)
+                      if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo)
                         _isLoadingThumbnail
                             ? const Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -269,9 +263,9 @@ class _MediaSectionState extends State<MediaSection> {
                             : ElevatedButton.icon(
                                 onPressed: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
                                     ? () => _removeThumbnail()
-                                    : () => _fetchThumbnail(),
+                                    : () => widget.item.type == MediaType.mediaLink ? _fetchThumbnail() : _generateVideoThumbnail(),
                                 icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image),
-                                label: Text((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : 'Get link thumbnail'),
+                                label: Text((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : (widget.item.type == MediaType.mediaLink ? 'Get link thumbnail' : 'Get video thumbnail')),
                                 style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
                                     ? ElevatedButton.styleFrom(
                                         backgroundColor: Colors.red[50],

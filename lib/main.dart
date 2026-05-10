@@ -48,10 +48,14 @@ Future<void> main() async {
 
   // Initialize sqflite for desktop platforms (Windows, Linux, macOS).
   // This allows the app to use SQLite databases on these platforms.
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-    fvp.registerWith(); // Initialize fvp for desktop video playback
+  if (!kIsWeb) {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+    
+    fvp.registerWith(); // Initialize fvp for video playback on all native platforms
+    
     if (Platform.isLinux || Platform.isWindows) {
       JustAudioMpv.registerWith(); // Initialize just_audio_mpv for desktop audio
     }

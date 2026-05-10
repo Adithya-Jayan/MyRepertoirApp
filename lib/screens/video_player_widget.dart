@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'dart:math';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:fvp/fvp.dart' as fvp;
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/models/bookmark.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
@@ -37,6 +39,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   final MusicPieceRepository _repository = MusicPieceRepository();
   final Uuid _uuid = const Uuid();
   double _playbackSpeed = 1.0;
+  double _pitch = 0.0; // Current pitch in half-step units.
   double? _dragValue;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -45,7 +48,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     super.initState();
     _enableWakelock();
     _initializeBookmarks();
-    _initializePlayer().then((_) => _loadPlaybackSpeed());
+    _initializePlayer().then((_) => _loadSettings());
   }
 
   void _enableWakelock() {
@@ -62,31 +65,47 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
-  Future<void> _loadPlaybackSpeed() async {
+  Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedSpeed = prefs.getDouble('video_playback_speed');
-      if (savedSpeed != null) {
-        if (mounted) {
-          setState(() {
-            _playbackSpeed = savedSpeed;
-          });
-        }
-        if (_isInitialized) {
-          await _controller.setPlaybackSpeed(savedSpeed);
-        }
+      final savedSpeed = prefs.getDouble('video_playback_speed_${widget.musicPiece.id}') ?? 1.0;
+      final savedPitch = prefs.getDouble('video_pitch_${widget.musicPiece.id}') ?? 0.0;
+      
+      if (mounted) {
+        setState(() {
+          _playbackSpeed = savedSpeed;
+          _pitch = savedPitch;
+        });
+      }
+      
+      if (_isInitialized) {
+        await _controller.setPlaybackSpeed(savedSpeed);
+        await _applyPitch(savedPitch);
       }
     } catch (e) {
-      AppLogger.log('Error loading playback speed: $e');
+      AppLogger.log('Error loading video settings: $e');
     }
   }
 
-  Future<void> _savePlaybackSpeed(double speed) async {
+  Future<void> _saveSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('video_playback_speed', speed);
+      await prefs.setDouble('video_playback_speed_${widget.musicPiece.id}', _playbackSpeed);
+      await prefs.setDouble('video_pitch_${widget.musicPiece.id}', _pitch);
     } catch (e) {
-      AppLogger.log('Error saving playback speed: $e');
+      AppLogger.log('Error saving video settings: $e');
+    }
+  }
+
+  Future<void> _applyPitch(double semitones) async {
+    // fvp supports setting properties. semitones to pitch ratio: 2^(semitones/12)
+    final pitchMultiplier = pow(2.0, semitones / 12.0).toDouble();
+    try {
+      // Use fvp extension setProperty
+      // In mdk, pitch can be set via 'pitch' property or 'avformat' options depending on version
+      fvp.FVPControllerExtensions(_controller).setProperty('pitch', pitchMultiplier.toString());
+    } catch (e) {
+      AppLogger.log('Error applying video pitch: $e');
     }
   }
 
@@ -94,7 +113,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     if (widget.controller != null) {
       _controller = widget.controller!;
       _isInitialized = true;
-      // Don't overwrite speed here, let _loadPlaybackSpeed handle it or keep controller's default
     } else {
       _controllerIsLocal = true;
       final videoPath = widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
@@ -132,6 +150,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       _controller.dispose();
     }
     super.dispose();
+  }
+
+  String _getPitchDisplayString(double semitones) {
+    if (semitones == 0) return 'Normal';
+    return '${semitones > 0 ? '+' : ''}${semitones.round()} st';
   }
 
   String _formatDuration(Duration duration) {
@@ -267,8 +290,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                     onSubmitted: (value) => Navigator.of(context).pop(value),
                   ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: const Text('Rename')),
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Rename')),
                   ],
                 ),
               );
@@ -393,7 +416,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               _playbackSpeed = speed;
               _controller.setPlaybackSpeed(speed);
             });
-            await _savePlaybackSpeed(speed);
+            await _saveSettings();
           },
         ),
       ],
@@ -408,6 +431,75 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           child: SafeArea(
             child: Column(
               children: [
+                const ListTile(
+                  title: Text('Video Controls', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+                const Divider(color: Colors.white24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text('Speed:', style: TextStyle(color: Colors.white70)),
+                          Expanded(
+                            child: Slider(
+                              min: 0.2,
+                              max: 2.5,
+                              value: _playbackSpeed,
+                              divisions: 23,
+                              activeColor: Colors.blue,
+                              onChanged: (value) async {
+                                setState(() {
+                                  _playbackSpeed = value;
+                                });
+                                await _controller.setPlaybackSpeed(value);
+                                await _saveSettings();
+                              },
+                            ),
+                          ),
+                          Text('${_playbackSpeed.toStringAsFixed(1)}x', style: const TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text('Pitch:', style: TextStyle(color: Colors.white70)),
+                          Expanded(
+                            child: Slider(
+                              min: -12.0,
+                              max: 12.0,
+                              value: _pitch,
+                              divisions: 24,
+                              activeColor: Colors.blue,
+                              onChanged: (value) async {
+                                setState(() {
+                                  _pitch = value;
+                                });
+                                await _applyPitch(value);
+                                await _saveSettings();
+                              },
+                            ),
+                          ),
+                          Text(_getPitchDisplayString(_pitch), style: const TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          setState(() {
+                            _playbackSpeed = 1.0;
+                            _pitch = 0.0;
+                          });
+                          await _controller.setPlaybackSpeed(1.0);
+                          await _applyPitch(0.0);
+                          await _saveSettings();
+                        },
+                        icon: const Icon(Icons.restore),
+                        label: const Text('Reset'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Colors.white24),
                 const ListTile(
                   title: Text('Bookmarks', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
@@ -481,6 +573,72 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           ],
         ),
 
+        // Speed & Pitch Controls (Inline)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Text('Speed:'),
+                  Expanded(
+                    child: Slider(
+                      min: 0.2,
+                      max: 2.5,
+                      value: _playbackSpeed,
+                      divisions: 23,
+                      label: _playbackSpeed.toStringAsFixed(1),
+                      onChanged: (value) async {
+                        setState(() {
+                          _playbackSpeed = value;
+                        });
+                        await _controller.setPlaybackSpeed(value);
+                        await _saveSettings();
+                      },
+                    ),
+                  ),
+                  Text('${_playbackSpeed.toStringAsFixed(1)}x'),
+                ],
+              ),
+              Row(
+                children: [
+                  const Text('Pitch:'),
+                  Expanded(
+                    child: Slider(
+                      min: -12.0,
+                      max: 12.0,
+                      value: _pitch,
+                      divisions: 24,
+                      label: _getPitchDisplayString(_pitch),
+                      onChanged: (value) async {
+                        setState(() {
+                          _pitch = value;
+                        });
+                        await _applyPitch(value);
+                        await _saveSettings();
+                      },
+                    ),
+                  ),
+                  Text(_getPitchDisplayString(_pitch)),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  setState(() {
+                    _playbackSpeed = 1.0;
+                    _pitch = 0.0;
+                  });
+                  await _controller.setPlaybackSpeed(1.0);
+                  await _applyPitch(0.0);
+                  await _saveSettings();
+                },
+                icon: const Icon(Icons.restore),
+                label: const Text('Reset Controls'),
+              ),
+            ],
+          ),
+        ),
+
         // Add Bookmark Button (Inline)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -550,25 +708,7 @@ class _ControlsOverlay extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
         ),
         
-        // Semi-transparent background when paused or finished
-        if (_isFinished)
-          const IgnorePointer(
-            child: ColoredBox(
-              color: Colors.black26,
-              child: Center(
-                child: Icon(Icons.replay, color: Colors.white, size: 80.0),
-              ),
-            ),
-          )
-        else if (!controller.value.isPlaying)
-          const IgnorePointer(
-            child: ColoredBox(
-              color: Colors.black26,
-              child: Center(
-                child: Icon(Icons.play_arrow, color: Colors.white, size: 80.0),
-              ),
-            ),
-          ),
+        // Removed semi-transparent background and center icons
 
         // Top Controls
         Positioned(
