@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/music_piece.dart';
 
+import '../models/media_item.dart';
+
 class MidiPlayerWidget extends StatelessWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
+  final Function(MediaItem)? onMediaItemChanged;
 
   const MidiPlayerWidget({
     super.key,
     required this.musicPiece,
     required this.mediaItemIndex,
+    this.onMediaItemChanged,
   });
 
   @override
