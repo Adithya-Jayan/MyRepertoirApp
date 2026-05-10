@@ -68,14 +68,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           final maxScroll = _scrollController.position.maxScrollExtent;
           final currentScroll = _scrollController.offset;
           
-          if (currentScroll >= maxScroll) {
+          // Stop if we reached the end (with a small tolerance)
+          if (currentScroll >= maxScroll - 5) {
             _toggleAutoScroll(false);
             return;
           }
           
           // Smooth scroll increment
-          // 1.0 speed = ~33 pixels per second (1 pixel every 30ms)
-          _scrollController.jumpTo(currentScroll + (_scrollSpeed * 0.5));
+          final nextScroll = (currentScroll + (_scrollSpeed * 0.5)).clamp(0.0, maxScroll);
+          _scrollController.jumpTo(nextScroll);
         }
       });
     }
@@ -107,15 +108,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       body: Stack(
         children: [
           if (_isLoaded && _document != null)
-            ListView.builder(
-              controller: _scrollController,
-              itemCount: _document!.pagesCount,
-              itemBuilder: (context, index) {
-                return _PdfPageWidget(
-                  document: _document!,
-                  pageNumber: index + 1,
-                );
+            NotificationListener<UserScrollNotification>(
+              onNotification: (notification) {
+                // If user starts manual scrolling, stop auto-scroll
+                if (notification.direction != ScrollDirection.idle && _isAutoScrolling) {
+                  _toggleAutoScroll(false);
+                }
+                return false;
               },
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: _document!.pagesCount,
+                itemBuilder: (context, index) {
+                  return _PdfPageWidget(
+                    document: _document!,
+                    pageNumber: index + 1,
+                  );
+                },
+              ),
             )
           else
             const Center(child: CircularProgressIndicator()),
