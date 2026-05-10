@@ -1,0 +1,8 @@
+New version! This version includes some new requested features and improvements. The midi player is now more fully fledged with channel wise audio control as well as the ability to name them. PDFs now have a autoscroll option that allows you to set and let the page scroll down automatically. The gallery pieces details can now be folded, making it less cluttered especially if you have a lot of widgets in a single piece. The video player has been improved with support for pitch shift control (Key transpose). A few other polish updates and bug fixes as well. Do open an issue on the GitHub page for suggestions/feedback!. Cheers!
+
+## What's Changed
+* Fix JVM target inconsistency by enforcing Java 17 for all subprojects by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/200
+* App improvements by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/201
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.8.1+31...v4.9.0+33
