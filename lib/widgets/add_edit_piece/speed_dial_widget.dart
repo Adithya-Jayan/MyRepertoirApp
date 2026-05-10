@@ -15,58 +15,58 @@ class SpeedDialWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<SpeedDialChild> dialChildren = [
+      SpeedDialChild(
+        child: const Icon(Icons.photo_size_select_actual),
+        label: 'Thumbnail',
+        onTap: hasThumbnail ? null : () => onAddMediaItem(MediaType.thumbnails),
+        backgroundColor: hasThumbnail ? Colors.grey : null,
+        labelStyle: hasThumbnail ? const TextStyle(color: Colors.grey) : null,
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.text_fields),
+        label: 'Markdown Text',
+        onTap: () => onAddMediaItem(MediaType.markdown),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.picture_as_pdf),
+        label: 'PDF',
+        onTap: () => onAddMediaItem(MediaType.pdf),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.image),
+        label: 'Image',
+        onTap: () => onAddMediaItem(MediaType.image),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.audiotrack),
+        label: 'Audio/MIDI',
+        onTap: () => onAddMediaItem(MediaType.audio), // Default to audio, picker will handle both
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.video_library),
+        label: 'Link',
+        onTap: () => onAddMediaItem(MediaType.mediaLink),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.movie_creation),
+        label: 'Local Video',
+        onTap: () => onAddMediaItem(MediaType.localVideo),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.bar_chart),
+        label: 'Learning Progress',
+        onTap: () => onAddMediaItem(MediaType.learningProgress),
+      ),
+    ];
+
+    // Sort children alphabetically by label
+    dialChildren.sort((a, b) => (a.label ?? '').compareTo(b.label ?? ''));
+
     return SpeedDial(
       icon: Icons.add,
       activeIcon: Icons.close,
-      children: [
-        SpeedDialChild(
-          child: const Icon(Icons.photo_size_select_actual),
-          label: 'Thumbnail',
-          onTap: hasThumbnail ? null : () => onAddMediaItem(MediaType.thumbnails),
-          backgroundColor: hasThumbnail ? Colors.grey : null,
-          labelStyle: hasThumbnail ? const TextStyle(color: Colors.grey) : null,
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.text_fields),
-          label: 'Markdown Text',
-          onTap: () => onAddMediaItem(MediaType.markdown),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.picture_as_pdf),
-          label: 'PDF',
-          onTap: () => onAddMediaItem(MediaType.pdf),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.image),
-          label: 'Image',
-          onTap: () => onAddMediaItem(MediaType.image),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.audiotrack),
-          label: 'Audio',
-          onTap: () => onAddMediaItem(MediaType.audio),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.video_library),
-          label: 'Link',
-          onTap: () => onAddMediaItem(MediaType.mediaLink),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.movie_creation),
-          label: 'Local Video',
-          onTap: () => onAddMediaItem(MediaType.localVideo),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.music_note),
-          label: 'MIDI',
-          onTap: () => onAddMediaItem(MediaType.midi),
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.bar_chart),
-          label: 'Learning Progress',
-          onTap: () => onAddMediaItem(MediaType.learningProgress),
-        ),
-      ],
+      children: dialChildren,
     );
   }
 } 

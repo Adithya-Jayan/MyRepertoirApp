@@ -12,7 +12,19 @@ class AppLogger {
 
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? true; // Enable by default for testing
+    
+    // One-time migration to change the default from true to false.
+    // This will run once for everyone (new and old users).
+    const String migrationKey = 'debugLogsDefaultMigrated';
+    final bool migrated = prefs.getBool(migrationKey) ?? false;
+    
+    if (!migrated) {
+      await prefs.setBool(_debugLogsEnabledKey, false);
+      await prefs.setBool(migrationKey, true);
+      _debugLogsEnabled = false;
+    } else {
+      _debugLogsEnabled = prefs.getBool(_debugLogsEnabledKey) ?? false;
+    }
 
     if (kIsWeb) {
       debugPrint('AppLogger: Running on Web. File logging disabled.');

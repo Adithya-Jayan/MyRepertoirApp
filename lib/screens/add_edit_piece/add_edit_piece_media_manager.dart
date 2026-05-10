@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
 import '../../models/media_item.dart';
 import '../../models/media_type.dart';
 import '../../models/learning_progress_config.dart'; // Import config
@@ -30,7 +31,10 @@ class AddEditPieceMediaManager {
         );
         break;
       case MediaType.audio:
-        result = await FilePicker.platform.pickFiles(type: FileType.audio);
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'mid', 'midi'],
+        );
         break;
       case MediaType.localVideo:
         result = await FilePicker.platform.pickFiles(
@@ -57,16 +61,24 @@ class AddEditPieceMediaManager {
 
     if (result != null && result.files.single.path != null) {
       try {
+        MediaType finalType = type;
+        if (type == MediaType.audio) {
+          final ext = p.extension(result.files.single.path!).toLowerCase();
+          if (ext == '.mid' || ext == '.midi') {
+            finalType = MediaType.midi;
+          }
+        }
+
         final newPath = await MediaStorageManager.copyMediaToLocal(
           result.files.single.path!, 
           musicPieceId, 
-          type
+          finalType
         );
         
         final newMediaItems = List<MediaItem>.from(currentMediaItems);
         newMediaItems.add(MediaItem(
           id: const Uuid().v4(),
-          type: type,
+          type: finalType,
           pathOrUrl: newPath,
         ));
         
