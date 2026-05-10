@@ -1,0 +1,8 @@
+Test release with new features. (Prerelease)
+
+## What's Changed
+* Fix JVM target inconsistency by enforcing Java 17 for all subprojects by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/200
+* App improvements by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/201
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.8.1+31...v4.9.0-prerelease.1+32
