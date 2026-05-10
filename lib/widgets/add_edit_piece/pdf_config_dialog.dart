@@ -12,13 +12,11 @@ class PdfConfigDialog extends StatefulWidget {
 
 class _PdfConfigDialogState extends State<PdfConfigDialog> {
   late bool _autoScrollEnabled;
-  late double _defaultSpeed;
 
   @override
   void initState() {
     super.initState();
     _autoScrollEnabled = widget.initialConfig.autoScrollEnabled;
-    _defaultSpeed = widget.initialConfig.defaultSpeed;
   }
 
   @override
@@ -38,22 +36,6 @@ class _PdfConfigDialogState extends State<PdfConfigDialog> {
               });
             },
           ),
-          if (_autoScrollEnabled) ...[
-            const SizedBox(height: 16),
-            const Text('Initial Speed'),
-            Slider(
-              min: 0.1,
-              max: 5.0,
-              divisions: 49,
-              value: _defaultSpeed,
-              onChanged: (value) {
-                setState(() {
-                  _defaultSpeed = value;
-                });
-              },
-            ),
-            Text('${_defaultSpeed.toStringAsFixed(1)}x'),
-          ],
         ],
       ),
       actions: [
@@ -67,7 +49,7 @@ class _PdfConfigDialogState extends State<PdfConfigDialog> {
               context,
               PdfConfig(
                 autoScrollEnabled: _autoScrollEnabled,
-                defaultSpeed: _defaultSpeed,
+                defaultSpeed: 1.0, // Default to 1.0
               ),
             );
           },
