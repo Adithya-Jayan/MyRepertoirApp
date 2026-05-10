@@ -54,7 +54,12 @@ Future<void> main() async {
       databaseFactory = databaseFactoryFfi;
     }
     
-    fvp.registerWith(); // Initialize fvp for video playback on all native platforms
+    fvp.registerWith(options: {
+      "player": {
+        "audio.backend": "ffmpeg",
+        "audio.resample": "1",
+      }
+    }); // Initialize fvp for video playback on all native platforms
     
     if (Platform.isLinux || Platform.isWindows) {
       JustAudioMpv.registerWith(); // Initialize just_audio_mpv for desktop audio

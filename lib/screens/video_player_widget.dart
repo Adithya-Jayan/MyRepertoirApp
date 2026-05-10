@@ -98,12 +98,27 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _applyPitch(double semitones) async {
-    // fvp supports setting properties. semitones to pitch ratio: 2^(semitones/12)
+    // semitones to pitch ratio: 2^(semitones/12)
     final pitchMultiplier = pow(2.0, semitones / 12.0).toDouble();
+    final pitchString = pitchMultiplier.toStringAsFixed(4);
+    
     try {
-      // Use fvp extension setProperty
-      // In mdk, pitch can be set via 'pitch' property or 'avformat' options depending on version
-      fvp.FVPControllerExtensions(_controller).setProperty('pitch', pitchMultiplier.toString());
+      // Use the standard setProperty extension from fvp. 
+      // This is the most stable and cross-platform way.
+      // We try multiple known keys to ensure compatibility with different mdk versions.
+      
+      // 1. Try common pitch keys
+      fvp.FVPControllerExtensions(_controller).setProperty('audio.pitch', pitchString);
+      fvp.FVPControllerExtensions(_controller).setProperty('pitch', pitchString);
+      
+      // 2. Try resampler configuration (requires audio.resample=1 set in main.dart)
+      fvp.FVPControllerExtensions(_controller).setProperty('audio.resample', 'pitch=$pitchString');
+      
+      // 3. Fallback: try using FFmpeg audio filter (asetrate + atempo) if available
+      final filter = 'asetrate=44100*$pitchString,aresample=44100,atempo=1/$pitchString';
+      fvp.FVPControllerExtensions(_controller).setProperty('audio.avfilter', filter);
+      
+      AppLogger.log('Applied video pitch shift attempts: $semitones st (ratio: $pitchString)');
     } catch (e) {
       AppLogger.log('Error applying video pitch: $e');
     }
