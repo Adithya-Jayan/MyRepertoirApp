@@ -5,8 +5,13 @@ import 'package:repertoire/models/music_piece.dart';
 
 class GroupsDisplay extends StatelessWidget {
   final MusicPiece musicPiece;
+  final bool showTitle;
 
-  const GroupsDisplay({super.key, required this.musicPiece});
+  const GroupsDisplay({
+    super.key, 
+    required this.musicPiece,
+    this.showTitle = true,
+  });
 
   Future<List<Group>> _loadGroups() async {
     final repository = MusicPieceRepository();
@@ -29,11 +34,13 @@ class GroupsDisplay extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Groups:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8.0),
+            if (showTitle) ...[
+              const Text(
+                'Groups:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
+            ],
             Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
@@ -45,7 +52,6 @@ class GroupsDisplay extends StatelessWidget {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 16.0),
           ],
         );
       },
