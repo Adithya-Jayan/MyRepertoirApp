@@ -325,7 +325,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         mainButton,
                         const SizedBox(width: 16), // Spacing
                         // Forward 5s Button
-                        IconButton(
+                        isCompleted 
+                        ? const SizedBox(width: 48.0) // Hide when completed to match user expectation
+                        : IconButton(
                           icon: const Icon(Icons.forward_5), // Using generic forward icon
                           iconSize: 32.0,
                           tooltip: 'Forward 5s',
