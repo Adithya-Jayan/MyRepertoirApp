@@ -184,6 +184,10 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                           repository: MusicPieceRepository(),
                           prefs: notifier.prefs,
                           onSettingsChanged: notifier.reloadData,
+                          quickFilters: notifier.quickFilters,
+                          onSaveQuickFilter: notifier.saveQuickFilter,
+                          onDeleteQuickFilter: notifier.deleteQuickFilter,
+                          onApplyQuickFilter: notifier.applyQuickFilter,
                         ),
                         body: ValueListenableBuilder<int>(
                           valueListenable: notifier.galleryColumnsNotifier,
