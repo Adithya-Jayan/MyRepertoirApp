@@ -312,23 +312,67 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       children: [
                         // Rewind 5s Button
                         IconButton(
-                          icon: const Icon(Icons.replay_5), // Using generic replay icon
+                          icon: const Icon(Icons.replay_5),
                           iconSize: 32.0,
                           tooltip: 'Rewind 5s',
                           onPressed: isMyAudio ? () {
                             final current = _player.player.position;
                             final newPos = current - const Duration(seconds: 5);
                             _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
-                          } : null, // Disable if not my audio
+                          } : null,
                         ),
-                        const SizedBox(width: 16), // Spacing
+                        // Rewind 1s / Fine Button
+                        Tooltip(
+                          message: 'Rewind 1s (Long press for 50ms)',
+                          child: InkWell(
+                            onTap: isMyAudio ? () {
+                              final current = _player.player.position;
+                              final newPos = current - const Duration(seconds: 1);
+                              _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
+                            } : null,
+                            onLongPress: isMyAudio ? () {
+                              final current = _player.player.position;
+                              final newPos = current - const Duration(milliseconds: 50);
+                              _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
+                            } : null,
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(Icons.chevron_left, size: 28.0),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         mainButton,
-                        const SizedBox(width: 16), // Spacing
+                        const SizedBox(width: 8),
+                        // Forward 1s / Fine Button
+                        Tooltip(
+                          message: 'Forward 1s (Long press for 50ms)',
+                          child: InkWell(
+                            onTap: isMyAudio ? () {
+                              final current = _player.player.position;
+                              final duration = _player.player.duration ?? Duration.zero;
+                              final newPos = current + const Duration(seconds: 1);
+                              _player.player.seek(newPos > duration ? duration : newPos);
+                            } : null,
+                            onLongPress: isMyAudio ? () {
+                              final current = _player.player.position;
+                              final duration = _player.player.duration ?? Duration.zero;
+                              final newPos = current + const Duration(milliseconds: 50);
+                              _player.player.seek(newPos > duration ? duration : newPos);
+                            } : null,
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(Icons.chevron_right, size: 28.0),
+                            ),
+                          ),
+                        ),
                         // Forward 5s Button
                         isCompleted 
-                        ? const SizedBox(width: 48.0) // Hide when completed to match user expectation
+                        ? const SizedBox(width: 48.0)
                         : IconButton(
-                          icon: const Icon(Icons.forward_5), // Using generic forward icon
+                          icon: const Icon(Icons.forward_5),
                           iconSize: 32.0,
                           tooltip: 'Forward 5s',
                           onPressed: isMyAudio ? () {
@@ -336,7 +380,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                             final duration = _player.player.duration ?? Duration.zero;
                             final newPos = current + const Duration(seconds: 5);
                             _player.player.seek(newPos > duration ? duration : newPos);
-                          } : null, // Disable if not my audio
+                          } : null,
                         ),
                       ],
                     );
