@@ -30,6 +30,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
   List<PracticeLog> _practiceLogs = [];
   bool _isLoading = true;
   bool _showTimeStats = false;
+  bool _showNotes = false;
   MusicPiece? _updatedMusicPiece;
 
   @override
@@ -41,8 +42,10 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
 
   Future<void> _loadSettings() async {
     final showTimeStats = await PracticeSettings.getShowPracticeTimeStats();
+    final showNotes = await PracticeSettings.getShowPracticeNotes();
     setState(() {
       _showTimeStats = showTimeStats;
+      _showNotes = showNotes;
     });
   }
 
@@ -74,7 +77,10 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
   Future<void> _addPracticeLog() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => PracticeLogDialog(showTimeStats: _showTimeStats),
+      builder: (context) => PracticeLogDialog(
+        showTimeStats: _showTimeStats,
+        showNotes: _showNotes,
+      ),
     );
 
     if (result != null) {
@@ -110,6 +116,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
         initialDurationMinutes: log.durationMinutes,
         initialTimestamp: log.timestamp,
         showTimeStats: _showTimeStats,
+        showNotes: _showNotes,
       ),
     );
 
@@ -223,6 +230,7 @@ class _PracticeLogsScreenState extends State<PracticeLogsScreen> {
                               onEdit: () => _editPracticeLog(log),
                               onDelete: () => _deletePracticeLog(log),
                               showTimeStats: _showTimeStats,
+                              showNotes: _showNotes,
                             );
                           },
                         ),

@@ -7,6 +7,7 @@ class PracticeLogTile extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final bool showTimeStats;
+  final bool showNotes;
 
   const PracticeLogTile({
     super.key,
@@ -14,6 +15,7 @@ class PracticeLogTile extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.showTimeStats,
+    required this.showNotes,
   });
 
   @override
@@ -29,7 +31,7 @@ class PracticeLogTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showTimeStats) Text(log.formattedDuration),
-            if (log.notes != null && log.notes!.isNotEmpty)
+            if (showNotes && log.notes != null && log.notes!.isNotEmpty)
               Text(
                 log.notes!,
                 style: Theme.of(context).textTheme.bodySmall,

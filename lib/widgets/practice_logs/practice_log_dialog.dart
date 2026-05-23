@@ -6,6 +6,7 @@ class PracticeLogDialog extends StatefulWidget {
   final int? initialDurationMinutes;
   final DateTime? initialTimestamp;
   final bool showTimeStats;
+  final bool showNotes;
 
   const PracticeLogDialog({
     super.key,
@@ -13,6 +14,7 @@ class PracticeLogDialog extends StatefulWidget {
     this.initialDurationMinutes,
     this.initialTimestamp,
     required this.showTimeStats,
+    required this.showNotes,
   });
 
   @override
@@ -112,16 +114,18 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
                 keyboardType: TextInputType.number,
               ),
             ],
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                hintText: 'e.g., Worked on dynamics, focused on difficult passages',
-                border: OutlineInputBorder(),
+            if (widget.showNotes) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (optional)',
+                  hintText: 'e.g., Worked on dynamics, focused on difficult passages',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
               ),
-              maxLines: 3,
-            ),
+            ],
           ],
         ),
       ),

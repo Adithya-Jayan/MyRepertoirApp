@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/utils/practice_indicator_utils.dart';
+import 'package:repertoire/utils/practice_settings.dart';
+import 'package:repertoire/utils/app_logger.dart';
 import '../../screens/practice_logs_screen.dart';
+import '../practice_logs/practice_log_dialog.dart';
 
 /// A card widget to display and manage practice tracking for a music piece.
 ///
@@ -64,7 +67,32 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
   /// Creates a new practice log entry and updates the music piece's practice tracking.
   Future<void> _logPractice() async {
     try {
-      await _repository.logPracticeSession(_musicPiece.id);
+      final showTimeStats = await PracticeSettings.getShowPracticeTimeStats();
+      final showNotes = await PracticeSettings.getShowPracticeNotes();
+
+      if (showTimeStats || showNotes) {
+        if (!mounted) return;
+        final result = await showDialog<Map<String, dynamic>>(
+          context: context,
+          builder: (context) => PracticeLogDialog(
+            showTimeStats: showTimeStats,
+            showNotes: showNotes,
+          ),
+        );
+
+        if (result != null) {
+          await _repository.logPracticeSession(
+            _musicPiece.id,
+            notes: result['notes'],
+            durationMinutes: result['durationMinutes'],
+            timestamp: result['timestamp'],
+          );
+        } else {
+          return; // User cancelled
+        }
+      } else {
+        await _repository.logPracticeSession(_musicPiece.id);
+      }
       
       // Refresh the music piece data
       final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
@@ -75,6 +103,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
         widget.onMusicPieceChanged(_musicPiece);
       }
     } catch (e) {
+      AppLogger.log('Error logging practice session: $e');
       // Fallback to old method if practice logs are not available
       setState(() {
         _musicPiece = _musicPiece.copyWith(
