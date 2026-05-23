@@ -11,6 +11,9 @@ import '../models/tag.dart'; // Data model for a tag
 import '../models/group.dart'; // Data model for a group
 import '../models/practice_log.dart'; // Data model for practice logs
 import '../models/tag_group.dart'; // Data model for tag groups
+import '../models/media_item.dart'; // Data model for media items
+import '../models/media_type.dart'; // Enum for media types
+import '../models/bookmark.dart'; // Data model for bookmarks
 
 // Database and service imports
 import './database_helper.dart'; // Helper for SQLite database operations
@@ -108,6 +111,100 @@ class MusicPieceRepository {
       await MediaStorageManager.deletePieceMediaDirectory(piece.id);
     }
     await dbHelper.deleteAllMusicPieces();
+  }
+
+  /// Creates a deep copy of a [MusicPiece].
+  ///
+  /// This includes generating a new ID, prefixing the title with "[copy] ",
+  /// and copying all associated local media files to a new storage directory.
+  Future<void> duplicateMusicPiece(String pieceId) async {
+    final originalPiece = await getMusicPieceById(pieceId);
+    if (originalPiece == null) {
+      throw Exception('Original music piece not found: $pieceId');
+    }
+
+    final newPieceId = uuid.v4();
+    final newTitle = '[copy] ${originalPiece.title}';
+
+    // Deep copy media items and keep track of ID mapping for bookmarks
+    final List<MediaItem> newMediaItems = [];
+    final Map<String, String> mediaIdMap = {};
+    for (final item in originalPiece.mediaItems) {
+      String newPathOrUrl = item.pathOrUrl;
+      String? newThumbnailPath = item.thumbnailPath;
+      final newMediaItemId = uuid.v4();
+      mediaIdMap[item.id] = newMediaItemId;
+
+      // Copy local media file if it exists
+      if (await MediaStorageManager.isFileInLocalStorage(item.pathOrUrl)) {
+        try {
+          newPathOrUrl = await MediaStorageManager.copyMediaToLocal(
+            item.pathOrUrl,
+            newPieceId,
+            item.type,
+          );
+        } catch (e) {
+          AppLogger.log('Error copying media item file during duplication: $e');
+        }
+      }
+
+      // Copy media item thumbnail if it exists
+      if (item.thumbnailPath != null && await MediaStorageManager.isFileInLocalStorage(item.thumbnailPath!)) {
+        try {
+          newThumbnailPath = await MediaStorageManager.copyMediaToLocal(
+            item.thumbnailPath!,
+            newPieceId,
+            MediaType.thumbnails,
+          );
+        } catch (e) {
+          AppLogger.log('Error copying media item thumbnail during duplication: $e');
+        }
+      }
+
+      newMediaItems.add(item.copyWith(
+        id: newMediaItemId,
+        pathOrUrl: newPathOrUrl,
+        thumbnailPath: newThumbnailPath,
+      ));
+    }
+
+    // Deep copy bookmarks and update their mediaItemId references
+    final List<Bookmark> newBookmarks = [];
+    for (final bookmark in originalPiece.bookmarks) {
+      newBookmarks.add(bookmark.copyWith(
+        id: uuid.v4(),
+        mediaItemId: bookmark.mediaItemId != null ? mediaIdMap[bookmark.mediaItemId] : null,
+      ));
+    }
+
+    // Deep copy piece thumbnail
+    String? newPieceThumbnailPath = originalPiece.thumbnailPath;
+    if (originalPiece.thumbnailPath != null && await MediaStorageManager.isFileInLocalStorage(originalPiece.thumbnailPath!)) {
+      try {
+        newPieceThumbnailPath = await MediaStorageManager.copyMediaToLocal(
+          originalPiece.thumbnailPath!,
+          newPieceId,
+          MediaType.thumbnails,
+        );
+      } catch (e) {
+        AppLogger.log('Error copying piece thumbnail during duplication: $e');
+      }
+    }
+
+    final duplicatedPiece = originalPiece.copyWith(
+      id: newPieceId,
+      title: newTitle,
+      mediaItems: newMediaItems,
+      bookmarks: newBookmarks,
+      thumbnailPath: newPieceThumbnailPath,
+      // Reset practice stats for the copy
+      lastAccessed: null,
+      lastPracticeTime: null,
+      practiceCount: 0,
+      googleDriveFileId: null, // Don't copy sync ID
+    );
+
+    await insertMusicPiece(duplicatedPiece);
   }
 
   /// Inserts a new [Tag] into the database.

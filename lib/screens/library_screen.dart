@@ -225,6 +225,14 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                                     allMusicPieces: notifier.allMusicPiecesNotifier.value,
                                   ).deleteSelectedPieces(context, notifier.selectedPieceIds);
                                 },
+                                onDuplicateSelectedPiece: () {
+                                  LibraryActions(
+                                    repository: MusicPieceRepository(),
+                                    onReloadMusicPieces: notifier.reloadData,
+                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
+                                  ).duplicateSelectedPiece(context, notifier.selectedPieceIds);
+                                },
                                 onModifyGroupOfSelectedPieces: () {
                                   LibraryActions(
                                     repository: MusicPieceRepository(),
@@ -234,6 +242,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                                   ).modifyGroupOfSelectedPieces(context, notifier.selectedPieceIds, notifier.groupsNotifier.value);
                                 },
                                 isSelectionEmpty: notifier.selectedPieceIds.isEmpty,
+                                selectedCount: notifier.selectedPieceIds.length,
                               )
                             : null,
                         floatingActionButton: notifier.isMultiSelectMode

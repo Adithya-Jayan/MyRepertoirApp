@@ -45,6 +45,28 @@ class LibraryActions {
     }
   }
 
+  /// Duplicates the selected music piece.
+  Future<void> duplicateSelectedPiece(BuildContext context, Set<String> selectedPieceIds) async {
+    if (selectedPieceIds.length != 1) return;
+
+    try {
+      final pieceId = selectedPieceIds.first;
+      await repository.duplicateMusicPiece(pieceId);
+      onToggleMultiSelectMode(); // Exit multi-select mode after duplication.
+      onReloadMusicPieces(); // Reload music pieces to update the UI.
+      
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Piece duplicated successfully')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error duplicating music piece: $e')),
+      );
+    }
+  }
+
   /// Handles modification of groups for selected music pieces.
   Future<void> modifyGroupOfSelectedPieces(BuildContext context, Set<String> selectedPieceIds, List<dynamic> groups) async {
     AppLogger.log('LibraryActions: modifyGroupOfSelectedPieces called');
