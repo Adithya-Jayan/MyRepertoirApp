@@ -135,6 +135,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     setState(() {
       _musicPiece = _musicPiece.copyWith(mediaItems: newMediaItems);
       if (newId.isNotEmpty) {
+        final newItem = newMediaItems.firstWhere((e) => e.id == newId);
+        if (newItem.type == MediaType.thumbnails) {
+          _musicPiece = _musicPiece.copyWith(thumbnailPath: newItem.pathOrUrl);
+        }
         _newlyAddedId = newId;
         _scrollToItem(newId);
       }

@@ -114,5 +114,51 @@ class SettingsManager {
       AppLogger.log('SettingsManager: Error encoding filter options: $e');
     }
   }
+
+  /// Loads quick filters from SharedPreferences.
+  Map<String, Map<String, dynamic>> loadQuickFilters() {
+    final quickFiltersJson = prefs.getString('quickFilters');
+    if (quickFiltersJson != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(quickFiltersJson);
+        final Map<String, Map<String, dynamic>> result = {};
+
+        decoded.forEach((name, options) {
+          if (options is Map<String, dynamic>) {
+            final Map<String, dynamic> processedOptions = Map<String, dynamic>.from(options);
+            // Specially handle orderedTags to ensure correct types
+            if (processedOptions.containsKey('orderedTags')) {
+              final Map<String, dynamic> rawTags = processedOptions['orderedTags'];
+              final Map<String, List<String>> orderedTags = {};
+              rawTags.forEach((key, value) {
+                if (value is List) {
+                  orderedTags[key] = List<String>.from(value);
+                }
+              });
+              processedOptions['orderedTags'] = orderedTags;
+            }
+            result[name] = processedOptions;
+          }
+        });
+
+        AppLogger.log('SettingsManager: ${result.length} quick filters loaded');
+        return result;
+      } catch (e) {
+        AppLogger.log('SettingsManager: Error decoding quick filters: $e');
+      }
+    }
+    return {};
+  }
+
+  /// Saves quick filters to SharedPreferences.
+  Future<void> saveQuickFilters(Map<String, Map<String, dynamic>> quickFilters) async {
+    try {
+      final jsonStr = jsonEncode(quickFilters);
+      await prefs.setString('quickFilters', jsonStr);
+      AppLogger.log('SettingsManager: Quick filters saved');
+    } catch (e) {
+      AppLogger.log('SettingsManager: Error encoding quick filters: $e');
+    }
+  }
 }
  

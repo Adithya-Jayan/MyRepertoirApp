@@ -444,6 +444,34 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     await _audioPlayer.player.seek(targetPos);
   }
 
+  Future<void> _onSeekFineBack() async {
+    final newPos = _controller.value.position - const Duration(seconds: 1);
+    final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
+    await _controller.seekTo(targetPos);
+    await _audioPlayer.player.seek(targetPos);
+  }
+
+  Future<void> _onSeekFineForward() async {
+    final newPos = _controller.value.position + const Duration(seconds: 1);
+    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    await _controller.seekTo(targetPos);
+    await _audioPlayer.player.seek(targetPos);
+  }
+
+  Future<void> _onStepBack() async {
+    final newPos = _controller.value.position - const Duration(milliseconds: 33); // Approx 1 frame at 30fps
+    final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
+    await _controller.seekTo(targetPos);
+    await _audioPlayer.player.seek(targetPos);
+  }
+
+  Future<void> _onStepForward() async {
+    final newPos = _controller.value.position + const Duration(milliseconds: 33);
+    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    await _controller.seekTo(targetPos);
+    await _audioPlayer.player.seek(targetPos);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -464,6 +492,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           onReplay: _onReplay,
           onSeekBack: _onSeekBack,
           onSeekForward: _onSeekForward,
+          onSeekFineBack: _onSeekFineBack,
+          onSeekFineForward: _onSeekFineForward,
+          onStepBack: _onStepBack,
+          onStepForward: _onStepForward,
           onOpenBookmarks: () {
             _scaffoldKey.currentState?.openEndDrawer();
           },
@@ -728,6 +760,10 @@ class _ControlsOverlay extends StatelessWidget {
     required this.onReplay,
     required this.onSeekBack,
     required this.onSeekForward,
+    required this.onSeekFineBack,
+    required this.onSeekFineForward,
+    required this.onStepBack,
+    required this.onStepForward,
     required this.onOpenBookmarks,
     required this.playbackSpeed,
     required this.onSpeedChanged,
@@ -739,6 +775,10 @@ class _ControlsOverlay extends StatelessWidget {
   final VoidCallback onReplay;
   final VoidCallback onSeekBack;
   final VoidCallback onSeekForward;
+  final VoidCallback onSeekFineBack;
+  final VoidCallback onSeekFineForward;
+  final VoidCallback onStepBack;
+  final VoidCallback onStepForward;
   final VoidCallback onOpenBookmarks;
   final double playbackSpeed;
   final Function(double) onSpeedChanged;
@@ -854,8 +894,15 @@ class _ControlsOverlay extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.replay_5, color: Colors.white),
                       onPressed: onSeekBack,
+                      tooltip: 'Back 5s',
                     ),
-                    const SizedBox(width: 20),
+                    _FineSeekButton(
+                      icon: Icons.chevron_left,
+                      onPressed: onSeekFineBack,
+                      onLongPress: onStepBack,
+                      tooltip: 'Back 1s (Long press for frame)',
+                    ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(
                         _isFinished 
@@ -866,10 +913,17 @@ class _ControlsOverlay extends StatelessWidget {
                       iconSize: 40,
                       onPressed: _togglePlay,
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 8),
+                    _FineSeekButton(
+                      icon: Icons.chevron_right,
+                      onPressed: onSeekFineForward,
+                      onLongPress: onStepForward,
+                      tooltip: 'Forward 1s (Long press for frame)',
+                    ),
                     IconButton(
                       icon: const Icon(Icons.forward_5, color: Colors.white),
                       onPressed: onSeekForward,
+                      tooltip: 'Forward 5s',
                     ),
                   ],
                 ),
@@ -878,6 +932,36 @@ class _ControlsOverlay extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FineSeekButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final VoidCallback onLongPress;
+  final String tooltip;
+
+  const _FineSeekButton({
+    required this.icon,
+    required this.onPressed,
+    required this.onLongPress,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(icon, color: Colors.white, size: 28),
+        ),
+      ),
     );
   }
 }

@@ -27,6 +27,9 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
   List<String> _getSectionKeys() {
     final keys = <String>[];
+    if (_musicPiece.groupIds.isNotEmpty) {
+      keys.add('groups_${_musicPiece.id}');
+    }
     if (_musicPiece.enablePracticeTracking) {
       keys.add('practice_tracking_${_musicPiece.id}');
     }
@@ -156,9 +159,13 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 _musicPiece.artistComposer,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 8.0),
-              GroupsDisplay(musicPiece: _musicPiece),
               const SizedBox(height: 16.0),
+              if (_musicPiece.groupIds.isNotEmpty)
+                CollapsibleSection(
+                  title: 'Groups',
+                  persistenceKey: 'groups_${_musicPiece.id}',
+                  child: GroupsDisplay(musicPiece: _musicPiece, showTitle: false),
+                ),
               if (_musicPiece.enablePracticeTracking)
                 CollapsibleSection(
                   title: 'Practice Tracking',
@@ -184,11 +191,10 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                   ),
                 ),
               
-              // Only show divider if there's a top section AND there is visible media to show below it
+              // Only show spacing if there's a top section AND there is visible media to show below it
               if ((_musicPiece.enablePracticeTracking || _musicPiece.tagGroups.isNotEmpty || _musicPiece.groupIds.isNotEmpty) && 
                   _musicPiece.mediaItems.any((item) => item.type != MediaType.thumbnails)) ...[
-                const Divider(),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 8.0),
               ],
               MediaDisplayList(
                 musicPiece: _musicPiece,

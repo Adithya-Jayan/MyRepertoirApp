@@ -25,9 +25,8 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
       }
     });
     _player.processingStateStream.listen((state) {
-      if (state == ProcessingState.completed) {
-        stop();
-      }
+      // We no longer call stop() on completed to allow the UI to show a replay button
+      // and maintain the completed state.
     });
   }
 

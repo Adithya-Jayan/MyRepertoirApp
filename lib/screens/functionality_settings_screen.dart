@@ -20,6 +20,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   bool _isLoading = true;
   
   bool _showPracticeTimeStats = false;
+  bool _showPracticeNotes = false;
   bool _notifyNewReleases = false;
 
   @override
@@ -36,6 +37,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     setState(() {
       _stages = stages;
       _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
+      _showPracticeNotes = prefs.getBool('show_practice_notes') ?? false;
       _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? true;
       _isLoading = false;
     });
@@ -48,6 +50,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   Future<void> _saveOtherSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('show_practice_time_stats', _showPracticeTimeStats);
+    await prefs.setBool('show_practice_notes', _showPracticeNotes);
     await prefs.setBool('notifyNewReleases', _notifyNewReleases);
   }
 
@@ -311,6 +314,17 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                   onChanged: (bool value) {
                     setState(() {
                       _showPracticeTimeStats = value;
+                    });
+                    _saveOtherSettings();
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Show Practice Notes'),
+                  subtitle: const Text('Allow adding and viewing notes for each practice session'),
+                  value: _showPracticeNotes,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _showPracticeNotes = value;
                     });
                     _saveOtherSettings();
                   },

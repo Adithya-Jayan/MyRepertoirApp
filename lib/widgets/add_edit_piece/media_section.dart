@@ -38,17 +38,11 @@ class MediaSectionWidget extends StatelessWidget {
       final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
       updatedMediaItems.removeWhere((element) => element.id == deletedItem.id);
       
-      // Check if we need to clear the thumbnail
+      // Check if we need to clear the thumbnail. 
+      // Only clear if the authoritative Thumbnail Widget itself is deleted.
       String? newThumbnailPath = musicPiece.thumbnailPath;
-      
-      if (deletedItem.type == MediaType.image || deletedItem.type == MediaType.thumbnails) {
-          if (musicPiece.thumbnailPath == deletedItem.pathOrUrl) {
-            newThumbnailPath = null;
-          }
-      } else {
-          if (deletedItem.thumbnailPath != null && musicPiece.thumbnailPath == deletedItem.thumbnailPath) {
-            newThumbnailPath = null;
-          }
+      if (deletedItem.type == MediaType.thumbnails && musicPiece.thumbnailPath == deletedItem.pathOrUrl) {
+          newThumbnailPath = null;
       }
       
       onMusicPieceChanged(musicPiece.copyWith(
@@ -169,17 +163,14 @@ class MediaSectionWidget extends StatelessWidget {
                     onUpdateMediaItem: (updatedItem) {
                       final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
                       if (originalIndex != -1) {
-                        final oldItem = updatedMediaItems[originalIndex];
                         updatedMediaItems[originalIndex] = updatedItem;
                         
                         String? newPieceThumbnail = musicPiece.thumbnailPath;
                         
-                        // If the piece thumbnail was pointing to the old item's path
-                        if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
-                            musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                        // If it's a dedicated thumbnail widget, it is the authoritative source.
+                        // Sync unconditionally.
+                        if (updatedItem.type == MediaType.thumbnails) {
                             newPieceThumbnail = updatedItem.pathOrUrl;
-                        } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
-                            newPieceThumbnail = updatedItem.thumbnailPath;
                         }
 
                         onMusicPieceChanged(musicPiece.copyWith(
@@ -239,17 +230,14 @@ class MediaSectionWidget extends StatelessWidget {
                     onUpdateMediaItem: (updatedItem) {
                       final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
                       if (originalIndex != -1) {
-                        final oldItem = updatedMediaItems[originalIndex];
                         updatedMediaItems[originalIndex] = updatedItem;
                         
                         String? newPieceThumbnail = musicPiece.thumbnailPath;
                         
-                        // If the piece thumbnail was pointing to the old item's path
-                        if ((oldItem.type == MediaType.thumbnails || oldItem.type == MediaType.image) && 
-                            musicPiece.thumbnailPath == oldItem.pathOrUrl) {
+                        // If it's a dedicated thumbnail widget, it is the authoritative source.
+                        // Sync unconditionally.
+                        if (updatedItem.type == MediaType.thumbnails) {
                             newPieceThumbnail = updatedItem.pathOrUrl;
-                        } else if (oldItem.thumbnailPath != null && musicPiece.thumbnailPath == oldItem.thumbnailPath) {
-                            newPieceThumbnail = updatedItem.thumbnailPath;
                         }
 
                         onMusicPieceChanged(musicPiece.copyWith(

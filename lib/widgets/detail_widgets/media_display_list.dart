@@ -94,8 +94,6 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                           },
                         ),
                       ),
-                      if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
-                        const Divider(indent: 16, endIndent: 16),
                     ],
                   );
                 },
@@ -144,8 +142,6 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                           },
                         ),
                       ),
-                      if (index < visibleItemsIndices.length - 1) // Add Divider if not the last visible item
-                        const Divider(indent: 16, endIndent: 16),
                     ],
                   );
                 },

@@ -38,6 +38,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   String? _errorMessage;
   String _searchQuery = '';
   Map<String, dynamic> _filterOptions = {'orderedTags': <String, List<String>>{}};
+  Map<String, Map<String, dynamic>> _quickFilters = {};
   String _sortOption = 'A-Z (Title)';
   bool _isMultiSelectMode = false;
   final Set<String> _selectedPieceIds = {};
@@ -60,6 +61,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   Map<String, dynamic> get filterOptions => _filterOptions;
+  Map<String, Map<String, dynamic>> get quickFilters => _quickFilters;
   String get sortOption => _sortOption;
   bool get isMultiSelectMode => _isMultiSelectMode;
   Set<String> get selectedPieceIds => _selectedPieceIds;
@@ -115,6 +117,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
     // Load saved filter options
     _filterOptions = _settingsManager.loadFilterOptions();
     AppLogger.log('LibraryScreenNotifier: Loaded saved filter options');
+
+    // Load quick filters
+    _quickFilters = _settingsManager.loadQuickFilters();
+    AppLogger.log('LibraryScreenNotifier: Loaded ${_quickFilters.length} quick filters');
     
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
@@ -204,6 +210,27 @@ class LibraryScreenNotifier extends ChangeNotifier {
     notifyListeners();
     _updateFilteredResultsCache();
     loadMusicPieces();
+  }
+
+  void saveQuickFilter(String name, Map<String, dynamic> options) {
+    _quickFilters[name] = Map<String, dynamic>.from(options);
+    _settingsManager.saveQuickFilters(_quickFilters);
+    notifyListeners();
+  }
+
+  void deleteQuickFilter(String name) {
+    if (_quickFilters.containsKey(name)) {
+      _quickFilters.remove(name);
+      _settingsManager.saveQuickFilters(_quickFilters);
+      notifyListeners();
+    }
+  }
+
+  void applyQuickFilter(String name) {
+    if (_quickFilters.containsKey(name)) {
+      setFilterOptions(Map<String, dynamic>.from(_quickFilters[name]!));
+      loadMusicPieces();
+    }
   }
 
   void selectAllPieces() {

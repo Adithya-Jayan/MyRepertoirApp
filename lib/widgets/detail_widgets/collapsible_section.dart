@@ -52,26 +52,45 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        controller: _controller,
-        initiallyExpanded: _stateService.isExpanded(
-          widget.persistenceKey,
-          defaultValue: widget.initiallyExpanded,
-        ),
-        title: Text(
-          widget.title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+    final theme = Theme.of(context);
+    final headerColor = theme.primaryColor.withValues(alpha: 0.1);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          controller: _controller,
+          initiallyExpanded: _stateService.isExpanded(
+            widget.persistenceKey,
+            defaultValue: widget.initiallyExpanded,
           ),
+          collapsedBackgroundColor: headerColor,
+          backgroundColor: headerColor,
+          title: Text(
+            widget.title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.primaryColor,
+            ),
+          ),
+          onExpansionChanged: (expanded) {
+            _stateService.setExpanded(widget.persistenceKey, expanded);
+          },
+          children: [
+            Container(
+              color: theme.scaffoldBackgroundColor, // Revert to normal background for content
+              width: double.infinity,
+              padding: const EdgeInsets.all(16.0),
+              child: widget.child,
+            ),
+          ],
         ),
-        onExpansionChanged: (expanded) {
-          _stateService.setExpanded(widget.persistenceKey, expanded);
-        },
-        children: [
-          widget.child,
-        ],
       ),
     );
   }
