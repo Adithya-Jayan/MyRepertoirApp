@@ -12,13 +12,12 @@ class MusicPieceFilter {
     required this.sortOption,
   });
 
-  List<MusicPiece> filterAndSort(List<MusicPiece> pieces) {
-    AppLogger.log('MusicPieceFilter: filterAndSort called with searchQuery: "$searchQuery" and ${pieces.length} pieces');
+  List<MusicPiece> filterAndSort(List<MusicPiece> pieces, {bool ignoreSearch = false}) {
+    AppLogger.log('MusicPieceFilter: filterAndSort called with searchQuery: "$searchQuery", ignoreSearch: $ignoreSearch and ${pieces.length} pieces');
     List<MusicPiece> filteredPieces = pieces.where((piece) {
       final lowerCaseSearchQuery = searchQuery.toLowerCase();
-      // Check if the piece matches the search query in title, artist/composer, or tags.
-      // Only apply search filter if searchQuery is not empty
-      final matchesSearch = searchQuery.isEmpty || 
+      // Check if the piece matches the search query.
+      final matchesSearch = ignoreSearch || searchQuery.isEmpty || 
           piece.title.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.artistComposer.toLowerCase().contains(lowerCaseSearchQuery) ||
           piece.tagGroups.any((tg) => tg.tags.any((tag) => tag.toLowerCase().contains(lowerCaseSearchQuery))) ||

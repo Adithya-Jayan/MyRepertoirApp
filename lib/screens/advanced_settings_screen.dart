@@ -12,6 +12,8 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'internal_file_explorer_screen.dart';
+
 class AdvancedSettingsScreen extends StatefulWidget {
   const AdvancedSettingsScreen({super.key});
 
@@ -268,8 +270,10 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
                                     TextButton(
                                       onPressed: () async {
                                         navigator.pop();
-                                        // ignore: deprecated_member_use
-                                        await Share.shareXFiles([XFile(logFile.path)], text: 'Repertoire app debug log');
+                                        await SharePlus.instance.share(ShareParams(
+                                          files: [XFile(logFile.path)],
+                                          text: 'Repertoire app debug log',
+                                        ));
                                       },
                                       child: const Text('Share Log File'),
                                     ),
@@ -347,6 +351,18 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
               ),
             ),
           ],
+          ListTile(
+            title: const Text('Internal File Explorer'),
+            subtitle: const Text('Browse, share, and manage internal app files'),
+            leading: const Icon(Icons.folder_shared),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const InternalFileExplorerScreen()),
+              );
+            },
+          ),
           const Divider(),
           ListTile(
             title: const Text('Purge Unused Media'),
