@@ -3,6 +3,7 @@ import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/models/tag.dart';
 import 'package:repertoire/models/media_type.dart';
+import 'dart:convert';
 
 void main() {
   group('MediaType', () {
@@ -13,6 +14,10 @@ void main() {
         MediaType.image,
         MediaType.audio,
         MediaType.mediaLink,
+        MediaType.thumbnails,
+        MediaType.learningProgress,
+        MediaType.localVideo,
+        MediaType.midi,
       ]);
     });
   });
@@ -55,39 +60,39 @@ void main() {
 
   group('MusicPiece', () {
     test('fromJson should create a valid MusicPiece from JSON', () {
+      final now = DateTime.now();
       final json = {
         'id': 'mp1',
         'title': 'Test Piece',
         'artistComposer': 'Test Artist',
-        
-        'tags': ['Study', 'Practice'],
-        'lastAccessed': DateTime.now().toIso8601String(),
-        'isFavorite': true,
-        'lastPracticeTime': DateTime.now().toIso8601String(),
+        'tags': jsonEncode(['Study', 'Practice']),
+        'lastAccessed': now.toIso8601String(),
+        'isFavorite': 1,
+        'lastPracticeTime': now.toIso8601String(),
         'practiceCount': 5,
-        'enablePracticeTracking': true,
+        'enablePracticeTracking': 1,
         'googleDriveFileId': 'gdrive123',
-        'mediaItems': [
+        'mediaItems': jsonEncode([
           {
             'id': 'mi1',
             'type': 'pdf',
             'pathOrUrl': '/path/to/score.pdf',
             'title': 'Score',
           }
-        ],
+        ]),
+        'groupIds': jsonEncode([]),
+        'tagGroups': jsonEncode([]),
+        'bookmarks': jsonEncode([]),
       };
       final musicPiece = MusicPiece.fromJson(json);
 
       expect(musicPiece.id, 'mp1');
       expect(musicPiece.title, 'Test Piece');
       expect(musicPiece.artistComposer, 'Test Artist');
-      
-      
-      
       expect(musicPiece.tags, ['Study', 'Practice']);
-      expect(musicPiece.lastAccessed, isA<DateTime>());
+      expect(musicPiece.lastAccessed!.toIso8601String(), now.toIso8601String());
       expect(musicPiece.isFavorite, true);
-      expect(musicPiece.lastPracticeTime, isA<DateTime>());
+      expect(musicPiece.lastPracticeTime!.toIso8601String(), now.toIso8601String());
       expect(musicPiece.practiceCount, 5);
       expect(musicPiece.enablePracticeTracking, true);
       expect(musicPiece.googleDriveFileId, 'gdrive123');
@@ -96,15 +101,15 @@ void main() {
     });
 
     test('toJson should convert MusicPiece to JSON correctly', () {
+      final now = DateTime.now();
       final musicPiece = MusicPiece(
         id: 'mp1',
         title: 'Test Piece',
         artistComposer: 'Test Artist',
-        
         tags: ['Study', 'Practice'],
-        lastAccessed: DateTime.now(),
+        lastAccessed: now,
         isFavorite: true,
-        lastPracticeTime: DateTime.now(),
+        lastPracticeTime: now,
         practiceCount: 5,
         enablePracticeTracking: true,
         googleDriveFileId: 'gdrive123',
@@ -122,18 +127,15 @@ void main() {
       expect(json['id'], 'mp1');
       expect(json['title'], 'Test Piece');
       expect(json['artistComposer'], 'Test Artist');
-      expect(json['genre'], ['Classical', 'Piano']);
-      expect(json['instrumentation'], 'Piano');
-      expect(json['difficulty'], 'Easy');
-      expect(json['tags'], ['Study', 'Practice']);
-      expect(json['lastAccessed'], isA<String>());
-      expect(json['isFavorite'], true);
-      expect(json['lastPracticeTime'], isA<String>());
+      expect(jsonDecode(json['tags']), ['Study', 'Practice']);
+      expect(json['lastAccessed'], now.toIso8601String());
+      expect(json['isFavorite'], 1);
+      expect(json['lastPracticeTime'], now.toIso8601String());
       expect(json['practiceCount'], 5);
-      expect(json['enablePracticeTracking'], true);
+      expect(json['enablePracticeTracking'], 1);
       expect(json['googleDriveFileId'], 'gdrive123');
-      expect(json['mediaItems'], isA<List>());
-      expect(json['mediaItems'][0]['id'], 'mi1');
+      expect(jsonDecode(json['mediaItems']), isA<List>());
+      expect(jsonDecode(json['mediaItems'])[0]['id'], 'mi1');
     });
   });
 
