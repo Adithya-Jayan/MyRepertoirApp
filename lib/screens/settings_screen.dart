@@ -90,12 +90,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ListTile(
                 leading: const Icon(Icons.tune),
                 title: const Text('Functionality'),
-                onTap: () {
+                onTap: () async {
                   AppLogger.log('Navigating to Functionality Settings screen.');
-                  Navigator.push(
+                  final result = await Navigator.push<bool?>(
                     context,
                     MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
                   );
+                  if (result == true) {
+                    setState(() {
+                      _changesMade = true;
+                    });
+                  }
                 },
               ),
               ListTile(

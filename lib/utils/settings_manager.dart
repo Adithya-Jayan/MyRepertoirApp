@@ -41,6 +41,17 @@ class SettingsManager {
     AppLogger.log('SettingsManager: galleryColumns saved: $columns');
   }
 
+  /// Loads the hideEmptyGroups setting.
+  bool loadHideEmptyGroups() {
+    return prefs.getBool('hideEmptyGroups') ?? false;
+  }
+
+  /// Saves the hideEmptyGroups setting.
+  Future<void> saveHideEmptyGroups(bool value) async {
+    await prefs.setBool('hideEmptyGroups', value);
+    AppLogger.log('SettingsManager: hideEmptyGroups saved: $value');
+  }
+
   /// Loads group order settings from SharedPreferences.
   Map<String, dynamic> loadGroupOrderSettings() {
     final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
