@@ -122,6 +122,7 @@ flutter_launcher_icons:
   image_path: "assets/icons/icon.png"
   adaptive_icon_background: "assets/icons/background.png"
   adaptive_icon_foreground: "assets/icons/foreground.png"
+  adaptive_icon_monochrome: "assets/icons/foreground.png"
   web:
     generate: true
     image_path: "assets/icons/icon.png"
