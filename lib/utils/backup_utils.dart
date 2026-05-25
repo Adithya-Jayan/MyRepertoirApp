@@ -143,15 +143,6 @@ Future<void> triggerAutoBackup({ScaffoldMessengerState? messenger}) async {
         await prefs.setInt('lastAutoBackupTimestamp', now.millisecondsSinceEpoch);
         AppLogger.log('BackupUtils: Updated lastAutoBackupTimestamp to: ${now.millisecondsSinceEpoch}');
         AppLogger.log('BackupUtils: Auto-backup completed successfully.');
-        if (messenger != null) {
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Auto-backup completed successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
       } catch (e) {
         AppLogger.log('BackupUtils: Auto-backup failed: $e');
         if (messenger != null) {
