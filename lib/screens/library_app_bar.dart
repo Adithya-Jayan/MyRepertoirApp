@@ -123,6 +123,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             onApply: widget.onApplyQuickFilter,
             onDelete: widget.onDeleteQuickFilter,
             onEdit: widget.onSaveQuickFilter,
+            onClear: widget.onClearFilter,
           ),
         Container(
           decoration: widget.hasActiveFilters
@@ -342,12 +343,16 @@ class _QuickFilterButton extends StatelessWidget {
   final Function(String) onApply;
   final Function(String) onDelete;
   final Function(String, Map<String, dynamic>) onEdit;
+  final VoidCallback onClear;
+
+  static const String _clearAction = '___CLEAR_FILTERS___';
 
   const _QuickFilterButton({
     required this.quickFilters,
     required this.onApply,
     required this.onDelete,
     required this.onEdit,
+    required this.onClear,
   });
 
   @override
@@ -355,10 +360,28 @@ class _QuickFilterButton extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.flash_on),
       tooltip: 'Quick Filters',
-      onSelected: onApply,
+      onSelected: (value) {
+        if (value == _clearAction) {
+          onClear();
+        } else {
+          onApply(value);
+        }
+      },
       itemBuilder: (context) {
-        return quickFilters.keys.map((name) {
-          return PopupMenuItem<String>(
+        return [
+          const PopupMenuItem<String>(
+            value: _clearAction,
+            child: Row(
+              children: [
+                Icon(Icons.filter_list_off, size: 20),
+                SizedBox(width: 8),
+                Text('Clear Filter'),
+              ],
+            ),
+          ),
+          if (quickFilters.isNotEmpty) const PopupMenuDivider(),
+          ...quickFilters.keys.map((name) {
+            return PopupMenuItem<String>(
             value: name,
             child: GestureDetector(
               onLongPress: () async {
