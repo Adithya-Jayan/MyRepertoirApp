@@ -271,10 +271,8 @@ class BackupManager {
       final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual);
 
       if (outputFile != null) {
-        // Only show success banner for manual backup, not for auto-backup (handled in backup_utils)
-        if (manual) {
-          _showBackupMessage(messenger, true, 'Data backed up successfully!');
-        }
+        // Show success banner
+        _showBackupMessage(messenger, true, manual ? 'Data backed up successfully!' : 'Auto-backup completed successfully!');
         AppLogger.log(manual ? 'Manual backup successful.' : 'Autobackup successful.');
       } else {
         _showBackupMessage(messenger, false, 'Backup cancelled.');
