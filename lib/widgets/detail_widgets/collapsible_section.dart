@@ -53,44 +53,65 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final headerColor = theme.primaryColor.withValues(alpha: 0.1);
+    final colorScheme = theme.colorScheme;
+    
+    // Use secondaryContainer for a subtle but distinct header background
+    // This provides better visual separation than just using primaryColor with alpha
+    final headerColor = colorScheme.secondaryContainer;
+    final onHeaderColor = colorScheme.onSecondaryContainer;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          controller: _controller,
-          initiallyExpanded: _stateService.isExpanded(
-            widget.persistenceKey,
-            defaultValue: widget.initiallyExpanded,
-          ),
-          collapsedBackgroundColor: headerColor,
-          backgroundColor: headerColor,
-          title: Text(
-            widget.title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.primaryColor,
-            ),
-          ),
-          onExpansionChanged: (expanded) {
-            _stateService.setExpanded(widget.persistenceKey, expanded);
-          },
-          children: [
-            Container(
-              color: theme.scaffoldBackgroundColor, // Revert to normal background for content
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              child: widget.child,
-            ),
-          ],
+      child: ExpansionTile(
+        controller: _controller,
+        initiallyExpanded: _stateService.isExpanded(
+          widget.persistenceKey,
+          defaultValue: widget.initiallyExpanded,
         ),
+        collapsedBackgroundColor: headerColor,
+        backgroundColor: headerColor,
+        // Explicitly set colors to avoid theme inheritance issues and fix the 'invisible title' bug
+        textColor: onHeaderColor,
+        collapsedTextColor: onHeaderColor,
+        iconColor: onHeaderColor,
+        collapsedIconColor: onHeaderColor,
+        // Remove default dividers from ExpansionTile to maintain clean card look
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        collapsedShape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        title: Text(
+          widget.title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        onExpansionChanged: (expanded) {
+          _stateService.setExpanded(widget.persistenceKey, expanded);
+        },
+        children: [
+          Container(
+            color: theme.scaffoldBackgroundColor, // Revert to normal background for content
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            child: widget.child,
+          ),
+        ],
       ),
     );
   }
