@@ -124,6 +124,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             onDelete: widget.onDeleteQuickFilter,
             onEdit: widget.onSaveQuickFilter,
             onClear: widget.onClearFilter,
+            onClear: widget.onClearFilter,
           ),
         Container(
           decoration: widget.hasActiveFilters
@@ -346,12 +347,16 @@ class _QuickFilterButton extends StatelessWidget {
   final VoidCallback onClear;
 
   static const String _clearAction = '___CLEAR_FILTERS___';
+  final VoidCallback onClear;
+
+  static const String _clearAction = '___CLEAR_FILTERS___';
 
   const _QuickFilterButton({
     required this.quickFilters,
     required this.onApply,
     required this.onDelete,
     required this.onEdit,
+    required this.onClear,
     required this.onClear,
   });
 
@@ -360,6 +365,13 @@ class _QuickFilterButton extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.flash_on),
       tooltip: 'Quick Filters',
+      onSelected: (value) {
+        if (value == _clearAction) {
+          onClear();
+        } else {
+          onApply(value);
+        }
+      },
       onSelected: (value) {
         if (value == _clearAction) {
           onClear();
