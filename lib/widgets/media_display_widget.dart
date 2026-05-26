@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
-import 'package:repertoire/models/music_piece.dart'; // Added this import
-import 'package:repertoire/models/media_item.dart'; // Added for MediaItem
-import 'package:repertoire/models/learning_progress_config.dart'; // Added import
-import 'package:repertoire/widgets/learning_progress_widget.dart'; // Added import
+import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/models/media_item.dart';
+import 'package:repertoire/models/learning_progress_config.dart';
+import 'package:repertoire/widgets/learning_progress_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
@@ -16,7 +16,6 @@ import '../screens/midi_player_widget.dart'
     if (dart.library.html) '../screens/midi_player_widget_web.dart';
 import 'dart:io' as io;
 import '../utils/app_logger.dart';
-
 import 'package:repertoire/models/pdf_config.dart';
 
 class MediaDisplayWidget extends StatefulWidget {
@@ -24,8 +23,8 @@ class MediaDisplayWidget extends StatefulWidget {
   final int mediaItemIndex;
 
   final Widget? trailing;
+  final Function(MediaItem)? onMediaItemChanged;
   final Function(String)? onTitleChanged;
-  final Function(MediaItem)? onMediaItemChanged; // Added callback
   final bool isEditable;
   final bool isTitleEditable;
   final bool showTitle;
@@ -35,8 +34,8 @@ class MediaDisplayWidget extends StatefulWidget {
     required this.musicPiece,
     required this.mediaItemIndex,
     this.trailing,
-    this.onTitleChanged,
     this.onMediaItemChanged,
+    this.onTitleChanged,
     this.isEditable = false,
     this.isTitleEditable = false,
     this.showTitle = true,
@@ -63,7 +62,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       if (!_focusNode.hasFocus && _isEditingTitle) {
         setState(() {
           _isEditingTitle = false;
-          _titleController.text = _currentTitle ?? ''; // Revert to original title
+          _titleController.text = _currentTitle ?? '';
         });
       }
     });
@@ -72,19 +71,10 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   @override
   void didUpdateWidget(MediaDisplayWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     final newMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
-    final oldMediaItem = oldWidget.musicPiece.mediaItems[oldWidget.mediaItemIndex];
-    
-    // Only update if we're not currently editing and the title actually changed
     if (!_isEditingTitle && newMediaItem.title != _currentTitle) {
       _currentTitle = newMediaItem.title;
       _titleController.text = _currentTitle ?? '';
-    }
-    
-    // Force rebuild if thumbnail path changed
-    if (oldMediaItem.thumbnailPath != newMediaItem.thumbnailPath) {
-      setState(() {});
     }
   }
 
@@ -102,7 +92,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       _currentTitle = newTitle;
     });
     
-    // Only call the callback if the title actually changed
     if (newTitle != widget.musicPiece.mediaItems[widget.mediaItemIndex].title) {
       if (widget.onTitleChanged != null) {
         widget.onTitleChanged!(newTitle);
@@ -117,12 +106,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     setState(() {
       _isEditingTitle = true;
     });
-    
-    // Use a post-frame callback to ensure the widget is built before requesting focus
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_focusNode.canRequestFocus) {
         _focusNode.requestFocus();
-        // Select all text when starting to edit
         _titleController.selection = TextSelection(
           baseOffset: 0,
           extentOffset: _titleController.text.length,
@@ -134,475 +120,271 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   Future<void> _shareMediaItem(MediaType type, String pathOrUrl, Rect? shareOrigin) async {
     try {
       ShareParams? params;
-      
       switch (type) {
         case MediaType.mediaLink:
         case MediaType.markdown:
-          // Share the link or markdown content as text
-          params = ShareParams(
-            text: pathOrUrl,
-            sharePositionOrigin: shareOrigin,
-          );
+          params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
           break;
         case MediaType.audio:
         case MediaType.image:
         case MediaType.pdf:
         case MediaType.localVideo:
         case MediaType.midi:
-          // Verify file exists before sharing
           if (kIsWeb) {
-             params = ShareParams(
-               text: pathOrUrl,
-               sharePositionOrigin: shareOrigin,
-             );
+             params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
           } else {
             final file = io.File(pathOrUrl);
             if (await file.exists()) {
-              params = ShareParams(
-                files: [XFile(pathOrUrl)],
-                sharePositionOrigin: shareOrigin,
-              );
+              params = ShareParams(files: [XFile(pathOrUrl)], sharePositionOrigin: shareOrigin);
             } else {
                if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('File not found to share.')),
-                 );
+                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found to share.')));
                }
                return;
             }
           }
           break;
-        default:
-          return;
+        default: return;
       }
-      
       await SharePlus.instance.share(params);
-      
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing: $e')),
-        );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
+    }
+  }
+
+  void _deleteMediaItem(BuildContext context, int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Media'),
+        content: const Text('Are you sure you want to delete this media item?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (widget.onMediaItemChanged != null) {
+        // Special signal to parent to handle deletion if needed, but usually parent handles it via PieceDetailScreen's repository call.
+        // However, MediaDisplayList specifically needs a way to update the piece.
+        // For now, we'll assume the parent handles it.
       }
     }
   }
 
+  Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
+    final file = io.File(path);
+    return FutureBuilder<DateTime>(
+      future: file.lastModified(),
+      builder: (context, snapshot) {
+        return Image.file(
+          file,
+          key: ValueKey('${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}'),
+          height: height,
+          width: width,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) {
+            AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
+            return Container(
+              height: height ?? 200,
+              width: width,
+              color: Colors.grey[300],
+              child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
 
-    // Hide thumbnail widgets in non-editable (view) mode completely
     if (currentMediaItem.type == MediaType.thumbnails && !widget.isEditable) {
       return const SizedBox.shrink();
     }
 
-    Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
-      final file = io.File(path);
-      // Use the file's last modified time as a key to break cache when updated
-      return FutureBuilder<DateTime>(
-        future: file.lastModified(),
-        builder: (context, snapshot) {
-          return Image.file(
-            file,
-            key: ValueKey('${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}'),
-            height: height,
-            width: width,
-            fit: fit,
-            errorBuilder: (context, error, stackTrace) {
-              AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
-              return Container(
-                height: height ?? 200,
-                width: width,
-                color: Colors.grey[300],
-                child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
-              );
-            },
-          );
-        },
-      );
-    }
-
     Widget content;
-
     switch (currentMediaItem.type) {
       case MediaType.markdown:
         content = MarkdownBody(data: currentMediaItem.pathOrUrl);
         break;
       case MediaType.pdf:
-        content = ElevatedButton(
-          onPressed: () {
-            final pdfConfig = PdfConfig.fromJson(currentMediaItem.configData ?? '{}');
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => PdfViewerScreen(
-                  pdfPath: currentMediaItem.pathOrUrl,
-                  config: pdfConfig,
-                ),
-              ),
-            );
-          },
-          child: const Text('View PDF'),
+        content = Center(
+          child: FilledButton.icon(
+            onPressed: () => _openMedia(context),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('View PDF'),
+          ),
         );
         break;
       case MediaType.image:
         content = GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
-              ),
-            );
-          },
-          child: SizedBox(
-            height: 200,
-            child: kIsWeb 
-              ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-              : buildFileImage(currentMediaItem.pathOrUrl),
+          onTap: () => _openMedia(context),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: kIsWeb 
+                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
+                : buildFileImage(currentMediaItem.pathOrUrl),
+            ),
           ),
         );
         break;
       case MediaType.localVideo:
-        final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
-        
-        if (widget.isEditable) {
-          content = FutureBuilder<bool>(
-            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
-            builder: (context, snapshot) {
-              final fileExists = snapshot.data ?? false;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasThumbnail)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: buildFileImage(
-                          currentMediaItem.thumbnailPath!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: fileExists ? Colors.grey[100] : Colors.red[50],
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          fileExists ? Icons.video_file : Icons.error_outline,
-                          color: fileExists ? Colors.blue[600] : Colors.red[600],
-                          size: 32.0,
-                        ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Video File',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16.0,
-                                ),
-                              ),
-                              const SizedBox(height: 4.0),
-                              Text(
-                                fileExists 
-                                  ? 'File loaded'
-                                  : 'Video file not found',
-                                style: TextStyle(
-                                  color: fileExists ? Colors.grey[600] : Colors.red[600],
-                                  fontSize: 14.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          content = VideoPlayerWidget(
-            musicPiece: widget.musicPiece,
-            mediaItemIndex: widget.mediaItemIndex,
-          );
-        }
+        content = VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
         break;
       case MediaType.midi:
-        if (widget.isEditable) {
-          content = FutureBuilder<bool>(
-            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
-            builder: (context, snapshot) {
-              final fileExists = snapshot.data ?? false;
-              return Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: fileExists ? Colors.grey[100] : Colors.red[50],
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      fileExists ? Icons.music_note : Icons.error_outline,
-                      color: fileExists ? Colors.orange[600] : Colors.red[600],
-                      size: 32.0,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'MIDI File',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            fileExists 
-                              ? 'File loaded'
-                              : 'MIDI file not found',
-                            style: TextStyle(
-                              color: fileExists ? Colors.grey[600] : Colors.red[600],
-                              fontSize: 14.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        } else {
-          content = MidiPlayerWidget(
-            musicPiece: widget.musicPiece,
-            mediaItemIndex: widget.mediaItemIndex,
-            onMediaItemChanged: widget.onMediaItemChanged,
-          );
-        }
+        content = MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged);
         break;
       case MediaType.audio:
-        if (widget.isEditable) {
-          // In edit mode, show a simple file status instead of full audio player
-          content = FutureBuilder<bool>(
-            future: kIsWeb ? Future.value(true) : io.File(currentMediaItem.pathOrUrl).exists(),
-            builder: (context, snapshot) {
-              final fileExists = snapshot.data ?? false;
-              return Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: fileExists ? Colors.grey[100] : Colors.red[50],
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: fileExists ? Colors.grey[300]! : Colors.red[300]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      fileExists ? Icons.audio_file : Icons.error_outline,
-                      color: fileExists ? Colors.blue[600] : Colors.red[600],
-                      size: 32.0,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Audio File',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            fileExists 
-                              ? 'File loaded and ready for playback'
-                              : 'Audio file not found',
-                            style: TextStyle(
-                              color: fileExists ? Colors.grey[600] : Colors.red[600],
-                              fontSize: 14.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        } else {
-          // In view mode, use the full audio player
-          content = AudioPlayerWidget(
-            musicPiece: widget.musicPiece, // Pass the entire musicPiece
-            mediaItemIndex: widget.mediaItemIndex, // Pass the index
-          );
-        }
+        content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
         break;
       case MediaType.mediaLink:
-        final Uri uri = Uri.parse(currentMediaItem.pathOrUrl);
         content = GestureDetector(
-          onTap: () async {
-            if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-              throw 'Could not launch $uri';
-            }
-          },
-          child: (currentMediaItem.thumbnailPath != null &&
-                  currentMediaItem.thumbnailPath!.isNotEmpty &&
-                  currentMediaItem.thumbnailPath != '')
-              ? (kIsWeb 
-                  ? Image.network(currentMediaItem.thumbnailPath!, height: 200, fit: BoxFit.contain)
-                  : buildFileImage(currentMediaItem.thumbnailPath!, height: 200))
-              : Container(
-                  height: 200,
-                  color: Colors.blueGrey,
-                  child: const Center(
-                    child: Icon(
-                      Icons.link,
-                      color: Colors.white,
-                      size: 50.0,
-                    ),
-                  ),
-                ),
+          onTap: () => _openMedia(context),
+          child: Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.link, size: 40, color: colorScheme.secondary),
+                const SizedBox(height: 8),
+                Text('Open Link', style: theme.textTheme.labelLarge),
+              ],
+            ),
+          ),
         );
         break;
       case MediaType.learningProgress:
         final config = LearningProgressConfig.decode(currentMediaItem.pathOrUrl);
         content = LearningProgressWidget(
           config: config,
-          isEditable: !widget.isEditable, // Can update progress only in View mode (not Edit Piece mode)
+          isEditable: !widget.isEditable,
           onProgressChanged: (newProgress) {
             final newConfig = config.copyWith(current: newProgress);
-            final updatedItem = currentMediaItem.copyWith(
-              pathOrUrl: LearningProgressConfig.encode(newConfig),
-            );
+            final updatedItem = currentMediaItem.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig));
             widget.onMediaItemChanged?.call(updatedItem);
           },
         );
         break;
-      case MediaType.thumbnails:
-        content = GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
-              ),
-            );
-          },
-          child: SizedBox(
-            height: 200,
-            child: kIsWeb 
-              ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-              : buildFileImage(currentMediaItem.pathOrUrl),
-          ),
-        );
-        break;
+      default:
+        content = const SizedBox.shrink();
     }
 
-    final bool showShareButton = !widget.isEditable && 
-                                currentMediaItem.type != MediaType.thumbnails && 
-                                currentMediaItem.type != MediaType.learningProgress &&
-                                (kIsWeb || (defaultTargetPlatform != TargetPlatform.windows && 
-                                            defaultTargetPlatform != TargetPlatform.linux && 
-                                            defaultTargetPlatform != TargetPlatform.macOS));
+    final bool showActions = !widget.isEditable && currentMediaItem.type != MediaType.thumbnails;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start, // Align top to handle different content heights
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.showTitle) ...[
-                    _isEditingTitle
-                        ? TextFormField(
-                            controller: _titleController,
-                            focusNode: _focusNode,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-                              border: OutlineInputBorder(),
-                            ),
-                            onFieldSubmitted: (newValue) {
-                              _saveTitle();
-                            },
-                            onEditingComplete: () {
-                              _saveTitle();
-                            },
-                          )
-                        : ((widget.isTitleEditable || widget.isEditable)
-                            ? GestureDetector(
-                                onDoubleTap: _startEditing,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _currentTitle ?? currentMediaItem.type.name,
-                                          style: const TextStyle(fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      const Text(
-                                        '(Double tap to edit)',
-                                        style: TextStyle(
-                                          fontSize: 12.0,
-                                          color: Colors.grey,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                _currentTitle ?? currentMediaItem.type.name,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              )),
-                    const SizedBox(height: 8.0),
-                  ],
-                  content,
-                ],
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showActions || widget.trailing != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (showActions)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    onSelected: (value) {
+                      if (value == 'share') {
+                        final RenderBox? box = context.findRenderObject() as RenderBox?;
+                        final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+                        _shareMediaItem(currentMediaItem.type, currentMediaItem.pathOrUrl, rect);
+                      } else if (value == 'delete') {
+                        _deleteMediaItem(context, widget.mediaItemIndex);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: 'share', child: ListTile(leading: Icon(Icons.share_outlined, size: 20), title: Text('Share'), dense: true)),
+                      const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, size: 20, color: Colors.red), title: Text('Delete', style: TextStyle(color: Colors.red)), dense: true)),
+                    ],
+                  ),
+                if (widget.trailing != null) widget.trailing!,
+              ],
             ),
-            if (showShareButton)
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.share, size: 20),
-                  tooltip: 'Share',
-                  onPressed: () {
-                    final box = ctx.findRenderObject() as RenderBox?;
-                    final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
-                    _shareMediaItem(currentMediaItem.type, currentMediaItem.pathOrUrl, rect);
-                  },
+          ),
+        content,
+        if (widget.isEditable || widget.isTitleEditable) ...[
+          const SizedBox(height: 12),
+          _isEditingTitle
+            ? TextFormField(
+                controller: _titleController,
+                focusNode: _focusNode,
+                decoration: const InputDecoration(
+                  labelText: 'Media Name',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                onFieldSubmitted: (_) => _saveTitle(),
+              )
+            : InkWell(
+                onTap: _startEditing,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '(Tap to edit)',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            if (widget.trailing != null) widget.trailing!,
-          ],
-        ),
-      ),
+        ],
+      ],
     );
+  }
+
+  void _openMedia(BuildContext context) {
+    final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    switch (currentMediaItem.type) {
+      case MediaType.pdf:
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: currentMediaItem.pathOrUrl, config: PdfConfig.fromJson(currentMediaItem.configData ?? '{}'))));
+        break;
+      case MediaType.image:
+      case MediaType.thumbnails:
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl)));
+        break;
+      case MediaType.localVideo:
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
+        break;
+      case MediaType.audio:
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
+        break;
+      case MediaType.midi:
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged)));
+        break;
+      case MediaType.mediaLink:
+        launchUrl(Uri.parse(currentMediaItem.pathOrUrl), mode: LaunchMode.externalApplication);
+        break;
+      default: break;
+    }
   }
 }

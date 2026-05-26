@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:just_audio/just_audio.dart' as ja;
 import 'package:repertoire/services/pitch_controllable_player.dart'; // Import the new player
 import 'dart:io';
@@ -37,6 +38,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for saving music piece.
   final Uuid _uuid = Uuid(); // For generating unique bookmark IDs.
   late Future<void> _playerInitFuture;
+  Timer? _skipTimer;
 
   @override
   void initState() {
@@ -44,6 +46,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null).toList();
     _playerInitFuture = _initializeSequence();
+  }
+
+  void _skip(bool forward, bool fine) {
+    if (!_isInitialized) return;
+    final current = _player.player.position;
+    final duration = _player.player.duration ?? Duration.zero;
+    final amount = fine ? const Duration(milliseconds: 50) : const Duration(seconds: 1);
+    
+    Duration newPos;
+    if (forward) {
+      newPos = current + amount;
+      if (newPos > duration) newPos = duration;
+    } else {
+      newPos = current - amount;
+      if (newPos < Duration.zero) newPos = Duration.zero;
+    }
+    
+    _player.player.seek(newPos);
+  }
+
+  void _startSkipTimer(bool forward, bool fine) {
+    _skipTimer?.cancel();
+    _skip(forward, fine);
+    
+    // Use a periodic timer for rapid skipping
+    _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _skip(forward, fine);
+    });
+  }
+
+  void _stopSkipTimer() {
+    _skipTimer?.cancel();
+    _skipTimer = null;
   }
 
   Future<void> _initializeSequence() async {
@@ -82,7 +117,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
   }
 
-  /// Initializes the audio player with the provided audio path.
   Future<void> _initAudio() async { // Removed audioPlayerService parameter
     try {
       final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
@@ -93,6 +127,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       final audioPath = audioMediaItem.pathOrUrl;
       
       AppLogger.log('AudioPlayerWidget: Initializing audio with path: $audioPath');
+
+      if (Platform.isWindows && (audioPath.startsWith('http') || audioPath.contains('%'))) {
+        AppLogger.log('AudioPlayerWidget: Windows limitation with URL/encoded paths');
+      }
 
       // Validate file extension
       final validExtensions = ['.mp3', '.wav', '.aac', '.m4a', '.ogg', '.flac', '.wma', '.amr'];
@@ -188,6 +226,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
     final myAudioPath = audioMediaItem.pathOrUrl;
 
@@ -315,56 +355,42 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                           icon: const Icon(Icons.replay_5),
                           iconSize: 32.0,
                           tooltip: 'Rewind 5s',
-                          onPressed: isMyAudio ? () {
-                            final current = _player.player.position;
-                            final newPos = current - const Duration(seconds: 5);
-                            _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
-                          } : null,
+                          onPressed: isMyAudio ? () => _skip(false, false) : null,
                         ),
-                        // Rewind 1s / Fine Button
+                        // Rewind 1s / Fine Button (Hold for fine)
                         Tooltip(
-                          message: 'Rewind 1s (Long press for 50ms)',
-                          child: InkWell(
-                            onTap: isMyAudio ? () {
-                              final current = _player.player.position;
-                              final newPos = current - const Duration(seconds: 1);
-                              _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
-                            } : null,
-                            onLongPress: isMyAudio ? () {
-                              final current = _player.player.position;
-                              final newPos = current - const Duration(milliseconds: 50);
-                              _player.player.seek(newPos < Duration.zero ? Duration.zero : newPos);
-                            } : null,
-                            borderRadius: BorderRadius.circular(20),
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Icon(Icons.chevron_left, size: 28.0),
+                          message: 'Rewind 1s (Hold for 50ms fine skip)',
+                          child: GestureDetector(
+                            onTap: isMyAudio ? () => _skip(false, false) : null,
+                            onLongPressStart: isMyAudio ? (_) => _startSkipTimer(false, true) : null,
+                            onLongPressEnd: (_) => _stopSkipTimer(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.chevron_left, 
+                                size: 28.0,
+                                color: isMyAudio ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         mainButton,
                         const SizedBox(width: 8),
-                        // Forward 1s / Fine Button
+                        // Forward 1s / Fine Button (Hold for fine)
                         Tooltip(
-                          message: 'Forward 1s (Long press for 50ms)',
-                          child: InkWell(
-                            onTap: isMyAudio ? () {
-                              final current = _player.player.position;
-                              final duration = _player.player.duration ?? Duration.zero;
-                              final newPos = current + const Duration(seconds: 1);
-                              _player.player.seek(newPos > duration ? duration : newPos);
-                            } : null,
-                            onLongPress: isMyAudio ? () {
-                              final current = _player.player.position;
-                              final duration = _player.player.duration ?? Duration.zero;
-                              final newPos = current + const Duration(milliseconds: 50);
-                              _player.player.seek(newPos > duration ? duration : newPos);
-                            } : null,
-                            borderRadius: BorderRadius.circular(20),
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Icon(Icons.chevron_right, size: 28.0),
+                          message: 'Forward 1s (Hold for 50ms fine skip)',
+                          child: GestureDetector(
+                            onTap: isMyAudio ? () => _skip(true, false) : null,
+                            onLongPressStart: isMyAudio ? (_) => _startSkipTimer(true, true) : null,
+                            onLongPressEnd: (_) => _stopSkipTimer(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.chevron_right, 
+                                size: 28.0,
+                                color: isMyAudio ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
+                              ),
                             ),
                           ),
                         ),
@@ -375,12 +401,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                           icon: const Icon(Icons.forward_5),
                           iconSize: 32.0,
                           tooltip: 'Forward 5s',
-                          onPressed: isMyAudio ? () {
-                            final current = _player.player.position;
-                            final duration = _player.player.duration ?? Duration.zero;
-                            final newPos = current + const Duration(seconds: 5);
-                            _player.player.seek(newPos > duration ? duration : newPos);
-                          } : null,
+                          onPressed: isMyAudio ? () => _skip(true, false) : null,
                         ),
                       ],
                     );

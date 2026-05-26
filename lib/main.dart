@@ -234,7 +234,12 @@ class _MyAppState extends State<MyApp> {
               // Defines the dark theme for the application.
               darkTheme: ThemeData(
                 // Generates a dark color scheme based on the selected accent color.
-                colorScheme: ColorScheme.fromSeed(seedColor: themeNotifier.accentColor, brightness: Brightness.dark),
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: themeNotifier.accentColor, 
+                  brightness: Brightness.dark,
+                  surface: themeNotifier.useOledBlack ? Colors.black : null,
+                ),
+                scaffoldBackgroundColor: themeNotifier.useOledBlack ? Colors.black : null,
                 useMaterial3: true, // Enables Material 3 design features
               ),
               // Sets the home screen based on whether the app has run before.

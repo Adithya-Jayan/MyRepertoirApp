@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
@@ -55,6 +57,91 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   void dispose() {
     AppLogger.log('PieceDetailScreen: dispose called');
     super.dispose();
+  }
+
+  Widget _buildHeroHeader() {
+    final theme = Theme.of(context);
+    final hasThumbnail = _musicPiece.thumbnailPath != null && _musicPiece.thumbnailPath!.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(24.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          if (hasThumbnail)
+            Positioned.fill(
+              child: Image.file(
+                File(_musicPiece.thumbnailPath!),
+                fit: BoxFit.cover,
+              ),
+            ),
+          if (hasThumbnail)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasThumbnail)
+                  Hero(
+                    tag: 'piece_thumb_${_musicPiece.id}',
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        image: DecorationImage(
+                          image: FileImage(File(_musicPiece.thumbnailPath!)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (hasThumbnail) const SizedBox(width: 16.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _musicPiece.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4.0),
+                      Text(
+                        _musicPiece.artistComposer,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -150,15 +237,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _musicPiece.title,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                _musicPiece.artistComposer,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              _buildHeroHeader(),
               const SizedBox(height: 16.0),
               if (_musicPiece.groupIds.isNotEmpty)
                 CollapsibleSection(
@@ -190,7 +269,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                     showTitle: false,
                   ),
                 ),
-              
+
               // Only show spacing if there's a top section AND there is visible media to show below it
               if ((_musicPiece.enablePracticeTracking || _musicPiece.tagGroups.isNotEmpty || _musicPiece.groupIds.isNotEmpty) && 
                   _musicPiece.mediaItems.any((item) => item.type != MediaType.thumbnails)) ...[

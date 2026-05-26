@@ -14,58 +14,71 @@ class TagGroupsDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Brightness brightness = Theme.of(context).brightness;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final Brightness brightness = theme.brightness;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showTitle) ...[
-          const Text(
-            'Tag Groups:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            'Tags & Categories',
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8.0),
+          const SizedBox(height: 16.0),
         ],
         ...musicPiece.tagGroups.map((tagGroup) {
           final color = tagGroup.color != null ? Color(tagGroup.color!) : null;
-          final backgroundColor = color != null 
+          final tagGroupColor = color != null 
               ? adjustColorForBrightness(color, brightness) 
-              : Theme.of(context).colorScheme.primaryContainer;
+              : colorScheme.primaryContainer;
           
-          // Determine text color based on background brightness for readability
-          final textColor = ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.light
-              ? Colors.black
+          final onTagGroupColor = ThemeData.estimateBrightnessForColor(tagGroupColor) == Brightness.light
+              ? Colors.black87
               : Colors.white;
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12.0),
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                   decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(4.0),
+                    color: tagGroupColor,
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Text(
                     tagGroup.name,
-                    style: TextStyle(
+                    style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: textColor,
+                      color: onTagGroupColor,
                     ),
                   ),
                 ),
-                const Text(' : '), // Add a colon after the tag group name
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0), // Align text vertically with the label
+                ...tagGroup.tags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(20.0),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
                     child: Text(
-                      tagGroup.tags.join(', '),
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      tag,
+                      style: theme.textTheme.bodyMedium,
                     ),
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           );

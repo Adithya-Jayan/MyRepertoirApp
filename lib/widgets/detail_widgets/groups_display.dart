@@ -31,26 +31,46 @@ class GroupsDisplay extends StatelessWidget {
         }
 
         final groups = snapshot.data!;
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showTitle) ...[
-              const Text(
-                'Groups:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                'Groups',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8.0),
+              const SizedBox(height: 16.0),
             ],
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 4.0,
-              children: groups.map((group) {
-                return Chip(
-                  label: Text(group.name),
-                  backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                );
-              }).toList(),
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+              ),
+              child: Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: groups.map((group) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    child: Text(
+                      group.name,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         );

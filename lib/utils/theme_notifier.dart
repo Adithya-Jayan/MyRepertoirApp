@@ -15,6 +15,7 @@ class ThemeNotifier with ChangeNotifier {
   bool _showLastPracticed = true;
   bool _showDotPatternBackground = true;
   bool _showGradientBackground = true;
+  bool _useOledBlack = false;
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
@@ -43,6 +44,7 @@ class ThemeNotifier with ChangeNotifier {
   bool get showLastPracticed => _showLastPracticed;
   bool get showDotPatternBackground => _showDotPatternBackground;
   bool get showGradientBackground => _showGradientBackground;
+  bool get useOledBlack => _useOledBlack;
 
   /// Loads the saved theme preference and accent color from [SharedPreferences].
   ///
@@ -60,6 +62,7 @@ class ThemeNotifier with ChangeNotifier {
     _showLastPracticed = prefs.getBool('showLastPracticed') ?? true;
     _showDotPatternBackground = prefs.getBool('showDotPatternBackground') ?? true;
     _showGradientBackground = prefs.getBool('showGradientBackground') ?? true;
+    _useOledBlack = prefs.getBool('useOledBlack') ?? false;
     notifyListeners(); // Notify listeners that the theme has changed.
   }
 
@@ -131,6 +134,15 @@ class ThemeNotifier with ChangeNotifier {
       notifyListeners();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('showGradientBackground', value);
+    }
+  }
+
+  void setUseOledBlack(bool value) async {
+    if (_useOledBlack != value) {
+      _useOledBlack = value;
+      notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('useOledBlack', value);
     }
   }
 

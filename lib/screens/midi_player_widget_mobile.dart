@@ -229,6 +229,13 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   Future<void> _initMidi() async {
     try {
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        setState(() {
+          _errorMessage = 'MIDI playback is currently not supported on desktop platforms.';
+          _isInitialized = true;
+        });
+        return;
+      }
       final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
       final midiFile = File(mediaItem.pathOrUrl);
       if (!await midiFile.exists()) {

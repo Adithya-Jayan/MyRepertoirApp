@@ -203,6 +203,14 @@ class PersonalizationSettingsScreenState
                 themeNotifier.setShowGradientBackground(value);
               },
             ),
+            SwitchListTile(
+              title: const Text('Use OLED Black'),
+              subtitle: const Text('True black background in dark mode'),
+              value: themeNotifier.useOledBlack,
+              onChanged: (value) {
+                themeNotifier.setUseOledBlack(value);
+              },
+            ),
             const SizedBox(height: 24),
             Text(
               'Gallery Columns',
