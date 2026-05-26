@@ -82,7 +82,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
   }
 
-  /// Initializes the audio player with the provided audio path.
   Future<void> _initAudio() async { // Removed audioPlayerService parameter
     try {
       final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
@@ -93,6 +92,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       final audioPath = audioMediaItem.pathOrUrl;
       
       AppLogger.log('AudioPlayerWidget: Initializing audio with path: $audioPath');
+
+      if (Platform.isWindows && (audioPath.startsWith('http') || audioPath.contains('%'))) {
+        AppLogger.log('AudioPlayerWidget: Windows limitation with URL/encoded paths');
+      }
 
       // Validate file extension
       final validExtensions = ['.mp3', '.wav', '.aac', '.m4a', '.ogg', '.flac', '.wma', '.amr'];

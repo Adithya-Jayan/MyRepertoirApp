@@ -9,7 +9,6 @@ import 'package:repertoire/widgets/detail_widgets/tag_groups_display.dart';
 import 'package:repertoire/widgets/detail_widgets/groups_display.dart';
 import 'package:repertoire/widgets/detail_widgets/media_display_list.dart';
 import 'package:repertoire/models/media_type.dart';
-import 'package:repertoire/utils/practice_indicator_utils.dart';
 import '../utils/app_logger.dart';
 import 'package:repertoire/widgets/detail_widgets/collapsible_section.dart';
 import 'package:repertoire/services/section_state_service.dart';
@@ -63,7 +62,6 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   Widget _buildHeroHeader() {
     final theme = Theme.of(context);
     final hasThumbnail = _musicPiece.thumbnailPath != null && _musicPiece.thumbnailPath!.isNotEmpty;
-    final practiceColor = PracticeIndicatorUtils.getPracticeIndicatorColorSync(_musicPiece.lastPracticeTime) ?? Colors.transparent;
 
     return Container(
       width: double.infinity,
@@ -122,35 +120,11 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          if (_musicPiece.enablePracticeTracking)
-                            Container(
-                              width: 12,
-                              height: 12,
-                              margin: const EdgeInsets.only(right: 8.0),
-                              decoration: BoxDecoration(
-                                color: practiceColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: practiceColor.withValues(alpha: 0.4),
-                                    blurRadius: 4,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          Expanded(
-                            child: Text(
-                              _musicPiece.title,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        _musicPiece.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4.0),
                       Text(

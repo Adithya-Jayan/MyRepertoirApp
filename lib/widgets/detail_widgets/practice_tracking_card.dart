@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
-import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/utils/practice_settings.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import '../../screens/practice_logs_screen.dart';
@@ -119,40 +118,6 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    Widget buildStatTile(String label, String value, IconData icon) {
-      return Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(12.0),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 16, color: colorScheme.secondary),
-              const SizedBox(height: 8.0),
-              Text(
-                value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
 
     Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,22 +129,6 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
           ),
           const SizedBox(height: 16.0),
         ],
-        Row(
-          children: [
-            buildStatTile(
-              'Last Practiced',
-              PracticeIndicatorUtils.formatLastPracticeTime(_musicPiece.lastPracticeTime),
-              Icons.calendar_today,
-            ),
-            const SizedBox(width: 12),
-            buildStatTile(
-              'Total Sessions',
-              _musicPiece.practiceCount.toString(),
-              Icons.repeat,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(

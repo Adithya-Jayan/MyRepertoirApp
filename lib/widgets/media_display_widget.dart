@@ -209,20 +209,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       return const SizedBox.shrink();
     }
 
-    IconData getMediaTypeIcon(MediaType type) {
-      switch (type) {
-        case MediaType.pdf: return Icons.picture_as_pdf_outlined;
-        case MediaType.audio: return Icons.audiotrack_outlined;
-        case MediaType.localVideo: return Icons.videocam_outlined;
-        case MediaType.mediaLink: return Icons.link_rounded;
-        case MediaType.image: return Icons.image_outlined;
-        case MediaType.markdown: return Icons.notes_rounded;
-        case MediaType.midi: return Icons.music_note_outlined;
-        case MediaType.learningProgress: return Icons.trending_up_rounded;
-        default: return Icons.insert_drive_file_outlined;
-      }
-    }
-
     Widget content;
     switch (currentMediaItem.type) {
       case MediaType.markdown:
@@ -300,73 +286,15 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
 
     final bool showActions = !widget.isEditable && currentMediaItem.type != MediaType.thumbnails;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showActions || widget.trailing != null)
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.only(bottom: 12.0),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: Icon(getMediaTypeIcon(currentMediaItem.type), color: colorScheme.primary, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _isEditingTitle
-                        ? TextFormField(
-                            controller: _titleController,
-                            focusNode: _focusNode,
-                            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-                            onFieldSubmitted: (_) => _saveTitle(),
-                          )
-                        : GestureDetector(
-                            onDoubleTap: (widget.isEditable || widget.isTitleEditable) ? _startEditing : null,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _currentTitle ?? currentMediaItem.type.name,
-                                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (widget.isEditable || widget.isTitleEditable) ...[
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '(Double tap to edit)',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                      Text(
-                        currentMediaItem.type.toString().split('.').last.toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, letterSpacing: 0.5),
-                      ),
-                    ],
-                  ),
-                ),
                 if (showActions)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 20),
@@ -388,13 +316,49 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               ],
             ),
           ),
-          const Divider(height: 1, indent: 12, endIndent: 12),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: content,
-          ),
+        content,
+        if (widget.isEditable || widget.isTitleEditable) ...[
+          const SizedBox(height: 12),
+          _isEditingTitle
+            ? TextFormField(
+                controller: _titleController,
+                focusNode: _focusNode,
+                decoration: const InputDecoration(
+                  labelText: 'Media Name',
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                onFieldSubmitted: (_) => _saveTitle(),
+              )
+            : InkWell(
+                onTap: _startEditing,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '(Tap to edit)',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ],
-      ),
+      ],
     );
   }
 
