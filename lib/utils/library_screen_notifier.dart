@@ -97,7 +97,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _pageController = PageController();
     _groupScrollController = ScrollController();
     
     _libraryDataManager = LibraryDataManager(
@@ -130,10 +129,18 @@ class LibraryScreenNotifier extends ChangeNotifier {
     
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
+    int initialPage = 0;
     if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
       _selectedGroupId = visibleGroups.first.id;
+      initialPage = 0;
       AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}');
+    } else if (_selectedGroupId != null) {
+      initialPage = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
+      if (initialPage == -1) initialPage = 0;
     }
+    
+    // Initialize PageController with the correct initial page
+    _pageController = PageController(initialPage: initialPage);
     
     // Update the cache with initial data and load music pieces
     _updateFilteredResultsCache();
@@ -144,6 +151,16 @@ class LibraryScreenNotifier extends ChangeNotifier {
     _isInitialized = true;
     _isLoading = false;
     notifyListeners();
+
+    // Auto-scroll the group title into view after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (visibleGroups.isNotEmpty) {
+        final index = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
+        if (index != -1) {
+          _scrollGroupIntoView(index);
+        }
+      }
+    });
   }
 
   @override

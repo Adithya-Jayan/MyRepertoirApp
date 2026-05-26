@@ -161,6 +161,10 @@ class _MyAppState extends State<MyApp> {
       await prefs.setInt('galleryColumns', 2);
       await prefs.setBool('all_group_isHidden', true);
       await prefs.setBool('notifyNewReleases', true);
+      await prefs.setBool('showPracticeCount', true);
+      await prefs.setBool('showLastPracticed', true);
+      await prefs.setBool('showDotPatternBackground', true);
+      await prefs.setBool('showGradientBackground', true);
     }
   }
 
