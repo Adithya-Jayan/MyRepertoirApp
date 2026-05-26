@@ -45,6 +45,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   
   Timer? _syncTimer;
+  Timer? _skipTimer;
 
   @override
   void initState() {
@@ -66,6 +67,40 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId).toList();
     _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+  }
+
+  void _skip(bool forward, bool fine) {
+    if (!_isInitialized) return;
+    
+    final current = _controller.value.position;
+    final duration = _controller.value.duration;
+    final amount = fine ? const Duration(milliseconds: 33) : const Duration(seconds: 1);
+    
+    Duration targetPos;
+    if (forward) {
+      targetPos = current + amount;
+      if (targetPos > duration) targetPos = duration;
+    } else {
+      targetPos = current - amount;
+      if (targetPos < Duration.zero) targetPos = Duration.zero;
+    }
+    
+    _controller.seekTo(targetPos);
+    _audioPlayer.player.seek(targetPos);
+  }
+
+  void _startSkipTimer(bool forward, bool fine) {
+    _skipTimer?.cancel();
+    _skip(forward, fine);
+    
+    _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _skip(forward, fine);
+    });
+  }
+
+  void _stopSkipTimer() {
+    _skipTimer?.cancel();
+    _skipTimer = null;
   }
 
   Future<void> _loadSettings() async {
@@ -494,6 +529,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           onSeekForward: _onSeekForward,
           onSeekFineBack: _onSeekFineBack,
           onSeekFineForward: _onSeekFineForward,
+          onStartSkip: _startSkipTimer,
+          onStopSkip: _stopSkipTimer,
           onStepBack: _onStepBack,
           onStepForward: _onStepForward,
           onOpenBookmarks: () {
@@ -700,8 +737,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                   const Text('Pitch:'),
                   Expanded(
                     child: Slider(
-                      min: -12.0,
-                      max: 12.0,
+                      min: -12.0, // One octave down
+                      max: 12.0, // One octave up
                       value: _pitch,
                       divisions: 24,
                       label: _getPitchDisplayString(_pitch),
@@ -762,6 +799,8 @@ class _ControlsOverlay extends StatelessWidget {
     required this.onSeekForward,
     required this.onSeekFineBack,
     required this.onSeekFineForward,
+    required this.onStartSkip,
+    required this.onStopSkip,
     required this.onStepBack,
     required this.onStepForward,
     required this.onOpenBookmarks,
@@ -777,6 +816,8 @@ class _ControlsOverlay extends StatelessWidget {
   final VoidCallback onSeekForward;
   final VoidCallback onSeekFineBack;
   final VoidCallback onSeekFineForward;
+  final Function(bool, bool) onStartSkip;
+  final VoidCallback onStopSkip;
   final VoidCallback onStepBack;
   final VoidCallback onStepForward;
   final VoidCallback onOpenBookmarks;
@@ -899,8 +940,9 @@ class _ControlsOverlay extends StatelessWidget {
                     _FineSeekButton(
                       icon: Icons.chevron_left,
                       onPressed: onSeekFineBack,
-                      onLongPress: onStepBack,
-                      tooltip: 'Back 1s (Long press for frame)',
+                      onStartSkip: () => onStartSkip(false, true),
+                      onStopSkip: onStopSkip,
+                      tooltip: 'Back 1s (Hold for frame skip)',
                     ),
                     const SizedBox(width: 8),
                     IconButton(
@@ -917,8 +959,9 @@ class _ControlsOverlay extends StatelessWidget {
                     _FineSeekButton(
                       icon: Icons.chevron_right,
                       onPressed: onSeekFineForward,
-                      onLongPress: onStepForward,
-                      tooltip: 'Forward 1s (Long press for frame)',
+                      onStartSkip: () => onStartSkip(true, true),
+                      onStopSkip: onStopSkip,
+                      tooltip: 'Forward 1s (Hold for frame skip)',
                     ),
                     IconButton(
                       icon: const Icon(Icons.forward_5, color: Colors.white),
@@ -939,13 +982,15 @@ class _ControlsOverlay extends StatelessWidget {
 class _FineSeekButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
-  final VoidCallback onLongPress;
+  final VoidCallback onStartSkip;
+  final VoidCallback onStopSkip;
   final String tooltip;
 
   const _FineSeekButton({
     required this.icon,
     required this.onPressed,
-    required this.onLongPress,
+    required this.onStartSkip,
+    required this.onStopSkip,
     required this.tooltip,
   });
 
@@ -953,10 +998,10 @@ class _FineSeekButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: InkWell(
+      child: GestureDetector(
         onTap: onPressed,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(20),
+        onLongPressStart: (_) => onStartSkip(),
+        onLongPressEnd: (_) => onStopSkip(),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Icon(icon, color: Colors.white, size: 28),
