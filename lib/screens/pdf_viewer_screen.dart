@@ -24,10 +24,12 @@ class PdfViewerScreen extends StatefulWidget {
   State<PdfViewerScreen> createState() => _PdfViewerScreenState();
 }
 
-class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProviderStateMixin {
+class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderStateMixin {
   final TransformationController _transformationController = TransformationController();
   final GlobalKey _contentKey = GlobalKey();
   late Ticker _ticker;
+  late AnimationController _animationController;
+  Animation<Matrix4>? _animation;
   bool _isAutoScrolling = false;
   double _scrollSpeed = 1.0; // Base speed
   bool _showControls = true;
@@ -41,6 +43,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProv
     super.initState();
     _scrollSpeed = widget.config.defaultSpeed;
     _ticker = createTicker(_onTick);
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..addListener(() {
+      _transformationController.value = _animation!.value;
+    });
     _loadDocument();
     _loadSavedSpeed();
   }
@@ -177,9 +185,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProv
   }
 
   void _resetZoom() {
-    setState(() {
-      _transformationController.value = Matrix4.identity();
-    });
+    _animation = Matrix4Tween(
+      begin: _transformationController.value,
+      end: Matrix4.identity(),
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
+    _animationController.forward(from: 0.0);
+  }
+
+  void _handleDoubleTap() {
+    if (_transformationController.value != Matrix4.identity()) {
+      _resetZoom();
+    } else {
+      // Zoom in on double tap if already at identity
+      final Matrix4 endMatrix = Matrix4.identity()..scaleByVector3(Vector3(2.0, 2.0, 1.0));
+      _animation = Matrix4Tween(
+        begin: _transformationController.value,
+        end: endMatrix,
+      ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
+      _animationController.forward(from: 0.0);
+    }
   }
 
   @override
@@ -188,6 +212,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProv
       _ticker.stop();
     }
     _ticker.dispose();
+    _animationController.dispose();
     _document?.close();
     _transformationController.dispose();
     super.dispose();
@@ -234,36 +259,42 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with SingleTickerProv
       body: Stack(
         children: [
           if (_isLoaded && _document != null)
-            Listener(
-              onPointerSignal: (pointerSignal) {
-                if (pointerSignal is PointerScrollEvent) {
-                  final isControlPressed = HardwareKeyboard.instance.isControlPressed;
-                  if (isControlPressed) {
-                    final zoomDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
-                    _updateZoom(zoomDelta);
+            GestureDetector(
+              onDoubleTap: _handleDoubleTap,
+              child: Listener(
+                onPointerSignal: (pointerSignal) {
+                  if (pointerSignal is PointerScrollEvent) {
+                    final isControlPressed = HardwareKeyboard.instance.isControlPressed;
+                    if (isControlPressed) {
+                      final zoomDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+                      _updateZoom(zoomDelta);
+                    }
                   }
-                }
-              },
-              child: InteractiveViewer(
-                transformationController: _transformationController,
-                minScale: 1.0,
-                maxScale: 4.0,
-                constrained: false, // Allows the Column to be its natural size
-                onInteractionStart: (_) {
-                  _toggleAutoScroll(false);
                 },
-                child: SizedBox(
-                  width: screenWidth,
-                  child: Column(
-                    key: _contentKey,
-                    children: List.generate(_document!.pagesCount, (index) {
-                      return _PdfPageWidget(
-                        document: _document!,
-                        pageNumber: index + 1,
-                        defaultAspectRatio: _defaultAspectRatio,
-                        transformationController: _transformationController,
-                      );
-                    }),
+                child: InteractiveViewer(
+                  transformationController: _transformationController,
+                  minScale: 1.0,
+                  maxScale: 4.0,
+                  constrained: false, // Allows the Column to be its natural size
+                  onInteractionStart: (_) {
+                    _toggleAutoScroll(false);
+                    if (_animationController.isAnimating) {
+                      _animationController.stop();
+                    }
+                  },
+                  child: SizedBox(
+                    width: screenWidth,
+                    child: Column(
+                      key: _contentKey,
+                      children: List.generate(_document!.pagesCount, (index) {
+                        return _PdfPageWidget(
+                          document: _document!,
+                          pageNumber: index + 1,
+                          defaultAspectRatio: _defaultAspectRatio,
+                          transformationController: _transformationController,
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ),
