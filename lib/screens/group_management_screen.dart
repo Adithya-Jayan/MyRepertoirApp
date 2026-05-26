@@ -208,7 +208,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: ListTile(
               leading: const Icon(Icons.drag_handle, color: Colors.grey),
-              title: Text(group.name),
+              title: Text('${group.name} (${group.itemCount})'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

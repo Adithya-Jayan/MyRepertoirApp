@@ -19,12 +19,17 @@ class Group {
   /// This allows users to temporarily hide groups without deleting them.
   bool isHidden;
 
+  /// The number of items in this group. This is not persisted in the group table
+  /// but populated during loading.
+  int itemCount;
+
   /// Constructor for the Group class.
   Group({
     required this.id,
     required this.name,
     required this.order,
     this.isHidden = false,
+    this.itemCount = 0,
   });
 
   /// Converts a [Group] object into a JSON-compatible Map.
@@ -57,12 +62,14 @@ class Group {
     String? name,
     int? order,
     bool? isHidden,
+    int? itemCount,
   }) {
     return Group(
       id: id ?? this.id,
       name: name ?? this.name,
       order: order ?? this.order,
       isHidden: isHidden ?? this.isHidden,
+      itemCount: itemCount ?? this.itemCount,
     );
   }
 }
