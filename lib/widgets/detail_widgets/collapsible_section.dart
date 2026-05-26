@@ -56,21 +56,29 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
     final colorScheme = theme.colorScheme;
     
     // Use secondaryContainer for a subtle but distinct header background
-    // This provides better visual separation than just using primaryColor with alpha
-    final headerColor = colorScheme.secondaryContainer;
+    final headerColor = colorScheme.secondaryContainer.withValues(alpha: 0.5);
     final onHeaderColor = colorScheme.onSecondaryContainer;
+
+    IconData getSectionIcon(String title) {
+      final t = title.toLowerCase();
+      if (t.contains('group')) return Icons.folder_outlined;
+      if (t.contains('practice')) return Icons.history_rounded;
+      if (t.contains('tag')) return Icons.label_outline_rounded;
+      if (t.contains('media')) return Icons.description_outlined;
+      return Icons.segment_rounded;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -83,22 +91,22 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
         ),
         collapsedBackgroundColor: headerColor,
         backgroundColor: headerColor,
-        // Explicitly set colors to avoid theme inheritance issues and fix the 'invisible title' bug
         textColor: onHeaderColor,
         collapsedTextColor: onHeaderColor,
         iconColor: onHeaderColor,
         collapsedIconColor: onHeaderColor,
-        // Remove default dividers from ExpansionTile to maintain clean card look
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
         ),
         collapsedShape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
         ),
+        leading: Icon(getSectionIcon(widget.title), size: 20),
         title: Text(
           widget.title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
+            letterSpacing: 0.2,
           ),
         ),
         onExpansionChanged: (expanded) {
@@ -106,7 +114,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
         },
         children: [
           Container(
-            color: theme.scaffoldBackgroundColor, // Revert to normal background for content
+            color: theme.scaffoldBackgroundColor,
             width: double.infinity,
             padding: const EdgeInsets.all(16.0),
             child: widget.child,

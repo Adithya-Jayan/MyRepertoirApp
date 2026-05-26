@@ -58,95 +58,77 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
       return const SizedBox.shrink(); // Hide the entire widget if no visible media items
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        widget.allowReordering
-            ? ReorderableListView.builder(
-                buildDefaultDragHandles: false,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: visibleItemsIndices.length,
-                itemBuilder: (context, index) {
-                  final mediaIndex = visibleItemsIndices[index];
-                  final item = _musicPiece.mediaItems[mediaIndex];
-                  return Column( // Wrap in Column to add Divider below
-                    key: ValueKey(item.id),
-                    children: [
-                      CollapsibleSection(
-                        title: item.title ?? item.type.name,
-                        persistenceKey: 'media_item_${item.id}',
-                        child: MediaDisplayWidget(
-                          musicPiece: _musicPiece,
-                          mediaItemIndex: mediaIndex,
-                          isEditable: false,
-                          showTitle: false,
-                          trailing: ReorderableDragStartListener(
-                            index: index,
-                            child: const Icon(Icons.drag_handle),
-                          ),
-                          onMediaItemChanged: (newItem) {
-                            setState(() {
-                              _musicPiece.mediaItems[mediaIndex] = newItem;
-                            });
-                            _repository.updateMusicPiece(_musicPiece);
-                            widget.onMusicPieceChanged(_musicPiece);
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    
-                    // Map visual indices back to original indices
-                    final originalOldIndex = visibleItemsIndices[oldIndex];
-                    final originalNewIndex = visibleItemsIndices[newIndex];
-                    
-                    final item = _musicPiece.mediaItems.removeAt(originalOldIndex);
-                    _musicPiece.mediaItems.insert(originalNewIndex, item);
-                    
+    return CollapsibleSection(
+      title: 'Media Attachments',
+      persistenceKey: 'media_attachments_${_musicPiece.id}',
+      child: widget.allowReordering
+          ? ReorderableListView.builder(
+              buildDefaultDragHandles: false,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visibleItemsIndices.length,
+              itemBuilder: (context, index) {
+                final mediaIndex = visibleItemsIndices[index];
+                final item = _musicPiece.mediaItems[mediaIndex];
+                return MediaDisplayWidget(
+                  key: ValueKey(item.id),
+                  musicPiece: _musicPiece,
+                  mediaItemIndex: mediaIndex,
+                  isEditable: false,
+                  showTitle: false,
+                  trailing: ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+                  onMediaItemChanged: (newItem) {
+                    setState(() {
+                      _musicPiece.mediaItems[mediaIndex] = newItem;
+                    });
                     _repository.updateMusicPiece(_musicPiece);
                     widget.onMusicPieceChanged(_musicPiece);
-                  });
-                },
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: visibleItemsIndices.length,
-                itemBuilder: (context, index) {
-                  final mediaIndex = visibleItemsIndices[index];
-                  final item = _musicPiece.mediaItems[mediaIndex];
-                  return Column( // Wrap in Column to add Divider below
-                    key: ValueKey(item.id),
-                    children: [
-                      CollapsibleSection(
-                        title: item.title ?? item.type.name,
-                        persistenceKey: 'media_item_${item.id}',
-                        child: MediaDisplayWidget(
-                          musicPiece: _musicPiece,
-                          mediaItemIndex: mediaIndex,
-                          isEditable: false,
-                          showTitle: false,
-                          onMediaItemChanged: (newItem) {
-                            setState(() {
-                              _musicPiece.mediaItems[mediaIndex] = newItem;
-                            });
-                            _repository.updateMusicPiece(_musicPiece);
-                            widget.onMusicPieceChanged(_musicPiece);
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-      ],
+                  },
+                );
+              },
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) {
+                    newIndex -= 1;
+                  }
+                  
+                  // Map visual indices back to original indices
+                  final originalOldIndex = visibleItemsIndices[oldIndex];
+                  final originalNewIndex = visibleItemsIndices[newIndex];
+                  
+                  final item = _musicPiece.mediaItems.removeAt(originalOldIndex);
+                  _musicPiece.mediaItems.insert(originalNewIndex, item);
+                  
+                  _repository.updateMusicPiece(_musicPiece);
+                  widget.onMusicPieceChanged(_musicPiece);
+                });
+              },
+            )
+          : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visibleItemsIndices.length,
+              itemBuilder: (context, index) {
+                final mediaIndex = visibleItemsIndices[index];
+                return MediaDisplayWidget(
+                  key: ValueKey(_musicPiece.mediaItems[mediaIndex].id),
+                  musicPiece: _musicPiece,
+                  mediaItemIndex: mediaIndex,
+                  isEditable: false,
+                  showTitle: false,
+                  onMediaItemChanged: (newItem) {
+                    setState(() {
+                      _musicPiece.mediaItems[mediaIndex] = newItem;
+                    });
+                    _repository.updateMusicPiece(_musicPiece);
+                    widget.onMusicPieceChanged(_musicPiece);
+                  },
+                );
+              },
+            ),
     );
   }
 }
