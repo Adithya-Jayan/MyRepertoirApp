@@ -120,13 +120,16 @@ class MediaCleanupService {
     return cleanupInfo;
   }
 
-  /// Performs the actual cleanup by deleting unused media files
-  Future<MediaCleanupResult> performCleanup() async {
+  /// Performs the actual cleanup by deleting unused media files.
+  /// 
+  /// An optional [MediaCleanupInfo] can be provided to avoid re-scanning,
+  /// which helps prevent race conditions if files are modified between scan and purge.
+  Future<MediaCleanupResult> performCleanup({MediaCleanupInfo? cleanupInfo}) async {
     AppLogger.log('Starting media cleanup...');
     
-    final cleanupInfo = await scanForUnusedMedia();
+    final info = cleanupInfo ?? await scanForUnusedMedia();
     
-    if (cleanupInfo.unusedFiles.isEmpty) {
+    if (info.unusedFiles.isEmpty) {
       AppLogger.log('No unused files to clean up.');
       return MediaCleanupResult(
         filesDeleted: 0,
@@ -140,7 +143,7 @@ class MediaCleanupService {
     int freedBytes = 0;
     List<String> errors = [];
 
-    for (final unusedFileInfo in cleanupInfo.unusedFiles) {
+    for (final unusedFileInfo in info.unusedFiles) {
       try {
         // Normalize the file path to handle any inconsistencies (e.g., mixed separators).
         final normalizedPath = p.normalize(unusedFileInfo.filePath);
