@@ -90,13 +90,14 @@ class GroupDialogManager {
   ///
   /// Returns true if the user confirms deletion, false otherwise.
   static Future<bool> showDeleteGroupDialog(BuildContext context, Group group) async {
+    final bool hasItems = group.itemCount > 0;
+    
     final confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Group'),
         content: Text(
-          'Are you sure you want to delete the group "${group.name}"?\n\n'
-          'Music pieces associated ONLY with this group will be moved to the "Default Group".'
+          'Are you sure you want to delete the group "${group.name}"?${hasItems ? '\n\nThis group contains ${group.itemCount} items. Music pieces associated ONLY with this group will be moved to the "Ungrouped" group.' : ''}'
         ),
         actions: [
           TextButton(

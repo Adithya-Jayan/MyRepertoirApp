@@ -21,6 +21,9 @@ class GroupOperationsManager {
       final allDbGroups = await repository.getGroups();
       AppLogger.log('GroupOperationsManager: Loaded ${allDbGroups.length} groups from DB.');
 
+      // Get all music pieces once to count items per group efficiently
+      final allPieces = await repository.getMusicPieces();
+
       // Get stored settings for special groups, with default values
       final allGroupOrder = prefs.getInt('all_group_order') ?? -2;
       final allGroupIsHidden = prefs.getBool('all_group_isHidden') ?? false;
@@ -32,6 +35,7 @@ class GroupOperationsManager {
         name: 'All',
         order: allGroupOrder,
         isHidden: allGroupIsHidden,
+        itemCount: allPieces.length,
       );
 
       final ungroupedGroup = Group(
@@ -39,7 +43,13 @@ class GroupOperationsManager {
         name: 'Ungrouped',
         order: ungroupedGroupOrder,
         isHidden: ungroupedGroupIsHidden,
+        itemCount: allPieces.where((p) => p.groupIds.isEmpty).length,
       );
+
+      // Populate item counts for DB groups
+      for (var group in allDbGroups) {
+        group.itemCount = allPieces.where((p) => p.groupIds.contains(group.id)).length;
+      }
 
       List<Group> combinedGroups = [allGroup, ungroupedGroup, ...allDbGroups];
 

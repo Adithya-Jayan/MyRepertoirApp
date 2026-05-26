@@ -98,7 +98,7 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
     try {
       final repository = MusicPieceRepository();
       final cleanupService = MediaCleanupService(repository);
-      final result = await cleanupService.performCleanup();
+      final result = await cleanupService.performCleanup(cleanupInfo: _cleanupInfo);
       
       setState(() {
         _isCleaning = false;

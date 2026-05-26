@@ -13,8 +13,8 @@ class ThemeNotifier with ChangeNotifier {
   ThumbnailStyle _thumbnailStyle = ThumbnailStyle.outline;
   bool _showPracticeCount = true;
   bool _showLastPracticed = true;
-  bool _showDotPatternBackground = false;
-  bool _showGradientBackground = false;
+  bool _showDotPatternBackground = true;
+  bool _showGradientBackground = true;
 
   // Define a list of available accent colors.
   static const List<Color> availableAccentColors = [
