@@ -337,11 +337,27 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                           )
                         : GestureDetector(
                             onDoubleTap: (widget.isEditable || widget.isTitleEditable) ? _startEditing : null,
-                            child: Text(
-                              _currentTitle ?? currentMediaItem.type.name,
-                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _currentTitle ?? currentMediaItem.type.name,
+                                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (widget.isEditable || widget.isTitleEditable) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '(Double tap to edit)',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                       Text(
