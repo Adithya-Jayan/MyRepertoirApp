@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/models/media_item.dart';
+import 'package:repertoire/models/learning_progress_config.dart';
+import 'package:repertoire/widgets/learning_progress_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
@@ -12,6 +15,7 @@ import '../screens/video_player_widget.dart';
 import '../screens/midi_player_widget.dart'
     if (dart.library.html) '../screens/midi_player_widget_web.dart';
 import 'dart:io' as io;
+import '../utils/app_logger.dart';
 import 'package:repertoire/models/pdf_config.dart';
 
 class MediaDisplayWidget extends StatefulWidget {
@@ -20,8 +24,9 @@ class MediaDisplayWidget extends StatefulWidget {
 
   final Widget? trailing;
   final Function(MediaItem)? onMediaItemChanged;
-  final Function(String)? onTitleChanged; // Added back for compatibility
+  final Function(String)? onTitleChanged;
   final bool isEditable;
+  final bool isTitleEditable;
   final bool showTitle;
 
   const MediaDisplayWidget({
@@ -32,6 +37,7 @@ class MediaDisplayWidget extends StatefulWidget {
     this.onMediaItemChanged,
     this.onTitleChanged,
     this.isEditable = false,
+    this.isTitleEditable = false,
     this.showTitle = true,
   });
 
@@ -40,17 +46,84 @@ class MediaDisplayWidget extends StatefulWidget {
 }
 
 class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
+  late TextEditingController _titleController;
+  bool _isEditingTitle = false;
+  late FocusNode _focusNode;
+  String? _currentTitle;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTitle = widget.musicPiece.mediaItems[widget.mediaItemIndex].title;
+    _titleController = TextEditingController(text: _currentTitle);
+    _focusNode = FocusNode();
+    
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditingTitle) {
+        setState(() {
+          _isEditingTitle = false;
+          _titleController.text = _currentTitle ?? '';
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(MediaDisplayWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    if (!_isEditingTitle && newMediaItem.title != _currentTitle) {
+      _currentTitle = newMediaItem.title;
+      _titleController.text = _currentTitle ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _saveTitle() {
+    final newTitle = _titleController.text;
+    setState(() {
+      _isEditingTitle = false;
+      _currentTitle = newTitle;
+    });
+    
+    if (newTitle != widget.musicPiece.mediaItems[widget.mediaItemIndex].title) {
+      if (widget.onTitleChanged != null) {
+        widget.onTitleChanged!(newTitle);
+      } else if (widget.onMediaItemChanged != null) {
+        final updatedItem = widget.musicPiece.mediaItems[widget.mediaItemIndex].copyWith(title: newTitle);
+        widget.onMediaItemChanged!(updatedItem);
+      }
+    }
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditingTitle = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_focusNode.canRequestFocus) {
+        _focusNode.requestFocus();
+        _titleController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _titleController.text.length,
+        );
+      }
+    });
+  }
+
   Future<void> _shareMediaItem(MediaType type, String pathOrUrl, Rect? shareOrigin) async {
     try {
       ShareParams? params;
-      
       switch (type) {
         case MediaType.mediaLink:
         case MediaType.markdown:
-          params = ShareParams(
-            text: pathOrUrl,
-            sharePositionOrigin: shareOrigin,
-          );
+          params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
           break;
         case MediaType.audio:
         case MediaType.image:
@@ -58,39 +131,24 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         case MediaType.localVideo:
         case MediaType.midi:
           if (kIsWeb) {
-             params = ShareParams(
-               text: pathOrUrl,
-               sharePositionOrigin: shareOrigin,
-             );
+             params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
           } else {
             final file = io.File(pathOrUrl);
             if (await file.exists()) {
-              params = ShareParams(
-                files: [XFile(pathOrUrl)],
-                sharePositionOrigin: shareOrigin,
-              );
+              params = ShareParams(files: [XFile(pathOrUrl)], sharePositionOrigin: shareOrigin);
             } else {
                if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('File not found to share.')),
-                 );
+                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found to share.')));
                }
                return;
             }
           }
           break;
-        default:
-          return;
+        default: return;
       }
-      
       await SharePlus.instance.share(params);
-      
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing: $e')),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
     }
   }
 
@@ -102,21 +160,43 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         content: const Text('Are you sure you want to delete this media item?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true), 
-            child: const Text('Delete', style: TextStyle(color: Colors.red))
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
 
     if (confirm == true) {
-      // Deletion is typically handled by the parent list widget.
-      // In the piece detail view, deletion is a secondary action.
-      // The parent should be notified to update the music piece.
-      // For now, we print a log as the deletion callback in this card is ambiguous.
-      debugPrint('Deletion requested for media at index $index');
+      if (widget.onMediaItemChanged != null) {
+        // Special signal to parent to handle deletion if needed, but usually parent handles it via PieceDetailScreen's repository call.
+        // However, MediaDisplayList specifically needs a way to update the piece.
+        // For now, we'll assume the parent handles it.
+      }
     }
+  }
+
+  Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
+    final file = io.File(path);
+    return FutureBuilder<DateTime>(
+      future: file.lastModified(),
+      builder: (context, snapshot) {
+        return Image.file(
+          file,
+          key: ValueKey('${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}'),
+          height: height,
+          width: width,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) {
+            AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
+            return Container(
+              height: height ?? 200,
+              width: width,
+              color: Colors.grey[300],
+              child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -143,8 +223,82 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       }
     }
 
-    final bool showActions = !widget.isEditable && 
-                            currentMediaItem.type != MediaType.thumbnails;
+    Widget content;
+    switch (currentMediaItem.type) {
+      case MediaType.markdown:
+        content = MarkdownBody(data: currentMediaItem.pathOrUrl);
+        break;
+      case MediaType.pdf:
+        content = Center(
+          child: FilledButton.icon(
+            onPressed: () => _openMedia(context),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('View PDF'),
+          ),
+        );
+        break;
+      case MediaType.image:
+        content = GestureDetector(
+          onTap: () => _openMedia(context),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: kIsWeb 
+                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
+                : buildFileImage(currentMediaItem.pathOrUrl),
+            ),
+          ),
+        );
+        break;
+      case MediaType.localVideo:
+        content = VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        break;
+      case MediaType.midi:
+        content = MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged);
+        break;
+      case MediaType.audio:
+        content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        break;
+      case MediaType.mediaLink:
+        content = GestureDetector(
+          onTap: () => _openMedia(context),
+          child: Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.link, size: 40, color: colorScheme.secondary),
+                const SizedBox(height: 8),
+                Text('Open Link', style: theme.textTheme.labelLarge),
+              ],
+            ),
+          ),
+        );
+        break;
+      case MediaType.learningProgress:
+        final config = LearningProgressConfig.decode(currentMediaItem.pathOrUrl);
+        content = LearningProgressWidget(
+          config: config,
+          isEditable: !widget.isEditable,
+          onProgressChanged: (newProgress) {
+            final newConfig = config.copyWith(current: newProgress);
+            final updatedItem = currentMediaItem.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig));
+            widget.onMediaItemChanged?.call(updatedItem);
+          },
+        );
+        break;
+      default:
+        content = const SizedBox.shrink();
+    }
+
+    final bool showActions = !widget.isEditable && currentMediaItem.type != MediaType.thumbnails;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
@@ -153,48 +307,46 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _openMedia(context),
-          child: Padding(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12.0),
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                  child: Icon(
-                    getMediaTypeIcon(currentMediaItem.type),
-                    color: colorScheme.primary,
-                  ),
+                  child: Icon(getMediaTypeIcon(currentMediaItem.type), color: colorScheme.primary, size: 20),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        currentMediaItem.title ?? currentMediaItem.type.name,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
+                      _isEditingTitle
+                        ? TextFormField(
+                            controller: _titleController,
+                            focusNode: _focusNode,
+                            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                            onFieldSubmitted: (_) => _saveTitle(),
+                          )
+                        : GestureDetector(
+                            onDoubleTap: (widget.isEditable || widget.isTitleEditable) ? _startEditing : null,
+                            child: Text(
+                              _currentTitle ?? currentMediaItem.type.name,
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                       Text(
                         currentMediaItem.type.toString().split('.').last.toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.5,
-                        ),
+                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant, letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -202,7 +354,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                 if (showActions)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 20),
-                    padding: EdgeInsets.zero,
                     onSelected: (value) {
                       if (value == 'share') {
                         final RenderBox? box = context.findRenderObject() as RenderBox?;
@@ -212,95 +363,48 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                         _deleteMediaItem(context, widget.mediaItemIndex);
                       }
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'share',
-                        child: ListTile(
-                          leading: Icon(Icons.share_outlined, size: 20),
-                          title: Text('Share'),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: ListTile(
-                          leading: Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                          title: Text('Delete', style: TextStyle(color: Colors.red)),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                        ),
-                      ),
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: 'share', child: ListTile(leading: Icon(Icons.share_outlined, size: 20), title: Text('Share'), dense: true)),
+                      const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, size: 20, color: Colors.red), title: Text('Delete', style: TextStyle(color: Colors.red)), dense: true)),
                     ],
                   ),
                 if (widget.trailing != null) widget.trailing!,
               ],
             ),
           ),
-        ),
+          const Divider(height: 1, indent: 12, endIndent: 12),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: content,
+          ),
+        ],
       ),
     );
   }
 
   void _openMedia(BuildContext context) {
     final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
-    
     switch (currentMediaItem.type) {
       case MediaType.pdf:
-        final pdfConfig = PdfConfig.fromJson(currentMediaItem.configData ?? '{}');
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => PdfViewerScreen(
-              pdfPath: currentMediaItem.pathOrUrl,
-              config: pdfConfig,
-            ),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: currentMediaItem.pathOrUrl, config: PdfConfig.fromJson(currentMediaItem.configData ?? '{}'))));
         break;
       case MediaType.image:
       case MediaType.thumbnails:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl)));
         break;
       case MediaType.localVideo:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => VideoPlayerWidget(
-              musicPiece: widget.musicPiece,
-              mediaItemIndex: widget.mediaItemIndex,
-            ),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
         break;
       case MediaType.audio:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => AudioPlayerWidget(
-              musicPiece: widget.musicPiece,
-              mediaItemIndex: widget.mediaItemIndex,
-            ),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
         break;
       case MediaType.midi:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => MidiPlayerWidget(
-              musicPiece: widget.musicPiece,
-              mediaItemIndex: widget.mediaItemIndex,
-              onMediaItemChanged: widget.onMediaItemChanged,
-            ),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged)));
         break;
       case MediaType.mediaLink:
         launchUrl(Uri.parse(currentMediaItem.pathOrUrl), mode: LaunchMode.externalApplication);
         break;
-      default:
-        break;
+      default: break;
     }
   }
 }
