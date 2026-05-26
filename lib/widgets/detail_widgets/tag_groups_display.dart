@@ -46,8 +46,10 @@ class TagGroupsDisplay extends StatelessWidget {
               borderRadius: BorderRadius.circular(16.0),
               border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -63,25 +65,20 @@ class TagGroupsDisplay extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10.0),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: tagGroup.tags.map((tag) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(20.0),
-                        border: Border.all(color: colorScheme.outlineVariant),
-                      ),
-                      child: Text(
-                        tag,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    );
-                  }).toList(),
-                ),
+                ...tagGroup.tags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(20.0),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: Text(
+                      tag,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  );
+                }),
               ],
             ),
           );
