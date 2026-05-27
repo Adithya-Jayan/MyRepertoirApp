@@ -14,30 +14,73 @@ import '../models/media_type.dart';
 import '../services/media_storage_manager.dart';
 
 class ThumbnailService {
-  static Future<void> fetchAndSaveThumbnail(MediaItem item, String musicPieceId) async {
-    if (kIsWeb) return; // Cannot save to local files on web yet
+  static Future<String?> fetchAndSaveThumbnail(MediaItem item, String musicPieceId) async {
+    if (kIsWeb) return null; // Cannot save to local files on web yet
 
     if (item.type == MediaType.mediaLink && item.pathOrUrl.isNotEmpty) {
       try {
-        final metadata = await MetadataFetch.extract(item.pathOrUrl);
-        final thumbnailUrl = metadata?.image;
+        String? thumbnailUrl;
+        
+        // Specific handling for YouTube
+        thumbnailUrl = _getYouTubeThumbnailUrl(item.pathOrUrl);
+        
+        if (thumbnailUrl == null) {
+          // Fallback to metadata_fetch with a custom request to avoid being blocked
+          final response = await http.get(Uri.parse(item.pathOrUrl), headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
+          });
+          
+          if (response.statusCode == 200) {
+            final document = MetadataFetch.responseToDocument(response);
+            final metadata = MetadataParser.parse(document);
+            thumbnailUrl = metadata.image;
+          } else {
+            // Try one more time with default extract if custom fails
+            final metadata = await MetadataFetch.extract(item.pathOrUrl);
+            thumbnailUrl = metadata?.image;
+          }
+        }
 
         if (thumbnailUrl != null) {
-          final response = await http.get(Uri.parse(thumbnailUrl));
-          final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
-          if (thumbnailDir != null) {
-            if (!await thumbnailDir.exists()) {
-              await thumbnailDir.create(recursive: true);
+          final response = await http.get(Uri.parse(thumbnailUrl), headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
+          });
+          
+          if (response.statusCode == 200) {
+            final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+            if (thumbnailDir != null) {
+              if (!await thumbnailDir.exists()) {
+                await thumbnailDir.create(recursive: true);
+              }
+              final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
+              await thumbnailFile.writeAsBytes(response.bodyBytes);
+              AppLogger.log('ThumbnailService: Link thumbnail saved to ${thumbnailFile.path} (${response.bodyBytes.length} bytes)');
+              return thumbnailFile.path;
             }
-            final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
-            await thumbnailFile.writeAsBytes(response.bodyBytes);
-            AppLogger.log('ThumbnailService: Link thumbnail saved to ${thumbnailFile.path} (${response.bodyBytes.length} bytes)');
+          } else {
+             AppLogger.log('ThumbnailService: Failed to download thumbnail from $thumbnailUrl, status: ${response.statusCode}');
           }
         }
       } catch (e) {
         AppLogger.log('Error fetching or saving thumbnail: $e');
       }
     }
+    return null;
+  }
+
+  static String? _getYouTubeThumbnailUrl(String url) {
+    final RegExp regExp = RegExp(
+      r'^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*',
+      caseSensitive: false,
+      multiLine: false,
+    );
+    final Match? match = regExp.firstMatch(url);
+    if (match != null && match.group(7)!.length == 11) {
+      final videoId = match.group(7);
+      // hqdefault is usually available and reliable
+      return 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+    }
+    return null;
   }
 
   static Future<String?> getThumbnailPath(MediaItem item, String musicPieceId) async {
