@@ -235,8 +235,32 @@ class LibraryScreenNotifier extends ChangeNotifier {
     loadMusicPieces();
   }
 
+  Map<String, dynamic> _deepCopyFilterOptions(Map<String, dynamic> options) {
+    final Map<String, dynamic> copy = Map<String, dynamic>.from(options);
+    
+    // Deep copy orderedTags map and its lists
+    if (copy['orderedTags'] != null && copy['orderedTags'] is Map) {
+      final Map<dynamic, dynamic> orderedTags = copy['orderedTags'];
+      copy['orderedTags'] = orderedTags.map((key, value) {
+        if (value is List) {
+          return MapEntry(key.toString(), List<String>.from(value));
+        }
+        return MapEntry(key.toString(), <String>[]);
+      });
+    }
+
+    // Deep copy other potential lists
+    for (final key in ['genres', 'instrumentations', 'difficulties']) {
+      if (copy[key] != null && copy[key] is List) {
+        copy[key] = List<String>.from(copy[key]);
+      }
+    }
+    
+    return copy;
+  }
+
   void saveQuickFilter(String name, Map<String, dynamic> options) {
-    _quickFilters[name] = Map<String, dynamic>.from(options);
+    _quickFilters[name] = _deepCopyFilterOptions(options);
     _settingsManager.saveQuickFilters(_quickFilters);
     notifyListeners();
   }
@@ -251,7 +275,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   void applyQuickFilter(String name) {
     if (_quickFilters.containsKey(name)) {
-      setFilterOptions(Map<String, dynamic>.from(_quickFilters[name]!));
+      setFilterOptions(_deepCopyFilterOptions(_quickFilters[name]!));
       loadMusicPieces();
     }
   }
@@ -373,10 +397,27 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   /// Compares two filter option maps for equality
   bool _areFilterOptionsEqual(Map<String, dynamic> a, Map<String, dynamic> b) {
+    if (identical(a, b)) return true;
     if (a.length != b.length) return false;
+    
     for (final key in a.keys) {
       if (!b.containsKey(key)) return false;
-      if (a[key] != b[key]) return false;
+      
+      final valA = a[key];
+      final valB = b[key];
+      
+      if (valA is Map && valB is Map) {
+        if (!_areFilterOptionsEqual(Map<String, dynamic>.from(valA), Map<String, dynamic>.from(valB))) {
+          return false;
+        }
+      } else if (valA is List && valB is List) {
+        if (valA.length != valB.length) return false;
+        for (int i = 0; i < valA.length; i++) {
+          if (valA[i] != valB[i]) return false;
+        }
+      } else if (valA != valB) {
+        return false;
+      }
     }
     return true;
   }
@@ -420,7 +461,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
     
     // Update last known criteria
     _lastSearchQuery = _searchQuery;
-    _lastFilterOptions = Map.from(_filterOptions);
+    _lastFilterOptions = _deepCopyFilterOptions(_filterOptions);
     _lastSortOption = _sortOption;
   }
 

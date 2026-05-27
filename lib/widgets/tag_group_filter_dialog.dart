@@ -21,7 +21,8 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedTags = Map.from(widget.initialSelectedTags);
+    // Deep copy the initial selected tags to avoid modifying the original lists
+    _selectedTags = widget.initialSelectedTags.map((key, value) => MapEntry(key, List<String>.from(value)));
   }
 
   List<String> _getFilteredTags(String tagName, List<String> tags) {
