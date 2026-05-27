@@ -127,6 +127,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           height: height,
           width: width,
           fit: fit,
+          // Limit the resolution in memory to prevent lag from huge images
+          cacheWidth: 400, 
           errorBuilder: (context, error, stackTrace) {
             AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
             return Container(

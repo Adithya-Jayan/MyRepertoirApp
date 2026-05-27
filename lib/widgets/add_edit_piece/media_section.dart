@@ -7,6 +7,7 @@ import '../../models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import '../detail_widgets/media_section.dart';
 import 'package:repertoire/models/music_piece.dart'; // Add this import
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../../utils/app_logger.dart';
 import './highlightable_widget.dart';
 
@@ -75,7 +76,7 @@ class MediaSectionWidget extends StatelessWidget {
         return;
       }
 
-      // Copy the file to create a dedicated thumbnail source
+      // Copy and compress the file to create a dedicated thumbnail source
       try {
         final appDir = await getApplicationDocumentsDirectory();
         final pieceMediaDir = Directory(p.join(appDir.path, 'media', musicPiece.id));
@@ -83,39 +84,56 @@ class MediaSectionWidget extends StatelessWidget {
           await pieceMediaDir.create(recursive: true);
         }
 
-        final extension = p.extension(thumbnailPath);
-        final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+        final extension = p.extension(thumbnailPath).toLowerCase();
+        final isJpg = extension == '.jpg' || extension == '.jpeg';
+        // Force .jpg extension for the compressed file
+        final newFileName = 'thumbnail_${const Uuid().v4()}.jpg';
         final newFilePath = p.join(pieceMediaDir.path, newFileName);
 
         final sourceFile = File(thumbnailPath);
         if (await sourceFile.exists()) {
-          await sourceFile.copy(newFilePath);
-          AppLogger.log('MediaSectionWidget: Copied thumbnail to $newFilePath');
+          // Compress and resize the image to a maximum of 1024px.
+          // This prevents memory lag from huge original images.
+          final result = await FlutterImageCompress.compressAndGetFile(
+            sourceFile.absolute.path,
+            newFilePath,
+            quality: 85,
+            minWidth: 1024,
+            minHeight: 1024,
+            format: CompressFormat.jpeg,
+          );
 
-          // Create or update thumbnail widget
-          final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-          final existingThumbnailIndex = updatedMediaItems.indexWhere((item) => item.type == MediaType.thumbnails);
+          if (result != null) {
+            final compressedFilePath = result.path;
+            AppLogger.log('MediaSectionWidget: Compressed thumbnail to $compressedFilePath');
 
-          if (existingThumbnailIndex != -1) {
-            // Update existing
-            final oldItem = updatedMediaItems[existingThumbnailIndex];
-            updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: newFilePath);
-            thumbnailId = oldItem.id;
-          } else {
-            // Create new
-            thumbnailId = const Uuid().v4();
-            updatedMediaItems.add(MediaItem(
-              id: thumbnailId,
-              type: MediaType.thumbnails,
-              pathOrUrl: newFilePath,
+            // Create or update thumbnail widget
+            final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+            final existingThumbnailIndex = updatedMediaItems.indexWhere((item) => item.type == MediaType.thumbnails);
+
+            if (existingThumbnailIndex != -1) {
+              // Update existing
+              final oldItem = updatedMediaItems[existingThumbnailIndex];
+              updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: compressedFilePath);
+              thumbnailId = oldItem.id;
+            } else {
+              // Create new
+              thumbnailId = const Uuid().v4();
+              updatedMediaItems.add(MediaItem(
+                id: thumbnailId,
+                type: MediaType.thumbnails,
+                pathOrUrl: compressedFilePath,
+              ));
+            }
+
+            onMusicPieceChanged(musicPiece.copyWith(
+              mediaItems: updatedMediaItems,
+              thumbnailPath: compressedFilePath,
             ));
+            onThumbnailSet?.call(thumbnailId);
+          } else {
+            AppLogger.log('MediaSectionWidget: Compression failed for $thumbnailPath');
           }
-
-          onMusicPieceChanged(musicPiece.copyWith(
-            mediaItems: updatedMediaItems,
-            thumbnailPath: newFilePath,
-          ));
-          onThumbnailSet?.call(thumbnailId);
         } else {
           AppLogger.log('MediaSectionWidget: Source thumbnail file not found: $thumbnailPath');
         }
