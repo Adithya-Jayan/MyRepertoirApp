@@ -4,6 +4,10 @@ import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/widgets/detail_widgets/collapsible_section.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
+import 'package:repertoire/models/media_item.dart';
 
 /// A widget that displays a reorderable list of media items associated with a music piece.
 ///
@@ -44,6 +48,64 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
     }
   }
 
+  Future<void> _shareMediaItem(MediaItem item, Rect? shareOrigin) async {
+    try {
+      ShareParams? params;
+      switch (item.type) {
+        case MediaType.mediaLink:
+        case MediaType.markdown:
+          params = ShareParams(text: item.pathOrUrl, sharePositionOrigin: shareOrigin);
+          break;
+        case MediaType.audio:
+        case MediaType.image:
+        case MediaType.pdf:
+        case MediaType.localVideo:
+        case MediaType.midi:
+          if (kIsWeb) {
+             params = ShareParams(text: item.pathOrUrl, sharePositionOrigin: shareOrigin);
+          } else {
+            final file = io.File(item.pathOrUrl);
+            if (await file.exists()) {
+              params = ShareParams(files: [XFile(item.pathOrUrl)], sharePositionOrigin: shareOrigin);
+            } else {
+               if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found to share.')));
+               }
+               return;
+            }
+          }
+          break;
+        default: return;
+      }
+      await SharePlus.instance.share(params);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
+    }
+  }
+
+  Widget _buildPieceActions(MediaItem item) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, size: 20),
+      onSelected: (value) async {
+        if (value == 'share') {
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+          await _shareMediaItem(item, rect);
+        }
+      },
+      itemBuilder: (_) => [
+        const PopupMenuItem(
+          value: 'share',
+          child: ListTile(
+            leading: Icon(Icons.share_outlined, size: 20),
+            title: Text('Share'),
+            dense: true,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Filter out thumbnails for the display list in view mode
@@ -71,6 +133,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                 key: ValueKey(item.id),
                 title: item.title ?? item.type.name,
                 persistenceKey: 'media_item_${item.id}',
+                trailing: _buildPieceActions(item),
                 child: MediaDisplayWidget(
                   musicPiece: _musicPiece,
                   mediaItemIndex: mediaIndex,
@@ -119,6 +182,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                 key: ValueKey(item.id),
                 title: item.title ?? item.type.name,
                 persistenceKey: 'media_item_${item.id}',
+                trailing: _buildPieceActions(item),
                 child: MediaDisplayWidget(
                   musicPiece: _musicPiece,
                   mediaItemIndex: mediaIndex,

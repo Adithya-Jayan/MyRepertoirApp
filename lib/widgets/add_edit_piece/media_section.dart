@@ -153,35 +153,96 @@ class MediaSectionWidget extends StatelessWidget {
                   key: ValueKey(item.id),
                   isHighlighted: newlyAddedId == item.id,
                   onHighlightComplete: onHighlightComplete,
-                  child: MediaSection(
-                    key: itemKey,
-                    item: item,
-                    index: index,
-                    globalIndex: originalIndex,
-                    musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
-                    musicPieceId: musicPiece.id,
-                    onUpdateMediaItem: (updatedItem) {
-                      final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                      if (originalIndex != -1) {
-                        updatedMediaItems[originalIndex] = updatedItem;
-                        
-                        String? newPieceThumbnail = musicPiece.thumbnailPath;
-                        
-                        // If it's a dedicated thumbnail widget, it is the authoritative source.
-                        // Sync unconditionally.
-                        if (updatedItem.type == MediaType.thumbnails) {
-                            newPieceThumbnail = updatedItem.pathOrUrl;
-                        }
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Left side: Management Rail (Reorder & Delete)
+                          Container(
+                            width: 48,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              border: Border(
+                                right: BorderSide(
+                                  color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                ),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                ReorderableDragStartListener(
+                                  index: index,
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                                    child: Icon(Icons.drag_handle, color: Colors.grey),
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                  onPressed: () => handleDelete(item),
+                                  tooltip: 'Delete media item',
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            ),
+                          ),
+                          
+                          // Right side: Content Area
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: MediaSection(
+                                key: itemKey,
+                                item: item,
+                                index: index,
+                                globalIndex: originalIndex,
+                                musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                                musicPieceId: musicPiece.id,
+                                isReorderable: false, // Handled by outer rail
+                                showExternalDelete: false, // Handled by outer rail
+                                onUpdateMediaItem: (updatedItem) {
+                                  final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                                  if (originalIndex != -1) {
+                                    updatedMediaItems[originalIndex] = updatedItem;
+                                    
+                                    String? newPieceThumbnail = musicPiece.thumbnailPath;
+                                    if (updatedItem.type == MediaType.thumbnails) {
+                                        newPieceThumbnail = updatedItem.pathOrUrl;
+                                    }
 
-                        onMusicPieceChanged(musicPiece.copyWith(
-                            mediaItems: updatedMediaItems,
-                            thumbnailPath: newPieceThumbnail
-                        ));
-                      }
-                    },
-                    onDeleteMediaItem: handleDelete,
-                    onSetThumbnail: handleSetThumbnail,
-                    musicPiece: musicPiece,
+                                    onMusicPieceChanged(musicPiece.copyWith(
+                                        mediaItems: updatedMediaItems,
+                                        thumbnailPath: newPieceThumbnail
+                                    ));
+                                  }
+                                },
+                                onDeleteMediaItem: handleDelete,
+                                onSetThumbnail: handleSetThumbnail,
+                                musicPiece: musicPiece,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
