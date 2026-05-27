@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:repertoire/models/group.dart';
@@ -136,6 +138,7 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
+              color: Colors.transparent, // Fully transparent to show dots
               border: Border(
                 bottom: BorderSide(
                   color: theme.dividerColor.withValues(alpha: 0.08),

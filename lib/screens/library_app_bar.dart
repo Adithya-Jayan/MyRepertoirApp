@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/widgets/tag_group_filter_dialog.dart';
@@ -89,18 +91,23 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
   }
 
   AppBar _buildDefaultAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
       title: TextField(
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search items...',
-          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
           suffixIcon: widget.searchQuery.isNotEmpty
               ? IconButton(
