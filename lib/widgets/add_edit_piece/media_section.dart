@@ -84,8 +84,6 @@ class MediaSectionWidget extends StatelessWidget {
           await pieceMediaDir.create(recursive: true);
         }
 
-        final extension = p.extension(thumbnailPath).toLowerCase();
-        final isJpg = extension == '.jpg' || extension == '.jpeg';
         // Force .jpg extension for the compressed file
         final newFileName = 'thumbnail_${const Uuid().v4()}.jpg';
         final newFilePath = p.join(pieceMediaDir.path, newFileName);

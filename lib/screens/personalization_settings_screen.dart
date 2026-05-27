@@ -21,6 +21,7 @@ class PersonalizationSettingsScreen extends StatefulWidget {
 class PersonalizationSettingsScreenState
     extends State<PersonalizationSettingsScreen> {
   double _galleryColumns = 1;
+  bool _hideEmptyGroups = false;
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class PersonalizationSettingsScreenState
     _loadSettings();
   }
 
-  /// Loads the saved gallery column setting from [SharedPreferences].
+  /// Loads settings from [SharedPreferences].
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     int defaultColumns;
@@ -42,9 +43,9 @@ class PersonalizationSettingsScreenState
       defaultColumns = 2;
     }
     setState(() {
-      // Retrieve the saved column count, defaulting to 1 if not found.
       _galleryColumns =
           (prefs.getInt('galleryColumns') ?? defaultColumns).toDouble();
+      _hideEmptyGroups = prefs.getBool('hideEmptyGroups') ?? false;
     });
   }
 
@@ -55,6 +56,15 @@ class PersonalizationSettingsScreenState
     if (!mounted) return;
     setState(() {
       _galleryColumns = value;
+    });
+  }
+
+  Future<void> _saveHideEmptyGroups(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hideEmptyGroups', value);
+    if (!mounted) return;
+    setState(() {
+      _hideEmptyGroups = value;
     });
   }
 
@@ -209,6 +219,14 @@ class PersonalizationSettingsScreenState
               value: themeNotifier.useOledBlack,
               onChanged: (value) {
                 themeNotifier.setUseOledBlack(value);
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Hide Empty Groups'),
+              subtitle: const Text('Do not show groups that contain no music pieces matching current filters'),
+              value: _hideEmptyGroups,
+              onChanged: (value) async {
+                await _saveHideEmptyGroups(value);
               },
             ),
             const SizedBox(height: 24),

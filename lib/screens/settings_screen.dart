@@ -35,6 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('SettingsScreen: build called');
+    final theme = Theme.of(context);
+    
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -43,121 +45,162 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Settings'), // Title of the settings screen.
+          title: const Text('Settings'),
         ),
         body: SafeArea(
           child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             children: [
-              ListTile(
-                leading: const Icon(Icons.folder_open), // Icon for the Groups setting.
-                title: const Text('Groups'), // Title for the Groups setting.
-                onTap: () async {
-                  AppLogger.log('Navigating to Group Management screen.');
-                  final navigator = Navigator.of(context);
-                  // Navigate to GroupManagementScreen and wait for any changes.
-                  final bool? changes = await navigator.push<bool?>(
-                    MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
-                  );
-                  if (!mounted) return;
-                  // If changes were made in GroupManagementScreen, update local state
-                  if (changes == true) {
-                    AppLogger.log('SettingsScreen: Received changesMade=true from GroupManagementScreen.');
-                    setState(() {
-                      _changesMade = true;
-                    });
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.palette), // Icon for the Personalization setting.
-                title: const Text('Personalization'), // Title for the Personalization setting.
-                onTap: () async {
-                  AppLogger.log('Navigating to Personalization Settings screen.');
-                  final navigator = Navigator.of(context);
-                  // Navigate to PersonalizationSettingsScreen and wait for any changes.
-                  final bool? changes = await navigator.push<bool?>(
-                    MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
-                  );
-                  if (!mounted) return;
-                  if (changes == true) {
-                    setState(() {
-                      _changesMade = true;
-                    });
+              _buildCategoryHeader(theme, 'Content & Display', Icons.dashboard_customize_outlined),
+              _buildSettingsCard([
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.folder_open,
+                  title: 'Groups',
+                  subtitle: 'Manage and reorder groups',
+                  onTap: () async {
+                    final bool? changes = await Navigator.of(context).push<bool?>(
+                      MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                    );
+                    if (changes == true) _markChanges();
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.palette_outlined,
+                  title: 'Personalization',
+                  subtitle: 'Theme, colors, and layout',
+                  onTap: () async {
+                    final bool? changes = await Navigator.of(context).push<bool?>(
+                      MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
+                    );
+                    if (changes == true) _markChanges();
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.tune_outlined,
+                  title: 'Functionality',
+                  subtitle: 'Practice stages and statistics',
+                  onTap: () async {
+                    final bool? changes = await Navigator.of(context).push<bool?>(
+                      MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
+                    );
+                    if (changes == true) _markChanges();
+                  },
+                ),
+              ]),
 
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.tune),
-                title: const Text('Functionality'),
-                onTap: () async {
-                  AppLogger.log('Navigating to Functionality Settings screen.');
-                  final result = await Navigator.push<bool?>(
-                    context,
-                    MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
-                  );
-                  if (result == true) {
-                    setState(() {
-                      _changesMade = true;
-                    });
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.backup),
-                title: const Text('Backup & Restore'), // Title for the Backup & Restore setting.
-                onTap: () async {
-                  AppLogger.log('Navigating to Backup & Restore screen.');
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
-                  );
-                  if (result == true) {
-                    setState(() {
-                      _changesMade = true;
-                    });
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings_applications),
-                title: const Text('Advanced Settings'),
-                onTap: () {
-                  AppLogger.log('Navigating to Advanced Settings screen.');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.info), // Icon for the About setting.
-                title: const Text('About'), // Title for the About setting.
-                onTap: () {
-                  AppLogger.log('Navigating to About screen.');
-                  // Navigate to AboutScreen.
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AboutScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.help), // Icon for the Help setting.
-                title: const Text('Help'), // Title for the Help setting.
-                onTap: () {
-                  AppLogger.log('Navigating to Help screen.');
-                  // Navigate to HelpScreen.
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HelpScreen()),
-                  );
-                },
-              ),
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'System & Maintenance', Icons.settings_outlined),
+              _buildSettingsCard([
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.backup_outlined,
+                  title: 'Backup & Restore',
+                  subtitle: 'Protect and sync your data',
+                  onTap: () async {
+                    final bool? changes = await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
+                    );
+                    if (changes == true) _markChanges();
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.settings_applications_outlined,
+                  title: 'Advanced Settings',
+                  subtitle: 'Logging and developer options',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
+                    );
+                  },
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'Information', Icons.info_outline),
+              _buildSettingsCard([
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.info_outlined,
+                  title: 'About',
+                  subtitle: 'Version and contributor info',
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.help_outline,
+                  title: 'Help',
+                  subtitle: 'Guides and troubleshooting',
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpScreen()));
+                  },
+                ),
+              ]),
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _markChanges() {
+    if (!mounted) return;
+    setState(() {
+      _changesMade = true;
+    });
+  }
+
+  Widget _buildCategoryHeader(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard(List<Widget> children) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingsTile(BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: onTap,
     );
   }
 }

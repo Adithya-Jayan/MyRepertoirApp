@@ -22,7 +22,6 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   bool _showPracticeTimeStats = false;
   bool _showPracticeNotes = false;
   bool _notifyNewReleases = false;
-  bool _hideEmptyGroups = false;
 
   @override
   void initState() {
@@ -40,7 +39,6 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
       _showPracticeNotes = prefs.getBool('show_practice_notes') ?? false;
       _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? true;
-      _hideEmptyGroups = prefs.getBool('hideEmptyGroups') ?? false;
       _isLoading = false;
     });
   }
@@ -54,7 +52,6 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     await prefs.setBool('show_practice_time_stats', _showPracticeTimeStats);
     await prefs.setBool('show_practice_notes', _showPracticeNotes);
     await prefs.setBool('notifyNewReleases', _notifyNewReleases);
-    await prefs.setBool('hideEmptyGroups', _hideEmptyGroups);
   }
 
   void _addStage() {
@@ -334,17 +331,6 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                   onChanged: (bool value) {
                     setState(() {
                       _showPracticeNotes = value;
-                    });
-                    _saveOtherSettings();
-                  },
-                ),
-                SwitchListTile(
-                  title: const Text('Hide Empty Groups'),
-                  subtitle: const Text('Do not show groups that contain no music pieces matching current filters'),
-                  value: _hideEmptyGroups,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _hideEmptyGroups = value;
                     });
                     _saveOtherSettings();
                   },
