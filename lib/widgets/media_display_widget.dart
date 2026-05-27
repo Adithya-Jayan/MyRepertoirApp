@@ -224,6 +224,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         );
         break;
       case MediaType.image:
+      case MediaType.thumbnails:
         content = GestureDetector(
           onTap: () => _openMedia(context),
           child: ClipRRect(
@@ -248,6 +249,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
         break;
       case MediaType.mediaLink:
+        final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
         content = GestureDetector(
           onTap: () => _openMedia(context),
           child: Container(
@@ -257,14 +259,21 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12.0),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.link, size: 40, color: colorScheme.secondary),
-                const SizedBox(height: 8),
-                Text('Open Link', style: theme.textTheme.labelLarge),
-              ],
-            ),
+            child: hasThumbnail 
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: kIsWeb
+                    ? Image.network(currentMediaItem.thumbnailPath!, fit: BoxFit.cover)
+                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, fit: BoxFit.cover),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.link, size: 40, color: colorScheme.secondary),
+                    const SizedBox(height: 8),
+                    Text('Open Link', style: theme.textTheme.labelLarge),
+                  ],
+                ),
           ),
         );
         break;
@@ -280,8 +289,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           },
         );
         break;
-      default:
-        content = const SizedBox.shrink();
     }
 
     final bool showActions = !widget.isEditable && currentMediaItem.type != MediaType.thumbnails;
