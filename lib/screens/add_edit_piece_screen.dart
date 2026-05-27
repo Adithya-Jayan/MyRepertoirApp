@@ -259,6 +259,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('AddEditPieceScreen: build called');
+    final theme = Theme.of(context);
     final hasThumbnail = _musicPiece.mediaItems.any((item) => item.type == MediaType.thumbnails);
 
     return SafeArea(
@@ -280,11 +281,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               content: const Text('You have unsaved changes. Are you sure you want to discard them?'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context, false),
+                  onPressed: () => navigator.pop(false),
                   child: const Text('Stay'),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed: () => navigator.pop(true),
                   child: const Text('Discard'),
                 ),
               ],
@@ -315,20 +316,28 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 ),
             ],
           ),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                controller: _scrollController,
-                children: [
-                  BasicDetailsSection(
-                    musicPiece: _musicPiece,
-                    onTitleChanged: (value) => _musicPiece.title = value,
-                    onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
-                    onSaveRequested: _savePiece,
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              children: [
+                _buildCategoryHeader(theme, 'Basic Details', Icons.info_outline),
+                _buildSectionCard(theme, [
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: BasicDetailsSection(
+                      musicPiece: _musicPiece,
+                      onTitleChanged: (value) => _musicPiece.title = value,
+                      onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
+                      onSaveRequested: _savePiece,
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                ]),
+
+                const SizedBox(height: 16),
+                _buildCategoryHeader(theme, 'Classification', Icons.category_outlined),
+                _buildSectionCard(theme, [
                   GroupsSection(
                     availableGroups: _availableGroups,
                     selectedGroupIds: _selectedGroupIds,
@@ -338,9 +347,14 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 20),
+                ]),
+
+                const SizedBox(height: 16),
+                _buildCategoryHeader(theme, 'Practice Tracking', Icons.timeline_outlined),
+                _buildSectionCard(theme, [
                   SwitchListTile(
                     title: const Text('Enable Practice Tracking'),
+                    subtitle: const Text('Keep track of sessions and status'),
                     value: _musicPiece.enablePracticeTracking,
                     onChanged: (bool value) {
                       setState(() {
@@ -348,45 +362,60 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 20),
-                  TagGroupsSection(
-                    tagGroups: _musicPiece.tagGroups,
-                    allTagGroupNames: _allTagGroupNames,
-                    onUpdateTagGroup: _handleUpdateTagGroup,
-                    onDeleteTagGroup: (tagGroup) => 
-                      _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
-                    onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
-                    onReorderTagGroups: (oldIndex, newIndex) => 
-                      _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
-                    onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
-                    onFetchMostCommonColor: _fetchMostCommonColor,
-                    newlyAddedId: _newlyAddedId,
-                    onHighlightComplete: () {
-                      setState(() {
-                        _newlyAddedId = null;
-                      });
-                    },
-                    itemKeys: _itemKeys,
+                ]),
+
+                const SizedBox(height: 16),
+                _buildCategoryHeader(theme, 'Tag Groups', Icons.label_outline),
+                _buildSectionCard(theme, [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TagGroupsSection(
+                      tagGroups: _musicPiece.tagGroups,
+                      allTagGroupNames: _allTagGroupNames,
+                      onUpdateTagGroup: _handleUpdateTagGroup,
+                      onDeleteTagGroup: (tagGroup) => 
+                        _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
+                      onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
+                      onReorderTagGroups: (oldIndex, newIndex) => 
+                        _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
+                      onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+                      onFetchMostCommonColor: _fetchMostCommonColor,
+                      newlyAddedId: _newlyAddedId,
+                      onHighlightComplete: () {
+                        setState(() {
+                          _newlyAddedId = null;
+                        });
+                      },
+                      itemKeys: _itemKeys,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  MediaSectionWidget(
-                    musicPiece: _musicPiece,
-                    onMusicPieceChanged: (updatedMusicPiece) {
-                      setState(() {
-                        _musicPiece = updatedMusicPiece;
-                      });
-                    },
-                    newlyAddedId: _newlyAddedId,
-                    onHighlightComplete: () {
-                      setState(() {
-                        _newlyAddedId = null;
-                      });
-                    },
-                    itemKeys: _itemKeys,
-                    onThumbnailSet: _triggerScrollAndHighlight,
+                ]),
+
+                const SizedBox(height: 16),
+                _buildCategoryHeader(theme, 'Media', Icons.perm_media_outlined),
+                _buildSectionCard(theme, [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: MediaSectionWidget(
+                      musicPiece: _musicPiece,
+                      onMusicPieceChanged: (updatedMusicPiece) {
+                        setState(() {
+                          _musicPiece = updatedMusicPiece;
+                        });
+                      },
+                      newlyAddedId: _newlyAddedId,
+                      onHighlightComplete: () {
+                        setState(() {
+                          _newlyAddedId = null;
+                        });
+                      },
+                      itemKeys: _itemKeys,
+                      onThumbnailSet: _triggerScrollAndHighlight,
+                    ),
                   ),
-                ],
-              ),
+                ]),
+                const SizedBox(height: 80),
+              ],
             ),
           ),
           floatingActionButton: SpeedDialWidget(
@@ -407,6 +436,41 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryHeader(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(ThemeData theme, List<Widget> children) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
+      ),
+      color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }
