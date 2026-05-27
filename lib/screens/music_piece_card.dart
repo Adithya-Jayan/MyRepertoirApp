@@ -63,26 +63,15 @@ class MusicPieceCard extends StatelessWidget {
 
     Widget textWithOutline(String text, TextStyle? style) {
       if (hasThumbnail && thumbnailStyle == ThumbnailStyle.outline) {
+        final shadowColor = brightness == Brightness.dark ? Colors.black : Colors.white;
         return Text(
           text,
           style: style?.copyWith(
             shadows: [
-              Shadow(
-                offset: const Offset(-1.5, -1.5),
-                color: brightness == Brightness.dark ? Colors.black : Colors.white,
-              ),
-              Shadow(
-                offset: const Offset(1.5, -1.5),
-                color: brightness == Brightness.dark ? Colors.black : Colors.white,
-              ),
-              Shadow(
-                offset: const Offset(1.5, 1.5),
-                color: brightness == Brightness.dark ? Colors.black : Colors.white,
-              ),
-              Shadow(
-                offset: const Offset(-1.5, 1.5),
-                color: brightness == Brightness.dark ? Colors.black : Colors.white,
-              ),
+              Shadow(offset: const Offset(-1.0, -1.0), color: shadowColor),
+              Shadow(offset: const Offset(1.0, -1.0), color: shadowColor),
+              Shadow(offset: const Offset(1.0, 1.0), color: shadowColor),
+              Shadow(offset: const Offset(-1.0, 1.0), color: shadowColor),
             ],
           ),
           overflow: TextOverflow.ellipsis,
@@ -98,145 +87,150 @@ class MusicPieceCard extends StatelessWidget {
       }
     }
 
-    return RepaintBoundary(
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-        elevation: 2.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          side: isSelected
-              ? BorderSide(color: colorScheme.primary, width: 2)
-              : BorderSide.none,
-        ),
-        color: isSelected ? colorScheme.primary.withAlpha(26) : null,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Stack(
-            children: [
-              if (hasThumbnail)
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: isSelected
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      color: isSelected ? colorScheme.primary.withAlpha(26) : null,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Stack(
+          children: [
+            if (hasThumbnail)
               Positioned.fill(
-              child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.file(
-                File(piece.thumbnailPath!),
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-                cacheWidth: isListView ? 300 : 250,
-                errorBuilder: (context, error, stackTrace) {
-                  AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
-                  return Container();
-                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.file(
+                    File(piece.thumbnailPath!),
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.low,
+                    cacheWidth: isListView ? 300 : 250,
+                    errorBuilder: (context, error, stackTrace) {
+                      AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
+                      return Container();
+                    },
+                  ),
+                ),
               ),
-              ),
-              ),
-
-              if (hasThumbnail && thumbnailStyle == ThumbnailStyle.gradient)
-                 Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            (brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.9),
-                            (brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.25),
-                          ],
-                        ),
+            if (hasThumbnail && thumbnailStyle == ThumbnailStyle.gradient)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          (brightness == Brightness.dark ? Colors.black : Colors.white)
+                              .withValues(alpha: 0.9),
+                          (brightness == Brightness.dark ? Colors.black : Colors.white)
+                              .withValues(alpha: 0.25),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: isListView ? MainAxisSize.min : MainAxisSize.max,
-                  children: [
-                    if (piece.enablePracticeTracking)
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          margin: const EdgeInsets.only(bottom: 4.0),
-                          decoration: BoxDecoration(
-                            color: PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime) ?? Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: isListView ? MainAxisSize.min : MainAxisSize.max,
+                children: [
+                  if (piece.enablePracticeTracking)
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        margin: const EdgeInsets.only(bottom: 4.0),
+                        decoration: BoxDecoration(
+                          color: PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime) ?? Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
                       ),
-                    textWithOutline(
-                      piece.title,
-                      Theme.of(context).textTheme.titleLarge,
                     ),
-                    const SizedBox(height: 4.0),
-                    textWithOutline(
-                      piece.artistComposer,
-                      Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8.0),
-                    if (piece.tagGroups.isNotEmpty)
-                      isListView
-                          ? Wrap(
-                              spacing: 8.0,
-                              runSpacing: 4.0,
-                              clipBehavior: Clip.antiAlias,
-                              children: [
-                                for (final tg in piece.tagGroups)
-                                  for (final tag in tg.tags)
-                                    _buildTagChip(tg, tag, brightness),
-                              ],
-                            )
-                          : galleryColumns <= 4
-                              ? SizedBox(
-                                  height: 32, // Fixed height for chips row
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    primary: false,
-                                    physics: const ClampingScrollPhysics(), // Snappier scrolling
-                                    child: Row(
-                                      children: [
-                                        for (final tg in piece.tagGroups)
-                                          for (final tag in tg.tags)
-                                            Padding(
-                                              padding: const EdgeInsets.only(right: 4.0),
-                                              child: _buildTagChip(tg, tag, brightness, scale: galleryColumns > 2 ? 0.8 : 1.0),
+                  textWithOutline(
+                    piece.title,
+                    Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4.0),
+                  textWithOutline(
+                    piece.artistComposer,
+                    Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8.0),
+                  if (piece.tagGroups.isNotEmpty)
+                    isListView
+                        ? Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            clipBehavior: Clip.antiAlias,
+                            children: [
+                              for (final tg in piece.tagGroups)
+                                for (final tag in tg.tags)
+                                  _buildTagChip(tg, tag, brightness),
+                            ],
+                          )
+                        : galleryColumns <= 4
+                            ? SizedBox(
+                                height: 32,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  primary: false,
+                                  physics: const ClampingScrollPhysics(),
+                                  child: Row(
+                                    children: [
+                                      for (final tg in piece.tagGroups)
+                                        for (final tag in tg.tags)
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 4.0),
+                                            child: _buildTagChip(
+                                              tg,
+                                              tag,
+                                              brightness,
+                                              scale: galleryColumns > 2 ? 0.8 : 1.0,
                                             ),
-                                      ],
-                                    ),
+                                          ),
+                                    ],
                                   ),
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.only(top: 2.0),
-                                  child: Icon(
-                                    Icons.label_outline, 
-                                    size: 14, 
-                                    color: (brightness == Brightness.dark ? Colors.white70 : Colors.black54)
-                                  ),
-                                ), // Show indicator icon when tags are hidden due to density
-                    if (isListView)
-                      const SizedBox(height: 8.0)
-                    else
-                      const Spacer(), // Push bottom text down if space allows
-                    if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
-                      textWithOutline(
-                        PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
-                        Theme.of(context).textTheme.bodySmall,
-                      ),
-                    if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
-                      textWithOutline(
-                        'Practice count: ${piece.practiceCount}',
-                        Theme.of(context).textTheme.bodySmall,
-                      ),
-                  ],
-                ),
+                                ),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.only(top: 2.0),
+                                child: Icon(
+                                  Icons.label_outline,
+                                  size: 14,
+                                  color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                                ),
+                              ),
+                  if (isListView)
+                    const SizedBox(height: 8.0)
+                  else
+                    const Spacer(),
+                  if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
+                    textWithOutline(
+                      PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
+                      Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
+                    textWithOutline(
+                      'Practice count: ${piece.practiceCount}',
+                      Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
