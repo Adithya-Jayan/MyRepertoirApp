@@ -89,9 +89,15 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
     
     // Re-initialize TabController if the number of groups changed
     if (oldWidget.visibleGroups.length != widget.visibleGroups.length) {
-      _tabController?.removeListener(_onTabChanged);
-      _tabController?.dispose();
+      final oldController = _tabController;
+      oldController?.removeListener(_onTabChanged);
       _initTabController();
+      // Delay disposal to ensure TabBar has switched to the new controller
+      if (oldController != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          oldController.dispose();
+        });
+      }
     } 
     // Sync TabController if the selected group changed externally
     else if (widget.selectedGroupId != oldWidget.selectedGroupId && widget.selectedGroupId != null) {
@@ -105,7 +111,9 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
   }
 
   void _onTabChanged() {
-    if (_tabController != null && _tabController!.indexIsChanging && !_isSyncing) {
+    if (_tabController == null || !mounted) return;
+    
+    if (_tabController!.indexIsChanging && !_isSyncing) {
       _isSyncing = true;
       widget.onGroupSelected(widget.visibleGroups[_tabController!.index].id, animate: true);
       _isSyncing = false;
@@ -114,7 +122,6 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
 
   void _onPageScroll() {
     // Completely decoupled from active swipes to prevent premature TabBar movement.
-    // The TabBar will only update its visual state once the page is committed in onPageChanged.
   }
 
   @override
@@ -136,15 +143,16 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.2),
+              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.02),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withValues(alpha: 0.7),
+                  color: theme.dividerColor.withValues(alpha: 0.08),
                   width: 1,
                 ),
               ),
             ),
             child: TabBar(
+              key: ValueKey('tabbar_${widget.visibleGroups.length}'), // Force rebuild when count changes
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
@@ -181,16 +189,19 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
               allowImplicitScrolling: true,
               padEnds: false,
               onPageChanged: (index) {
+                if (!mounted) return;
                 if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
                   if (!_isSyncing) {
                     _isSyncing = true;
                     // Force the TabController to sync ONLY once the page is fully settled
                     // Increased duration and added curve for a more visible, premium feel
-                    _tabController?.animateTo(
-                      index, 
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    );
+                    if (_tabController != null && _tabController!.index != index) {
+                      _tabController!.animateTo(
+                        index, 
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                      );
+                    }
                     widget.onGroupSelected(widget.visibleGroups[index].id, animate: false);
                     // Add subtle haptic feedback when the tab actually settles
                     HapticFeedback.selectionClick();
