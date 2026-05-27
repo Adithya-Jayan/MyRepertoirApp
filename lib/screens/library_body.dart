@@ -136,10 +136,10 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.transparent, // Fully transparent to show dots
+              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.2),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withValues(alpha: 0.08),
+                  color: theme.dividerColor.withValues(alpha: 0.7),
                   width: 1,
                 ),
               ),
@@ -245,6 +245,3 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
     );
   }
 }
-
-
-
