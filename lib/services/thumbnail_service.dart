@@ -77,8 +77,8 @@ class ThumbnailService {
     final Match? match = regExp.firstMatch(url);
     if (match != null && match.group(7)!.length == 11) {
       final videoId = match.group(7);
-      // hqdefault is usually available and reliable
-      return 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+      // mqdefault (320x180) is 16:9 and doesn't have baked-in black bars like hqdefault.
+      return 'https://img.youtube.com/vi/$videoId/mqdefault.jpg';
     }
     return null;
   }

@@ -175,8 +175,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               height: 200,
               width: double.infinity,
               child: kIsWeb 
-                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-                : buildFileImage(currentMediaItem.pathOrUrl),
+                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.cover)
+                : buildFileImage(currentMediaItem.pathOrUrl, height: 200, width: double.infinity, fit: BoxFit.cover),
             ),
           ),
         );
@@ -206,7 +206,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   borderRadius: BorderRadius.circular(12.0),
                   child: kIsWeb
                     ? Image.network(currentMediaItem.thumbnailPath!, fit: BoxFit.cover)
-                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, fit: BoxFit.cover),
+                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, width: double.infinity, fit: BoxFit.cover),
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
