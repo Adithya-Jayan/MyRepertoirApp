@@ -6,6 +6,7 @@ class CollapsibleSection extends StatefulWidget {
   final Widget child;
   final String persistenceKey;
   final bool initiallyExpanded;
+  final Widget? trailing;
 
   const CollapsibleSection({
     super.key,
@@ -13,6 +14,7 @@ class CollapsibleSection extends StatefulWidget {
     required this.child,
     required this.persistenceKey,
     this.initiallyExpanded = true,
+    this.trailing,
   });
 
   @override
@@ -109,6 +111,15 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
             letterSpacing: 0.2,
           ),
         ),
+        trailing: widget.trailing != null
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  widget.trailing!,
+                  const Icon(Icons.expand_more),
+                ],
+              )
+            : null,
         onExpansionChanged: (expanded) {
           _stateService.setExpanded(widget.persistenceKey, expanded);
         },

@@ -48,7 +48,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Timer? _debounceTimer;
   final FocusNode _focusNode = FocusNode();
   late PageController _pageController;
-  late ScrollController _groupScrollController;
   Key _groupListKey = UniqueKey();
   String? _selectedGroupId;
 
@@ -70,7 +69,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Set<LogicalKeyboardKey> get pressedKeys => _pressedKeys;
   FocusNode get focusNode => _focusNode;
   PageController get pageController => _pageController;
-  ScrollController get groupScrollController => _groupScrollController;
   Key get groupListKey => _groupListKey;
   String? get selectedGroupId => _selectedGroupId;
   SharedPreferences get prefs => _settingsManager.prefs;
@@ -97,8 +95,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _groupScrollController = ScrollController();
-    
     _libraryDataManager = LibraryDataManager(
       _repository,
       _settingsManager.prefs,
@@ -146,28 +142,17 @@ class LibraryScreenNotifier extends ChangeNotifier {
     _updateFilteredResultsCache();
     await loadMusicPieces();
     
-    _focusNode.requestFocus();
-
     _isInitialized = true;
     _isLoading = false;
     notifyListeners();
 
-    // Auto-scroll the group title into view after first build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (visibleGroups.isNotEmpty) {
-        final index = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
-        if (index != -1) {
-          _scrollGroupIntoView(index);
-        }
-      }
-    });
+    _focusNode.requestFocus();
   }
 
   @override
   void dispose() {
     AppLogger.log('LibraryScreenNotifier: dispose called');
     _pageController.dispose();
-    _groupScrollController.dispose();
     _focusNode.dispose();
     _debounceTimer?.cancel();
     isLoadingNotifier.dispose();
@@ -487,7 +472,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
       AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group: ${visibleGroups.first.name}');
     }
 
-    // Synchronize page controller index
+    // Sync TabController if the selected group changed externally
     if (_selectedGroupId != null && _pageController.hasClients) {
       final index = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
       if (index != -1) {
@@ -519,9 +504,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
       pageController.jumpToPage(index);
     }
     
-    // Auto-scroll the group title into view
-    _scrollGroupIntoView(index);
-    
     // Update music pieces from cache instead of re-filtering
     if (groupId != null) {
       final cachedPieces = getFilteredPiecesForGroup(groupId);
@@ -532,26 +514,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
     }
     
     notifyListeners();
-  }
-
-  /// Scrolls the selected group chip into view in the horizontal scroll view
-  void _scrollGroupIntoView(int groupIndex) {
-    if (groupIndex == -1 || !_groupScrollController.hasClients) return;
-    
-    // Calculate the approximate position of the group chip
-    // Each chip has padding and we need to account for the chip width
-    final chipWidth = 120.0; // Approximate width of a group chip
-    final chipPadding = 8.0; // Padding between chips
-    final targetOffset = groupIndex * (chipWidth + chipPadding);
-    
-    // Animate to the target position
-    _groupScrollController.animateTo(
-      targetOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    
-    AppLogger.log('LibraryScreenNotifier: Scrolling group at index $groupIndex to offset $targetOffset');
   }
 
   Future<void> reloadData() async {

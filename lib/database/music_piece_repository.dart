@@ -405,6 +405,53 @@ class MusicPieceRepository {
     }
   }
 
+  /// Updates all references to a media file path across all music pieces.
+  Future<void> updateMediaFilePathGlobally(String oldPath, String newPath) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      bool changed = false;
+      
+      // Update piece thumbnail
+      String? newPieceThumbnail = piece.thumbnailPath;
+      if (piece.thumbnailPath == oldPath) {
+        newPieceThumbnail = newPath;
+        changed = true;
+      }
+      
+      // Update media items
+      final updatedMediaItems = <MediaItem>[];
+      for (var item in piece.mediaItems) {
+        String itemPath = item.pathOrUrl;
+        String? itemThumbPath = item.thumbnailPath;
+        bool itemChanged = false;
+        
+        if (item.pathOrUrl == oldPath) {
+          itemPath = newPath;
+          itemChanged = true;
+        }
+        
+        if (item.thumbnailPath == oldPath) {
+          itemThumbPath = newPath;
+          itemChanged = true;
+        }
+        
+        if (itemChanged) {
+          updatedMediaItems.add(item.copyWith(pathOrUrl: itemPath, thumbnailPath: itemThumbPath));
+          changed = true;
+        } else {
+          updatedMediaItems.add(item);
+        }
+      }
+      
+      if (changed) {
+        await updateMusicPiece(piece.copyWith(
+          thumbnailPath: newPieceThumbnail,
+          mediaItems: updatedMediaItems,
+        ));
+      }
+    }
+  }
+
   /// Exports all music piece, tag, and group data to a JSON file.
   /// Allows the user to choose the save location.
   /// Returns the path of the saved file if successful, otherwise null.

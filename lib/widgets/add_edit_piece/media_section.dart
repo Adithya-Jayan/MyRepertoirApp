@@ -7,6 +7,7 @@ import '../../models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import '../detail_widgets/media_section.dart';
 import 'package:repertoire/models/music_piece.dart'; // Add this import
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../../utils/app_logger.dart';
 import './highlightable_widget.dart';
 
@@ -75,7 +76,7 @@ class MediaSectionWidget extends StatelessWidget {
         return;
       }
 
-      // Copy the file to create a dedicated thumbnail source
+      // Copy and compress the file to create a dedicated thumbnail source
       try {
         final appDir = await getApplicationDocumentsDirectory();
         final pieceMediaDir = Directory(p.join(appDir.path, 'media', musicPiece.id));
@@ -83,39 +84,54 @@ class MediaSectionWidget extends StatelessWidget {
           await pieceMediaDir.create(recursive: true);
         }
 
-        final extension = p.extension(thumbnailPath);
-        final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
+        // Force .jpg extension for the compressed file
+        final newFileName = 'thumbnail_${const Uuid().v4()}.jpg';
         final newFilePath = p.join(pieceMediaDir.path, newFileName);
 
         final sourceFile = File(thumbnailPath);
         if (await sourceFile.exists()) {
-          await sourceFile.copy(newFilePath);
-          AppLogger.log('MediaSectionWidget: Copied thumbnail to $newFilePath');
+          // Compress and resize the image to a maximum of 1024px.
+          // This prevents memory lag from huge original images.
+          final result = await FlutterImageCompress.compressAndGetFile(
+            sourceFile.absolute.path,
+            newFilePath,
+            quality: 85,
+            minWidth: 1024,
+            minHeight: 1024,
+            format: CompressFormat.jpeg,
+          );
 
-          // Create or update thumbnail widget
-          final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-          final existingThumbnailIndex = updatedMediaItems.indexWhere((item) => item.type == MediaType.thumbnails);
+          if (result != null) {
+            final compressedFilePath = result.path;
+            AppLogger.log('MediaSectionWidget: Compressed thumbnail to $compressedFilePath');
 
-          if (existingThumbnailIndex != -1) {
-            // Update existing
-            final oldItem = updatedMediaItems[existingThumbnailIndex];
-            updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: newFilePath);
-            thumbnailId = oldItem.id;
-          } else {
-            // Create new
-            thumbnailId = const Uuid().v4();
-            updatedMediaItems.add(MediaItem(
-              id: thumbnailId,
-              type: MediaType.thumbnails,
-              pathOrUrl: newFilePath,
+            // Create or update thumbnail widget
+            final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+            final existingThumbnailIndex = updatedMediaItems.indexWhere((item) => item.type == MediaType.thumbnails);
+
+            if (existingThumbnailIndex != -1) {
+              // Update existing
+              final oldItem = updatedMediaItems[existingThumbnailIndex];
+              updatedMediaItems[existingThumbnailIndex] = oldItem.copyWith(pathOrUrl: compressedFilePath);
+              thumbnailId = oldItem.id;
+            } else {
+              // Create new
+              thumbnailId = const Uuid().v4();
+              updatedMediaItems.add(MediaItem(
+                id: thumbnailId,
+                type: MediaType.thumbnails,
+                pathOrUrl: compressedFilePath,
+              ));
+            }
+
+            onMusicPieceChanged(musicPiece.copyWith(
+              mediaItems: updatedMediaItems,
+              thumbnailPath: compressedFilePath,
             ));
+            onThumbnailSet?.call(thumbnailId);
+          } else {
+            AppLogger.log('MediaSectionWidget: Compression failed for $thumbnailPath');
           }
-
-          onMusicPieceChanged(musicPiece.copyWith(
-            mediaItems: updatedMediaItems,
-            thumbnailPath: newFilePath,
-          ));
-          onThumbnailSet?.call(thumbnailId);
         } else {
           AppLogger.log('MediaSectionWidget: Source thumbnail file not found: $thumbnailPath');
         }
@@ -153,35 +169,96 @@ class MediaSectionWidget extends StatelessWidget {
                   key: ValueKey(item.id),
                   isHighlighted: newlyAddedId == item.id,
                   onHighlightComplete: onHighlightComplete,
-                  child: MediaSection(
-                    key: itemKey,
-                    item: item,
-                    index: index,
-                    globalIndex: originalIndex,
-                    musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
-                    musicPieceId: musicPiece.id,
-                    onUpdateMediaItem: (updatedItem) {
-                      final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
-                      if (originalIndex != -1) {
-                        updatedMediaItems[originalIndex] = updatedItem;
-                        
-                        String? newPieceThumbnail = musicPiece.thumbnailPath;
-                        
-                        // If it's a dedicated thumbnail widget, it is the authoritative source.
-                        // Sync unconditionally.
-                        if (updatedItem.type == MediaType.thumbnails) {
-                            newPieceThumbnail = updatedItem.pathOrUrl;
-                        }
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Left side: Management Rail (Reorder & Delete)
+                          Container(
+                            width: 48,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              border: Border(
+                                right: BorderSide(
+                                  color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                ),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                ReorderableDragStartListener(
+                                  index: index,
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                                    child: Icon(Icons.drag_handle, color: Colors.grey),
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                  onPressed: () => handleDelete(item),
+                                  tooltip: 'Delete media item',
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            ),
+                          ),
+                          
+                          // Right side: Content Area
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: MediaSection(
+                                key: itemKey,
+                                item: item,
+                                index: index,
+                                globalIndex: originalIndex,
+                                musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
+                                musicPieceId: musicPiece.id,
+                                isReorderable: false, // Handled by outer rail
+                                showExternalDelete: false, // Handled by outer rail
+                                onUpdateMediaItem: (updatedItem) {
+                                  final updatedMediaItems = List<MediaItem>.from(musicPiece.mediaItems);
+                                  if (originalIndex != -1) {
+                                    updatedMediaItems[originalIndex] = updatedItem;
+                                    
+                                    String? newPieceThumbnail = musicPiece.thumbnailPath;
+                                    if (updatedItem.type == MediaType.thumbnails) {
+                                        newPieceThumbnail = updatedItem.pathOrUrl;
+                                    }
 
-                        onMusicPieceChanged(musicPiece.copyWith(
-                            mediaItems: updatedMediaItems,
-                            thumbnailPath: newPieceThumbnail
-                        ));
-                      }
-                    },
-                    onDeleteMediaItem: handleDelete,
-                    onSetThumbnail: handleSetThumbnail,
-                    musicPiece: musicPiece,
+                                    onMusicPieceChanged(musicPiece.copyWith(
+                                        mediaItems: updatedMediaItems,
+                                        thumbnailPath: newPieceThumbnail
+                                    ));
+                                  }
+                                },
+                                onDeleteMediaItem: handleDelete,
+                                onSetThumbnail: handleSetThumbnail,
+                                musicPiece: musicPiece,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },

@@ -1,9 +1,12 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import '../database/music_piece_repository.dart';
+import './pdf_viewer_screen.dart';
+import './image_viewer_screen.dart';
 
 enum FileExplorerViewMode {
   physical,
@@ -22,15 +25,15 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
   FileExplorerViewMode _viewMode = FileExplorerViewMode.physical;
   
   // Navigation state
-  Directory? _rootDirectory;
-  Directory? _currentDirectory; // For physical mode
+  io.Directory? _rootDirectory;
+  io.Directory? _currentDirectory; // For physical mode
   final List<String> _virtualPath = []; // For virtual modes
   
   // Data
   final List<FileSystemItem> _items = [];
   Map<String, String> _pieceIdToTitle = {};
-  Map<String, List<File>> _filesByPiece = {};
-  Map<String, List<File>> _filesByType = {};
+  Map<String, List<io.File>> _filesByPiece = {};
+  Map<String, List<io.File>> _filesByType = {};
   
   // Selection
   final Set<String> _selectedPaths = {};
@@ -71,13 +74,13 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     
     if (_rootDirectory == null) return;
     
-    final mediaDir = Directory(p.join(_rootDirectory!.path, 'media'));
+    final mediaDir = io.Directory(p.join(_rootDirectory!.path, 'media'));
     if (!await mediaDir.exists()) return;
 
-    final List<FileSystemEntity> allEntities = await mediaDir.list(recursive: true).toList();
+    final List<io.FileSystemEntity> allEntities = await mediaDir.list(recursive: true).toList();
     
     for (final entity in allEntities) {
-      if (entity is File) {
+      if (entity is io.File) {
         // By Type
         final ext = p.extension(entity.path).toLowerCase();
         String type = 'Other';
@@ -94,7 +97,6 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
         _filesByType.putIfAbsent(type, () => []).add(entity);
         
         // By Piece
-        // Path structure: .../media/<pieceId>/<type>/<filename>
         final relative = p.relative(entity.path, from: mediaDir.path);
         final parts = p.split(relative);
         if (parts.isNotEmpty) {
@@ -141,8 +143,8 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (_currentDirectory == null) return;
     final entities = _currentDirectory!.listSync();
     entities.sort((a, b) {
-      if (a is Directory && b is! Directory) return -1;
-      if (a is! Directory && b is Directory) return 1;
+      if (a is io.Directory && b is! io.Directory) return -1;
+      if (a is! io.Directory && b is io.Directory) return 1;
       return p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase());
     });
     
@@ -150,7 +152,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       _items.add(FileSystemItem(
         name: p.basename(entity.path),
         path: entity.path,
-        isDirectory: entity is Directory,
+        isDirectory: entity is io.Directory,
         entity: entity,
       ));
     }
@@ -217,7 +219,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (item.isDirectory) {
       if (_viewMode == FileExplorerViewMode.physical) {
         setState(() {
-          _currentDirectory = Directory(item.path);
+          _currentDirectory = io.Directory(item.path);
         });
       } else {
         setState(() {
@@ -226,7 +228,19 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       }
       _updateDisplayItems();
     } else {
-       _toggleSelection(item.path);
+       _openFile(item.path);
+    }
+  }
+
+  void _openFile(String path) {
+    final extension = p.extension(path).toLowerCase();
+    if (extension == '.pdf') {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: path)));
+    } else if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ImageViewerScreen(imagePath: path)));
+    } else {
+      // Use open_filex for other files to handle content URIs on Android
+      OpenFilex.open(path);
     }
   }
 
@@ -245,8 +259,8 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
   Future<void> _shareSelected() async {
     final List<XFile> filesToShare = [];
     for (final path in _selectedPaths) {
-      final type = FileSystemEntity.typeSync(path);
-      if (type == FileSystemEntityType.file) {
+      final type = io.FileSystemEntity.typeSync(path);
+      if (type == io.FileSystemEntityType.file) {
         filesToShare.add(XFile(path));
       }
     }
@@ -286,11 +300,11 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       setState(() => _isLoading = true);
       try {
         for (final path in _selectedPaths) {
-          final type = FileSystemEntity.typeSync(path);
-          if (type == FileSystemEntityType.file) {
-            await File(path).delete();
-          } else if (type == FileSystemEntityType.directory) {
-            await Directory(path).delete(recursive: true);
+          final type = io.FileSystemEntity.typeSync(path);
+          if (type == io.FileSystemEntityType.file) {
+            await io.File(path).delete();
+          } else if (type == io.FileSystemEntityType.directory) {
+            await io.Directory(path).delete(recursive: true);
           }
         }
         _selectedPaths.clear();
@@ -399,21 +413,42 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (_error != null) return Center(child: Padding(padding: const EdgeInsets.all(16), child: Text('Error: $_error', textAlign: TextAlign.center)));
     if (_items.isEmpty) return const Center(child: Text('Empty'));
 
+    final theme = Theme.of(context);
+
+    if ((_viewMode == FileExplorerViewMode.byPiece || _viewMode == FileExplorerViewMode.byType) && _virtualPath.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          _buildCategoryHeader(theme, _viewMode == FileExplorerViewMode.byPiece ? 'Music Pieces' : 'File Categories', 
+            _viewMode == FileExplorerViewMode.byPiece ? Icons.library_music_outlined : Icons.category_outlined),
+          _buildSettingsCard([
+            for (final item in _items)
+              ListTile(
+                leading: const Icon(Icons.folder_open, color: Colors.amber),
+                title: Text(item.name),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () => _onItemTap(item),
+              ),
+          ]),
+        ],
+      );
+    }
+
     return ListView.builder(
       itemCount: _items.length,
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
         final item = _items[index];
         final isSelected = _selectedPaths.contains(item.path);
 
         return ListTile(
-          leading: Icon(
-            item.isDirectory ? Icons.folder : _getFileIcon(item.path),
-            color: item.isDirectory ? Colors.amber : null,
-          ),
-          title: Text(item.name),
-          subtitle: item.isDirectory ? null : Text(_getFileSize(item.path)),
+          leading: _getItemLeading(item),
+          title: Text(item.name, style: const TextStyle(fontSize: 14)),
+          subtitle: item.isDirectory ? null : Text(_getFileSize(item.path), style: const TextStyle(fontSize: 12)),
           selected: isSelected,
-          trailing: _isSelectionMode ? Checkbox(value: isSelected, onChanged: (_) => _toggleSelection(item.path)) : null,
+          trailing: _isSelectionMode 
+            ? Checkbox(value: isSelected, onChanged: (_) => _toggleSelection(item.path)) 
+            : _buildItemMenu(item),
           onTap: () => _onItemTap(item),
           onLongPress: () => _toggleSelection(item.path),
         );
@@ -421,7 +456,170 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     );
   }
 
-  IconData _getFileIcon(String path) {
+  Widget? _buildItemMenu(FileSystemItem item) {
+    if (item.isVirtual) return null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (item.isDirectory && _viewMode == FileExplorerViewMode.physical)
+          const Icon(Icons.chevron_right, size: 18),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, size: 20),
+          onSelected: (value) {
+            if (value == 'rename') {
+              _renameItem(item);
+            } else if (value == 'delete') {
+              _selectedPaths.clear();
+              _selectedPaths.add(item.path);
+              _deleteSelected();
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'rename',
+              child: ListTile(
+                leading: Icon(Icons.edit_outlined, size: 18),
+                title: Text('Rename'),
+                dense: true,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                title: Text('Delete', style: TextStyle(color: Colors.red)),
+                dense: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _getItemLeading(FileSystemItem item) {
+    if (item.isDirectory) {
+      return const Icon(Icons.folder, color: Colors.amber);
+    }
+    
+    final extension = p.extension(item.path).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          io.File(item.path),
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          cacheWidth: 100,
+          errorBuilder: (context, error, stackTrace) => Icon(_getFileIconData(item.path)),
+        ),
+      );
+    }
+    
+    return Icon(_getFileIconData(item.path));
+  }
+
+  Widget _buildCategoryHeader(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard(List<Widget> children) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      child: Column(children: children),
+    );
+  }
+
+  Future<void> _renameItem(FileSystemItem item) async {
+    final nameController = TextEditingController(text: item.name);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename File'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'WARNING: Renaming files may break links if not handled correctly. '
+              'The app will attempt to update all piece references automatically.',
+              style: TextStyle(color: Colors.orange, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'New Name'),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, nameController.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty && newName != item.name) {
+      setState(() => _isLoading = true);
+      try {
+        final parentPath = p.dirname(item.path);
+        final newPath = p.join(parentPath, newName);
+        
+        if (await io.File(newPath).exists() || await io.Directory(newPath).exists()) {
+          throw Exception('An item with that name already exists.');
+        }
+
+        if (item.isDirectory) {
+           await io.Directory(item.path).rename(newPath);
+        } else {
+           await io.File(item.path).rename(newPath);
+        }
+
+        final repository = MusicPieceRepository();
+        await repository.updateMediaFilePathGlobally(item.path, newPath);
+
+        await _scanFiles();
+        _updateDisplayItems();
+        
+        scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Renamed successfully.')));
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  IconData _getFileIconData(String path) {
     final extension = p.extension(path).toLowerCase();
     switch (extension) {
       case '.pdf': return Icons.picture_as_pdf;
@@ -446,7 +644,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
 
   String _getFileSize(String path) {
     try {
-      final file = File(path);
+      final file = io.File(path);
       final bytes = file.lengthSync();
       if (bytes < 1024) return '$bytes B';
       if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
@@ -463,7 +661,7 @@ class FileSystemItem {
   final String path;
   final bool isDirectory;
   final bool isVirtual;
-  final FileSystemEntity? entity;
+  final io.FileSystemEntity? entity;
 
   FileSystemItem({
     required this.name,

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
-import 'package:repertoire/models/music_piece.dart'; // Added this import
+import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/widgets/media_display_widget.dart';
 import 'package:repertoire/services/thumbnail_service.dart';
 import 'package:repertoire/utils/app_logger.dart';
-import 'package:repertoire/models/learning_progress_config.dart'; // Added
-import 'package:repertoire/widgets/add_edit_piece/learning_progress_config_dialog.dart'; // Added
+import 'package:repertoire/models/learning_progress_config.dart';
+import 'package:repertoire/widgets/add_edit_piece/learning_progress_config_dialog.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,8 +29,9 @@ class MediaSection extends StatefulWidget {
   final Function(MediaItem) onUpdateMediaItem;
   final Function(MediaItem) onDeleteMediaItem;
   final Function(String) onSetThumbnail;
-  final MusicPiece musicPiece; // Added this
+  final MusicPiece musicPiece;
   final bool isReorderable;
+  final bool showExternalDelete;
 
   const MediaSection({
     super.key,
@@ -44,6 +45,7 @@ class MediaSection extends StatefulWidget {
     required this.onSetThumbnail,
     required this.musicPiece,
     this.isReorderable = true,
+    this.showExternalDelete = true,
   });
 
   @override
@@ -170,44 +172,31 @@ class _MediaSectionState extends State<MediaSection> {
 
   void _removeThumbnail() {
     AppLogger.log('MediaSection: _removeThumbnail called for item: ${widget.item.title}');
-    AppLogger.log('MediaSection: Current thumbnail path: "$_currentThumbnailPath"');
-    AppLogger.log('MediaSection: Piece thumbnail: "${widget.musicPieceThumbnail}"');
     
-    // Delete the thumbnail file if it exists
     if (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) {
       try {
         final file = File(_currentThumbnailPath!);
         if (file.existsSync()) {
           file.deleteSync();
-          AppLogger.log('MediaSection: Deleted thumbnail file: $_currentThumbnailPath');
         }
       } catch (e) {
         AppLogger.log('Error deleting thumbnail file: $e');
       }
     }
 
-    // If this thumbnail was set as the piece thumbnail, clear it first
     if (widget.musicPieceThumbnail == _currentThumbnailPath) {
       widget.onSetThumbnail('');
-      AppLogger.log('MediaSection: Cleared piece thumbnail');
     }
 
-    // Update the media item to remove the thumbnail path
     final updatedItem = widget.item.copyWith(thumbnailPath: '');
     widget.onUpdateMediaItem(updatedItem);
-    AppLogger.log('MediaSection: Updated media item with empty thumbnail path');
 
-    // Update local state
     setState(() {
       _currentThumbnailPath = '';
     });
-    AppLogger.log('MediaSection: Updated local state, _currentThumbnailPath is now: "$_currentThumbnailPath"');
-
-    AppLogger.log('Thumbnail removed for media item: ${widget.item.title}');
   }
 
   void _deleteMediaItem() {
-    // Delete the thumbnail file if it exists
     if (_currentThumbnailPath != null) {
       try {
         final file = File(_currentThumbnailPath!);
@@ -218,8 +207,6 @@ class _MediaSectionState extends State<MediaSection> {
         AppLogger.log('Error deleting thumbnail file: $e');
       }
     }
-
-    // Call the parent's delete method
     widget.onDeleteMediaItem(widget.item);
   }
 
@@ -229,7 +216,6 @@ class _MediaSectionState extends State<MediaSection> {
       if (result != null && result.files.single.path != null) {
         final sourcePath = result.files.single.path!;
         
-        // Copy to secure location
         final appDir = await getApplicationDocumentsDirectory();
         final pieceMediaDir = Directory(p.join(appDir.path, 'media', widget.musicPieceId));
         if (!await pieceMediaDir.exists()) {
@@ -242,7 +228,6 @@ class _MediaSectionState extends State<MediaSection> {
         
         await File(sourcePath).copy(newFilePath);
         
-        // Update item
         final updatedItem = widget.item.copyWith(pathOrUrl: newFilePath);
         widget.onUpdateMediaItem(updatedItem);
         
@@ -265,218 +250,233 @@ class _MediaSectionState extends State<MediaSection> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('MediaSection: build called for item: ${widget.item.title}, _currentThumbnailPath: "$_currentThumbnailPath"');
-    return Card(
-      key: ValueKey(widget.item.id),
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MediaDisplayWidget(
-                    musicPiece: widget.musicPiece,
-                    mediaItemIndex: widget.globalIndex,
-                    isEditable: true, // Allow title editing
-                    onTitleChanged: (newTitle) {
-                      widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
-                    },
-                    onMediaItemChanged: (newItem) {
-                      widget.onUpdateMediaItem(newItem);
-                    },
-                  ),
-                  // Thumbnail controls
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: [
-                      // Get/Remove thumbnail button (for media links and local video)
-                      if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo)
-                        _isLoadingThumbnail
-                            ? const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text('Fetching...'),
-                                ],
-                              )
-                            : ElevatedButton.icon(
-                                onPressed: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
-                                    ? () => _removeThumbnail()
-                                    : () => widget.item.type == MediaType.mediaLink ? _fetchThumbnail() : _generateVideoThumbnail(),
-                                icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image),
-                                label: Text((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : (widget.item.type == MediaType.mediaLink ? 'Get link thumbnail' : 'Get video thumbnail')),
-                                style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
-                                    ? ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red[50],
-                                        foregroundColor: Colors.red[700],
-                                      )
-                                    : null,
-                              ),
-                      // Change Image button (for thumbnail widgets)
-                      if (widget.item.type == MediaType.thumbnails)
-                        ElevatedButton.icon(
-                          onPressed: _pickAndChangeImage,
-                          icon: const Icon(Icons.image),
-                          label: const Text('Change Image'),
-                        ),
-                      // Update piece thumbnail button
-                      if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            final isCurrentlyThumbnail = widget.musicPieceThumbnail.isNotEmpty && 
-                                   (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                                    widget.musicPieceThumbnail == _currentThumbnailPath);
-                            
-                            if (isCurrentlyThumbnail) {
-                              widget.onSetThumbnail('');
-                            } else {
-                              // Fix: For local videos, we MUST use the generated thumbnail path, not the video path.
-                              // For images, we use the item path.
-                              String? path;
-                              if (widget.item.type == MediaType.image) {
-                                path = widget.item.pathOrUrl;
-                              } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink) {
-                                path = _currentThumbnailPath;
-                              }
-                              
-                              if (path != null && path.isNotEmpty) {
-                                widget.onSetThumbnail(path);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please generate a thumbnail first.')),
-                                );
-                              }
-                            }
-                          },
-                          icon: Icon(
-                            (widget.musicPieceThumbnail.isNotEmpty && 
-                             (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                              widget.musicPieceThumbnail == _currentThumbnailPath))
-                                ? Icons.star
-                                : Icons.star_border,
-                          ),
-                          label: Text(
-                            (widget.musicPieceThumbnail.isNotEmpty && 
-                             (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                              widget.musicPieceThumbnail == _currentThumbnailPath))
-                                ? 'Is Piece Thumbnail'
-                                : 'Set as Piece Thumbnail',
-                          ),
-                          style: (widget.musicPieceThumbnail.isNotEmpty && 
-                                  (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                                   widget.musicPieceThumbnail == _currentThumbnailPath))
-                              ? ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.amber[50],
-                                  foregroundColor: Colors.amber[800],
-                                )
-                              : null,
-                        ),
-                    ],
-                  ),
-                  // Display appropriate input field based on media type
-                  if (widget.item.type == MediaType.learningProgress)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.settings),
-                        label: const Text('Configure Progress Bar'),
-                        onPressed: () async {
-                           final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
-                           final newConfig = await showDialog<LearningProgressConfig>(
-                              context: context,
-                              builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
-                           );
-                           if (newConfig != null) {
-                              widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
-                           }
-                        },
-                      ),
-                    )
-                  else if (widget.item.type == MediaType.midi)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.settings),
-                        label: const Text('Configure MIDI Tracks'),
-                        onPressed: () async {
-                           final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
-                           final newConfig = await showDialog<MidiTrackConfig>(
-                              context: context,
-                              builder: (context) => MidiTrackConfigDialog(
-                                midiPath: widget.item.pathOrUrl,
-                                initialConfig: currentConfig,
-                              ),
-                           );
-                           if (newConfig != null) {
-                              widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                           }
-                        },
-                      ),
-                    )
-                  else if (widget.item.type == MediaType.pdf)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.settings),
-                        label: const Text('Configure Auto Scroll'),
-                        onPressed: () async {
-                           final currentConfig = PdfConfig.fromJson(widget.item.configData ?? '{}');
-                           final newConfig = await showDialog<PdfConfig>(
-                              context: context,
-                              builder: (context) => PdfConfigDialog(initialConfig: currentConfig),
-                           );
-                           if (newConfig != null) {
-                              widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                           }
-                        },
-                      ),
-                    )
-                  else if (widget.item.type == MediaType.markdown)
-                    TextFormField(
-                      initialValue: widget.item.pathOrUrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Markdown Content',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 5,
-                      onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
-                    )
-                  else
-                    TextFormField(
-                      initialValue: widget.item.pathOrUrl,
-                      decoration: const InputDecoration(labelText: 'Path or URL'),
-                      onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
-                    ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                if (widget.isReorderable)
-                  ReorderableDragStartListener(
-                    index: widget.index,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Icon(Icons.drag_handle), // Drag handle for reordering.
-                    ),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.delete), // Button to delete the media item.
-                  onPressed: () => _deleteMediaItem(),
-                ),
-              ],
-            ),
-          ],
+    
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top Section: Title & Renaming
+        Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: MediaDisplayWidget(
+            musicPiece: widget.musicPiece,
+            mediaItemIndex: widget.globalIndex,
+            isEditable: true, // Allow title editing
+            onTitleChanged: (newTitle) {
+              widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
+            },
+            onMediaItemChanged: (newItem) {
+              widget.onUpdateMediaItem(newItem);
+            },
+          ),
         ),
-      ),
+        
+        const SizedBox(height: 12),
+        
+        // Middle Section: Content Configuration
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.item.type == MediaType.learningProgress)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Configure Progress Bar'),
+                  onPressed: () async {
+                     final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
+                     final newConfig = await showDialog<LearningProgressConfig>(
+                        context: context,
+                        builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
+                     );
+                     if (newConfig != null) {
+                        widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
+                     }
+                  },
+                )
+              else if (widget.item.type == MediaType.midi)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Configure MIDI Tracks'),
+                  onPressed: () async {
+                     final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
+                     final newConfig = await showDialog<MidiTrackConfig>(
+                        context: context,
+                        builder: (context) => MidiTrackConfigDialog(
+                          midiPath: widget.item.pathOrUrl,
+                          initialConfig: currentConfig,
+                        ),
+                     );
+                     if (newConfig != null) {
+                        widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
+                     }
+                  },
+                )
+              else if (widget.item.type == MediaType.pdf)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Configure Auto Scroll'),
+                  onPressed: () async {
+                     final currentConfig = PdfConfig.fromJson(widget.item.configData ?? '{}');
+                     final newConfig = await showDialog<PdfConfig>(
+                        context: context,
+                        builder: (context) => PdfConfigDialog(initialConfig: currentConfig),
+                     );
+                     if (newConfig != null) {
+                        widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
+                     }
+                  },
+                )
+              else if (widget.item.type == MediaType.markdown)
+                TextFormField(
+                  initialValue: widget.item.pathOrUrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Markdown Content',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  maxLines: 5,
+                  onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
+                )
+              else
+                TextFormField(
+                  initialValue: widget.item.pathOrUrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Path or URL',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
+                ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Bottom Section: Secondary Actions (Thumbnails)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: [
+              if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo)
+                _isLoadingThumbnail
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                          SizedBox(width: 8),
+                          Text('Fetching...', style: TextStyle(fontSize: 12)),
+                        ],
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
+                            ? () => _removeThumbnail()
+                            : () => widget.item.type == MediaType.mediaLink ? _fetchThumbnail() : _generateVideoThumbnail(),
+                        icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image, size: 18),
+                        label: Text(
+                          (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : (widget.item.type == MediaType.mediaLink ? 'Get link thumbnail' : 'Get video thumbnail'),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
+                            ? OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red[700],
+                                side: BorderSide(color: Colors.red[200]!),
+                              )
+                            : null,
+                      ),
+              if (widget.item.type == MediaType.thumbnails)
+                OutlinedButton.icon(
+                  onPressed: _pickAndChangeImage,
+                  icon: const Icon(Icons.image, size: 18),
+                  label: const Text('Change Image', style: TextStyle(fontSize: 12)),
+                ),
+              if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final isCurrentlyThumbnail = widget.musicPieceThumbnail.isNotEmpty && 
+                           (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                            widget.musicPieceThumbnail == _currentThumbnailPath);
+                    
+                    if (isCurrentlyThumbnail) {
+                      widget.onSetThumbnail('');
+                    } else {
+                      String? path;
+                      if (widget.item.type == MediaType.image) {
+                        path = widget.item.pathOrUrl;
+                      } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink) {
+                        path = _currentThumbnailPath;
+                      }
+                      
+                      if (path != null && path.isNotEmpty) {
+                        widget.onSetThumbnail(path);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please generate a thumbnail first.')),
+                        );
+                      }
+                    }
+                  },
+                  icon: Icon(
+                    (widget.musicPieceThumbnail.isNotEmpty && 
+                     (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                      widget.musicPieceThumbnail == _currentThumbnailPath))
+                        ? Icons.star
+                        : Icons.star_border,
+                    size: 18,
+                  ),
+                  label: Text(
+                    (widget.musicPieceThumbnail.isNotEmpty && 
+                     (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                      widget.musicPieceThumbnail == _currentThumbnailPath))
+                        ? 'Is Piece Thumbnail'
+                        : 'Set as Piece Thumbnail',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  style: (widget.musicPieceThumbnail.isNotEmpty && 
+                          (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
+                           widget.musicPieceThumbnail == _currentThumbnailPath))
+                      ? OutlinedButton.styleFrom(
+                          foregroundColor: Colors.amber[800],
+                          side: BorderSide(color: Colors.amber[200]!),
+                        )
+                      : null,
+                ),
+            ],
+          ),
+        ),
+
+        if (widget.showExternalDelete) ...[
+          const Divider(height: 24),
+          Row(
+            children: [
+              if (widget.isReorderable)
+                ReorderableDragStartListener(
+                  index: widget.index,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.drag_handle, color: Colors.grey),
+                  ),
+                ),
+              const Spacer(),
+              TextButton.icon(
+                icon: const Icon(Icons.delete, size: 20),
+                label: const Text('Delete Item'),
+                onPressed: () => _deleteMediaItem(),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

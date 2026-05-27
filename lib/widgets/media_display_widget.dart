@@ -7,7 +7,6 @@ import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/learning_progress_config.dart';
 import 'package:repertoire/widgets/learning_progress_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
@@ -117,63 +116,6 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     });
   }
 
-  Future<void> _shareMediaItem(MediaType type, String pathOrUrl, Rect? shareOrigin) async {
-    try {
-      ShareParams? params;
-      switch (type) {
-        case MediaType.mediaLink:
-        case MediaType.markdown:
-          params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
-          break;
-        case MediaType.audio:
-        case MediaType.image:
-        case MediaType.pdf:
-        case MediaType.localVideo:
-        case MediaType.midi:
-          if (kIsWeb) {
-             params = ShareParams(text: pathOrUrl, sharePositionOrigin: shareOrigin);
-          } else {
-            final file = io.File(pathOrUrl);
-            if (await file.exists()) {
-              params = ShareParams(files: [XFile(pathOrUrl)], sharePositionOrigin: shareOrigin);
-            } else {
-               if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found to share.')));
-               }
-               return;
-            }
-          }
-          break;
-        default: return;
-      }
-      await SharePlus.instance.share(params);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
-    }
-  }
-
-  void _deleteMediaItem(BuildContext context, int index) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Media'),
-        content: const Text('Are you sure you want to delete this media item?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      if (widget.onMediaItemChanged != null) {
-        // Special signal to parent to handle deletion if needed, but usually parent handles it via PieceDetailScreen's repository call.
-        // However, MediaDisplayList specifically needs a way to update the piece.
-        // For now, we'll assume the parent handles it.
-      }
-    }
-  }
-
   Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
     final file = io.File(path);
     return FutureBuilder<DateTime>(
@@ -185,6 +127,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           height: height,
           width: width,
           fit: fit,
+          // Limit the resolution in memory to prevent lag from huge images
+          cacheWidth: 400, 
           errorBuilder: (context, error, stackTrace) {
             AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
             return Container(
@@ -233,8 +177,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               height: 200,
               width: double.infinity,
               child: kIsWeb 
-                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.contain)
-                : buildFileImage(currentMediaItem.pathOrUrl),
+                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.cover)
+                : buildFileImage(currentMediaItem.pathOrUrl, height: 200, width: double.infinity, fit: BoxFit.cover),
             ),
           ),
         );
@@ -264,7 +208,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   borderRadius: BorderRadius.circular(12.0),
                   child: kIsWeb
                     ? Image.network(currentMediaItem.thumbnailPath!, fit: BoxFit.cover)
-                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, fit: BoxFit.cover),
+                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, width: double.infinity, fit: BoxFit.cover),
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -291,38 +235,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         break;
     }
 
-    final bool showActions = !widget.isEditable && currentMediaItem.type != MediaType.thumbnails;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (showActions || widget.trailing != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (showActions)
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, size: 20),
-                    onSelected: (value) {
-                      if (value == 'share') {
-                        final RenderBox? box = context.findRenderObject() as RenderBox?;
-                        final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
-                        _shareMediaItem(currentMediaItem.type, currentMediaItem.pathOrUrl, rect);
-                      } else if (value == 'delete') {
-                        _deleteMediaItem(context, widget.mediaItemIndex);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(value: 'share', child: ListTile(leading: Icon(Icons.share_outlined, size: 20), title: Text('Share'), dense: true)),
-                      const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, size: 20, color: Colors.red), title: Text('Delete', style: TextStyle(color: Colors.red)), dense: true)),
-                    ],
-                  ),
-                if (widget.trailing != null) widget.trailing!,
-              ],
-            ),
-          ),
         content,
         if (widget.isEditable || widget.isTitleEditable) ...[
           const SizedBox(height: 12),

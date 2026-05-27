@@ -21,6 +21,7 @@ class PersonalizationSettingsScreen extends StatefulWidget {
 class PersonalizationSettingsScreenState
     extends State<PersonalizationSettingsScreen> {
   double _galleryColumns = 1;
+  bool _hideEmptyGroups = false;
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class PersonalizationSettingsScreenState
     _loadSettings();
   }
 
-  /// Loads the saved gallery column setting from [SharedPreferences].
+  /// Loads settings from [SharedPreferences].
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     int defaultColumns;
@@ -42,9 +43,9 @@ class PersonalizationSettingsScreenState
       defaultColumns = 2;
     }
     setState(() {
-      // Retrieve the saved column count, defaulting to 1 if not found.
       _galleryColumns =
           (prefs.getInt('galleryColumns') ?? defaultColumns).toDouble();
+      _hideEmptyGroups = prefs.getBool('hideEmptyGroups') ?? false;
     });
   }
 
@@ -58,6 +59,15 @@ class PersonalizationSettingsScreenState
     });
   }
 
+  Future<void> _saveHideEmptyGroups(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hideEmptyGroups', value);
+    if (!mounted) return;
+    setState(() {
+      _hideEmptyGroups = value;
+    });
+  }
+
   @override
   void dispose() {
     AppLogger.log('PersonalizationSettingsScreen: dispose called');
@@ -68,6 +78,7 @@ class PersonalizationSettingsScreenState
   Widget build(BuildContext context) {
     AppLogger.log('PersonalizationSettingsScreen: build called');
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final theme = Theme.of(context);
 
     return PopScope(
       canPop: false,
@@ -81,157 +92,206 @@ class PersonalizationSettingsScreenState
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.of(context).pop(true); // Return true to indicate changes were made
+              Navigator.of(context).pop(true);
             },
           ),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-            Text(
-              'Theme Mode',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            RadioGroup<ThemeMode>(
-              groupValue: themeNotifier.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setTheme(value);
-                }
-              },
-              child: Column(
-                children: [
-                  RadioListTile<ThemeMode>(
-                    title: const Text('System Default'),
-                    value: ThemeMode.system,
-                  ),
-                  RadioListTile<ThemeMode>(
-                    title: const Text('Light'),
-                    value: ThemeMode.light,
-                  ),
-                  RadioListTile<ThemeMode>(
-                    title: const Text('Dark'),
-                    value: ThemeMode.dark,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Accent Color',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: ThemeNotifier.availableAccentColors.map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    themeNotifier.setAccentColor(color);
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            children: [
+              _buildCategoryHeader(theme, 'App Theme', Icons.palette_outlined),
+              _buildSettingsCard([
+                const Padding(
+                  padding: EdgeInsets.only(left: 16.0, top: 16.0),
+                  child: Text('Theme Mode', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                RadioGroup<ThemeMode>(
+                  groupValue: themeNotifier.themeMode,
+                  onChanged: (v) {
+                    if (v != null) themeNotifier.setTheme(v);
                   },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: themeNotifier.accentColor == color
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Colors.transparent,
-                        width: 3.0,
+                  child: const Column(
+                    children: [
+                      RadioListTile<ThemeMode>(
+                        title: Text('System Default'),
+                        value: ThemeMode.system,
                       ),
-                    ),
+                      RadioListTile<ThemeMode>(
+                        title: Text('Light'),
+                        value: ThemeMode.light,
+                      ),
+                      RadioListTile<ThemeMode>(
+                        title: Text('Dark'),
+                        value: ThemeMode.dark,
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Thumbnail Style',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            RadioGroup<ThumbnailStyle>(
-              groupValue: themeNotifier.thumbnailStyle,
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setThumbnailStyle(value);
-                }
-              },
-              child: Column(
-                children: [
-                  RadioListTile<ThumbnailStyle>(
-                    title: const Text('Outline Text'),
-                    value: ThumbnailStyle.outline,
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                const Padding(
+                  padding: EdgeInsets.only(left: 16.0, top: 8.0, bottom: 12.0),
+                  child: Text('Accent Color', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+                  child: Wrap(
+                    spacing: 12.0,
+                    runSpacing: 12.0,
+                    children: ThemeNotifier.availableAccentColors.map((color) {
+                      return GestureDetector(
+                        onTap: () => themeNotifier.setAccentColor(color),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: themeNotifier.accentColor == color
+                                  ? theme.colorScheme.onSurface
+                                  : Colors.transparent,
+                              width: 3.0,
+                            ),
+                            boxShadow: [
+                              if (themeNotifier.accentColor == color)
+                                BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8)
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  RadioListTile<ThumbnailStyle>(
-                    title: const Text('Gradient Overlay'),
-                    value: ThumbnailStyle.gradient,
+                ),
+                SwitchListTile(
+                  title: const Text('Use OLED Black'),
+                  subtitle: const Text('True black background in dark mode'),
+                  value: themeNotifier.useOledBlack,
+                  onChanged: (v) => themeNotifier.setUseOledBlack(v),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'Gallery Layout', Icons.grid_view_outlined),
+              _buildSettingsCard([
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Columns', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text('${_galleryColumns.toInt()}', 
+                            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      Slider(
+                        value: _galleryColumns,
+                        min: 1,
+                        max: 10,
+                        divisions: 9,
+                        onChanged: (v) => _saveGalleryColumns(v),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            SwitchListTile(
-              title: const Text('Show Practice Count'),
-              value: themeNotifier.showPracticeCount,
-              onChanged: (value) {
-                themeNotifier.setShowPracticeCount(value);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Show Last Practiced'),
-              value: themeNotifier.showLastPracticed,
-              onChanged: (value) {
-                themeNotifier.setShowLastPracticed(value);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Show Dot Pattern Background'),
-              value: themeNotifier.showDotPatternBackground,
-              onChanged: (value) {
-                themeNotifier.setShowDotPatternBackground(value);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Show Gradient Background'),
-              value: themeNotifier.showGradientBackground,
-              onChanged: (value) {
-                themeNotifier.setShowGradientBackground(value);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Use OLED Black'),
-              subtitle: const Text('True black background in dark mode'),
-              value: themeNotifier.useOledBlack,
-              onChanged: (value) {
-                themeNotifier.setUseOledBlack(value);
-              },
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Gallery Columns',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Slider(
-              value: _galleryColumns,
-              min: 1,
-              max: 10,
-              divisions: 9,
-              label: _galleryColumns.toInt().toString(),
-              onChanged: (value) async {
-                await _saveGalleryColumns(value);
-              },
-            ),
-          ],
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                const Padding(
+                  padding: EdgeInsets.only(left: 16.0, top: 8.0),
+                  child: Text('Thumbnail Style', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                RadioGroup<ThumbnailStyle>(
+                  groupValue: themeNotifier.thumbnailStyle,
+                  onChanged: (v) {
+                    if (v != null) themeNotifier.setThumbnailStyle(v);
+                  },
+                  child: const Column(
+                    children: [
+                      RadioListTile<ThumbnailStyle>(
+                        title: Text('Outline Text'),
+                        value: ThumbnailStyle.outline,
+                      ),
+                      RadioListTile<ThumbnailStyle>(
+                        title: Text('Gradient Overlay'),
+                        value: ThumbnailStyle.gradient,
+                      ),
+                    ],
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'Display Options', Icons.visibility_outlined),
+              _buildSettingsCard([
+                SwitchListTile(
+                  title: const Text('Show Practice Count'),
+                  value: themeNotifier.showPracticeCount,
+                  onChanged: (v) => themeNotifier.setShowPracticeCount(v),
+                ),
+                SwitchListTile(
+                  title: const Text('Show Last Practiced'),
+                  value: themeNotifier.showLastPracticed,
+                  onChanged: (v) => themeNotifier.setShowLastPracticed(v),
+                ),
+                SwitchListTile(
+                  title: const Text('Hide Empty Groups'),
+                  subtitle: const Text('Do not show groups with no matching pieces'),
+                  value: _hideEmptyGroups,
+                  onChanged: (v) => _saveHideEmptyGroups(v),
+                ),
+                SwitchListTile(
+                  title: const Text('Show Dot Pattern'),
+                  value: themeNotifier.showDotPatternBackground,
+                  onChanged: (v) => themeNotifier.setShowDotPatternBackground(v),
+                ),
+                SwitchListTile(
+                  title: const Text('Show Gradient Background'),
+                  value: themeNotifier.showGradientBackground,
+                  onChanged: (v) => themeNotifier.setShowGradientBackground(v),
+                ),
+              ]),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCategoryHeader(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
       ),
-    ),
-    ),
+    );
+  }
+
+  Widget _buildSettingsCard(List<Widget> children) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
     );
   }
 }

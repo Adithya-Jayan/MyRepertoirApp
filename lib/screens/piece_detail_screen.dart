@@ -65,81 +65,95 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
     return Container(
       width: double.infinity,
+      // Shadow moved to outer container WITHOUT clipping
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(24.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          if (hasThumbnail)
-            Positioned.fill(
-              child: Image.file(
-                File(_musicPiece.thumbnailPath!),
-                fit: BoxFit.cover,
-              ),
-            ),
-          if (hasThumbnail)
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24.0),
+        child: Stack(
+          children: [
+            if (hasThumbnail)
+              Positioned.fill(
+                // Scale slightly to hide any clear edge artifacts from the blur
+                child: Transform.scale(
+                  scale: 1.05,
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Image.file(
+                      File(_musicPiece.thumbnailPath!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
+            Positioned.fill(
+              child: Container(
+                color: hasThumbnail
+                    ? theme.colorScheme.surface.withValues(alpha: 0.6)
+                    : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              ),
             ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasThumbnail)
-                  Hero(
-                    tag: 'piece_thumb_${_musicPiece.id}',
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasThumbnail)
+                    Hero(
+                      tag: 'piece_thumb_${_musicPiece.id}',
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          image: DecorationImage(
+                            image: FileImage(File(_musicPiece.thumbnailPath!)),
+                            fit: BoxFit.cover,
                           ),
-                        ],
-                        image: DecorationImage(
-                          image: FileImage(File(_musicPiece.thumbnailPath!)),
-                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                  ),
-                if (hasThumbnail) const SizedBox(width: 16.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _musicPiece.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  if (hasThumbnail) const SizedBox(width: 16.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _musicPiece.title,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4.0),
-                      Text(
-                        _musicPiece.artistComposer,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 4.0),
+                        Text(
+                          _musicPiece.artistComposer,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

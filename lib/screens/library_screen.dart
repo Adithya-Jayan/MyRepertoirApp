@@ -203,7 +203,6 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                                 galleryColumns: galleryColumns,
                                 groupListKey: notifier.groupListKey,
                                 pageController: notifier.pageController,
-                                groupScrollController: notifier.groupScrollController,
                                 isMultiSelectMode: notifier.isMultiSelectMode,
                                 selectedPieceIds: notifier.selectedPieceIds,
                                 pressedKeys: notifier.pressedKeys,
