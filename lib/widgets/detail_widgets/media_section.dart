@@ -71,7 +71,52 @@ class _MediaSectionState extends State<MediaSection> {
   }
 
   Future<void> _fetchThumbnail() async {
-// ... (omitted unchanged fetch)
+    if (widget.item.pathOrUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('URL is empty')),
+      );
+      return;
+    }
+
+    AppLogger.log('MediaSection: Fetching thumbnail for URL: ${widget.item.pathOrUrl}');
+    setState(() {
+      _isLoadingThumbnail = true;
+    });
+
+    try {
+      final thumbnailPath = await ThumbnailService.fetchAndSaveThumbnail(widget.item, widget.musicPieceId);
+      
+      if (thumbnailPath != null && mounted) {
+        setState(() {
+          _currentThumbnailPath = thumbnailPath;
+          _isLoadingThumbnail = false;
+        });
+        
+        final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
+        widget.onUpdateMediaItem(updatedItem);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thumbnail fetched successfully!')),
+        );
+      } else if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch thumbnail.')),
+        );
+      }
+    } catch (e) {
+      AppLogger.log('Error fetching thumbnail: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching thumbnail: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _generateVideoThumbnail() async {

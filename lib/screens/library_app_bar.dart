@@ -383,60 +383,67 @@ class _QuickFilterButton extends StatelessWidget {
           ...quickFilters.keys.map((name) {
             return PopupMenuItem<String>(
               value: name,
-              child: GestureDetector(
-                onLongPress: () async {
-                  Navigator.pop(context); // Close menu
-                  final action = await showDialog<String>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Manage Filter: $name'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, 'delete'),
-                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: Row(
+                children: [
+                  Expanded(child: Text(name)),
+                  IconButton(
+                    icon: const Icon(Icons.settings, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () async {
+                      Navigator.pop(context); // Close menu
+                      final action = await showDialog<String>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Manage Filter: $name'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'delete'),
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'rename'),
+                              child: const Text('Rename'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, 'rename'),
-                          child: const Text('Rename'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                      ],
-                    ),
-                  );
+                      );
 
-                  if (action == 'delete') {
-                    onDelete(name);
-                  } else if (action == 'rename') {
-                    if (!context.mounted) return;
-                    final nameController = TextEditingController(text: name);
-                    final newName = await showDialog<String>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Rename Quick Filter'),
-                        content: TextField(
-                          controller: nameController,
-                          autofocus: true,
-                        ),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, nameController.text),
-                            child: const Text('Save'),
+                      if (action == 'delete') {
+                        onDelete(name);
+                      } else if (action == 'rename') {
+                        if (!context.mounted) return;
+                        final nameController = TextEditingController(text: name);
+                        final newName = await showDialog<String>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Rename Quick Filter'),
+                            content: TextField(
+                              controller: nameController,
+                              autofocus: true,
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, nameController.text),
+                                child: const Text('Save'),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                    if (newName != null && newName.isNotEmpty && newName != name) {
-                      final options = quickFilters[name]!;
-                      onDelete(name);
-                      onEdit(newName, options);
-                    }
-                  }
-                },
-                child: Text(name),
+                        );
+                        if (newName != null && newName.isNotEmpty && newName != name) {
+                          final options = quickFilters[name]!;
+                          onDelete(name);
+                          onEdit(newName, options);
+                        }
+                      }
+                    },
+                  ),
+                ],
               ),
             );
           }),
