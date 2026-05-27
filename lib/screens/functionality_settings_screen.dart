@@ -138,6 +138,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     if (_isLoading) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    final theme = Theme.of(context);
 
     return PopScope(
       canPop: false,
@@ -156,39 +157,45 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
           ),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Practice Tracking Stages',
-                  style: Theme.of(context).textTheme.titleLarge,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            children: [
+              _buildCategoryHeader(theme, 'Practice Tracking', Icons.timeline_outlined),
+              _buildSettingsCard([
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tracking Stages', style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text(
+                         'Stages for practice indicators. Drag to reorder. Double tap name to edit.',
+                         style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                   'Configure the stages of practice indicators. Drag to reorder. Double tap name to edit.',
-                   style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
                 
-                // Header Row
-                const Row(
-                   children: [
-                      SizedBox(width: 32), // Placeholder for drag handle
-                      SizedBox(width: 8),
-                      Expanded(flex: 3, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                      SizedBox(width: 8),
-                      Text('Color', style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(width: 16),
-                      Expanded(flex: 1, child: Text('Hold', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                      SizedBox(width: 8),
-                      Expanded(flex: 1, child: Text('Trans', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                      SizedBox(width: 40),
-                   ],
+                // Header Row for stages
+                const Padding(
+                   padding: EdgeInsets.symmetric(horizontal: 12.0),
+                   child: Row(
+                      children: [
+                         SizedBox(width: 24),
+                         SizedBox(width: 8),
+                         Expanded(flex: 3, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                         SizedBox(width: 8),
+                         Text('Color', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                         SizedBox(width: 16),
+                         Expanded(flex: 1, child: Text('Hold', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                         SizedBox(width: 8),
+                         Expanded(flex: 1, child: Text('Trans', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                         SizedBox(width: 32),
+                      ],
+                   ),
                 ),
-                const Divider(),
+                const Divider(indent: 12, endIndent: 12),
 
                 ReorderableListView.builder(
                   buildDefaultDragHandles: false,
@@ -209,16 +216,15 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                     
                     return Padding(
                       key: ValueKey(stage.id),
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
                       child: Row(
                         children: [
                           ReorderableDragStartListener(
                             index: index,
-                            child: const Icon(Icons.drag_handle, color: Colors.grey),
+                            child: const Icon(Icons.drag_handle, color: Colors.grey, size: 20),
                           ),
                           const SizedBox(width: 8),
 
-                          // Status Name (Editable Label)
                           Expanded(
                             flex: 3,
                             child: _EditableLabel(
@@ -233,31 +239,30 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                           ),
                           const SizedBox(width: 8),
                           
-                          // Color Picker
                           GestureDetector(
                             onTap: () => _pickColor(index),
                             child: Container(
-                              width: 32,
-                              height: 32,
+                              width: 24,
+                              height: 24,
                               decoration: BoxDecoration(
                                 color: Color(stage.colorValue),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey),
+                                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
                               ),
                             ),
                           ),
                           const SizedBox(width: 16),
 
-                          // Hold Days
                           Expanded(
                             flex: 1,
                             child: isLast
-                              ? const Center(child: Text('-'))
+                              ? const Center(child: Text('-', style: TextStyle(color: Colors.grey)))
                               : TextFormField(
                                   initialValue: stage.holdDays.toString(),
                                   keyboardType: TextInputType.number,
                                   textAlign: TextAlign.center,
-                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8)),
+                                  style: const TextStyle(fontSize: 13),
+                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6)),
                                   onChanged: (val) {
                                     final days = int.tryParse(val) ?? 0;
                                     _stages[index].holdDays = days;
@@ -267,16 +272,16 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                           ),
                           const SizedBox(width: 8),
 
-                          // Transition Days
                           Expanded(
                             flex: 1,
                             child: isLast 
-                              ? const Center(child: Text('-'))
+                              ? const Center(child: Text('-', style: TextStyle(color: Colors.grey)))
                               : TextFormField(
                                   initialValue: stage.transitionDays.toString(),
                                   keyboardType: TextInputType.number,
                                   textAlign: TextAlign.center,
-                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8)),
+                                  style: const TextStyle(fontSize: 13),
+                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6)),
                                   onChanged: (val) {
                                     final days = int.tryParse(val) ?? 0;
                                     _stages[index].transitionDays = days;
@@ -285,13 +290,13 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                                 ),
                           ),
                           
-                          // Remove Button
                           if (_stages.length > 1)
                             IconButton(
-                              icon: const Icon(Icons.delete, size: 20),
+                              icon: const Icon(Icons.close, size: 18),
                               onPressed: () => _removeStage(index),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
                             )
                           else
                             const SizedBox(width: 24),
@@ -303,66 +308,101 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                 
                 if (_stages.length < 10)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: TextButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Stage'),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Stage', style: TextStyle(fontSize: 13)),
                         onPressed: _addStage,
                     ),
                   ),
+              ]),
 
-                const SizedBox(height: 24),
-                const Divider(),
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'Practice Options', Icons.auto_graph_outlined),
+              _buildSettingsCard([
                 SwitchListTile(
-                  title: const Text('Show Practice Time Statistics'),
-                  subtitle: const Text('Display duration and time-based statistics in practice logs'),
+                  title: const Text('Practice Time Stats'),
+                  subtitle: const Text('Show duration and stats in logs'),
                   value: _showPracticeTimeStats,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _showPracticeTimeStats = value;
-                    });
+                  onChanged: (v) {
+                    setState(() => _showPracticeTimeStats = v);
                     _saveOtherSettings();
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Show Practice Notes'),
-                  subtitle: const Text('Allow adding and viewing notes for each practice session'),
+                  title: const Text('Practice Notes'),
+                  subtitle: const Text('Allow adding notes to sessions'),
                   value: _showPracticeNotes,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _showPracticeNotes = value;
-                    });
+                  onChanged: (v) {
+                    setState(() => _showPracticeNotes = v);
                     _saveOtherSettings();
                   },
                 ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(theme, 'Updates', Icons.system_update_outlined),
+              _buildSettingsCard([
                 SwitchListTile(
                   title: const Text('Notify New Releases'),
-                  subtitle: const Text('Show a popup when a new version is available on GitHub.'),
+                  subtitle: const Text('Check GitHub for app updates'),
                   value: _notifyNewReleases,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _notifyNewReleases = value;
-                    });
+                  onChanged: (v) {
+                    setState(() => _notifyNewReleases = v);
                     _saveOtherSettings();
                   },
                 ),
-                const SizedBox(height: 12),
-                Center(
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.update),
-                    label: const Text('Check for Updates Now'),
-                    onPressed: () {
-                      UpdateService().checkForUpdates(context, manual: true);
-                    },
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Check for Updates Now'),
+                      onPressed: () => UpdateService().checkForUpdates(context, manual: true),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ]),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
-    ),
+    );
+  }
+
+  Widget _buildCategoryHeader(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard(List<Widget> children) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
     );
   }
 }
