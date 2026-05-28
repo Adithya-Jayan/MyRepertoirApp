@@ -258,9 +258,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        content,
-        if (widget.isEditable || widget.isTitleEditable) ...[
-          const SizedBox(height: 12),
+        if ((widget.isEditable || widget.isTitleEditable) && currentMediaItem.type != MediaType.thumbnails) ...[
           _isEditingTitle
             ? TextFormField(
                 controller: _titleController,
@@ -281,13 +279,15 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                     children: [
                       const Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(
-                        'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      Expanded(
+                        child: Text(
+                          'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Text(
                         '(Tap to edit)',
                         style: theme.textTheme.labelSmall?.copyWith(
@@ -299,7 +299,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   ),
                 ),
               ),
+          const SizedBox(height: 12),
         ],
+        content,
       ],
     );
   }
