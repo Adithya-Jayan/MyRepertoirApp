@@ -42,6 +42,10 @@ class MediaCleanupService {
     // Get all music pieces to find referenced media files
     final musicPieces = await _repository.getMusicPieces();
     final Map<String, MusicPiece> pieceIdToPiece = { for (var p in musicPieces) p.id: p };
+
+    // Collect all referenced media file paths
+    // On Windows, paths are case-insensitive, so we normalize to lowercase for comparisons.
+    final bool isWindows = Platform.isWindows;
     final Set<String> referencedFiles = <String>{};
     
     // Collect all referenced media file paths
@@ -50,7 +54,8 @@ class MediaCleanupService {
         if (mediaItem.pathOrUrl.isNotEmpty) {
           final absolutePath = getAbsolutePath(mediaItem.pathOrUrl, mediaDir);
           if (await File(absolutePath).exists()) {
-            referencedFiles.add(p.normalize(absolutePath));
+            final normalized = p.normalize(absolutePath);
+            referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
           }
         }
         // Also check thumbnail paths
@@ -58,7 +63,8 @@ class MediaCleanupService {
             mediaItem.thumbnailPath!.isNotEmpty) {
             final absolutePath = getAbsolutePath(mediaItem.thumbnailPath!, mediaDir);
             if (await File(absolutePath).exists()) {
-              referencedFiles.add(p.normalize(absolutePath));
+              final normalized = p.normalize(absolutePath);
+              referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
             }
         }
       }
@@ -67,15 +73,13 @@ class MediaCleanupService {
           piece.thumbnailPath!.isNotEmpty) {
           final absolutePath = getAbsolutePath(piece.thumbnailPath!, mediaDir);
           if (await File(absolutePath).exists()) {
-            referencedFiles.add(p.normalize(absolutePath));
+            final normalized = p.normalize(absolutePath);
+            referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
           }
       }
     }
 
     AppLogger.log('Found ${referencedFiles.length} referenced media files');
-    for (final file in referencedFiles) {
-      AppLogger.log('  - $file');
-    }
 
     // Scan all files in media directory
     final List<File> allFiles = [];
@@ -89,15 +93,42 @@ class MediaCleanupService {
       final fileSize = await file.length();
       totalSize += fileSize;
       
-      if (!referencedFiles.contains(p.normalize(file.path))) {
-        final pieceId = p.basename(p.dirname(p.dirname(file.path)));
-        final piece = pieceIdToPiece[pieceId];
-        final fileType = p.basename(p.dirname(file.path));
+      final normalizedFilePath = p.normalize(file.path);
+      final checkPath = isWindows ? normalizedFilePath.toLowerCase() : normalizedFilePath;
+      
+      if (!referencedFiles.contains(checkPath)) {
+        // Attempt to identify the piece by walking up the directory structure
+        // Expected structure: .../media/<pieceId>/<optional_type>/<filename>
+        String pieceName = 'Unknown Piece';
+        String fileType = 'Unknown Type';
+        
+        try {
+          final mediaDir = await _mediaDirectoryPath;
+          final relativeToMedia = p.relative(normalizedFilePath, from: mediaDir);
+          final pathParts = p.split(relativeToMedia);
+          
+          if (pathParts.isNotEmpty) {
+            final pieceId = pathParts[0];
+            final piece = pieceIdToPiece[pieceId];
+            if (piece != null) {
+              pieceName = piece.title;
+            } else if (pieceId != 'thumbnails' && pieceId.length > 20) {
+              // Looks like a UUID but not found in DB
+              pieceName = 'Stray Piece (ID: ${pieceId.substring(0, 8)}...)';
+            }
+            
+            if (pathParts.length > 1) {
+              fileType = pathParts[pathParts.length - 2];
+            }
+          }
+        } catch (e) {
+          AppLogger.log('Error identifying piece for file ${file.path}: $e');
+        }
 
         unusedFiles.add(UnusedFileInfo(
-          pieceName: piece?.title ?? 'Unknown Piece',
+          pieceName: pieceName,
           fileType: fileType,
-          filePath: file.path,
+          filePath: normalizedFilePath,
         ));
         unusedSize += fileSize;
       }
@@ -114,8 +145,8 @@ class MediaCleanupService {
     AppLogger.log('Media cleanup scan completed:');
     AppLogger.log('  Total files: ${cleanupInfo.totalFilesFound}');
     AppLogger.log('  Unused files: ${cleanupInfo.unusedFilesFound}');
-    AppLogger.log('  Total size: ${_formatBytes(cleanupInfo.totalSizeBytes)}');
-    AppLogger.log('  Unused size: ${_formatBytes(cleanupInfo.unusedSizeBytes)}');
+    AppLogger.log('  Total size: ${cleanupInfo.totalSizeFormatted}');
+    AppLogger.log('  Unused size: ${cleanupInfo.unusedSizeFormatted}');
 
     return cleanupInfo;
   }
@@ -127,7 +158,9 @@ class MediaCleanupService {
   Future<MediaCleanupResult> performCleanup({MediaCleanupInfo? cleanupInfo}) async {
     AppLogger.log('Starting media cleanup...');
     
-    final info = cleanupInfo ?? await scanForUnusedMedia();
+    // Always re-scan to get the most up-to-date state and avoid 'file not found' errors
+    // if files were moved or deleted since the last scan.
+    final info = await scanForUnusedMedia();
     
     if (info.unusedFiles.isEmpty) {
       AppLogger.log('No unused files to clean up.');
@@ -144,24 +177,34 @@ class MediaCleanupService {
     List<String> errors = [];
 
     for (final unusedFileInfo in info.unusedFiles) {
+      final normalizedPath = p.normalize(unusedFileInfo.filePath);
+      final file = File(normalizedPath);
+      
       try {
-        // Normalize the file path to handle any inconsistencies (e.g., mixed separators).
-        final normalizedPath = p.normalize(unusedFileInfo.filePath);
-        final file = File(normalizedPath);
-
         if (await file.exists()) {
-          final fileSize = await file.length();
-          await file.delete();
-          deletedCount++;
-          freedBytes += fileSize;
-          AppLogger.log('Deleted unused file: ${unusedFileInfo.filePath}');
+          int fileSize = 0;
+          try {
+            fileSize = await file.length();
+          } catch (e) {
+            AppLogger.log('Could not get size for file before deletion: $normalizedPath - $e');
+          }
+
+          try {
+            await file.delete();
+            deletedCount++;
+            freedBytes += fileSize;
+            AppLogger.log('Deleted unused file: $normalizedPath');
+          } catch (e) {
+            AppLogger.log('Failed to delete file $normalizedPath: $e');
+            errors.add('Failed to delete ${p.basename(normalizedPath)}: $e');
+          }
         } else {
-          AppLogger.log('File not found for deletion (already deleted or moved): ${unusedFileInfo.filePath}');
-          errors.add('File not found: ${p.basename(unusedFileInfo.filePath)}');
+          AppLogger.log('File disappeared before deletion: $normalizedPath');
+          // Not adding to errors as it's technically gone now.
         }
       } catch (e) {
-        AppLogger.log('Error deleting file ${unusedFileInfo.filePath}: $e');
-        errors.add('Failed to delete ${p.basename(unusedFileInfo.filePath)}: $e');
+        AppLogger.log('Unexpected error processing file $normalizedPath: $e');
+        errors.add('Error processing ${p.basename(normalizedPath)}: $e');
       }
     }
 

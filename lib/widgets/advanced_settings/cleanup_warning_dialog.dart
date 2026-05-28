@@ -14,25 +14,51 @@ class CleanupWarningDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return AlertDialog(
-      title: const Text('Purge Unused Media'),
+      title: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+          const SizedBox(width: 12),
+          const Text('Purge Unused Media'),
+        ],
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'This will permanently delete unused media files that are no longer referenced by any music pieces.',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
-          Text('Files to delete: ${cleanupInfo.unusedFilesFound}'),
-          Text('Space to free: ${cleanupInfo.unusedSizeFormatted}'),
-          const SizedBox(height: 16),
-          const Text(
-            '⚠️ This action cannot be undone. Make sure you have a backup before proceeding.',
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 20),
+          _buildInfoRow(theme, 'Files to delete', '${cleanupInfo.unusedFilesFound}'),
+          _buildInfoRow(theme, 'Space to free', cleanupInfo.unusedSizeFormatted),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.errorContainer.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colorScheme.error.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, color: colorScheme.error, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'This action cannot be undone. Make sure you have a backup before proceeding.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -42,18 +68,31 @@ class CleanupWarningDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(false),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () {
             Navigator.of(context).pop(true);
             onConfirm();
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
+          style: FilledButton.styleFrom(
+            backgroundColor: colorScheme.error,
+            foregroundColor: colorScheme.onError,
           ),
           child: const Text('Delete Files'),
         ),
       ],
+    );
+  }
+
+  Widget _buildInfoRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 } 
