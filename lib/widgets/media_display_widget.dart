@@ -190,7 +190,27 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         content = MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged);
         break;
       case MediaType.audio:
-        content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        if (widget.isEditable) {
+          content = Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.music_note, size: 40, color: colorScheme.primary),
+                const SizedBox(height: 8),
+                Text('Audio File', style: theme.textTheme.labelLarge),
+              ],
+            ),
+          );
+        } else {
+          content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        }
         break;
       case MediaType.mediaLink:
         final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
