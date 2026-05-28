@@ -271,7 +271,8 @@ class _MediaSectionState extends State<MediaSection> {
           child: MediaDisplayWidget(
             musicPiece: widget.musicPiece,
             mediaItemIndex: widget.globalIndex,
-            isEditable: widget.isTitleEditable, // Use the new flag
+            isEditable: true, // Always true as MediaSection is for editing
+            isTitleEditable: widget.isTitleEditable, // Pass the specific editability flag
             onTitleChanged: (newTitle) {
               widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
             },
