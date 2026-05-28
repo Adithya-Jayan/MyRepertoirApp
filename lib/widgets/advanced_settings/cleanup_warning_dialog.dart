@@ -4,12 +4,10 @@ import '../../services/media_cleanup_service.dart';
 /// A dialog that warns the user before performing media cleanup.
 class CleanupWarningDialog extends StatelessWidget {
   final MediaCleanupInfo cleanupInfo;
-  final VoidCallback onConfirm;
 
   const CleanupWarningDialog({
     super.key,
     required this.cleanupInfo,
-    required this.onConfirm,
   });
 
   @override
@@ -71,7 +69,6 @@ class CleanupWarningDialog extends StatelessWidget {
         FilledButton(
           onPressed: () {
             Navigator.of(context).pop(true);
-            onConfirm();
           },
           style: FilledButton.styleFrom(
             backgroundColor: colorScheme.error,

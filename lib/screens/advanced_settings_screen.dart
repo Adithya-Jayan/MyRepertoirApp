@@ -80,7 +80,6 @@ class _AdvancedSettingsScreenState extends State<AdvancedSettingsScreen> {
       builder: (BuildContext context) {
         return CleanupWarningDialog(
           cleanupInfo: _cleanupInfo!,
-          onConfirm: _performCleanup,
         );
       },
     );

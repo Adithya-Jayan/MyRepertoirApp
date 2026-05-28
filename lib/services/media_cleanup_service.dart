@@ -48,38 +48,42 @@ class MediaCleanupService {
     final bool isWindows = Platform.isWindows;
     final Set<String> referencedFiles = <String>{};
     
+    // Helper to add path to referenced set, handling potential URL encoding
+    Future<void> addReferencedPath(String path) async {
+      if (path.isEmpty) return;
+      
+      final absolutePath = getAbsolutePath(path, mediaDir);
+      final normalized = p.normalize(absolutePath);
+      
+      if (await File(normalized).exists()) {
+        referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
+      } else {
+        // Try decoding in case it's URL encoded (e.g. %20 for spaces)
+        try {
+          final decodedPath = Uri.decodeFull(normalized);
+          if (decodedPath != normalized && await File(decodedPath).exists()) {
+            referencedFiles.add(isWindows ? decodedPath.toLowerCase() : decodedPath);
+          }
+        } catch (e) {
+          // Ignore decoding errors
+        }
+      }
+    }
+    
     // Collect all referenced media file paths
     for (final piece in musicPieces) {
       for (final mediaItem in piece.mediaItems) {
-        if (mediaItem.pathOrUrl.isNotEmpty) {
-          final absolutePath = getAbsolutePath(mediaItem.pathOrUrl, mediaDir);
-          if (await File(absolutePath).exists()) {
-            final normalized = p.normalize(absolutePath);
-            referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
-          }
-        }
-        // Also check thumbnail paths
-        if (mediaItem.thumbnailPath != null &&
-            mediaItem.thumbnailPath!.isNotEmpty) {
-            final absolutePath = getAbsolutePath(mediaItem.thumbnailPath!, mediaDir);
-            if (await File(absolutePath).exists()) {
-              final normalized = p.normalize(absolutePath);
-              referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
-            }
+        await addReferencedPath(mediaItem.pathOrUrl);
+        if (mediaItem.thumbnailPath != null) {
+          await addReferencedPath(mediaItem.thumbnailPath!);
         }
       }
-      // Check piece thumbnail
-      if (piece.thumbnailPath != null &&
-          piece.thumbnailPath!.isNotEmpty) {
-          final absolutePath = getAbsolutePath(piece.thumbnailPath!, mediaDir);
-          if (await File(absolutePath).exists()) {
-            final normalized = p.normalize(absolutePath);
-            referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
-          }
+      if (piece.thumbnailPath != null) {
+        await addReferencedPath(piece.thumbnailPath!);
       }
     }
 
-    AppLogger.log('Found ${referencedFiles.length} referenced media files');
+    AppLogger.log('Found ${referencedFiles.length} unique referenced media files');
 
     // Scan all files in media directory
     final List<File> allFiles = [];
@@ -98,7 +102,6 @@ class MediaCleanupService {
       
       if (!referencedFiles.contains(checkPath)) {
         // Attempt to identify the piece by walking up the directory structure
-        // Expected structure: .../media/<pieceId>/<optional_type>/<filename>
         String pieceName = 'Unknown Piece';
         String fileType = 'Unknown Type';
         
@@ -108,17 +111,25 @@ class MediaCleanupService {
           final pathParts = p.split(relativeToMedia);
           
           if (pathParts.isNotEmpty) {
+            // First part is usually the pieceId or 'thumbnails' (legacy)
             final pieceId = pathParts[0];
             final piece = pieceIdToPiece[pieceId];
+            
             if (piece != null) {
               pieceName = piece.title;
-            } else if (pieceId != 'thumbnails' && pieceId.length > 20) {
-              // Looks like a UUID but not found in DB
+            } else if (pieceId == 'thumbnails') {
+              pieceName = 'Legacy Thumbnails';
+            } else if (pieceId.length > 20) {
               pieceName = 'Stray Piece (ID: ${pieceId.substring(0, 8)}...)';
             }
-            
+
+            // Identify type by looking at the folder just above the file
             if (pathParts.length > 1) {
               fileType = pathParts[pathParts.length - 2];
+              // If type is the pieceId, it's a root-level file for that piece
+              if (fileType == pieceId) {
+                fileType = 'Root';
+              }
             }
           }
         } catch (e) {
@@ -195,8 +206,16 @@ class MediaCleanupService {
             freedBytes += fileSize;
             AppLogger.log('Deleted unused file: $normalizedPath');
           } catch (e) {
-            AppLogger.log('Failed to delete file $normalizedPath: $e');
-            errors.add('Failed to delete ${p.basename(normalizedPath)}: $e');
+            // Check if file still exists - if not, it was probably deleted by another process
+            // or a race condition, which is fine as the goal was to remove it.
+            if (await file.exists()) {
+              AppLogger.log('Failed to delete file $normalizedPath: $e');
+              errors.add('Failed to delete ${p.basename(normalizedPath)}: $e');
+            } else {
+              AppLogger.log('File disappeared during deletion attempt: $normalizedPath');
+              deletedCount++; // Still count it as deleted since it's gone
+              freedBytes += fileSize;
+            }
           }
         } else {
           AppLogger.log('File disappeared before deletion: $normalizedPath');
