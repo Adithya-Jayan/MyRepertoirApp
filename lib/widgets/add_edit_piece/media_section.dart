@@ -302,6 +302,8 @@ class MediaSectionWidget extends StatelessWidget {
                     index: -1, // Not used for reordering
                     globalIndex: originalIndex,
                     isReorderable: false,
+                    isTitleEditable: false, // Disable title editing for thumbnail widget
+                    isPathEditable: false, // Disable path editing for thumbnail widget
                     musicPieceThumbnail: musicPiece.thumbnailPath ?? '',
                     musicPieceId: musicPiece.id,
                     onUpdateMediaItem: (updatedItem) {

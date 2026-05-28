@@ -351,6 +351,119 @@ class MusicPieceRepository {
     return uniqueTagGroups.map((key, value) => MapEntry(key, value.toList()));
   }
 
+  /// Retrieves statistics for all tag groups across all music pieces.
+  /// Returns a list of maps, each containing 'name', 'color', 'tags', and 'count'.
+  Future<List<Map<String, dynamic>>> getTagGroupStats() async {
+    final allPieces = await getMusicPieces();
+    final Map<String, Map<String, dynamic>> stats = {};
+
+    for (var piece in allPieces) {
+      for (var tagGroup in piece.tagGroups) {
+        if (!stats.containsKey(tagGroup.name)) {
+          stats[tagGroup.name] = {
+            'name': tagGroup.name,
+            'color': tagGroup.color,
+            'tags': <String>{},
+            'count': 0,
+          };
+        }
+        
+        // Update tag set
+        final tagSet = stats[tagGroup.name]!['tags'] as Set<String>;
+        tagSet.addAll(tagGroup.tags);
+        
+        // Increment piece count
+        stats[tagGroup.name]!['count'] = (stats[tagGroup.name]!['count'] as int) + 1;
+        
+        // Prefer non-null colors if they exist
+        if (stats[tagGroup.name]!['color'] == null && tagGroup.color != null) {
+          stats[tagGroup.name]!['color'] = tagGroup.color;
+        }
+      }
+    }
+
+    // Convert sets back to sorted lists
+    return stats.values.map((entry) {
+      final tags = (entry['tags'] as Set<String>).toList()..sort();
+      return {
+        ...entry,
+        'tags': tags,
+      };
+    }).toList()..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+  }
+
+  /// Renames a tag group globally across all pieces.
+  Future<void> renameTagGroupGlobally(String oldName, String newName) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      bool changed = false;
+      final updatedTagGroups = piece.tagGroups.map((tg) {
+        if (tg.name == oldName) {
+          changed = true;
+          return tg.copyWith(name: newName);
+        }
+        return tg;
+      }).toList();
+
+      if (changed) {
+        await updateMusicPiece(piece.copyWith(tagGroups: updatedTagGroups));
+      }
+    }
+  }
+
+  /// Renames a specific tag within a tag group globally.
+  Future<void> renameTagGlobally(String groupName, String oldTagName, String newTagName) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      bool changed = false;
+      final updatedTagGroups = piece.tagGroups.map((tg) {
+        if (tg.name == groupName && tg.tags.contains(oldTagName)) {
+          changed = true;
+          final newTags = tg.tags.map((t) => t == oldTagName ? newTagName : t).toList();
+          return tg.copyWith(tags: newTags);
+        }
+        return tg;
+      }).toList();
+
+      if (changed) {
+        await updateMusicPiece(piece.copyWith(tagGroups: updatedTagGroups));
+      }
+    }
+  }
+
+  /// Deletes a tag group globally across all pieces.
+  Future<void> deleteTagGroupGlobally(String groupName) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      final originalCount = piece.tagGroups.length;
+      final updatedTagGroups = piece.tagGroups.where((tg) => tg.name != groupName).toList();
+      
+      if (updatedTagGroups.length != originalCount) {
+        await updateMusicPiece(piece.copyWith(tagGroups: updatedTagGroups));
+      }
+    }
+  }
+
+  /// Deletes a specific tag from a tag group globally.
+  Future<void> deleteTagGlobally(String groupName, String tagName) async {
+    final allPieces = await getMusicPieces();
+    for (var piece in allPieces) {
+      bool changed = false;
+      final updatedTagGroups = piece.tagGroups.map((tg) {
+        if (tg.name == groupName && tg.tags.contains(tagName)) {
+          changed = true;
+          final newTags = tg.tags.where((t) => t != tagName).toList();
+          return tg.copyWith(tags: newTags);
+        }
+        return tg;
+      }).toList();
+
+      if (changed) {
+        await updateMusicPiece(piece.copyWith(tagGroups: updatedTagGroups));
+      }
+    }
+  }
+
   Future<int?> getMostCommonColorForTagGroup(String groupName) async {
     final db = await dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query('music_pieces', columns: ['tagGroups']);

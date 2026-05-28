@@ -32,6 +32,8 @@ class MediaSection extends StatefulWidget {
   final MusicPiece musicPiece;
   final bool isReorderable;
   final bool showExternalDelete;
+  final bool isTitleEditable;
+  final bool isPathEditable;
 
   const MediaSection({
     super.key,
@@ -46,6 +48,8 @@ class MediaSection extends StatefulWidget {
     required this.musicPiece,
     this.isReorderable = true,
     this.showExternalDelete = true,
+    this.isTitleEditable = true,
+    this.isPathEditable = true,
   });
 
   @override
@@ -267,7 +271,8 @@ class _MediaSectionState extends State<MediaSection> {
           child: MediaDisplayWidget(
             musicPiece: widget.musicPiece,
             mediaItemIndex: widget.globalIndex,
-            isEditable: true, // Allow title editing
+            isEditable: true, // Always true as MediaSection is for editing
+            isTitleEditable: widget.isTitleEditable, // Pass the specific editability flag
             onTitleChanged: (newTitle) {
               widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
             },
@@ -277,86 +282,88 @@ class _MediaSectionState extends State<MediaSection> {
           ),
         ),
         
-        const SizedBox(height: 12),
-        
-        // Middle Section: Content Configuration
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.item.type == MediaType.learningProgress)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Configure Progress Bar'),
-                  onPressed: () async {
-                     final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
-                     final newConfig = await showDialog<LearningProgressConfig>(
-                        context: context,
-                        builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
-                     );
-                     if (newConfig != null) {
-                        widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
-                     }
-                  },
-                )
-              else if (widget.item.type == MediaType.midi)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Configure MIDI Tracks'),
-                  onPressed: () async {
-                     final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
-                     final newConfig = await showDialog<MidiTrackConfig>(
-                        context: context,
-                        builder: (context) => MidiTrackConfigDialog(
-                          midiPath: widget.item.pathOrUrl,
-                          initialConfig: currentConfig,
-                        ),
-                     );
-                     if (newConfig != null) {
-                        widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                     }
-                  },
-                )
-              else if (widget.item.type == MediaType.pdf)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Configure Auto Scroll'),
-                  onPressed: () async {
-                     final currentConfig = PdfConfig.fromJson(widget.item.configData ?? '{}');
-                     final newConfig = await showDialog<PdfConfig>(
-                        context: context,
-                        builder: (context) => PdfConfigDialog(initialConfig: currentConfig),
-                     );
-                     if (newConfig != null) {
-                        widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                     }
-                  },
-                )
-              else if (widget.item.type == MediaType.markdown)
-                TextFormField(
-                  initialValue: widget.item.pathOrUrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Markdown Content',
-                    border: OutlineInputBorder(),
-                    isDense: true,
+        if (widget.isPathEditable) ...[ // Wrap path section with flag check
+          const SizedBox(height: 12),
+          
+          // Middle Section: Content Configuration
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.item.type == MediaType.learningProgress)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Configure Progress Bar'),
+                    onPressed: () async {
+                       final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
+                       final newConfig = await showDialog<LearningProgressConfig>(
+                          context: context,
+                          builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
+                       );
+                       if (newConfig != null) {
+                          widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
+                       }
+                    },
+                  )
+                else if (widget.item.type == MediaType.midi)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Configure MIDI Tracks'),
+                    onPressed: () async {
+                       final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
+                       final newConfig = await showDialog<MidiTrackConfig>(
+                          context: context,
+                          builder: (context) => MidiTrackConfigDialog(
+                            midiPath: widget.item.pathOrUrl,
+                            initialConfig: currentConfig,
+                          ),
+                       );
+                       if (newConfig != null) {
+                          widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
+                       }
+                    },
+                  )
+                else if (widget.item.type == MediaType.pdf)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Configure Auto Scroll'),
+                    onPressed: () async {
+                       final currentConfig = PdfConfig.fromJson(widget.item.configData ?? '{}');
+                       final newConfig = await showDialog<PdfConfig>(
+                          context: context,
+                          builder: (context) => PdfConfigDialog(initialConfig: currentConfig),
+                       );
+                       if (newConfig != null) {
+                          widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
+                       }
+                    },
+                  )
+                else if (widget.item.type == MediaType.markdown)
+                  TextFormField(
+                    initialValue: widget.item.pathOrUrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Markdown Content',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    maxLines: 5,
+                    onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
+                  )
+                else
+                  TextFormField(
+                    initialValue: widget.item.pathOrUrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Path or URL',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
                   ),
-                  maxLines: 5,
-                  onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
-                )
-              else
-                TextFormField(
-                  initialValue: widget.item.pathOrUrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Path or URL',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
 
         const SizedBox(height: 12),
 

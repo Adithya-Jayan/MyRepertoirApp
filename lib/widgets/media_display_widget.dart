@@ -190,7 +190,27 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
         content = MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged);
         break;
       case MediaType.audio:
-        content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        if (widget.isEditable) {
+          content = Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.music_note, size: 40, color: colorScheme.primary),
+                const SizedBox(height: 8),
+                Text('Audio File', style: theme.textTheme.labelLarge),
+              ],
+            ),
+          );
+        } else {
+          content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        }
         break;
       case MediaType.mediaLink:
         final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
@@ -238,9 +258,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        content,
-        if (widget.isEditable || widget.isTitleEditable) ...[
-          const SizedBox(height: 12),
+        if ((widget.isEditable || widget.isTitleEditable) && currentMediaItem.type != MediaType.thumbnails) ...[
           _isEditingTitle
             ? TextFormField(
                 controller: _titleController,
@@ -261,13 +279,15 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                     children: [
                       const Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(
-                        'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      Expanded(
+                        child: Text(
+                          'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Text(
                         '(Tap to edit)',
                         style: theme.textTheme.labelSmall?.copyWith(
@@ -279,7 +299,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
                   ),
                 ),
               ),
+          const SizedBox(height: 12),
         ],
+        content,
       ],
     );
   }

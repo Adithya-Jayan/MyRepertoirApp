@@ -3,6 +3,7 @@ import 'package:repertoire/screens/about_screen.dart';
 import 'package:repertoire/screens/help_screen.dart';
 
 import 'package:repertoire/screens/group_management_screen.dart'; // New import
+import 'package:repertoire/screens/tag_group_management_screen.dart'; // New import
 import 'package:repertoire/screens/backup_restore_screen.dart';
 import 'package:repertoire/screens/advanced_settings_screen.dart';
 import 'package:repertoire/utils/app_logger.dart';
@@ -61,6 +62,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () async {
                     final bool? changes = await Navigator.of(context).push<bool?>(
                       MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                    );
+                    if (changes == true) _markChanges();
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.label_outline,
+                  title: 'Tagging',
+                  subtitle: 'Bulk edit tag groups and colors',
+                  onTap: () async {
+                    final bool? changes = await Navigator.of(context).push<bool?>(
+                      MaterialPageRoute(builder: (context) => const TagGroupManagementScreen()),
                     );
                     if (changes == true) _markChanges();
                   },
