@@ -132,10 +132,10 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor.withAlpha(242),
+              color: Colors.transparent,
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withAlpha(128),
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   width: 1,
                 ),
               ),

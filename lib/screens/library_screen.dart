@@ -153,7 +153,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                    // Base background color (behind everything)
                   Positioned.fill(
                     child: Container(
-                      color: Theme.of(context).scaffoldBackgroundColor,
+                      color: Theme.of(context).colorScheme.surface,
                     ),
                   ),
                   // Optional patterned background

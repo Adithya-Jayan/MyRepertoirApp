@@ -169,7 +169,7 @@ class _AboutScreenState extends State<AboutScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(children: children),

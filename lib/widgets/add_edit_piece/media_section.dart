@@ -175,7 +175,7 @@ class MediaSectionWidget extends StatelessWidget {
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(
-                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.outlineVariant,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -197,7 +197,7 @@ class MediaSectionWidget extends StatelessWidget {
                               color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                               border: Border(
                                 right: BorderSide(
-                                  color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                                  color: Theme.of(context).colorScheme.outlineVariant,
                                 ),
                               ),
                             ),

@@ -61,6 +61,13 @@ class MusicPieceCard extends StatelessWidget {
     final bool hasThumbnail = piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty;
     final ThumbnailStyle thumbnailStyle = themeNotifier.thumbnailStyle;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final imageCacheWidth = (isListView
+            ? screenWidth
+            : (screenWidth / galleryColumns)) *
+        devicePixelRatio;
+
     Widget textWithOutline(String text, TextStyle? style) {
       if (hasThumbnail && thumbnailStyle == ThumbnailStyle.outline) {
         final shadowColor = brightness == Brightness.dark ? Colors.black : Colors.white;
@@ -89,7 +96,7 @@ class MusicPieceCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-      elevation: 2.0,
+      elevation: 1.0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
         side: isSelected
@@ -111,7 +118,7 @@ class MusicPieceCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
                     filterQuality: FilterQuality.low,
-                    cacheWidth: isListView ? 300 : 250,
+                    cacheWidth: imageCacheWidth.round(),
                     errorBuilder: (context, error, stackTrace) {
                       AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
                       return Container();
