@@ -113,9 +113,19 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
   void _onTabChanged() {
     if (_tabController == null || !mounted) return;
     
+    // ONLY sync to the parent/page controller if the change was NOT triggered by PageView's onPageChanged.
+    // indexIsChanging is true when TabBar is tapped or animateTo is called.
     if (_tabController!.indexIsChanging && !_isSyncing) {
+      final targetIndex = _tabController!.index;
+      final currentPageIndex = widget.pageController.page?.round();
+      
+      // If the TabBar is moving to the page we are already on (or moving towards), 
+      // then this is a sync from PageView -> TabBar, and we should NOT sync back.
+      if (targetIndex == currentPageIndex) return;
+
       _isSyncing = true;
-      widget.onGroupSelected(widget.visibleGroups[_tabController!.index].id, animate: true);
+      // When tapping a tab, we want to animate the PageView to the new group.
+      widget.onGroupSelected(widget.visibleGroups[targetIndex].id, animate: true);
       _isSyncing = false;
     }
   }
@@ -180,79 +190,94 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
 
           Expanded(
             // PageView to display music pieces for each selected group.
-            child: PageView.builder(
-              controller: widget.pageController,
-              itemCount: widget.visibleGroups.length,
-              physics: const SensitivePageScrollPhysics(),
-              // Enabled implicit scrolling for a more fluid feel; 
-              // RepaintBoundaries and cacheExtent in GridView should keep it smooth.
-              allowImplicitScrolling: true,
-              padEnds: false,
-              onPageChanged: (index) {
-                if (!mounted) return;
-                if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
-                  if (!_isSyncing) {
-                    _isSyncing = true;
-                    // Force the TabController to sync ONLY once the page is fully settled
-                    // Increased duration and added curve for a more visible, premium feel
-                    if (_tabController != null && _tabController!.index != index) {
-                      _tabController!.animateTo(
-                        index, 
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollEndNotification) {
+                  // When the scroll ends, we ensure the parent state is fully in sync.
+                  // This is deferred to ScrollEnd to prevent jitter from parent rebuilds during the animation.
+                  final index = widget.pageController.page?.round() ?? 0;
+                  if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
+                    final targetId = widget.visibleGroups[index].id;
+                    if (widget.selectedGroupId != targetId) {
+                      widget.onGroupSelected(targetId, animate: false);
+                    }
+                  }
+                }
+                return false;
+              },
+              child: PageView.builder(
+                controller: widget.pageController,
+                itemCount: widget.visibleGroups.length,
+                physics: const SensitivePageScrollPhysics(),
+                // Enabled implicit scrolling for a more fluid feel; 
+                // RepaintBoundaries and cacheExtent in GridView should keep it smooth.
+                allowImplicitScrolling: true,
+                padEnds: false,
+                onPageChanged: (index) {
+                  if (!mounted) return;
+                  if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
+                    if (!_isSyncing) {
+                      _isSyncing = true;
+                      // Sync the TabController at the midpoint for immediate visual feedback.
+                      // We do NOT call onGroupSelected here to avoid expensive parent rebuilds during the slide.
+                      if (_tabController != null && _tabController!.index != index) {
+                        _tabController!.animateTo(
+                          index, 
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                      // Add subtle haptic feedback when the midpoint is crossed
+                      HapticFeedback.selectionClick();
+                      _isSyncing = false;
+                    }
+                  }
+                },
+                itemBuilder: (context, pageIndex) {
+                  if (widget.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (widget.errorMessage != null) {
+                    return Center(child: Text(widget.errorMessage!));
+                  } else {
+                    // Determine the group ID for the current page.
+                    String? currentPageGroupId;
+                    if (widget.visibleGroups.isNotEmpty) {
+                      currentPageGroupId = widget.visibleGroups[pageIndex].id;
+                    } else {
+                      // If no groups are visible, show an empty gallery.
+                      return const Center(child: Text('No visible groups.'));
+                    }
+
+                    // Get filtered pieces from cache instead of filtering on every build
+                    final filteredAndSortedPieces = widget.getFilteredPiecesForGroup(currentPageGroupId);
+                    
+                    if (filteredAndSortedPieces.isEmpty) {
+                      return SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
+                        child: const Center(child: Text('This group is empty.')),
                       );
                     }
-                    widget.onGroupSelected(widget.visibleGroups[index].id, animate: false);
-                    // Add subtle haptic feedback when the tab actually settles
-                    HapticFeedback.selectionClick();
-                    _isSyncing = false;
-                  }
-                }
-              },
-              itemBuilder: (context, pageIndex) {
-                if (widget.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (widget.errorMessage != null) {
-                  return Center(child: Text(widget.errorMessage!));
-                } else {
-                  // Determine the group ID for the current page.
-                  String? currentPageGroupId;
-                  if (widget.visibleGroups.isNotEmpty) {
-                    currentPageGroupId = widget.visibleGroups[pageIndex].id;
-                  } else {
-                    // If no groups are visible, show an empty gallery.
-                    return const Center(child: Text('No visible groups.'));
-                  }
 
-                  // Get filtered pieces from cache instead of filtering on every build
-                  final filteredAndSortedPieces = widget.getFilteredPiecesForGroup(currentPageGroupId);
-                  
-                  if (filteredAndSortedPieces.isEmpty) {
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
-                      child: const Center(child: Text('This group is empty.')),
+                    return MusicPieceGridView(
+                      key: ValueKey('grid_${currentPageGroupId}_${widget.galleryColumns}_$pageIndex'),
+                      musicPieces: filteredAndSortedPieces,
+                      isLoading: widget.isLoading,
+                      errorMessage: widget.errorMessage,
+                      galleryColumns: widget.galleryColumns,
+                      selectedPieceIds: widget.selectedPieceIds,
+                      pressedKeys: widget.pressedKeys,
+                      isMultiSelectMode: widget.isMultiSelectMode,
+                      onPieceSelected: widget.onPieceSelected,
+                      onReloadData: widget.onReloadData,
+                      onToggleMultiSelectMode: widget.onToggleMultiSelectMode,
+                      currentPageGroupId: currentPageGroupId,
                     );
                   }
-
-                  return MusicPieceGridView(
-                    key: ValueKey('grid_${currentPageGroupId}_${widget.galleryColumns}_$pageIndex'),
-                    musicPieces: filteredAndSortedPieces,
-                    isLoading: widget.isLoading,
-                    errorMessage: widget.errorMessage,
-                    galleryColumns: widget.galleryColumns,
-                    selectedPieceIds: widget.selectedPieceIds,
-                    pressedKeys: widget.pressedKeys,
-                    isMultiSelectMode: widget.isMultiSelectMode,
-                    onPieceSelected: widget.onPieceSelected,
-                    onReloadData: widget.onReloadData,
-                    onToggleMultiSelectMode: widget.onToggleMultiSelectMode,
-                    currentPageGroupId: currentPageGroupId,
-                  );
-                }
-              },
+                },
+              ),
             ),
           ),
-        ],
+      ],
     );
   }
 }

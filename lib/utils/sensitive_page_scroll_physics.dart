@@ -22,31 +22,34 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
 
   double _getTargetPixels(ScrollMetrics position, Tolerance tolerance, double velocity) {
     double page = _getPage(position);
-    
-    // Very low velocity threshold to make even tiny flicks trigger a page change
-    final double velocityThreshold = tolerance.velocity * 0.05; // 5% of the default velocity threshold
+
+    // Extremely low velocity threshold to ensure almost any flick triggers a page change
+    final double velocityThreshold = tolerance.velocity * 0.01; // 1% of the default velocity threshold
 
     if (velocity < -velocityThreshold) {
-      // Small flick back: strongly favor the previous page
-      page -= 0.7; 
+      // Flick back: snap to the previous page index
+      // Using round(page - 0.5) ensures we go to the immediately adjacent page without overshooting
+      page = (page - 0.5).roundToDouble();
     } else if (velocity > velocityThreshold) {
-      // Small flick forward: strongly favor the next page
-      page += 0.7;
+      // Flick forward: snap to the next page index
+      // Using round(page + 0.5) ensures we go to the immediately adjacent page without overshooting
+      page = (page + 0.5).roundToDouble();
     } else {
-      // For slow drags, lower the displacement threshold from 0.5 to 0.35
-      // This means moving ~35% of the way is enough to snap to the next page
+      // For slow drags, even 15% of the way is enough to snap to the next page
+      // This makes the UI feel very "eager" to move
       final double fraction = page - page.truncateToDouble();
-      if (fraction > 0.35) {
+      if (fraction > 0.15) {
         page = page.truncateToDouble() + 1.0;
-      } else if (fraction < -0.35) {
+      } else if (fraction < -0.15) {
         page = page.truncateToDouble() - 1.0;
       } else {
         page = page.roundToDouble();
       }
-      return _getPixels(position, page);
     }
 
-    return _getPixels(position, page.roundToDouble());
+    // Convert page index back to pixels and CLAMP to prevent harsh boundary bounces
+    final double target = _getPixels(position, page);
+    return target.clamp(position.minScrollExtent, position.maxScrollExtent);
   }
 
   @override
@@ -55,10 +58,10 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
         (velocity >= 0.0 && position.pixels >= position.maxScrollExtent)) {
       return super.createBallisticSimulation(position, velocity);
     }
-    
+
     final Tolerance tolerance = toleranceFor(position);
     final double target = _getTargetPixels(position, tolerance, velocity);
-    
+
     if (target != position.pixels) {
       return ScrollSpringSimulation(spring, position.pixels, target, velocity, tolerance: tolerance);
     }
@@ -70,8 +73,8 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
 
   @override
   SpringDescription get spring => const SpringDescription(
-    mass: 0.4,      // Very light mass for instant response
-    stiffness: 180.0, // Natural stiffness for a clean, non-mechanical snap
-    damping: 20.0,    // Balanced damping for a smooth finish
+    mass: 0.5,      // Slightly more mass for a grounded feel
+    stiffness: 120.0, // Natural stiffness for a smooth, decisive snap
+    damping: 20.0,    // Overdamped to ensure no oscillation or jitter
   );
 }
