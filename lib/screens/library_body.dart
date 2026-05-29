@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_grid_view.dart';
-import 'package:repertoire/utils/sensitive_page_scroll_physics.dart';
 
 class LibraryBody extends StatefulWidget {
   final List<Group> visibleGroups;
@@ -14,14 +13,13 @@ class LibraryBody extends StatefulWidget {
   final String? errorMessage;
   final int galleryColumns;
   final Key groupListKey;
-  final PageController pageController;
   final bool isMultiSelectMode;
   final Set<String> selectedPieceIds;
   final Set<LogicalKeyboardKey> pressedKeys;
   final Function(MusicPiece) onPieceSelected;
   final VoidCallback onReloadData;
   final VoidCallback onToggleMultiSelectMode;
-  final void Function(String, {bool animate}) onGroupSelected;
+  final void Function(String?) onGroupSelected;
   final String searchQuery;
   final Map<String, dynamic> filterOptions;
   final String sortOption;
@@ -37,7 +35,6 @@ class LibraryBody extends StatefulWidget {
     required this.errorMessage,
     required this.galleryColumns,
     required this.groupListKey,
-    required this.pageController,
     required this.isMultiSelectMode,
     required this.selectedPieceIds,
     required this.pressedKeys,
@@ -57,13 +54,11 @@ class LibraryBody extends StatefulWidget {
 
 class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin {
   TabController? _tabController;
-  bool _isSyncing = false;
 
   @override
   void initState() {
     super.initState();
     _initTabController();
-    widget.pageController.addListener(_onPageScroll);
   }
 
   void _initTabController() {
@@ -87,56 +82,40 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
   void didUpdateWidget(LibraryBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    // Re-initialize TabController if the number of groups changed
-    if (oldWidget.visibleGroups.length != widget.visibleGroups.length) {
+    bool groupsChanged = oldWidget.visibleGroups.length != widget.visibleGroups.length ||
+        !oldWidget.visibleGroups.every((g) => widget.visibleGroups.any((ng) => ng.id == g.id));
+
+    if (groupsChanged) {
       final oldController = _tabController;
       oldController?.removeListener(_onTabChanged);
       _initTabController();
-      // Delay disposal to ensure TabBar has switched to the new controller
       if (oldController != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           oldController.dispose();
         });
       }
-    } 
-    // Sync TabController if the selected group changed externally
-    else if (widget.selectedGroupId != oldWidget.selectedGroupId && widget.selectedGroupId != null) {
+    } else if (widget.selectedGroupId != oldWidget.selectedGroupId && widget.selectedGroupId != null) {
       final index = widget.visibleGroups.indexWhere((g) => g.id == widget.selectedGroupId);
       if (index != -1 && _tabController != null && _tabController!.index != index) {
-        _isSyncing = true;
         _tabController!.animateTo(index);
-        _isSyncing = false;
       }
     }
   }
 
   void _onTabChanged() {
-    if (_tabController == null || !mounted) return;
+    if (_tabController == null || !_tabController!.indexIsChanging) return;
     
-    // ONLY sync to the parent/page controller if the change was NOT triggered by PageView's onPageChanged.
-    // indexIsChanging is true when TabBar is tapped or animateTo is called.
-    if (_tabController!.indexIsChanging && !_isSyncing) {
-      final targetIndex = _tabController!.index;
-      final currentPageIndex = widget.pageController.page?.round();
-      
-      // If the TabBar is moving to the page we are already on (or moving towards), 
-      // then this is a sync from PageView -> TabBar, and we should NOT sync back.
-      if (targetIndex == currentPageIndex) return;
-
-      _isSyncing = true;
-      // When tapping a tab, we want to animate the PageView to the new group.
-      widget.onGroupSelected(widget.visibleGroups[targetIndex].id, animate: true);
-      _isSyncing = false;
+    final newIndex = _tabController!.index;
+    if (widget.visibleGroups.isNotEmpty && newIndex < widget.visibleGroups.length) {
+      final newGroupId = widget.visibleGroups[newIndex].id;
+      if (widget.selectedGroupId != newGroupId) {
+        widget.onGroupSelected(newGroupId);
+      }
     }
-  }
-
-  void _onPageScroll() {
-    // Completely decoupled from active swipes to prevent premature TabBar movement.
   }
 
   @override
   void dispose() {
-    widget.pageController.removeListener(_onPageScroll);
     _tabController?.removeListener(_onTabChanged);
     _tabController?.dispose();
     super.dispose();
@@ -153,10 +132,10 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor.withValues(alpha: 0.02),
+              color: theme.scaffoldBackgroundColor.withAlpha(242),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withValues(alpha: 0.08),
+                  color: theme.dividerColor.withAlpha(128),
                   width: 1,
                 ),
               ),
@@ -169,11 +148,10 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
               indicatorSize: TabBarIndicatorSize.label,
               indicatorColor: theme.colorScheme.primary,
               labelColor: theme.colorScheme.primary,
-              unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(179),
               labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              // Use a more subtle splash effect for a premium feel
               splashFactory: NoSplash.splashFactory,
               overlayColor: WidgetStateProperty.all(Colors.transparent),
               tabs: widget.visibleGroups.map((group) {
@@ -187,79 +165,30 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
               }).toList(),
             ),
           ),
-
-          Expanded(
-            // PageView to display music pieces for each selected group.
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification is ScrollEndNotification) {
-                  // When the scroll ends, we ensure the parent state is fully in sync.
-                  // This is deferred to ScrollEnd to prevent jitter from parent rebuilds during the animation.
-                  final index = widget.pageController.page?.round() ?? 0;
-                  if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
-                    final targetId = widget.visibleGroups[index].id;
-                    if (widget.selectedGroupId != targetId) {
-                      widget.onGroupSelected(targetId, animate: false);
-                    }
-                  }
-                }
-                return false;
-              },
-              child: PageView.builder(
-                controller: widget.pageController,
-                itemCount: widget.visibleGroups.length,
-                physics: const SensitivePageScrollPhysics(),
-                // Enabled implicit scrolling for a more fluid feel; 
-                // RepaintBoundaries and cacheExtent in GridView should keep it smooth.
-                allowImplicitScrolling: true,
-                padEnds: false,
-                onPageChanged: (index) {
-                  if (!mounted) return;
-                  if (widget.visibleGroups.isNotEmpty && index < widget.visibleGroups.length) {
-                    if (!_isSyncing) {
-                      _isSyncing = true;
-                      // Sync the TabController at the midpoint for immediate visual feedback.
-                      // We do NOT call onGroupSelected here to avoid expensive parent rebuilds during the slide.
-                      if (_tabController != null && _tabController!.index != index) {
-                        _tabController!.animateTo(
-                          index, 
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutCubic,
-                        );
-                      }
-                      // Add subtle haptic feedback when the midpoint is crossed
-                      HapticFeedback.selectionClick();
-                      _isSyncing = false;
-                    }
-                  }
-                },
-                itemBuilder: (context, pageIndex) {
-                  if (widget.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (widget.errorMessage != null) {
-                    return Center(child: Text(widget.errorMessage!));
-                  } else {
-                    // Determine the group ID for the current page.
-                    String? currentPageGroupId;
-                    if (widget.visibleGroups.isNotEmpty) {
-                      currentPageGroupId = widget.visibleGroups[pageIndex].id;
-                    } else {
-                      // If no groups are visible, show an empty gallery.
-                      return const Center(child: Text('No visible groups.'));
+          if (_tabController == null)
+            const Expanded(child: Center(child: Text("No visible groups.")))
+          else
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: widget.visibleGroups.map((group) {
+                    if (widget.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (widget.errorMessage != null) {
+                      return Center(child: Text(widget.errorMessage!));
                     }
 
-                    // Get filtered pieces from cache instead of filtering on every build
-                    final filteredAndSortedPieces = widget.getFilteredPiecesForGroup(currentPageGroupId);
+                    final filteredAndSortedPieces = widget.getFilteredPiecesForGroup(group.id);
                     
                     if (filteredAndSortedPieces.isEmpty) {
                       return SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.6, // Ensure minimum height for refresh
+                        height: MediaQuery.of(context).size.height * 0.6,
                         child: const Center(child: Text('This group is empty.')),
                       );
                     }
 
                     return MusicPieceGridView(
-                      key: ValueKey('grid_${currentPageGroupId}_${widget.galleryColumns}_$pageIndex'),
+                      key: ValueKey('grid_${group.id}_${widget.galleryColumns}'),
                       musicPieces: filteredAndSortedPieces,
                       isLoading: widget.isLoading,
                       errorMessage: widget.errorMessage,
@@ -270,13 +199,11 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
                       onPieceSelected: widget.onPieceSelected,
                       onReloadData: widget.onReloadData,
                       onToggleMultiSelectMode: widget.onToggleMultiSelectMode,
-                      currentPageGroupId: currentPageGroupId,
+                      currentPageGroupId: group.id,
                     );
-                  }
-                },
+                }).toList(),
               ),
             ),
-          ),
       ],
     );
   }

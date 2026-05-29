@@ -47,7 +47,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   final Set<LogicalKeyboardKey> _pressedKeys = {};
   Timer? _debounceTimer;
   final FocusNode _focusNode = FocusNode();
-  late PageController _pageController;
   Key _groupListKey = UniqueKey();
   String? _selectedGroupId;
 
@@ -68,7 +67,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Set<String> get selectedPieceIds => _selectedPieceIds;
   Set<LogicalKeyboardKey> get pressedKeys => _pressedKeys;
   FocusNode get focusNode => _focusNode;
-  PageController get pageController => _pageController;
   Key get groupListKey => _groupListKey;
   String? get selectedGroupId => _selectedGroupId;
   SharedPreferences get prefs => _settingsManager.prefs;
@@ -125,18 +123,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
     
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
-    int initialPage = 0;
     if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
       _selectedGroupId = visibleGroups.first.id;
-      initialPage = 0;
       AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}');
-    } else if (_selectedGroupId != null) {
-      initialPage = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
-      if (initialPage == -1) initialPage = 0;
     }
-    
-    // Initialize PageController with the correct initial page
-    _pageController = PageController(initialPage: initialPage);
     
     // Update the cache with initial data and load music pieces
     _updateFilteredResultsCache();
@@ -152,7 +142,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
   @override
   void dispose() {
     AppLogger.log('LibraryScreenNotifier: dispose called');
-    _pageController.dispose();
     _focusNode.dispose();
     _debounceTimer?.cancel();
     isLoadingNotifier.dispose();
@@ -321,9 +310,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
         _selectedGroupId = null;
       }
       
-      // Reset PageController to ensure smooth transitions when groups change
-      _resetPageController();
-      
       _groupListKey = UniqueKey();
     } catch (e) {
       errorMessageNotifier.value = 'Failed to load groups: $e';
@@ -334,15 +320,8 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   Future<void> loadMusicPieces() async {
-    // Check if cache needs to be updated
-    final filtersChanged = !_areFilterOptionsEqual(_filterOptions, _lastFilterOptions);
     if (_needsCacheUpdate()) {
       _updateFilteredResultsCache();
-    }
-    
-    // If filters changed, some groups might have appeared/disappeared
-    if (filtersChanged) {
-      _resetPageController();
     }
     
     // Use cached results for the selected group
@@ -450,44 +429,8 @@ class LibraryScreenNotifier extends ChangeNotifier {
     _lastSortOption = _sortOption;
   }
 
-  void _resetPageController() {
-    AppLogger.log('LibraryScreenNotifier: _resetPageController called');
-    final visibleGroups = getVisibleGroups();
-    AppLogger.log('LibraryScreenNotifier: Visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
-    
-    // If the currently selected group is not in visible groups, select the first visible group
-    if (_selectedGroupId != null && !visibleGroups.any((g) => g.id == _selectedGroupId)) {
-      if (visibleGroups.isNotEmpty) {
-        _selectedGroupId = visibleGroups.first.id;
-        AppLogger.log('LibraryScreenNotifier: Selected first visible group: ${visibleGroups.first.name}');
-      } else {
-        _selectedGroupId = null;
-        AppLogger.log('LibraryScreenNotifier: No visible groups, cleared selection');
-      }
-    }
-    
-    // If no group is selected and there are visible groups, select the first one
-    if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
-      _selectedGroupId = visibleGroups.first.id;
-      AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group: ${visibleGroups.first.name}');
-    }
-
-    // Sync TabController if the selected group changed externally
-    if (_selectedGroupId != null && _pageController.hasClients) {
-      final index = visibleGroups.indexWhere((g) => g.id == _selectedGroupId);
-      if (index != -1) {
-         // Use jumpToPage to ensure the UI stays in sync with the selected group
-         WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_pageController.hasClients) {
-              _pageController.jumpToPage(index);
-            }
-         });
-      }
-    }
-  }
-
-  void onGroupSelected(String? groupId, {bool animate = true}) {
-    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId, animate: $animate');
+  void onGroupSelected(String? groupId) {
+    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId');
     
     // Avoid unnecessary updates if the group hasn't changed
     if (_selectedGroupId == groupId) {
@@ -495,14 +438,6 @@ class LibraryScreenNotifier extends ChangeNotifier {
     }
 
     _selectedGroupId = groupId;
-    final visibleGroups = getVisibleGroups();
-    final index = visibleGroups.indexWhere((g) => g.id == groupId);
-    AppLogger.log('LibraryScreenNotifier: Found group at index: $index in visible groups: ${visibleGroups.map((g) => g.name).join(', ')}');
-    
-    if (animate && pageController.hasClients && index != -1) {
-      // Use jumpToPage for instant transition to avoid scrolling through intermediate pages
-      pageController.jumpToPage(index);
-    }
     
     // Update music pieces from cache instead of re-filtering
     if (groupId != null) {
