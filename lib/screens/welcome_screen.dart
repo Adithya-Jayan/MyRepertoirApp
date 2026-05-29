@@ -147,45 +147,75 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('WelcomeScreen: build called');
+    final theme = Theme.of(context);
     return SafeArea(
       child: Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.rocket_launch, size: 100), // Rocket launch icon for welcome.
-              const SizedBox(height: 20),
-              const Text('Welcome!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)), // Welcome message.
-              const SizedBox(height: 10),
-              const Text('Let\'s set some things up first. You can change these settings later.'), // Introductory text.
-              const SizedBox(height: 40),
-              const Text('Select a folder where the app will store its files:'), // Instruction for folder selection.
-              const SizedBox(height: 10),
-              Text('Selected folder: ${_storagePath ?? 'No storage location set'}'), // Display selected folder path.
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _selectStorageFolder, // Button to trigger folder selection.
-                child: const Text('Select a folder'),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.rocket_launch, size: 80),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Welcome!',
+                    style: theme.textTheme.displaySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Let\'s get your repertoire set up. You can always change these settings later.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 48),
+                  Text(
+                    'Select a folder where the app will store its files:',
+                    style: theme.textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _storagePath ?? 'No storage location set',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.tonal(
+                    onPressed: _selectStorageFolder,
+                    child: const Text('Select a folder'),
+                  ),
+                  const SizedBox(height: 40),
+                  ElevatedButton(
+                    onPressed: _storagePath != null
+                        ? () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ColorSchemeScreen()),
+                            );
+                          }
+                        : null,
+                    child: const Text('Next'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: _storagePath != null
-                    ? () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ColorSchemeScreen()), // Navigate to ColorSchemeScreen.
-                        );
-                      }
-                    : null, // Disable button if no storage path is selected.
-                child: const Text('Next'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
