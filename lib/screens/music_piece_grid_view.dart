@@ -52,7 +52,7 @@ class MusicPieceGridView extends StatelessWidget {
           key: ValueKey('list_${currentPageGroupId}_$galleryColumns'),
           padding: const EdgeInsets.all(8.0),
           itemCount: musicPieces.length,
-          cacheExtent: 150, // Reduced from 500 to improve performance
+          cacheExtent: 500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
           addRepaintBoundaries: true,
           physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (context, index) {
@@ -70,7 +70,7 @@ class MusicPieceGridView extends StatelessWidget {
       child: GridView.builder(
         key: ValueKey('grid_${currentPageGroupId}_$galleryColumns'), // More stable key
         padding: const EdgeInsets.all(8.0),
-        cacheExtent: 150, // Reduced from 500 to improve performance
+        cacheExtent: 500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
         addRepaintBoundaries: true,
         physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -91,7 +91,7 @@ class MusicPieceGridView extends StatelessWidget {
   Widget _buildMusicPieceCard(BuildContext context, MusicPiece piece) {
     final isSelected = selectedPieceIds.contains(piece.id);
     return MusicPieceCard(
-      key: ValueKey('card_${piece.id}_$isSelected'), // Add key for better performance
+      key: ValueKey('card_${piece.id}'), // Simplified key to allow efficient element updates during selection changes
       piece: piece,
       isSelected: isSelected,
       isListView: galleryColumns == 1,
