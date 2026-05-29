@@ -247,7 +247,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                               decoration: BoxDecoration(
                                 color: Color(stage.colorValue),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                               ),
                             ),
                           ),
@@ -396,7 +396,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(
