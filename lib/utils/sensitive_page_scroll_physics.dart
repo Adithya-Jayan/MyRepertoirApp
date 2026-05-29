@@ -27,23 +27,18 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
     final double velocityThreshold = tolerance.velocity * 0.01; // 1% of the default velocity threshold
 
     if (velocity < -velocityThreshold) {
-      // Flick back: snap to the previous page index
-      // Using round(page - 0.5) ensures we go to the immediately adjacent page without overshooting
-      page = (page - 0.5).roundToDouble();
+      // Flick back: snap to the beginning of the current page
+      page = page.floorToDouble();
     } else if (velocity > velocityThreshold) {
-      // Flick forward: snap to the next page index
-      // Using round(page + 0.5) ensures we go to the immediately adjacent page without overshooting
-      page = (page + 0.5).roundToDouble();
+      // Flick forward: snap to the beginning of the next page
+      page = page.ceilToDouble();
     } else {
       // For slow drags, even 15% of the way is enough to snap to the next page
-      // This makes the UI feel very "eager" to move
-      final double fraction = page - page.truncateToDouble();
-      if (fraction > 0.15) {
-        page = page.truncateToDouble() + 1.0;
-      } else if (fraction < -0.15) {
-        page = page.truncateToDouble() - 1.0;
+      final double roundPage = page.roundToDouble();
+      if ((page - roundPage).abs() > 0.15) {
+        page = page > roundPage ? roundPage + 1.0 : roundPage - 1.0;
       } else {
-        page = page.roundToDouble();
+        page = roundPage;
       }
     }
 
