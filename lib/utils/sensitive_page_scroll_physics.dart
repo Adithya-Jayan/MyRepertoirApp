@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// 
 /// It lowers the velocity and distance thresholds required to snap to the next page,
 /// making the gallery navigation feel more fluid and responsive without oscillation.
-class SensitivePageScrollPhysics extends ScrollPhysics {
+class SensitivePageScrollPhysics extends PageScrollPhysics {
   const SensitivePageScrollPhysics({super.parent});
 
   @override
@@ -27,15 +27,18 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
     final double velocityThreshold = tolerance.velocity * 0.01; // 1% of the default velocity threshold
 
     if (velocity < -velocityThreshold) {
-      // Flick back: snap to the beginning of the current page
-      page = page.floorToDouble();
+      // Flick back (towards smaller indices): snap to the previous page
+      // Using ceil - 0.9 ensures that if we are exactly on page 1.0, we go to 0.1
+      page = page.ceilToDouble() - 0.9;
     } else if (velocity > velocityThreshold) {
-      // Flick forward: snap to the beginning of the next page
-      page = page.ceilToDouble();
+      // Flick forward (towards larger indices): snap to the next page
+      // Using floor + 0.9 ensures that if we are exactly on page 0.0, we go to 0.9
+      page = page.floorToDouble() + 0.9;
     } else {
-      // For slow drags, even 15% of the way is enough to snap to the next page
+      // For slow drags, even 25% of the way is enough to snap to the next page
+      // This is the "eager" behavior the user wants to keep.
       final double roundPage = page.roundToDouble();
-      if ((page - roundPage).abs() > 0.15) {
+      if ((page - roundPage).abs() > 0.25) {
         page = page > roundPage ? roundPage + 1.0 : roundPage - 1.0;
       } else {
         page = roundPage;
@@ -65,11 +68,4 @@ class SensitivePageScrollPhysics extends ScrollPhysics {
 
   @override
   bool get allowImplicitScrolling => true;
-
-  @override
-  SpringDescription get spring => const SpringDescription(
-    mass: 0.5,      // Slightly more mass for a grounded feel
-    stiffness: 120.0, // Natural stiffness for a smooth, decisive snap
-    damping: 20.0,    // Overdamped to ensure no oscillation or jitter
-  );
 }
