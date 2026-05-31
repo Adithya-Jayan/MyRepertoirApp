@@ -22,8 +22,10 @@ class PracticeSummaryWidget extends StatelessWidget {
       (sum, log) => sum + log.durationMinutes,
     );
     
-    final averageDuration = practiceLogs.isNotEmpty 
-        ? totalDuration / practiceLogs.length 
+    final logsWithDurationCount = practiceLogs.where((log) => log.durationMinutes > 0).length;
+    
+    final averageDuration = logsWithDurationCount > 0 
+        ? totalDuration / logsWithDurationCount 
         : 0;
 
     return Card(
