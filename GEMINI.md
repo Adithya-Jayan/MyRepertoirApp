@@ -11,3 +11,4 @@ These steps must be completed to verify structural integrity and identify potent
 Always confirm with the user before merging changes or Pushing updates (For each push/merge).
 
 - **Backward Compatibility:** Always ensure that backup and restore, app upgrades, and general backward compatibility are checked and handled properly for any update.
+- **Settings & Backup:** Whenever a new `SharedPreferences` key is added to the application, ensure it is also included in the backup (`BackupManager._collectAppSettings`) and restore (`RestoreManager._restoreAppSettings`) logic to maintain user data consistency.
