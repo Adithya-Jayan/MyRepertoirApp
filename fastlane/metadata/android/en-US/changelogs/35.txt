@@ -1,0 +1,21 @@
+Incremental release with fixes for identified issues.
+
+## What's Changed
+* Upgrades and Updates. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/202
+* Bug fixes and improvements. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/203
+* Bug fix by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/204
+* Missing autobackup notification fix. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/205
+* Hide empty groups and file explorer implementation  by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/206
+* Dev by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/207
+* Visual overhaul by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/208
+* Bugfixes by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/209
+* Thumbnail fix by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/210
+* Lots of upgrades by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/211
+* Improve media management and edit screen functionality by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/212
+* Enhance group swipe experience and optimize scrolling by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/213
+* Flutter analyze fix by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/215
+* Colour theme update on the webpage. by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/216
+* Enhance backup settings, practice duration, and sharing features by @Adithya-Jayan in https://github.com/Adithya-Jayan/MyRepertoirApp/pull/217
+
+
+**Full Changelog**: https://github.com/Adithya-Jayan/MyRepertoirApp/compare/v4.9.0+33...v4.10.0-prerelease.2+35
