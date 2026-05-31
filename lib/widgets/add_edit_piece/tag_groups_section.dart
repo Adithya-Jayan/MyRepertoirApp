@@ -70,6 +70,7 @@ class TagGroupsSection extends StatelessWidget {
                 onDeleteTagGroup: onDeleteTagGroup,
                 onGetAllTagsForTagGroup: onGetAllTagsForTagGroup,
                 onFetchMostCommonColor: onFetchMostCommonColor,
+                isNewlyAdded: newlyAddedId == tagGroup.id,
               ),
             );
           },

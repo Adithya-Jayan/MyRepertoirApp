@@ -105,7 +105,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.7),
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
           suffixIcon: widget.searchQuery.isNotEmpty
               ? IconButton(

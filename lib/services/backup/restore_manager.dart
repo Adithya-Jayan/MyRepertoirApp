@@ -499,6 +499,18 @@ class RestoreManager {
       await prefs.setString('sortOption', appSettingsJson['sortOption']);
       AppLogger.log('RestoreManager: Restored sortOption: ${appSettingsJson['sortOption']}');
     }
+    if (appSettingsJson['hideEmptyGroups'] != null) {
+      await prefs.setBool('hideEmptyGroups', appSettingsJson['hideEmptyGroups']);
+      AppLogger.log('RestoreManager: Restored hideEmptyGroups: ${appSettingsJson['hideEmptyGroups']}');
+    }
+    if (appSettingsJson['filterOptions'] != null) {
+      await prefs.setString('filterOptions', appSettingsJson['filterOptions']);
+      AppLogger.log('RestoreManager: Restored filterOptions');
+    }
+    if (appSettingsJson['quickFilters'] != null) {
+      await prefs.setString('quickFilters', appSettingsJson['quickFilters']);
+      AppLogger.log('RestoreManager: Restored quickFilters');
+    }
     
     // Group visibility settings
     if (appSettingsJson['all_group_isHidden'] != null) {
@@ -533,11 +545,27 @@ class RestoreManager {
       await prefs.setString('practice_stages', appSettingsJson['practice_stages']);
       AppLogger.log('RestoreManager: Restored practice_stages');
     }
+    if (appSettingsJson['show_practice_time_stats'] != null) {
+      await prefs.setBool('show_practice_time_stats', appSettingsJson['show_practice_time_stats']);
+      AppLogger.log('RestoreManager: Restored show_practice_time_stats: ${appSettingsJson['show_practice_time_stats']}');
+    }
+    if (appSettingsJson['show_practice_notes'] != null) {
+      await prefs.setBool('show_practice_notes', appSettingsJson['show_practice_notes']);
+      AppLogger.log('RestoreManager: Restored show_practice_notes: ${appSettingsJson['show_practice_notes']}');
+    }
     
     // App state settings
     if (appSettingsJson['hasRunBefore'] != null) {
       await prefs.setBool('hasRunBefore', appSettingsJson['hasRunBefore']);
       AppLogger.log('RestoreManager: Restored hasRunBefore: ${appSettingsJson['hasRunBefore']}');
+    }
+    if (appSettingsJson['notifyNewReleases'] != null) {
+      await prefs.setBool('notifyNewReleases', appSettingsJson['notifyNewReleases']);
+      AppLogger.log('RestoreManager: Restored notifyNewReleases: ${appSettingsJson['notifyNewReleases']}');
+    }
+    if (appSettingsJson['showGradientBackground'] != null) {
+      await prefs.setBool('showGradientBackground', appSettingsJson['showGradientBackground']);
+      AppLogger.log('RestoreManager: Restored showGradientBackground: ${appSettingsJson['showGradientBackground']}');
     }
     
     // Debug settings

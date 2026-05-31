@@ -12,6 +12,25 @@ plugins {
 }
 
     android {
+    // Safety check to prevent flavorless builds which cause "file not found" errors in the Flutter tool
+    val taskNames = gradle.startParameter.taskNames
+    val isGenericBuildTask = taskNames.any { 
+        it.endsWith("assembleDebug") || it.endsWith("assembleRelease") || 
+        it.endsWith("installDebug") || it.endsWith("installRelease") ||
+        it.endsWith("bundleDebug") || it.endsWith("bundleRelease")
+    }
+    if (isGenericBuildTask) {
+        throw GradleException("\n\n" +
+            "********************************************************************************\n" +
+            "ERROR: NO FLAVOR SPECIFIED!\n" +
+            "This project requires a flavor to be specified (e.g., 'fdroid' or 'nightly').\n" +
+            "Please use the --flavor flag:\n" +
+            "  - flutter run --flavor fdroid\n" +
+            "  - flutter build apk --flavor fdroid\n" +
+            "********************************************************************************\n" +
+            "\n\n")
+    }
+
     namespace = "io.github.adithya_jayan.myrepertoirapp"
     compileSdk = 36
     ndkVersion = "27.0.12077973"

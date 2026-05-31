@@ -14,6 +14,7 @@ class TagGroupSection extends StatefulWidget {
   final Function(TagGroup) onDeleteTagGroup;
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
   final Future<int?> Function(String) onFetchMostCommonColor;
+  final bool isNewlyAdded;
 
 
   const TagGroupSection({
@@ -25,6 +26,7 @@ class TagGroupSection extends StatefulWidget {
     required this.onDeleteTagGroup,
     required this.onGetAllTagsForTagGroup,
     required this.onFetchMostCommonColor,
+    this.isNewlyAdded = false,
   });
 
   @override
@@ -32,20 +34,51 @@ class TagGroupSection extends StatefulWidget {
 }
 
 class _TagGroupSectionState extends State<TagGroupSection> {
-  late final TextEditingController _tagGroupController;
+  TextEditingController? _groupNameController;
+  final FocusNode _groupNameFocusNode = FocusNode();
+  final FocusNode _addTagFocusNode = FocusNode();
   TextEditingController? _addTagController;
   bool _isAddingTag = false;
+  bool _shouldFocusAddTag = false;
+
+  Future<List<String>>? _availableTagsFuture;
+  String? _lastGroupNameForFuture;
 
   @override
   void initState() {
     super.initState();
-    _tagGroupController = TextEditingController(text: widget.tagGroup.name);
+  }
+
+  @override
+  void didUpdateWidget(TagGroupSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Sync group name controller if the name changed externally (e.g. from parent)
+    if (widget.tagGroup.name != oldWidget.tagGroup.name) {
+      if (_groupNameController != null && _groupNameController!.text != widget.tagGroup.name) {
+        _groupNameController!.text = widget.tagGroup.name;
+      }
+    }
+
+    // Handle auto-focus for newly added items
+    if (widget.isNewlyAdded && !oldWidget.isNewlyAdded) {
+      _groupNameFocusNode.requestFocus();
+    }
   }
 
   @override
   void dispose() {
-    _tagGroupController.dispose();
+    _groupNameFocusNode.dispose();
+    _addTagFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<List<String>> _getAvailableTags() {
+    if (_availableTagsFuture == null || _lastGroupNameForFuture != widget.tagGroup.name) {
+      _lastGroupNameForFuture = widget.tagGroup.name;
+      _availableTagsFuture = widget.onGetAllTagsForTagGroup(widget.tagGroup.name);
+    }
+    return _availableTagsFuture!;
   }
 
   static const List<int?> _colorOptions = [
@@ -221,11 +254,16 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                           child: Autocomplete<String>(
                             initialValue: TextEditingValue(text: widget.tagGroup.name),
                             fieldViewBuilder: (context, fieldTextEditingController, focusNode, onFieldSubmitted) {
-                              _tagGroupController.addListener(() {
-                                if (_tagGroupController.text != fieldTextEditingController.text) {
-                                  fieldTextEditingController.text = _tagGroupController.text;
-                                }
-                              });
+                              _groupNameController = fieldTextEditingController;
+                              
+                              if (widget.isNewlyAdded && !focusNode.hasFocus) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted && !focusNode.hasFocus) {
+                                    focusNode.requestFocus();
+                                  }
+                                });
+                              }
+
                               return TextFormField(
                                 controller: fieldTextEditingController,
                                 focusNode: focusNode,
@@ -257,7 +295,6 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                 option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                             },
                             onSelected: (selection) async {
-                              _tagGroupController.text = selection;
                               widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
                               final mostCommonColor = await widget.onFetchMostCommonColor(selection);
                               if (mostCommonColor != null) {
@@ -318,7 +355,10 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                               
                               if (!_isAddingTag)
                                 InkWell(
-                                  onTap: () => setState(() => _isAddingTag = true),
+                                  onTap: () => setState(() {
+                                    _isAddingTag = true;
+                                    _shouldFocusAddTag = true;
+                                  }),
                                   borderRadius: BorderRadius.circular(20),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -342,7 +382,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                           if (_isAddingTag) ...[
                             const SizedBox(height: 12),
                             FutureBuilder<List<String>>(
-                              future: widget.onGetAllTagsForTagGroup(widget.tagGroup.name),
+                              future: _getAvailableTags(),
                               builder: (context, snapshot) {
                                 final availableTags = snapshot.data ?? [];
                                 return Autocomplete<String>(
@@ -361,9 +401,15 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                   },
                                   fieldViewBuilder: (context, fieldTextEditingController, focusNode, onFieldSubmitted) {
                                     _addTagController = fieldTextEditingController;
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (_isAddingTag && !focusNode.hasFocus) focusNode.requestFocus();
-                                    });
+                                    
+                                    if (_shouldFocusAddTag) {
+                                      _shouldFocusAddTag = false;
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (mounted && !focusNode.hasFocus) {
+                                          focusNode.requestFocus();
+                                        }
+                                      });
+                                    }
 
                                     return TextFormField(
                                       controller: fieldTextEditingController,

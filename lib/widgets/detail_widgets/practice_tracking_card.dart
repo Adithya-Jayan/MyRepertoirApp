@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/models/practice_log.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/utils/practice_settings.dart';
 import 'package:repertoire/utils/app_logger.dart';
@@ -31,11 +32,13 @@ class PracticeTrackingCard extends StatefulWidget {
 class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
   late MusicPiece _musicPiece;
   final MusicPieceRepository _repository = MusicPieceRepository();
+  PracticeLog? _latestPracticeLog;
 
   @override
   void initState() {
     super.initState();
     _musicPiece = widget.musicPiece;
+    _fetchLatestPracticeLog();
   }
 
   @override
@@ -43,6 +46,27 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.musicPiece.id != widget.musicPiece.id) {
       _musicPiece = widget.musicPiece;
+      _fetchLatestPracticeLog();
+    }
+  }
+
+  /// Fetches the latest practice log for the current music piece.
+  Future<void> _fetchLatestPracticeLog() async {
+    try {
+      final logs = await _repository.getPracticeLogsForPiece(_musicPiece.id);
+      if (logs.isNotEmpty && mounted) {
+        // Sort logs by timestamp descending to get the latest one
+        logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        setState(() {
+          _latestPracticeLog = logs.first;
+        });
+      } else if (mounted) {
+        setState(() {
+          _latestPracticeLog = null;
+        });
+      }
+    } catch (e) {
+      AppLogger.log('Error fetching latest practice log: $e');
     }
   }
 
@@ -55,6 +79,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
           _musicPiece = updatedPiece;
         });
         widget.onMusicPieceChanged(_musicPiece);
+        await _fetchLatestPracticeLog();
       }
     } catch (e) {
       // Handle error silently
@@ -93,13 +118,14 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
         await _repository.logPracticeSession(_musicPiece.id);
       }
       
-      // Refresh the music piece data
+      // Refresh the music piece data and latest log
       final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
       if (updatedPiece != null) {
         setState(() {
           _musicPiece = updatedPiece;
         });
         widget.onMusicPieceChanged(_musicPiece);
+        await _fetchLatestPracticeLog();
       }
     } catch (e) {
       AppLogger.log('Error logging practice session: $e');
@@ -112,6 +138,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       });
       await _repository.updateMusicPiece(_musicPiece);
       widget.onMusicPieceChanged(_musicPiece);
+      await _fetchLatestPracticeLog();
     }
   }
 
@@ -166,6 +193,60 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
             ),
           ],
         ),
+        if (_latestPracticeLog != null) ...[
+          const SizedBox(height: 16.0),
+          const Divider(),
+          const SizedBox(height: 8.0),
+          Row(
+            children: [
+              Icon(Icons.event, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Last practiced: ${_latestPracticeLog!.formattedTimestamp}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          if (_latestPracticeLog!.notes != null && _latestPracticeLog!.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.notes, size: 16, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _latestPracticeLog!.notes!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ] else if (_musicPiece.practiceCount > 0) ...[
+           const SizedBox(height: 16.0),
+           const Divider(),
+           const SizedBox(height: 8.0),
+           Row(
+            children: [
+              Icon(Icons.event, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Last practiced: ${_musicPiece.lastPracticeTime?.toLocal().toString().split('.')[0] ?? 'Unknown'}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
 

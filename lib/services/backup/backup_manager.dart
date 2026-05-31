@@ -66,6 +66,9 @@ class BackupManager {
     
     // Library and sorting settings
     settings['sortOption'] = prefs.getString('sortOption');
+    settings['hideEmptyGroups'] = prefs.getBool('hideEmptyGroups');
+    settings['filterOptions'] = prefs.getString('filterOptions');
+    settings['quickFilters'] = prefs.getString('quickFilters');
     
     // Group visibility settings
     settings['all_group_isHidden'] = prefs.getBool('all_group_isHidden');
@@ -79,9 +82,13 @@ class BackupManager {
     
     // Practice settings
     settings['practice_stages'] = prefs.getString('practice_stages');
+    settings['show_practice_time_stats'] = prefs.getBool('show_practice_time_stats');
+    settings['show_practice_notes'] = prefs.getBool('show_practice_notes');
     
     // App state settings
     settings['hasRunBefore'] = prefs.getBool('hasRunBefore');
+    settings['notifyNewReleases'] = prefs.getBool('notifyNewReleases');
+    settings['showGradientBackground'] = prefs.getBool('showGradientBackground');
     
     // Debug settings
     settings['debugLogsEnabled'] = prefs.getBool('debugLogsEnabled');
