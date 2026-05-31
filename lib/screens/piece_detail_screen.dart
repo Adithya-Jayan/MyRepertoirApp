@@ -13,6 +13,7 @@ import '../utils/app_logger.dart';
 import 'package:repertoire/widgets/detail_widgets/collapsible_section.dart';
 import 'package:repertoire/services/section_state_service.dart';
 import 'package:provider/provider.dart';
+import 'package:repertoire/services/share_handler_service.dart';
 
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -26,6 +27,42 @@ class PieceDetailScreen extends StatefulWidget {
 class _PieceDetailScreenState extends State<PieceDetailScreen> {
   late MusicPiece _musicPiece;
   final MusicPieceRepository _repository = MusicPieceRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _musicPiece = widget.musicPiece;
+    AppLogger.log('PieceDetailScreen: initState for piece: ${_musicPiece.title} (ID: ${_musicPiece.id})');
+    
+    // Listen for data changes from external sources (like ShareHandlerService)
+    ShareHandlerService.dataChangeNotifier.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    AppLogger.log('PieceDetailScreen: dispose called');
+    ShareHandlerService.dataChangeNotifier.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  void _onDataChanged() {
+    if (mounted) {
+      _refreshPiece();
+    }
+  }
+
+  Future<void> _refreshPiece() async {
+    try {
+      final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
+      if (updatedPiece != null && mounted) {
+        setState(() {
+          _musicPiece = updatedPiece;
+        });
+      }
+    } catch (e) {
+      AppLogger.log('Error refreshing music piece in PieceDetailScreen: $e');
+    }
+  }
 
   List<String> _getSectionKeys() {
     final keys = <String>[];
@@ -44,19 +81,6 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
       }
     }
     return keys;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _musicPiece = widget.musicPiece;
-    AppLogger.log('PieceDetailScreen: initState for piece: ${_musicPiece.title} (ID: ${_musicPiece.id})');
-  }
-
-  @override
-  void dispose() {
-    AppLogger.log('PieceDetailScreen: dispose called');
-    super.dispose();
   }
 
   Widget _buildHeroHeader() {
