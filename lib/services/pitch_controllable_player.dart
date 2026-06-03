@@ -32,7 +32,7 @@ class PitchControllablePlayer {
         androidNotificationChannelId: 'com.repertoire.audio',
         androidNotificationChannelName: 'Repertoire Audio',
         androidNotificationOngoing: true,
-        androidNotificationIcon: 'mipmap/ic_launcher',
+        androidNotificationIcon: 'drawable/ic_launcher_monochrome',
       ),
     );
   }
