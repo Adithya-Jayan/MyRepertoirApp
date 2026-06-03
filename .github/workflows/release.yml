@@ -181,11 +181,12 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create F-Droid Changelog
+        env:
+          USER_NOTES: ${{ github.event.inputs.release_notes }}
+          GEN_NOTES: ${{ steps.generate_notes.outputs.notes }}
         run: |
           VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
           # Combine user notes and generated notes for the file
-          USER_NOTES="${{ github.event.inputs.release_notes }}"
-          GEN_NOTES="${{ steps.generate_notes.outputs.notes }}"
           
           if [ -n "$USER_NOTES" ]; then
             FULL_NOTES="$USER_NOTES"$'\n\n'"$GEN_NOTES"
