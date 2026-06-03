@@ -69,12 +69,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
-  void _skip(bool forward, bool fine) {
+  void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
     
     final current = _controller.value.position;
     final duration = _controller.value.duration;
-    final amount = fine ? const Duration(milliseconds: 33) : const Duration(seconds: 1);
+    final amount = fine ? const Duration(milliseconds: 33) : Duration(seconds: seconds);
     
     Duration targetPos;
     if (forward) {
@@ -91,10 +91,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   void _startSkipTimer(bool forward, bool fine) {
     _skipTimer?.cancel();
-    _skip(forward, fine);
+    _skip(forward, fine: fine);
     
     _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      _skip(forward, fine);
+      _skip(forward, fine: fine);
     });
   }
 

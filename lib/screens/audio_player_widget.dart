@@ -48,11 +48,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _playerInitFuture = _initializeSequence();
   }
 
-  void _skip(bool forward, bool fine) {
+  void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
     final current = _player.player.position;
     final duration = _player.player.duration ?? Duration.zero;
-    final amount = fine ? const Duration(milliseconds: 50) : const Duration(seconds: 1);
+    final amount = fine ? const Duration(milliseconds: 50) : Duration(seconds: seconds);
     
     Duration newPos;
     if (forward) {
@@ -68,11 +68,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   void _startSkipTimer(bool forward, bool fine) {
     _skipTimer?.cancel();
-    _skip(forward, fine);
+    _skip(forward, fine: fine);
     
     // Use a periodic timer for rapid skipping
     _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      _skip(forward, fine);
+      _skip(forward, fine: fine);
     });
   }
 
@@ -355,13 +355,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                           icon: const Icon(Icons.replay_5),
                           iconSize: 32.0,
                           tooltip: 'Rewind 5s',
-                          onPressed: isMyAudio ? () => _skip(false, false) : null,
+                          onPressed: isMyAudio ? () => _skip(false, seconds: 5) : null,
                         ),
                         // Rewind 1s / Fine Button (Hold for fine)
                         Tooltip(
                           message: 'Rewind 1s (Hold for 50ms fine skip)',
                           child: GestureDetector(
-                            onTap: isMyAudio ? () => _skip(false, false) : null,
+                            onTap: isMyAudio ? () => _skip(false) : null,
                             onLongPressStart: isMyAudio ? (_) => _startSkipTimer(false, true) : null,
                             onLongPressEnd: (_) => _stopSkipTimer(),
                             child: Padding(
@@ -381,7 +381,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         Tooltip(
                           message: 'Forward 1s (Hold for 50ms fine skip)',
                           child: GestureDetector(
-                            onTap: isMyAudio ? () => _skip(true, false) : null,
+                            onTap: isMyAudio ? () => _skip(true) : null,
                             onLongPressStart: isMyAudio ? (_) => _startSkipTimer(true, true) : null,
                             onLongPressEnd: (_) => _stopSkipTimer(),
                             child: Padding(
@@ -401,7 +401,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                           icon: const Icon(Icons.forward_5),
                           iconSize: 32.0,
                           tooltip: 'Forward 5s',
-                          onPressed: isMyAudio ? () => _skip(true, false) : null,
+                          onPressed: isMyAudio ? () => _skip(true, seconds: 5) : null,
                         ),
                       ],
                     );
