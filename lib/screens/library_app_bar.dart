@@ -151,15 +151,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                           const Icon(Icons.tune_outlined, size: 20),
                           const SizedBox(width: 8),
                           const Text('Filter Options'),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.restart_alt),
-                            tooltip: 'Reset Filters',
-                            onPressed: () {
-                              widget.onClearFilter();
-                              Navigator.pop(context);
-                            },
-                          ),                        ],
+                        ],
                       ),
                       titlePadding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -314,6 +306,13 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                         ),
                       ),
                       actions: [
+                        TextButton(
+                          onPressed: () {
+                             widget.onClearFilter();
+                             Navigator.pop(context);
+                          },
+                          child: const Text('Clear Filter'),
+                        ),
                         FilledButton(
                           onPressed: () {
                              Navigator.pop(context);

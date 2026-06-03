@@ -1,8 +1,8 @@
-name: Update Contributors JSON
+name: Weekly Maintenance
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # weekly
+    - cron: '0 0 * * 0'  # Weekly on Sundays at 00:00 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   update-contributors:
+    name: Update Contributors JSON
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,6 +61,7 @@ jobs:
           fi
       
       - name: Setup SSH Key
+        if: github.event_name == 'workflow_dispatch' || steps.check_changes.outputs.has_changes == 'true'
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
@@ -72,3 +74,43 @@ jobs:
           git add assets/contributors.json
           git diff --cached --quiet || git commit -m "Update contributors.json in assets"
           git push
+
+  cleanup-pre-releases:
+    name: Cleanup Old Pre-releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Delete pre-releases older than 1 month
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Calculate threshold date (30 days ago) in seconds
+          THRESHOLD=$(date -d "30 days ago" -u +%s)
+          echo "Threshold date: $(date -d "@$THRESHOLD" -u)"
+
+          # Get all releases with metadata
+          RELEASES=$(gh release list --limit 100 --json tagName,isPrerelease,publishedAt)
+
+          # Iterate through pre-releases
+          echo "$RELEASES" | jq -c '.[] | select(.isPrerelease == true)' | while read -r release; do
+            TAG=$(echo "$release" | jq -r '.tagName')
+            PUB_AT=$(echo "$release" | jq -r '.publishedAt')
+            
+            # Skip the 'nightly' rolling release tag if it exists as a pre-release
+            if [ "$TAG" = "nightly" ]; then
+              echo "Skipping rolling nightly release."
+              continue
+            fi
+
+            # Parse publication date to seconds
+            PUB_SEC=$(date -d "$PUB_AT" -u +%s)
+
+            if [ "$PUB_SEC" -lt "$THRESHOLD" ]; then
+              echo "Deleting old pre-release: $TAG (published at $PUB_AT)"
+              gh release delete "$TAG" --yes --cleanup-tag
+            else
+              echo "Keeping recent pre-release: $TAG (published at $PUB_AT)"
+            fi
+          done
