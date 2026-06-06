@@ -33,6 +33,7 @@ jobs:
     outputs:
       final_version_string: ${{ steps.final_version.outputs.final_version_string }}
       build_number: ${{ steps.final_version.outputs.build_number }}
+      version_name: ${{ steps.version_calc.outputs.VERSION_NAME }}
     
     steps:
       - name: Checkout code
@@ -446,6 +447,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.final_version_string }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -464,7 +467,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Desktop App
-        run: ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.final_version_string }}" --build-number="${{ needs.release.outputs.build_number }}"
+        run: ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.version_name }}" --build-number="${{ needs.release.outputs.build_number }}"
 
       - name: Zip Release
         shell: bash
