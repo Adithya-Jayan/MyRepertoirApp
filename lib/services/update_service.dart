@@ -140,7 +140,18 @@ class UpdateService {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('New Update Available!'),
-        content: Text('Version $latestVersion is available.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Version $latestVersion is available.'),
+            const SizedBox(height: 12),
+            const Text(
+              'Note: F-Droid may take a few days to reflect the new version.',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () async {
