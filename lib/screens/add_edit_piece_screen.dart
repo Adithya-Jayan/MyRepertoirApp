@@ -18,6 +18,10 @@ import 'add_edit_piece/add_edit_piece_media_manager.dart';
 import 'add_edit_piece/add_edit_piece_tag_manager.dart';
 import 'add_edit_piece/add_edit_piece_form_handler.dart';
 
+import 'dart:io';
+import 'package:repertoire/services/pitch_controllable_player.dart';
+import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
+
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
   final String? selectedGroupId;
@@ -59,6 +63,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    
+    // Stop any active playback when leaving the add/edit screen
+    PitchControllablePlayer().stop();
+    if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+      FlutterPcmSound.stop();
+    }
+    
     super.dispose();
   }
 

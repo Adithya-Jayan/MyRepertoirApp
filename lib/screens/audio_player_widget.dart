@@ -217,10 +217,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   void dispose() {
     _saveBookmarks(); // Save bookmarks when the widget is disposed.
-    // We stop playback when leaving this screen
-    _player.stop(); 
-    // PitchControllablePlayer.dispose also calls stop() but keeps the handler alive for the session
-    _player.dispose(); 
+    _skipTimer?.cancel();
     super.dispose();
   }
 
