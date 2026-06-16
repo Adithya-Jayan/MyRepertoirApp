@@ -126,7 +126,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
           final visibleGroups = notifier.getVisibleGroups();
           return PopScope(
-            canPop: true,
+            canPop: !notifier.isMultiSelectMode,
             onPopInvokedWithResult: (didPop, result) async {
               AppLogger.log('LibraryScreen: PopScope triggered - didPop: $didPop, result: $result');
               if (didPop) {
@@ -137,6 +137,9 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                 AppLogger.log('LibraryScreen: Reloading data after navigation return');
                 await notifier.reloadData();
                 AppLogger.log('LibraryScreen: Data reload completed');
+              } else if (notifier.isMultiSelectMode) {
+                // If selection mode is active, deselect instead of popping
+                notifier.toggleMultiSelectMode();
               }
             },
             child: KeyboardListener(
