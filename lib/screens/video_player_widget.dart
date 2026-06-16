@@ -224,8 +224,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void dispose() {
     _syncTimer?.cancel();
+    _skipTimer?.cancel();
     _disableWakelock();
-    _audioPlayer.stop();
     if (_controllerIsLocal) {
       _controller.dispose();
     }

@@ -37,6 +37,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   bool _isLoaded = false;
   double? _defaultAspectRatio;
   Duration _lastElapsed = Duration.zero;
+  int _currentPage = 1;
+  bool _isDraggingScrollbar = false;
+
+  late AnimationController _scrollbarOpacityController;
+  Timer? _scrollbarHideTimer;
 
   @override
   void initState() {
@@ -49,8 +54,57 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     )..addListener(() {
       _transformationController.value = _animation!.value;
     });
+    
+    _scrollbarOpacityController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: 0.0, // Initially hidden
+    );
+    
+    _transformationController.addListener(_onTransformationChanged);
     _loadDocument();
     _loadSavedSpeed();
+    
+    // Show initially, then fade out
+    _showScrollbar();
+  }
+
+  void _showScrollbar() {
+    if (_isAutoScrolling) return; // Stay hidden while auto-scrolling
+    
+    _scrollbarOpacityController.forward();
+    _scrollbarHideTimer?.cancel();
+    _scrollbarHideTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted && !_isDraggingScrollbar) {
+        _scrollbarOpacityController.reverse();
+      }
+    });
+  }
+
+  void _onTransformationChanged() {
+    if (!mounted || _document == null) return;
+
+    final Matrix4 matrix = _transformationController.value;
+    final Vector3 translation = matrix.getTranslation();
+    final double scale = matrix.getMaxScaleOnAxis();
+
+    final RenderBox? contentBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? viewerBox = context.findRenderObject() as RenderBox?;
+
+    if (contentBox != null && viewerBox != null) {
+      final double contentHeight = contentBox.size.height * scale;
+      final double scrollY = -translation.y;
+      
+      // Estimate current page
+      final double pageHeight = contentHeight / _document!.pagesCount;
+      final int newPage = ((scrollY + viewerBox.size.height / 2) / pageHeight).floor() + 1;
+      
+      if (newPage != _currentPage && newPage >= 1 && newPage <= _document!.pagesCount) {
+        setState(() {
+          _currentPage = newPage;
+        });
+      }
+    }
   }
 
   void _onTick(Duration elapsed) {
@@ -155,6 +209,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     });
 
     if (_isAutoScrolling) {
+      _scrollbarHideTimer?.cancel();
+      _scrollbarOpacityController.reverse();
       _lastElapsed = Duration.zero;
       if (!_ticker.isActive) {
         _ticker.start();
@@ -163,6 +219,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
       if (_ticker.isActive) {
         _ticker.stop();
       }
+      _showScrollbar();
     }
   }
 
@@ -206,14 +263,115 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     }
   }
 
+  Future<void> _jumpToPage(int pageNumber) async {
+    if (_document == null || pageNumber < 1 || pageNumber > _document!.pagesCount) return;
+
+    final RenderBox? contentBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (contentBox == null) return;
+
+    final double contentHeight = contentBox.size.height;
+    final double scale = _transformationController.value.getMaxScaleOnAxis();
+    
+    // Calculate target Y
+    final double pageHeight = contentHeight / _document!.pagesCount;
+    double targetY = (pageNumber - 1) * pageHeight * scale;
+
+    // Boundary check
+    final RenderBox? viewerBox = context.findRenderObject() as RenderBox?;
+    if (viewerBox != null) {
+      final double maxScroll = math.max(0.0, (contentHeight * scale) - viewerBox.size.height);
+      targetY = targetY.clamp(0.0, maxScroll);
+    }
+
+    final Matrix4 matrix = _transformationController.value.clone();
+    final Vector3 translation = matrix.getTranslation();
+    matrix.setTranslationRaw(translation.x, -targetY, 0);
+
+    // Animate to target
+    _animation = Matrix4Tween(
+      begin: _transformationController.value,
+      end: matrix,
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
+    _animationController.forward(from: 0.0);
+  }
+
+  void _showJumpToPageDialog() {
+    final TextEditingController controller = TextEditingController(text: _currentPage.toString());
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Go to Page'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Enter page number (1-${_document!.pagesCount})',
+          ),
+          onSubmitted: (value) {
+            final page = int.tryParse(value);
+            if (page != null) {
+              _jumpToPage(page);
+              Navigator.pop(context);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final page = int.tryParse(controller.text);
+              if (page != null) {
+                _jumpToPage(page);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Go'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleScrollbarDrag(DragUpdateDetails details) {
+    final RenderBox? viewerBox = context.findRenderObject() as RenderBox?;
+    final RenderBox? contentBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewerBox == null || contentBox == null || _document == null) return;
+
+    final double viewerHeight = viewerBox.size.height;
+    final double contentHeight = contentBox.size.height;
+    final double scale = _transformationController.value.getMaxScaleOnAxis();
+    final double totalHeight = contentHeight * scale;
+    final double maxScroll = math.max(0.0, totalHeight - viewerHeight);
+
+    if (maxScroll <= 0) return;
+
+    // Calculate new scroll Y based on drag position
+    // We assume the scrollbar is full height of the viewer
+    final double dragY = details.localPosition.dy;
+    final double scrollPercentage = (dragY / viewerHeight).clamp(0.0, 1.0);
+    final double newScrollY = scrollPercentage * maxScroll;
+
+    final Matrix4 matrix = _transformationController.value.clone();
+    final Vector3 translation = matrix.getTranslation();
+    matrix.setTranslationRaw(translation.x, -newScrollY, 0);
+    _transformationController.value = matrix;
+  }
+
   @override
   void dispose() {
+    _scrollbarHideTimer?.cancel();
+    _scrollbarOpacityController.dispose();
     if (_ticker.isActive) {
       _ticker.stop();
     }
     _ticker.dispose();
     _animationController.dispose();
     _document?.close();
+    _transformationController.removeListener(_onTransformationChanged);
     _transformationController.dispose();
     super.dispose();
   }
@@ -262,7 +420,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
             GestureDetector(
               onDoubleTap: _handleDoubleTap,
               child: Listener(
+                onPointerDown: (_) => _showScrollbar(),
+                onPointerMove: (_) => _showScrollbar(),
+                onPointerUp: (_) => _showScrollbar(),
                 onPointerSignal: (pointerSignal) {
+                  _showScrollbar();
                   if (pointerSignal is PointerScrollEvent) {
                     final isControlPressed = HardwareKeyboard.instance.isControlPressed;
                     if (isControlPressed) {
@@ -302,18 +464,100 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
           else
             const Center(child: CircularProgressIndicator()),
 
+          // Scrollbar implementation
+          if (_isLoaded && _document != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onVerticalDragStart: (_) {
+                  setState(() => _isDraggingScrollbar = true);
+                  _showScrollbar();
+                },
+                onVerticalDragEnd: (_) {
+                  setState(() => _isDraggingScrollbar = false);
+                  _showScrollbar();
+                },
+                onVerticalDragUpdate: (details) {
+                  _showScrollbar();
+                  _handleScrollbarDrag(details);
+                },
+                child: FadeTransition(
+                  opacity: _scrollbarOpacityController,
+                  child: Container(
+                    width: 20,
+                  color: Colors.transparent,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final Matrix4 matrix = _transformationController.value;
+                      final Vector3 translation = matrix.getTranslation();
+                      final double scale = matrix.getMaxScaleOnAxis();
+
+                      final RenderBox? contentBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+                      if (contentBox == null) return const SizedBox.shrink();
+
+                      final double viewerHeight = constraints.maxHeight;
+                      final double totalHeight = contentBox.size.height * scale;
+                      
+                      if (totalHeight <= viewerHeight) return const SizedBox.shrink();
+
+                      final double scrollPercentage = (-translation.y / (totalHeight - viewerHeight)).clamp(0.0, 1.0);
+                      final double thumbHeight = math.max(40.0, (viewerHeight / totalHeight) * viewerHeight);
+                      final double thumbTop = scrollPercentage * (viewerHeight - thumbHeight);
+
+                      return Stack(
+                        children: [
+                          Positioned(
+                            top: thumbTop,
+                            right: 2,
+                            child: Container(
+                              width: 8,
+                              height: thumbHeight,
+                              decoration: BoxDecoration(
+                                color: _isDraggingScrollbar ? Colors.white70 : Colors.white38,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                ),
+              ),
+            ),
+
           if (_showControls && widget.config.autoScrollEnabled)
             Positioned(
               bottom: 20,
               left: 20,
               right: 20,
               child: _buildScrollOverlay(),
+            )
+          else if (_isLoaded && _document != null)
+            // Page indicator when controls are hidden
+            Positioned(
+              bottom: 20,
+              right: 40,
+              child: GestureDetector(
+                onTap: _showJumpToPageDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Text(
+                    '$_currentPage / ${_document!.pagesCount}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
     );
   }
-
 
   Widget _buildScrollOverlay() {
     return Card(
@@ -344,9 +588,19 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                 },
               ),
             ),
-            Text(
-              '${_scrollSpeed.toStringAsFixed(1)}x',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            GestureDetector(
+              onTap: _showJumpToPageDialog,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$_currentPage / ${_document!.pagesCount}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),
@@ -481,6 +735,3 @@ class _PdfPageWidgetState extends State<_PdfPageWidget> {
     );
   }
 }
-
-
-

@@ -14,7 +14,7 @@ import './highlightable_widget.dart';
 class MediaSectionWidget extends StatelessWidget {
   final MusicPiece musicPiece; // New parameter
   final Function(MusicPiece) onMusicPieceChanged; // New parameter
-  final String? newlyAddedId;
+  final List<String>? newlyAddedIds;
   final VoidCallback? onHighlightComplete;
   final Map<String, GlobalKey> itemKeys;
   final Function(String)? onThumbnailSet; // New callback
@@ -23,7 +23,7 @@ class MediaSectionWidget extends StatelessWidget {
     super.key,
     required this.musicPiece,
     required this.onMusicPieceChanged,
-    this.newlyAddedId,
+    this.newlyAddedIds,
     this.onHighlightComplete,
     required this.itemKeys,
     this.onThumbnailSet,
@@ -164,10 +164,11 @@ class MediaSectionWidget extends StatelessWidget {
                 // Find the index in the original list for updates
                 final originalIndex = musicPiece.mediaItems.indexWhere((element) => element.id == item.id);
                 final itemKey = itemKeys.putIfAbsent(item.id, () => GlobalKey());
+                final isHighlighted = newlyAddedIds?.contains(item.id) ?? false;
 
                 return HighlightableWidget(
                   key: ValueKey(item.id),
-                  isHighlighted: newlyAddedId == item.id,
+                  isHighlighted: isHighlighted,
                   onHighlightComplete: onHighlightComplete,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
@@ -294,7 +295,7 @@ class MediaSectionWidget extends StatelessWidget {
 
                 return HighlightableWidget(
                   key: ValueKey(item.id),
-                  isHighlighted: newlyAddedId == item.id,
+                  isHighlighted: newlyAddedIds?.contains(item.id) ?? false,
                   onHighlightComplete: onHighlightComplete,
                   child: MediaSection(
                     key: itemKey,

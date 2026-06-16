@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
 import 'package:video_player/video_player.dart';
 import 'package:fvp/fvp.dart' as fvp;
+import 'package:pdfx/pdfx.dart';
 
 import '../utils/app_logger.dart';
 import '../models/media_item.dart';
@@ -86,11 +87,11 @@ class ThumbnailService {
   static Future<String?> getThumbnailPath(MediaItem item, String musicPieceId) async {
     if (kIsWeb) return null;
 
-    if ((item.type == MediaType.mediaLink || item.type == MediaType.localVideo) && item.pathOrUrl.isNotEmpty) {
+    if ((item.type == MediaType.mediaLink || item.type == MediaType.localVideo || item.type == MediaType.pdf) && item.pathOrUrl.isNotEmpty) {
       try {
         final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
         if (thumbnailDir != null) {
-          // Check for both .jpg (web links) and .png (video frames)
+          // Check for both .jpg and .png
           final jpgFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
           if (await jpgFile.exists()) return jpgFile.path;
           
@@ -147,6 +148,49 @@ class ThumbnailService {
       AppLogger.log('ThumbnailService: Error generating video thumbnail: $e');
     } finally {
       await controller?.dispose();
+    }
+    return null;
+  }
+
+  static Future<String?> generatePdfThumbnail(MediaItem item, String musicPieceId) async {
+    if (kIsWeb) return null;
+    if (item.type != MediaType.pdf) return null;
+
+    AppLogger.log('ThumbnailService: Generating PDF thumbnail for ${item.pathOrUrl}');
+    
+    PdfDocument? document;
+    try {
+      document = await PdfDocument.openFile(item.pathOrUrl);
+      if (document.pagesCount < 1) return null;
+
+      final page = await document.getPage(1);
+      
+      // Render page to image bytes
+      final pageImage = await page.render(
+        width: page.width * 2, // Double for better quality
+        height: page.height * 2,
+        format: PdfPageImageFormat.jpeg,
+        quality: 85,
+      );
+      
+      await page.close();
+
+      if (pageImage != null) {
+        final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+        if (thumbnailDir != null) {
+          if (!await thumbnailDir.exists()) {
+            await thumbnailDir.create(recursive: true);
+          }
+          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
+          await thumbnailFile.writeAsBytes(pageImage.bytes);
+          AppLogger.log('ThumbnailService: PDF thumbnail saved to ${thumbnailFile.path}');
+          return thumbnailFile.path;
+        }
+      }
+    } catch (e) {
+      AppLogger.log('ThumbnailService: Error generating PDF thumbnail: $e');
+    } finally {
+      await document?.close();
     }
     return null;
   }
@@ -227,3 +271,4 @@ class ThumbnailService {
   }
 
 }
+

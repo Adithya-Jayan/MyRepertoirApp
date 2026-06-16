@@ -19,7 +19,7 @@ on:
         type: boolean
         default: false
       release_notes:
-        description: 'Release notes (optional)'
+        description: 'Release notes (optional, use \n for newlines)'
         required: false
         type: string
         default: ''
@@ -144,6 +144,17 @@ jobs:
           yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
           echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
 
+      - name: Format Release Notes
+        id: format_notes
+        env:
+          USER_NOTES: ${{ github.event.inputs.release_notes }}
+        run: |
+          # Parse literal \n into actual newlines
+          FORMATTED_USER_NOTES=$(echo -e "${USER_NOTES//\\n/\\n}")
+          echo "formatted_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$FORMATTED_USER_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Generate Release Notes
         id: generate_notes
         env:
@@ -183,7 +194,7 @@ jobs:
 
       - name: Create F-Droid Changelog
         env:
-          USER_NOTES: ${{ github.event.inputs.release_notes }}
+          USER_NOTES: ${{ steps.format_notes.outputs.formatted_notes }}
           GEN_NOTES: ${{ steps.generate_notes.outputs.notes }}
         run: |
           VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
@@ -371,7 +382,7 @@ jobs:
         with:
           tag_name: v${{ steps.final_version.outputs.final_version_string }}
           body: |
-            ${{ github.event.inputs.release_notes }}
+            ${{ steps.format_notes.outputs.formatted_notes }}
 
             <details>
             <summary>Release Details</summary>

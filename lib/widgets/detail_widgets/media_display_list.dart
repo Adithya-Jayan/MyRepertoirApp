@@ -171,12 +171,9 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
               });
             },
           )
-        : ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: visibleItemsIndices.length,
-            itemBuilder: (context, index) {
-              final mediaIndex = visibleItemsIndices[index];
+        : Column(
+            children: visibleItemsIndices.map((index) {
+              final mediaIndex = index;
               final item = _musicPiece.mediaItems[mediaIndex];
               return CollapsibleSection(
                 key: ValueKey(item.id),
@@ -197,7 +194,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                   },
                 ),
               );
-            },
+            }).toList(),
           );
   }
 }

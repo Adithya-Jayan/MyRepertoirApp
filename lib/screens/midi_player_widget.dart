@@ -512,9 +512,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     _saveBookmarks();
     _audioTimer?.cancel();
     _positionTimer?.cancel();
-    _sequencer?.stop();
     _clearSynthSounds();
-    FlutterPcmSound.stop();
     super.dispose();
   }
 

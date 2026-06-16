@@ -174,6 +174,55 @@ class _MediaSectionState extends State<MediaSection> {
     }
   }
 
+  Future<void> _generatePdfThumbnail() async {
+    if (widget.item.pathOrUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF file path is empty')),
+      );
+      return;
+    }
+
+    AppLogger.log('MediaSection: Generating thumbnail for PDF: ${widget.item.pathOrUrl}');
+    setState(() {
+      _isLoadingThumbnail = true;
+    });
+
+    try {
+      final thumbnailPath = await ThumbnailService.generatePdfThumbnail(widget.item, widget.musicPieceId);
+      
+      if (thumbnailPath != null && mounted) {
+        setState(() {
+          _currentThumbnailPath = thumbnailPath;
+          _isLoadingThumbnail = false;
+        });
+        
+        final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
+        widget.onUpdateMediaItem(updatedItem);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PDF thumbnail generated successfully!')),
+        );
+      } else if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to generate PDF thumbnail.')),
+        );
+      }
+    } catch (e) {
+      AppLogger.log('Error generating PDF thumbnail: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating thumbnail: $e')),
+        );
+      }
+    }
+  }
+
   void _removeThumbnail() {
     AppLogger.log('MediaSection: _removeThumbnail called for item: ${widget.item.title}');
     
@@ -374,7 +423,7 @@ class _MediaSectionState extends State<MediaSection> {
             spacing: 8.0,
             runSpacing: 8.0,
             children: [
-              if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo)
+              if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo || widget.item.type == MediaType.pdf)
                 _isLoadingThumbnail
                     ? const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -387,10 +436,22 @@ class _MediaSectionState extends State<MediaSection> {
                     : OutlinedButton.icon(
                         onPressed: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
                             ? () => _removeThumbnail()
-                            : () => widget.item.type == MediaType.mediaLink ? _fetchThumbnail() : _generateVideoThumbnail(),
+                            : () {
+                                if (widget.item.type == MediaType.mediaLink) {
+                                  _fetchThumbnail();
+                                } else if (widget.item.type == MediaType.localVideo) {
+                                  _generateVideoThumbnail();
+                                } else if (widget.item.type == MediaType.pdf) {
+                                  _generatePdfThumbnail();
+                                }
+                              },
                         icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image, size: 18),
                         label: Text(
-                          (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? 'Remove Thumbnail' : (widget.item.type == MediaType.mediaLink ? 'Get link thumbnail' : 'Get video thumbnail'),
+                          (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) 
+                              ? 'Remove Thumbnail' 
+                              : (widget.item.type == MediaType.mediaLink 
+                                  ? 'Get link thumbnail' 
+                                  : (widget.item.type == MediaType.localVideo ? 'Get video thumbnail' : 'Get PDF thumbnail')),
                           style: const TextStyle(fontSize: 12),
                         ),
                         style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
@@ -406,7 +467,7 @@ class _MediaSectionState extends State<MediaSection> {
                   icon: const Icon(Icons.image, size: 18),
                   label: const Text('Change Image', style: TextStyle(fontSize: 12)),
                 ),
-              if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
+              if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || widget.item.type == MediaType.pdf || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
                 OutlinedButton.icon(
                   onPressed: () {
                     final isCurrentlyThumbnail = widget.musicPieceThumbnail.isNotEmpty && 
@@ -419,7 +480,7 @@ class _MediaSectionState extends State<MediaSection> {
                       String? path;
                       if (widget.item.type == MediaType.image) {
                         path = widget.item.pathOrUrl;
-                      } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink) {
+                      } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.pdf) {
                         path = _currentThumbnailPath;
                       }
                       

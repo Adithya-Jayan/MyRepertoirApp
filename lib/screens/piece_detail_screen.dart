@@ -15,6 +15,9 @@ import 'package:repertoire/services/section_state_service.dart';
 import 'package:provider/provider.dart';
 import 'package:repertoire/services/share_handler_service.dart';
 
+import 'package:repertoire/services/pitch_controllable_player.dart';
+import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
+
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
 
@@ -42,6 +45,13 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   void dispose() {
     AppLogger.log('PieceDetailScreen: dispose called');
     ShareHandlerService.dataChangeNotifier.removeListener(_onDataChanged);
+    
+    // Stop any active playback when leaving the detail screen
+    PitchControllablePlayer().stop();
+    if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+      FlutterPcmSound.stop();
+    }
+    
     super.dispose();
   }
 
