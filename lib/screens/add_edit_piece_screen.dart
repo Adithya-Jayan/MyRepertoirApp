@@ -25,9 +25,9 @@ import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
   final String? selectedGroupId;
-  final String? newlyAddedId;
+  final List<String>? newlyAddedIds;
 
-  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId, this.newlyAddedId});
+  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId, this.newlyAddedIds});
 
   @override
   State<AddEditPieceScreen> createState() => _AddEditPieceScreenState();
@@ -45,7 +45,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   late final AddEditPieceFormHandler _formHandler;
 
   final ScrollController _scrollController = ScrollController();
-  String? _newlyAddedId;
+  List<String>? _newlyAddedIds;
   final Map<String, GlobalKey> _itemKeys = {};
 
   @override
@@ -54,9 +54,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     _initializeManagers();
     _initializeMusicPiece();
     _loadData();
-    if (widget.newlyAddedId != null) {
-      _newlyAddedId = widget.newlyAddedId;
-      _scrollToItem(widget.newlyAddedId!);
+    if (widget.newlyAddedIds != null && widget.newlyAddedIds!.isNotEmpty) {
+      _newlyAddedIds = widget.newlyAddedIds;
+      _scrollToItem(widget.newlyAddedIds!.first);
     }
   }
 
@@ -134,7 +134,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   void _triggerScrollAndHighlight(String id) {
     setState(() {
-      _newlyAddedId = id;
+      _newlyAddedIds = [id];
     });
     _scrollToItem(id);
   }
@@ -150,7 +150,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         if (newItem.type == MediaType.thumbnails) {
           _musicPiece = _musicPiece.copyWith(thumbnailPath: newItem.pathOrUrl);
         }
-        _newlyAddedId = newId;
+        _newlyAddedIds = [newId];
         _scrollToItem(newId);
       }
     });
@@ -164,7 +164,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     setState(() {
       _musicPiece = _musicPiece.copyWith(tagGroups: newTagGroups);
       if (newId.isNotEmpty) {
-        _newlyAddedId = newId;
+        _newlyAddedIds = [newId];
         _scrollToItem(newId);
       }
     });
@@ -391,10 +391,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                         _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
                       onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
                       onFetchMostCommonColor: _fetchMostCommonColor,
-                      newlyAddedId: _newlyAddedId,
+                      newlyAddedIds: _newlyAddedIds,
                       onHighlightComplete: () {
                         setState(() {
-                          _newlyAddedId = null;
+                          _newlyAddedIds = null;
                         });
                       },
                       itemKeys: _itemKeys,
@@ -414,10 +414,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                           _musicPiece = updatedMusicPiece;
                         });
                       },
-                      newlyAddedId: _newlyAddedId,
+                      newlyAddedIds: _newlyAddedIds,
                       onHighlightComplete: () {
                         setState(() {
-                          _newlyAddedId = null;
+                          _newlyAddedIds = null;
                         });
                       },
                       itemKeys: _itemKeys,

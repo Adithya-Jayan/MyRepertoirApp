@@ -13,7 +13,7 @@ class TagGroupsSection extends StatelessWidget {
   final Function(int, int) onReorderTagGroups;
   final VoidCallback onAddTagGroup;
   final Future<int?> Function(String) onFetchMostCommonColor;
-  final String? newlyAddedId;
+  final List<String>? newlyAddedIds;
   final VoidCallback? onHighlightComplete;
   final Map<String, GlobalKey> itemKeys;
 
@@ -27,7 +27,7 @@ class TagGroupsSection extends StatelessWidget {
     required this.onReorderTagGroups,
     required this.onAddTagGroup,
     required this.onFetchMostCommonColor,
-    this.newlyAddedId,
+    this.newlyAddedIds,
     this.onHighlightComplete,
     required this.itemKeys,
   });
@@ -56,10 +56,11 @@ class TagGroupsSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final tagGroup = tagGroups[index];
             final itemKey = itemKeys.putIfAbsent(tagGroup.id, () => GlobalKey());
+            final isHighlighted = newlyAddedIds?.contains(tagGroup.id) ?? false;
             
             return HighlightableWidget(
               key: ValueKey(tagGroup.id),
-              isHighlighted: newlyAddedId == tagGroup.id,
+              isHighlighted: isHighlighted,
               onHighlightComplete: onHighlightComplete,
               child: TagGroupSection(
                 key: itemKey,
@@ -70,7 +71,7 @@ class TagGroupsSection extends StatelessWidget {
                 onDeleteTagGroup: onDeleteTagGroup,
                 onGetAllTagsForTagGroup: onGetAllTagsForTagGroup,
                 onFetchMostCommonColor: onFetchMostCommonColor,
-                isNewlyAdded: newlyAddedId == tagGroup.id,
+                isNewlyAdded: isHighlighted,
               ),
             );
           },

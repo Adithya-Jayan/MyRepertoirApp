@@ -137,13 +137,21 @@ class ShareHandlerService {
               );
           }
 
+          String itemTitle = 'Shared Media';
+          if (file.type == SharedMediaType.text || file.type == SharedMediaType.url) {
+            itemTitle = pathOrUrl;
+            if (itemTitle.length > 50) {
+              itemTitle = '${itemTitle.substring(0, 47)}...';
+            }
+          } else if (file.path.isNotEmpty) {
+            itemTitle = path.basename(file.path);
+          }
+
           final newMediaItem = MediaItem(
             id: const Uuid().v4(),
             type: type,
             pathOrUrl: pathOrUrl,
-            title: (file.type == SharedMediaType.text || file.type == SharedMediaType.url) 
-                ? 'Shared Link/Text' 
-                : (file.path.isNotEmpty ? path.basename(file.path) : 'Shared Media'), 
+            title: itemTitle,
           );
 
           newItems.add(newMediaItem);
@@ -175,12 +183,12 @@ class ShareHandlerService {
           );
 
           // Open the piece in edit mode so the user can see/configure the new items
-          final firstNewId = newItems.isNotEmpty ? newItems.first.id : null;
+          final allNewIds = newItems.map((item) => item.id).toList();
           navigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (context) => AddEditPieceScreen(
                 musicPiece: currentPiece,
-                newlyAddedId: firstNewId,
+                newlyAddedIds: allNewIds,
               ),
             ),
           );
