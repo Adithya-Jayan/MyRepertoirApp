@@ -199,9 +199,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   bool _isSaving = false;
+  bool _hasSaved = false;
 
   Future<void> _savePiece() async {
-    if (_isSaving) return; // Prevent multiple saves
+    if (_isSaving || _hasSaved) return; // Prevent multiple saves
     
     setState(() {
       _isSaving = true;
@@ -215,12 +216,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       );
       
       if (success && mounted) {
+        _hasSaved = true; // Prevent any further saves while popping
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop(true);
         }
       }
     } finally {
-      if (mounted) {
+      if (mounted && !_hasSaved) {
         setState(() {
           _isSaving = false;
         });
