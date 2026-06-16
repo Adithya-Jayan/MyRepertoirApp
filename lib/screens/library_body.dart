@@ -76,6 +76,15 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
       vsync: this,
     );
     _tabController!.addListener(_onTabChanged);
+
+    // Ensure the notifier is in sync with the actual initial tab, 
+    // especially if we fell back to index 0 because the selected group became hidden.
+    final actualInitialGroupId = widget.visibleGroups[initialIndex].id;
+    if (widget.selectedGroupId != actualInitialGroupId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onGroupSelected(actualInitialGroupId);
+      });
+    }
   }
 
   @override
