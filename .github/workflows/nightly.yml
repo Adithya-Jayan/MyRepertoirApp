@@ -94,43 +94,47 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
           VERSION="0.0.0-${{ steps.meta.outputs.build_name }}"
-          yq -i ".version = \"$VERSION\"" pubspec.yaml
-          echo "Updated pubspec.yaml to nightly version $VERSION"
+          yq -i ".version = \"$VERSION\"" app_fdroid/pubspec.yaml
+          echo "Updated app_fdroid/pubspec.yaml to nightly version $VERSION"
 
       - name: Decode Keystore
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
+        run: |
+          mkdir -p app_fdroid/android
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app_fdroid/android/my-release-key.jks
 
       - name: Create key.properties
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
-          echo "storeFile=../my-release-key.jks" > android/key.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "storeFile=../my-release-key.jks" > app_fdroid/android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> app_fdroid/android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> app_fdroid/android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> app_fdroid/android/key.properties
 
       - name: Build Nightly Artifacts
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
+          cd app_fdroid
           BUILD_NAME="${{ steps.meta.outputs.build_name }}"
           flutter pub get
-          flutter build apk --flavor nightly --release --build-name="$BUILD_NAME"
-          flutter build appbundle --flavor nightly --release --build-name="$BUILD_NAME"
+          flutter build apk --release --build-name="$BUILD_NAME"
+          flutter build appbundle --release --build-name="$BUILD_NAME"
           flutter build web --release --build-name="$BUILD_NAME"
+          cd ..
 
       - name: Verify APK Signature
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
           APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
-          $APKSIGNER_PATH verify --print-certs build/app/outputs/flutter-apk/app-nightly-release.apk
+          $APKSIGNER_PATH verify --print-certs app_fdroid/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Package Nightly Assets
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
           mkdir -p nightly_assets
-          cp build/app/outputs/flutter-apk/app-nightly-release.apk nightly_assets/app-nightly.apk
-          cp build/app/outputs/bundle/nightlyRelease/app-nightly-release.aab nightly_assets/app-nightly.aab
-          cp -r build/web nightly_assets/web_build
+          cp app_fdroid/build/app/outputs/flutter-apk/app-release.apk nightly_assets/app-nightly.apk
+          cp app_fdroid/build/app/outputs/bundle/release/app-release.aab nightly_assets/app-nightly.aab
+          cp -r app_fdroid/build/web nightly_assets/web_build
           cd nightly_assets
           zip -r web_build.zip web_build/
           cd ..

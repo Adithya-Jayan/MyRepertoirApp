@@ -142,7 +142,9 @@ jobs:
         run: |
           FINAL_VERSION_STRING="${{ steps.final_version.outputs.final_version_string }}"
           yq -i ".version = \"$FINAL_VERSION_STRING\"" pubspec.yaml
-          echo "Updated pubspec.yaml to version $FINAL_VERSION_STRING"
+          yq -i ".version = \"$FINAL_VERSION_STRING\"" app_fdroid/pubspec.yaml
+          yq -i ".version = \"$FINAL_VERSION_STRING\"" app_playstore/pubspec.yaml
+          echo "Updated pubspec.yamls to version $FINAL_VERSION_STRING"
 
       - name: Format Release Notes
         id: format_notes
@@ -210,26 +212,29 @@ jobs:
           echo "$FULL_NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
 
       - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
+        run: |
+          mkdir -p app_fdroid/android
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app_fdroid/android/my-release-key.jks
 
       - name: Create key.properties
         run: |
-          echo "storeFile=../my-release-key.jks" > android/key.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "storeFile=../my-release-key.jks" > app_fdroid/android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> app_fdroid/android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> app_fdroid/android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> app_fdroid/android/key.properties
 
       - name: Install dependencies
-        run: flutter pub get
+        run: cd app_fdroid && flutter pub get
 
       - name: Build All Platforms
         run: |
+          cd app_fdroid
           BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
           
           # --- Build armeabi-v7a ---
           echo "Building APK for armeabi-v7a"
-          flutter build apk --flavor fdroid --release \
+          flutter build apk --release \
             --split-per-abi \
             --target-platform=android-arm \
             --build-name="$BUILD_NAME" \
@@ -237,7 +242,7 @@ jobs:
           
           # --- Build arm64-v8a ---
           echo "Building APK for arm64-v8a"
-          flutter build apk --flavor fdroid --release \
+          flutter build apk --release \
             --split-per-abi \
             --target-platform=android-arm64 \
             --build-name="$BUILD_NAME" \
@@ -245,7 +250,7 @@ jobs:
           
           # --- Build x86_64 ---
           echo "Building APK for x86_64"
-          flutter build apk --flavor fdroid --release \
+          flutter build apk --release \
             --split-per-abi \
             --target-platform=android-x64 \
             --build-name="$BUILD_NAME" \
@@ -253,11 +258,12 @@ jobs:
 
           # Build App Bundle
           echo "Building App Bundle"
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          flutter build appbundle --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
           
           # Build Web
           echo "Building Web"
           flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          cd ..
           
       - name: Verify APK Versions
         run: |
@@ -273,7 +279,7 @@ jobs:
           EXPECTED_VC_V8A=$((BUILD_NUMBER * 10 + 2))
           EXPECTED_VC_X64=$((BUILD_NUMBER * 10 + 3))
           # --- Verify armeabi-v7a ---
-          APK_PATH_V7A="build/app/outputs/flutter-apk/app-armeabi-v7a-fdroid-release.apk"
+          APK_PATH_V7A="app_fdroid/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk"
           echo "Verifying $APK_PATH_V7A"
           ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
           ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
@@ -284,7 +290,7 @@ jobs:
             exit 1
           fi
           # --- Verify arm64-v8a ---
-          APK_PATH_V8A="build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk"
+          APK_PATH_V8A="app_fdroid/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
           echo "Verifying $APK_PATH_V8A"
           ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
           ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
@@ -295,7 +301,7 @@ jobs:
             exit 1
           fi
           # --- Verify x86_64 ---
-          APK_PATH_X64="build/app/outputs/flutter-apk/app-x86_64-fdroid-release.apk"
+          APK_PATH_X64="app_fdroid/build/app/outputs/flutter-apk/app-x86_64-release.apk"
           echo "Verifying $APK_PATH_X64"
           ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
           ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
@@ -311,7 +317,7 @@ jobs:
         run: |
           # Verify APKs
           APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
-          APKS_TO_VERIFY=$(find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk")
+          APKS_TO_VERIFY=$(find app_fdroid/build/app/outputs/flutter-apk -name "app-*-release.apk")
           if [ -z "$APKS_TO_VERIFY" ]; then
             echo "No APKs found to verify."
             exit 1
@@ -323,14 +329,14 @@ jobs:
           
           # Verify App Bundle
           echo "Verifying App Bundle"
-          jarsigner -verify -certs build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab
+          jarsigner -verify -certs app_fdroid/build/app/outputs/bundle/release/app-release.aab
 
       - name: Create Release Assets
         run: |
           mkdir -p release_assets
-          find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk" -exec cp {} release_assets/ \;
-          cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab release_assets/
-          cp -r build/web release_assets/web_build
+          find app_fdroid/build/app/outputs/flutter-apk -name "app-*-release.apk" -exec cp {} release_assets/ \;
+          cp app_fdroid/build/app/outputs/bundle/release/app-release.aab release_assets/app-fdroid-release.aab
+          cp -r app_fdroid/build/web release_assets/web_build
           
           cd release_assets
           zip -r web_build.zip web_build/
@@ -339,7 +345,7 @@ jobs:
       - name: Generate Checksums
         run: |
           cd release_assets
-          APKS_TO_CHECKSUM=$(find . -name "app-*-fdroid-release.apk")
+          APKS_TO_CHECKSUM=$(find . -name "app-*-release.apk")
           if [ -n "$APKS_TO_CHECKSUM" ]; then
             for apk in $APKS_TO_CHECKSUM; do
               sha256sum "$apk" > "$apk.sha256"
@@ -361,8 +367,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Add pubspec.yaml and the new changelog file
-          git add pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          # Add pubspec.yamls and the new changelog file
+          git add pubspec.yaml app_fdroid/pubspec.yaml app_playstore/pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
           
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
@@ -447,12 +453,12 @@ jobs:
           - os: windows-latest
             target: windows
             build_cmd: flutter build windows --release
-            asset_path: build/windows/x64/runner/Release
+            asset_path: app_fdroid/build/windows/x64/runner/Release
             zip_name: repertoire-windows
           - os: ubuntu-latest
             target: linux
             build_cmd: flutter build linux --release
-            asset_path: build/linux/x64/release/bundle
+            asset_path: app_fdroid/build/linux/x64/release/bundle
             zip_name: repertoire-linux
     runs-on: ${{ matrix.os }}
     steps:
@@ -475,10 +481,10 @@ jobs:
           sudo apt-get install -y ninja-build libgtk-3-dev
 
       - name: Install dependencies
-        run: flutter pub get
+        run: cd app_fdroid && flutter pub get
 
       - name: Build Desktop App
-        run: ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.version_name }}" --build-number="${{ needs.release.outputs.build_number }}"
+        run: cd app_fdroid && ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.version_name }}" --build-number="${{ needs.release.outputs.build_number }}"
 
       - name: Zip Release
         shell: bash
