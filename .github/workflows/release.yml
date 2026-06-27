@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ''
+      use_release_file:
+        description: 'Use release notes from RELEASE_NOTES.md?'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -150,11 +155,32 @@ jobs:
         id: format_notes
         env:
           USER_NOTES: ${{ github.event.inputs.release_notes }}
+          USE_RELEASE_FILE: ${{ github.event.inputs.use_release_file }}
         run: |
           # Parse literal \n into actual newlines
           FORMATTED_USER_NOTES=$(echo -e "${USER_NOTES//\\n/\\n}")
+          
+          # Read from RELEASE_NOTES.md if enabled and exists
+          FILE_NOTES=""
+          if [ "$USE_RELEASE_FILE" = "true" ] && [ -f RELEASE_NOTES.md ]; then
+            FILE_NOTES=$(cat RELEASE_NOTES.md)
+            # Empty the release notes file to prevent stale notes in future runs
+            > RELEASE_NOTES.md
+            echo "Cleared RELEASE_NOTES.md"
+          fi
+          
+          # Combine user notes (from text input) and file notes
+          COMBINED_NOTES=""
+          if [ -n "$FORMATTED_USER_NOTES" ] && [ -n "$FILE_NOTES" ]; then
+            COMBINED_NOTES="$FORMATTED_USER_NOTES"$'\n\n'"$FILE_NOTES"
+          elif [ -n "$FORMATTED_USER_NOTES" ]; then
+            COMBINED_NOTES="$FORMATTED_USER_NOTES"
+          else
+            COMBINED_NOTES="$FILE_NOTES"
+          fi
+          
           echo "formatted_notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$FORMATTED_USER_NOTES" >> $GITHUB_OUTPUT
+          echo "$COMBINED_NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Generate Release Notes
@@ -197,19 +223,18 @@ jobs:
       - name: Create F-Droid Changelog
         env:
           USER_NOTES: ${{ steps.format_notes.outputs.formatted_notes }}
-          GEN_NOTES: ${{ steps.generate_notes.outputs.notes }}
         run: |
           VERSION_CODE="${{ steps.final_version.outputs.build_number }}"
-          # Combine user notes and generated notes for the file
           
-          if [ -n "$USER_NOTES" ]; then
-            FULL_NOTES="$USER_NOTES"$'\n\n'"$GEN_NOTES"
-          else
-            FULL_NOTES="$GEN_NOTES"
-          fi
-          
+          # If manual notes are provided, write them. Otherwise, leave it empty to prevent stale commit notes.
           mkdir -p fastlane/metadata/android/en-US/changelogs
-          echo "$FULL_NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          if [ -n "$USER_NOTES" ]; then
+            echo "$USER_NOTES" > "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+            echo "Wrote manual changelog to Fastlane"
+          else
+            touch "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+            echo "Left Fastlane changelog empty (no manual notes provided)"
+          fi
 
       - name: Decode Keystore
         run: |
@@ -352,8 +377,11 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Add pubspec.yamls and the new changelog file
+          # Add pubspec.yamls, the new changelog file, and RELEASE_NOTES.md (if it exists)
           git add pubspec.yaml app_fdroid/pubspec.yaml app_playstore/pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          if [ -f RELEASE_NOTES.md ]; then
+            git add RELEASE_NOTES.md
+          fi
           
           COMMIT_MSG="Release version $TAG_NAME"
           git commit -m "$COMMIT_MSG"
