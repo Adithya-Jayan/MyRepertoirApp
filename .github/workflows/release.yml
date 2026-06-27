@@ -240,26 +240,8 @@ jobs:
           
           # --- F-Droid Builds ---
           cd app_fdroid
-          echo "Building APK for armeabi-v7a (F-Droid)"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-arm \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          echo "Building APK for arm64-v8a (F-Droid)"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-arm64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          echo "Building APK for x86_64 (F-Droid)"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-x64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
+          echo "Building Universal APK (F-Droid)"
+          flutter build apk --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
 
           echo "Building App Bundle (F-Droid)"
           flutter build appbundle --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
@@ -287,43 +269,16 @@ jobs:
           # Expected values
           EXPECTED_BUILD_NAME="${{ steps.version_calc.outputs.VERSION_NAME }}"
           BUILD_NUMBER="${{ steps.final_version.outputs.build_number }}"
-          EXPECTED_VC_V7A=$((BUILD_NUMBER * 10 + 1))
-          EXPECTED_VC_V8A=$((BUILD_NUMBER * 10 + 2))
-          EXPECTED_VC_X64=$((BUILD_NUMBER * 10 + 3))
           
-          # --- Verify armeabi-v7a ---
-          APK_PATH_V7A="app_fdroid/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk"
-          echo "Verifying $APK_PATH_V7A"
-          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
-          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V7A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
+          # --- Verify F-Droid Universal ---
+          APK_PATH_FDROID="app_fdroid/build/app/outputs/flutter-apk/app-release.apk"
+          echo "Verifying $APK_PATH_FDROID"
+          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_FDROID" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
+          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_FDROID" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
           echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
-          echo "Expected Version Code: $EXPECTED_VC_V7A, Actual: $ACTUAL_VERSION_CODE"
-          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_V7A" ]; then
-            echo "Version mismatch for armeabi-v7a!"
-            exit 1
-          fi
-          
-          # --- Verify arm64-v8a ---
-          APK_PATH_V8A="app_fdroid/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
-          echo "Verifying $APK_PATH_V8A"
-          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
-          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_V8A" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
-          echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
-          echo "Expected Version Code: $EXPECTED_VC_V8A, Actual: $ACTUAL_VERSION_CODE"
-          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_V8A" ]; then
-            echo "Version mismatch for arm64-v8a!"
-            exit 1
-          fi
-          
-          # --- Verify x86_64 ---
-          APK_PATH_X64="app_fdroid/build/app/outputs/flutter-apk/app-x86_64-release.apk"
-          echo "Verifying $APK_PATH_X64"
-          ACTUAL_VERSION_NAME=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionName" | sed "s/.*versionName='\([^']*\)'.*/\1/")
-          ACTUAL_VERSION_CODE=$($AAPT2_PATH dump badging "$APK_PATH_X64" | grep "versionCode" | sed "s/.*versionCode='\([^']*\)'.*/\1/")
-          echo "Expected Version Name: $EXPECTED_BUILD_NAME, Actual: $ACTUAL_VERSION_NAME"
-          echo "Expected Version Code: $EXPECTED_VC_X64, Actual: $ACTUAL_VERSION_CODE"
-          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$EXPECTED_VC_X64" ]; then
-            echo "Version mismatch for x86_64!"
+          echo "Expected Version Code: $BUILD_NUMBER, Actual: $ACTUAL_VERSION_CODE"
+          if [ "$ACTUAL_VERSION_NAME" != "$EXPECTED_BUILD_NAME" ] || [ "$ACTUAL_VERSION_CODE" != "$BUILD_NUMBER" ]; then
+            echo "Version mismatch for F-Droid Universal!"
             exit 1
           fi
           
@@ -346,10 +301,8 @@ jobs:
           APKSIGNER_PATH=$(find $ANDROID_SDK_ROOT/build-tools -name "apksigner" | sort -r | head -n 1)
           
           # Verify F-Droid
-          for apk in app_fdroid/build/app/outputs/flutter-apk/app-*-release.apk; do
-            echo "Verifying $apk"
-            $APKSIGNER_PATH verify --print-certs "$apk"
-          done
+          echo "Verifying F-Droid APK"
+          $APKSIGNER_PATH verify --print-certs app_fdroid/build/app/outputs/flutter-apk/app-release.apk
           echo "Verifying App Bundle (F-Droid)"
           jarsigner -verify -certs app_fdroid/build/app/outputs/bundle/release/app-release.aab
           
@@ -363,9 +316,7 @@ jobs:
         run: |
           mkdir -p release_assets
           # F-Droid
-          cp app_fdroid/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release_assets/app-armeabi-v7a-fdroid-release.apk
-          cp app_fdroid/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release_assets/app-arm64-v8a-fdroid-release.apk
-          cp app_fdroid/build/app/outputs/flutter-apk/app-x86_64-release.apk release_assets/app-x86_64-fdroid-release.apk
+          cp app_fdroid/build/app/outputs/flutter-apk/app-release.apk release_assets/app-universal-fdroid-release.apk
           cp app_fdroid/build/app/outputs/bundle/release/app-release.aab release_assets/app-fdroid-release.aab
           
           # Play Store
@@ -446,9 +397,7 @@ jobs:
             - **Android Users (Play Store / Proprietary):**
               - `app-universal-playstore-release.apk` (Universal APK for all devices)
             - **Android Users (F-Droid / Open Source):**
-              - `app-armeabi-v7a-fdroid-release.apk` (Older phones)
-              - `app-arm64-v8a-fdroid-release.apk` (Newer phones - Most common)
-              - `app-x86_64-fdroid-release.apk` (Emulators/Intel based tablets)
+              - `app-universal-fdroid-release.apk` (Universal APK for all devices)
             - **Web Users:**
               - `web_build.zip` (For hosting on a web server)
             - **Windows Users:**
@@ -460,12 +409,8 @@ jobs:
             ./release_assets/app-universal-playstore-release.apk.sha256
             ./release_assets/app-playstore-release.aab
             ./release_assets/app-playstore-release.aab.sha256
-            ./release_assets/app-armeabi-v7a-fdroid-release.apk
-            ./release_assets/app-armeabi-v7a-fdroid-release.apk.sha256
-            ./release_assets/app-arm64-v8a-fdroid-release.apk
-            ./release_assets/app-arm64-v8a-fdroid-release.apk.sha256
-            ./release_assets/app-x86_64-fdroid-release.apk
-            ./release_assets/app-x86_64-fdroid-release.apk.sha256
+            ./release_assets/app-universal-fdroid-release.apk
+            ./release_assets/app-universal-fdroid-release.apk.sha256
             ./release_assets/app-fdroid-release.aab
             ./release_assets/app-fdroid-release.aab.sha256
             ./release_assets/web_build.zip

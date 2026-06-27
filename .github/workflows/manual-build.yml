@@ -46,29 +46,9 @@ jobs:
           BUILD_NAME="0.0.0-test"
           BUILD_NUMBER="${{ github.run_number }}"
           
-          # --- Build armeabi-v7a ---
-          echo "Building APK for armeabi-v7a"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-arm \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          # --- Build arm64-v8a ---
-          echo "Building APK for arm64-v8a"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-arm64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          # --- Build x86_64 ---
-          echo "Building APK for x86_64"
-          flutter build apk --release \
-            --split-per-abi \
-            --target-platform=android-x64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
+          # --- Build Universal APK ---
+          echo "Building Universal APK"
+          flutter build apk --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
 
           # Build App Bundle
           echo "Building App Bundle"
@@ -82,7 +62,7 @@ jobs:
       - name: Create Release Assets
         run: |
           mkdir -p release_assets
-          find app_fdroid/build/app/outputs/flutter-apk -name "app-*-release.apk" -exec cp {} release_assets/ \;
+          cp app_fdroid/build/app/outputs/flutter-apk/app-release.apk release_assets/app-universal-fdroid-release.apk
           cp app_fdroid/build/app/outputs/bundle/release/app-release.aab release_assets/app-fdroid-release.aab
           cp -r app_fdroid/build/web release_assets/web_build
           
@@ -90,25 +70,11 @@ jobs:
           zip -r web_build.zip web_build/
           cd ..
 
-      - name: Upload APK (armeabi-v7a)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-armeabi-v7a-fdroid-release
-          path: release_assets/app-armeabi-v7a-release.apk
-          retention-days: 5
-
-      - name: Upload APK (arm64-v8a)
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-arm64-v8a-fdroid-release
-          path: release_assets/app-arm64-v8a-release.apk
-          retention-days: 5
-
-      - name: Upload APK (x86_64)
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-x86_64-fdroid-release
-          path: release_assets/app-x86_64-release.apk
+          name: app-universal-fdroid-release
+          path: release_assets/app-universal-fdroid-release.apk
           retention-days: 5
 
       - name: Upload App Bundle
