@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.adithya_jayan.myrepertoirapp"
+    namespace = "io.github.adithya_jayan.myrepertoirapp.playstore"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,11 +24,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.github.adithya_jayan.myrepertoirapp"
+        applicationId = "io.github.adithya_jayan.myrepertoirapp.playstore"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "app_name", "Repertoire")
     }
 
     signingConfigs {

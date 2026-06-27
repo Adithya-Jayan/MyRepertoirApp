@@ -1,6 +1,6 @@
 {
-    "name": "app_playstore",
-    "short_name": "app_playstore",
+    "name": "Repertoire",
+    "short_name": "Repertoire",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
