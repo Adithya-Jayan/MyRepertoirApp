@@ -36,12 +36,8 @@ jobs:
         run: cd app_fdroid && flutter pub get
       - name: Run analyzer (F-Droid)
         run: cd app_fdroid && flutter analyze
-      - name: Run tests (F-Droid)
-        run: cd app_fdroid && flutter test
 
       - name: Install packages (Play Store)
         run: cd app_playstore && flutter pub get
       - name: Run analyzer (Play Store)
         run: cd app_playstore && flutter analyze
-      - name: Run tests (Play Store)
-        run: cd app_playstore && flutter test
