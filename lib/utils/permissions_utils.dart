@@ -2,7 +2,20 @@ import 'dart:io'; // Add this import
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Import for BuildContext, showDialog
 import 'package:permission_handler/permission_handler.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:repertoire/utils/app_logger.dart';
+
+/// Checks if the current build is the Google Play Store variant.
+Future<bool> isPlayStoreBuild() async {
+  if (kIsWeb) return false;
+  if (!Platform.isAndroid) return false;
+  try {
+    final packageInfo = await PackageInfo.fromPlatform();
+    return packageInfo.packageName.endsWith('.playstore');
+  } catch (_) {
+    return false;
+  }
+}
 
 /// Requests necessary permissions for the application.
 /// Handles storage permissions for Android and iOS.
@@ -16,6 +29,12 @@ Future<void> requestPermissions(BuildContext context) async { // Pass BuildConte
 
   if (Platform.isAndroid) {
     AppLogger.log("Platform is Android.");
+    
+    if (await isPlayStoreBuild()) {
+      AppLogger.log("Play Store build detected. Skipping MANAGE_EXTERNAL_STORAGE.");
+      return;
+    }
+
     var status = await Permission.manageExternalStorage.status;
     AppLogger.log("Current Manage External Storage status: $status");
 

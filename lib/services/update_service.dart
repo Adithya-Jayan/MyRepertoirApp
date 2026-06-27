@@ -7,6 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
+import '../utils/permissions_utils.dart';
 
 class UpdateService {
   static const String _githubRepo = 'Adithya-Jayan/MyRepertoirApp';
@@ -17,6 +18,15 @@ class UpdateService {
 
   /// Checks for updates and shows a dialog if a new version is available.
   Future<void> checkForUpdates(BuildContext context, {bool manual = false}) async {
+    if (await isPlayStoreBuild()) {
+      if (manual && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Updates are managed by the Google Play Store.')),
+        );
+      }
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final shouldNotify = prefs.getBool('notifyNewReleases') ?? true;
 

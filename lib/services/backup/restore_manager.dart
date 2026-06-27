@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
 import '../../services/migration_service.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/permissions_utils.dart';
 
 import '../../database/music_piece_repository.dart';
 import '../../models/music_piece.dart';
@@ -486,8 +487,14 @@ class RestoreManager {
     
     // Storage and path settings
     if (appSettingsJson['appStoragePath'] != null) {
-      await prefs.setString('appStoragePath', appSettingsJson['appStoragePath']);
-      AppLogger.log('RestoreManager: Restored appStoragePath: ${appSettingsJson['appStoragePath']}');
+      String path = appSettingsJson['appStoragePath'];
+      if (await isPlayStoreBuild()) {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        path = appDocDir.path;
+        AppLogger.log('RestoreManager: Play Store detected. Forcing sandboxed appStoragePath: $path');
+      }
+      await prefs.setString('appStoragePath', path);
+      AppLogger.log('RestoreManager: Restored appStoragePath: $path');
       
       // Reinitialize the logger with the restored storage path
       await AppLogger.reinitialize();
