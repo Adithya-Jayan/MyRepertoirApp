@@ -90,12 +90,14 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "build_name=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Update version in pubspec.yaml (nightly)
+      - name: Update versions in pubspec.yamls (nightly)
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
           VERSION="0.0.0-${{ steps.meta.outputs.build_name }}"
+          yq -i ".version = \"$VERSION\"" pubspec.yaml
           yq -i ".version = \"$VERSION\"" app_fdroid/pubspec.yaml
-          echo "Updated app_fdroid/pubspec.yaml to nightly version $VERSION"
+          yq -i ".version = \"$VERSION\"" app_playstore/pubspec.yaml
+          echo "Updated all pubspec.yamls to nightly version $VERSION"
 
       - name: Decode Keystore
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
