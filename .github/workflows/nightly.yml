@@ -67,7 +67,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.1'
+          flutter-version: '3.38.4'
           channel: 'stable'
           cache: true
 
