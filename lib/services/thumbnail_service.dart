@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
 import 'package:video_player/video_player.dart';
 import 'package:fvp/fvp.dart' as fvp;
-import 'package:pdfx/pdfx.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 import '../utils/app_logger.dart';
 import '../models/media_item.dart';
@@ -160,37 +160,42 @@ class ThumbnailService {
     
     PdfDocument? document;
     try {
+      await pdfrxFlutterInitialize();
       document = await PdfDocument.openFile(item.pathOrUrl);
-      if (document.pagesCount < 1) return null;
+      if (document.pages.isEmpty) return null;
 
-      final page = await document.getPage(1);
+      final page = document.pages[0];
       
       // Render page to image bytes
       final pageImage = await page.render(
-        width: page.width * 2, // Double for better quality
-        height: page.height * 2,
-        format: PdfPageImageFormat.jpeg,
-        quality: 85,
+        width: page.width.toInt() * 2, // Double for better quality
+        height: page.height.toInt() * 2,
       );
-      
-      await page.close();
 
       if (pageImage != null) {
-        final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
-        if (thumbnailDir != null) {
-          if (!await thumbnailDir.exists()) {
-            await thumbnailDir.create(recursive: true);
+        final flutterImage = await pageImage.createImage();
+        final byteData = await flutterImage.toByteData(format: ui.ImageByteFormat.png);
+        
+        flutterImage.dispose();
+        pageImage.dispose(); // important to dispose PdfImage!
+
+        if (byteData != null) {
+          final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+          if (thumbnailDir != null) {
+            if (!await thumbnailDir.exists()) {
+              await thumbnailDir.create(recursive: true);
+            }
+            final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
+            await thumbnailFile.writeAsBytes(byteData.buffer.asUint8List());
+            AppLogger.log('ThumbnailService: PDF thumbnail saved to ${thumbnailFile.path}');
+            return thumbnailFile.path;
           }
-          final thumbnailFile = File(p.join(thumbnailDir.path, '${item.id}.jpg'));
-          await thumbnailFile.writeAsBytes(pageImage.bytes);
-          AppLogger.log('ThumbnailService: PDF thumbnail saved to ${thumbnailFile.path}');
-          return thumbnailFile.path;
         }
       }
     } catch (e) {
       AppLogger.log('ThumbnailService: Error generating PDF thumbnail: $e');
     } finally {
-      await document?.close();
+      await document?.dispose();
     }
     return null;
   }
