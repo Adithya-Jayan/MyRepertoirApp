@@ -29,9 +29,9 @@ Keep your sheet music, notes, audio recordings, videos, links, and practice logs
 
 ### Installation
 
-**Just want to use the app on Android?** Follow our **[Step-by-Step Installation Guide](INSTALL.md)**.
-
-Currently available for Android. A web version is available in the [Nightly Builds](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly), and support for Windows, macOS, and Linux is planned for the future.
+* **Android**: Follow our **[Step-by-Step Installation Guide](INSTALL.md)** or get it from F-Droid.
+* **Windows & Linux**: Download the pre-compiled `.zip` from the releases section, extract, and run.
+* **Web**: Access the live web version or download the web build from releases.
 
 ### Quick Overview
 
@@ -116,7 +116,7 @@ Personalize your experience and keep your data safe
 - Go to Settings > Backup & Restore. You can create manual backups or restore from a previous backup file. Automatic periodic backups are also supported.
 
 **What platforms does the app support?**
-- Currently available for Android. Support for web, Windows, macOS, and Linux is planned for the future.
+- Officially supports Android, Windows, Linux, and Web. macOS support is planned.
 
 ## Contributing
 
@@ -137,22 +137,22 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) before getting starte
 1. Clone the repository:
    ```sh
    git clone https://github.com/Adithya-Jayan/MyRepertoirApp.git
-   ```
-
-2. Navigate to the project directory:
-   ```sh
    cd MyRepertoirApp
    ```
 
-3. Install dependencies:
-   ```sh
-   flutter pub get
-   ```
-
-4. Run the app:
-   ```sh
-   flutter run
-   ```
+2. Choose the project variant to run:
+   * **F-Droid Build (FOSS)**:
+     ```sh
+     cd app_fdroid
+     flutter pub get
+     flutter run
+     ```
+   * **Play Store Build (Google Play)**:
+     ```sh
+     cd app_playstore
+     flutter pub get
+     flutter run
+     ```
 
 **Prerequisites:** Ensure you have the Flutter SDK installed. See the [official Flutter installation guide](https://flutter.dev/docs/get-started/install).
 

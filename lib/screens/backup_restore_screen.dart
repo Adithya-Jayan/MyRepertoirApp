@@ -6,7 +6,10 @@ import '../database/music_piece_repository.dart';
 import '../services/backup_restore_service.dart';
 import '../utils/backup_utils.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, Directory, File;
+import 'package:path/path.dart' as p;
+import 'package:share_plus/share_plus.dart';
+import '../utils/permissions_utils.dart';
 
 /// A screen for managing backup and restore operations of the application data.
 ///
@@ -28,6 +31,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   String _currentStoragePath = '';
   bool _isInitializing = true;
   String? _initializationError;
+  bool _isPlayStore = false;
 
   // Controllers to prevent TextField rebuilds
   late TextEditingController _frequencyController;
@@ -59,8 +63,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       _backupRestoreService = BackupRestoreService(MusicPieceRepository(), prefs);
       
       await _loadAutoBackupSettings();
+      final isPlayStore = await isPlayStoreBuild();
       
       setState(() {
+        _isPlayStore = isPlayStore;
         _currentStoragePath = prefs.getString('appStoragePath') ?? _getDefaultStoragePath();
         _isInitializing = false;
       });
@@ -177,6 +183,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         _buildStorageSection(),
         const SizedBox(height: 16),
         _buildAutoBackupSection(),
+        const SizedBox(height: 16),
+        _buildAutoBackupsListSection(),
       ],
     );
   }
@@ -405,6 +413,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
   /// Check if storage folder can be changed on this platform
   bool _canChangeStorageFolder() {
+    if (_isPlayStore) return false;
     return !kIsWeb && (Platform.isWindows || Platform.isAndroid || Platform.isMacOS || Platform.isLinux);
   }
 
@@ -481,5 +490,184 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         );
       }
     }
+  }
+
+  Future<List<File>> _getAutoBackups() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storagePath = prefs.getString('appStoragePath');
+      if (storagePath == null || storagePath.isEmpty) return [];
+      
+      final backupDir = Directory(p.join(storagePath, 'Backups', 'Autobackups'));
+      if (!await backupDir.exists()) return [];
+      
+      final files = await backupDir.list().toList();
+      final zipFiles = files
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.zip'))
+          .toList();
+      
+      zipFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+      return zipFiles;
+    } catch (e) {
+      utils.AppLogger.log('BackupRestoreScreen: Error listing auto backups: $e');
+      return [];
+    }
+  }
+
+  Future<void> _exportBackup(File file) async {
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+      
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        text: 'Repertoire Backup',
+        sharePositionOrigin: rect,
+      ));
+    } catch (e) {
+      utils.AppLogger.log('BackupRestoreScreen: Error sharing backup: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting backup: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmAndRestoreFromPath(String filePath) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Restore'),
+        content: const Text(
+          'Are you sure you want to restore from this backup? '
+          'This will replace all your current data.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true && mounted) {
+      try {
+        utils.AppLogger.log('BackupRestoreScreen: Starting restore from path: $filePath');
+        
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Restoring backup...'),
+              ],
+            ),
+          ),
+        );
+        
+        final success = await _backupRestoreService.restoreData(
+          context: context,
+          filePath: filePath,
+          shouldPop: false,
+        );
+        
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Backup restored successfully.'), backgroundColor: Colors.green),
+            );
+            Navigator.of(context).pop(true);
+          }
+        }
+      } catch (e) {
+        utils.AppLogger.log('BackupRestoreScreen: Restore error: $e');
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Restore failed: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildAutoBackupsListSection() {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Automatic Backups',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          FutureBuilder<List<File>>(
+            future: _getAutoBackups(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No automatic backups found.', style: TextStyle(color: Colors.grey)),
+                );
+              }
+              
+              final files = snapshot.data!;
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: files.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final file = files[index];
+                  final fileName = p.basename(file.path);
+                  final modTime = file.statSync().modified;
+                  final formattedDate = '${modTime.year}-${modTime.month.toString().padLeft(2, '0')}-${modTime.day.toString().padLeft(2, '0')} ${modTime.hour.toString().padLeft(2, '0')}:${modTime.minute.toString().padLeft(2, '0')}';
+                  
+                  return ListTile(
+                    leading: const Icon(Icons.folder_zip, color: Colors.orange),
+                    title: Text(fileName, style: const TextStyle(fontSize: 14)),
+                    subtitle: Text('Created: $formattedDate', style: const TextStyle(fontSize: 12)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.restore, color: Colors.blue),
+                          tooltip: 'Restore this backup',
+                          onPressed: () => _confirmAndRestoreFromPath(file.path),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.share, color: Colors.green),
+                          tooltip: 'Share/Export backup',
+                          onPressed: () => _exportBackup(file),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

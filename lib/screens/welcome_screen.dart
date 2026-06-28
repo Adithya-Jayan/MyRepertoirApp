@@ -10,6 +10,7 @@ import '../utils/app_logger.dart';
 import '../services/backup_restore_service.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/permissions_utils.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// The initial screen displayed to the user on their first launch of the application.
 ///
@@ -32,6 +33,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
+        final isPlayStore = await isPlayStoreBuild();
+        if (isPlayStore) {
+          final appDocDir = await getApplicationDocumentsDirectory();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('appStoragePath', appDocDir.path);
+          await AppLogger.reinitialize();
+          
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ColorSchemeScreen()),
+            );
+          }
+          return;
+        }
+        if (!mounted) return;
         await requestPermissions(context);
       }
     });

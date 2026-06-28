@@ -29,83 +29,52 @@ jobs:
         run: flutter pub get
 
       - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/my-release-key.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app_fdroid/android/my-release-key.jks
 
       - name: Create key.properties
         run: |
-          echo "storeFile=../my-release-key.jks" > android/key.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          mkdir -p app_fdroid/android
+          echo "storeFile=../my-release-key.jks" > app_fdroid/android/key.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> app_fdroid/android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> app_fdroid/android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> app_fdroid/android/key.properties
 
       - name: Build All Platforms
         run: |
+          cd app_fdroid
           # Use a placeholder build name/number since we aren't calculating/bumping it
           BUILD_NAME="0.0.0-test"
           BUILD_NUMBER="${{ github.run_number }}"
           
-          # --- Build armeabi-v7a ---
-          echo "Building APK for armeabi-v7a"
-          flutter build apk --flavor fdroid --release \
-            --split-per-abi \
-            --target-platform=android-arm \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          # --- Build arm64-v8a ---
-          echo "Building APK for arm64-v8a"
-          flutter build apk --flavor fdroid --release \
-            --split-per-abi \
-            --target-platform=android-arm64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
-          
-          # --- Build x86_64 ---
-          echo "Building APK for x86_64"
-          flutter build apk --flavor fdroid --release \
-            --split-per-abi \
-            --target-platform=android-x64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
+          # --- Build Universal APK ---
+          echo "Building Universal APK"
+          flutter build apk --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
 
           # Build App Bundle
           echo "Building App Bundle"
-          flutter build appbundle --flavor fdroid --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          flutter build appbundle --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
           
           # Build Web
           echo "Building Web"
           flutter build web --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+          cd ..
 
       - name: Create Release Assets
         run: |
           mkdir -p release_assets
-          find build/app/outputs/flutter-apk -name "app-*-fdroid-release.apk" -exec cp {} release_assets/ \;
-          cp build/app/outputs/bundle/fdroidRelease/app-fdroid-release.aab release_assets/
-          cp -r build/web release_assets/web_build
+          cp app_fdroid/build/app/outputs/flutter-apk/app-release.apk release_assets/app-universal-fdroid-release.apk
+          cp app_fdroid/build/app/outputs/bundle/release/app-release.aab release_assets/app-fdroid-release.aab
+          cp -r app_fdroid/build/web release_assets/web_build
           
           cd release_assets
           zip -r web_build.zip web_build/
           cd ..
 
-      - name: Upload APK (armeabi-v7a)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-armeabi-v7a-fdroid-release
-          path: release_assets/app-armeabi-v7a-fdroid-release.apk
-          retention-days: 5
-
-      - name: Upload APK (arm64-v8a)
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-arm64-v8a-fdroid-release
-          path: release_assets/app-arm64-v8a-fdroid-release.apk
-          retention-days: 5
-
-      - name: Upload APK (x86_64)
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-x86_64-fdroid-release
-          path: release_assets/app-x86_64-fdroid-release.apk
+          name: app-universal-fdroid-release
+          path: release_assets/app-universal-fdroid-release.apk
           retention-days: 5
 
       - name: Upload App Bundle

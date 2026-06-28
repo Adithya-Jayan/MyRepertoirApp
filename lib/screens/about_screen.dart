@@ -20,6 +20,7 @@ class AboutScreen extends StatefulWidget {
 /// Manages the display of app version and other static information.
 class _AboutScreenState extends State<AboutScreen> {
   String _appVersion = 'Loading...'; // Stores the application version.
+  bool _isPlayStore = false;
 
   @override
   void initState() {
@@ -30,7 +31,9 @@ class _AboutScreenState extends State<AboutScreen> {
   /// Asynchronously loads the application version from package info.
   Future<void> _loadAppVersion() async {
     final packageInfo = await PackageInfo.fromPlatform(); // Get package information.
+    final isPlayStore = packageInfo.packageName.endsWith('.playstore');
     setState(() {
+      _isPlayStore = isPlayStore;
       _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}'; // Set the app version string.
     });
   }
@@ -89,22 +92,24 @@ class _AboutScreenState extends State<AboutScreen> {
                 title: Text('Inspired by'),
                 trailing: Text('Mihon', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
               ),
-              const Divider(indent: 16, endIndent: 16),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Center(
-                  child: TextButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CreditsScreen()),
-                      );
-                    },
-                    icon: const Icon(Icons.group_outlined, size: 18),
-                    label: const Text('View All Contributors'),
+              if (!_isPlayStore) ...[
+                const Divider(indent: 16, endIndent: 16),
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CreditsScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.group_outlined, size: 18),
+                      label: const Text('View All Contributors'),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ]),
 
             const SizedBox(height: 16),
@@ -117,13 +122,14 @@ class _AboutScreenState extends State<AboutScreen> {
                 trailing: const Icon(Icons.open_in_new, size: 16),
                 onTap: () => _launchUrl('https://adithyajayan.in/MyRepertoirApp/'),
               ),
-              ListTile(
-                leading: const Icon(Icons.android, color: Colors.green),
-                title: const Text('F-Droid'),
-                subtitle: const Text('f-droid.org/.../myrepertoirapp', style: TextStyle(fontSize: 12)),
-                trailing: const Icon(Icons.open_in_new, size: 16),
-                onTap: () => _launchUrl('https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/'),
-              ),
+              if (!_isPlayStore)
+                ListTile(
+                  leading: const Icon(Icons.android, color: Colors.green),
+                  title: const Text('F-Droid'),
+                  subtitle: const Text('f-droid.org/.../myrepertoirapp', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.open_in_new, size: 16),
+                  onTap: () => _launchUrl('https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/'),
+                ),
               ListTile(
                 leading: const Icon(Icons.code, color: Colors.black),
                 title: const Text('GitHub'),

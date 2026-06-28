@@ -25,9 +25,19 @@ jobs:
         with:
           flutter-version: '3.35.1'
           cache: true
-      - name: Install packages
+      - name: Install packages (Root)
         run: flutter pub get
-      - name: Run analyzer
+      - name: Run analyzer (Root)
         run: flutter analyze
-      - name: Run tests
+      - name: Run tests (Root)
         run: flutter test --coverage
+      
+      - name: Install packages (F-Droid)
+        run: cd app_fdroid && flutter pub get
+      - name: Run analyzer (F-Droid)
+        run: cd app_fdroid && flutter analyze
+
+      - name: Install packages (Play Store)
+        run: cd app_playstore && flutter pub get
+      - name: Run analyzer (Play Store)
+        run: cd app_playstore && flutter analyze
