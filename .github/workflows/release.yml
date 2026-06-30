@@ -60,6 +60,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Enable Swift Package Manager
+        run: flutter config --enable-swift-package-manager
+
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq
@@ -487,7 +490,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.1"
+          flutter-version: "3.38.4"
           channel: 'stable'
           cache: true
       

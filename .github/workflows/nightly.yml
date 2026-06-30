@@ -71,6 +71,10 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Enable Swift Package Manager
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
+        run: flutter config --enable-swift-package-manager
+
       - name: Install yq
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
