@@ -1,0 +1,1 @@
+Test release after fdroid playstore flow separation. This includes a few bug fixes as well.
