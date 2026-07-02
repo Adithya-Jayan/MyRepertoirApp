@@ -503,6 +503,13 @@ jobs:
       - name: Install dependencies
         run: cd app_fdroid && flutter pub get
 
+      - name: Pre-download and extract MDK SDK (Windows)
+        if: matrix.target == 'windows'
+        shell: bash
+        run: |
+          curl -L -o mdk-sdk.7z https://sourceforge.net/projects/mdk-sdk/files/nightly/mdk-sdk-windows-x64.7z
+          7z x mdk-sdk.7z -oapp_fdroid/windows/flutter/ephemeral/.plugin_symlinks/fvp/windows/ -aoa
+
       - name: Build Desktop App
         run: cd app_fdroid && ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.version_name }}" --build-number="${{ needs.release.outputs.build_number }}"
 
