@@ -60,9 +60,6 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Enable Swift Package Manager
-        run: flutter config --enable-swift-package-manager
-
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64 -O /usr/local/bin/yq

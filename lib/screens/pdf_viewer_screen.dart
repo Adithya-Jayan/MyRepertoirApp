@@ -37,6 +37,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   Duration _lastElapsed = Duration.zero;
   int _currentPage = 1;
   bool _isDraggingScrollbar = false;
+  Duration _lastUpdateElapsed = Duration.zero;
 
   late AnimationController _scrollbarOpacityController;
   Timer? _scrollbarHideTimer;
@@ -87,14 +88,27 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   void _onTick(Duration elapsed) {
     if (!_isAutoScrolling || !_pdfViewerController.isReady) return;
 
+    if (_lastElapsed == Duration.zero) {
+      _lastElapsed = elapsed;
+      _lastUpdateElapsed = elapsed;
+      return;
+    }
+
     final Duration delta = elapsed - _lastElapsed;
     _lastElapsed = elapsed;
+
+    final Duration updateDelta = elapsed - _lastUpdateElapsed;
+    // Throttle scroll updates to ~30fps to give the rendering engine breathing room
+    if (updateDelta < const Duration(milliseconds: 30)) {
+      return;
+    }
+    _lastUpdateElapsed = elapsed;
 
     if (delta == Duration.zero) return;
 
     // 1.0 speed = 40 pixels per second
     final double pixelsPerSecond = _scrollSpeed * 40.0;
-    final double moveAmount = pixelsPerSecond * (delta.inMicroseconds / 1000000.0);
+    final double moveAmount = pixelsPerSecond * (updateDelta.inMicroseconds / 1000000.0);
 
     final Matrix4 matrix = _pdfViewerController.value.clone();
     final Vector3 translation = matrix.getTranslation();
@@ -154,6 +168,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
       _scrollbarHideTimer?.cancel();
       _scrollbarOpacityController.reverse();
       _lastElapsed = Duration.zero;
+      _lastUpdateElapsed = Duration.zero;
       if (!_ticker.isActive) {
         _ticker.start();
       }
@@ -183,10 +198,21 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
 
   void _handleDoubleTap() {
     if (!_pdfViewerController.isReady) return;
-    if (_pdfViewerController.value != Matrix4.identity()) {
-      _resetZoom();
+    final currentZoom = _pdfViewerController.currentZoom;
+    final minZoom = _pdfViewerController.minScale;
+    
+    // Zoom out to fit page width if we are currently zoomed in
+    if (currentZoom > minZoom + 0.01) {
+      _pdfViewerController.setZoom(
+        _pdfViewerController.centerPosition,
+        minZoom,
+      );
     } else {
-      _pdfViewerController.setZoom(_pdfViewerController.centerPosition, 2.0);
+      // Zoom in to 2.0 times the fit zoom (minScale)
+      _pdfViewerController.setZoom(
+        _pdfViewerController.centerPosition,
+        minZoom * 2.0,
+      );
     }
   }
 
@@ -336,6 +362,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                 controller: _pdfViewerController,
                 params: PdfViewerParams(
                   margin: 8.0,
+                  scrollPhysics: const BouncingScrollPhysics(),
+                  scrollPhysicsScale: const BouncingScrollPhysics(),
+                  behaviorControlParams: const PdfViewerBehaviorControlParams(
+                    pageImageCachingDelay: Duration.zero,
+                    partialImageLoadingDelay: Duration.zero,
+                  ),
                   onViewerReady: (document, controller) {
                     if (mounted) {
                       setState(() {

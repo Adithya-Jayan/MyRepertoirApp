@@ -71,10 +71,6 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Enable Swift Package Manager
-        if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
-        run: flutter config --enable-swift-package-manager
-
       - name: Install yq
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         run: |
@@ -102,6 +98,17 @@ jobs:
           yq -i ".version = \"$VERSION\"" app_fdroid/pubspec.yaml
           yq -i ".version = \"$VERSION\"" app_playstore/pubspec.yaml
           echo "Updated all pubspec.yamls to nightly version $VERSION"
+
+      - name: Customize app name and package ID for nightly builds
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
+        run: |
+          # Update F-Droid app name and package ID
+          sed -i 's/resValue("string", "app_name", "Repertoire")/resValue("string", "app_name", "Repertoire Nightly")/g' app_fdroid/android/app/build.gradle.kts
+          sed -i 's/applicationId = "io.github.adithya_jayan.myrepertoirapp.fdroid"/applicationId = "io.github.adithya_jayan.myrepertoirapp.fdroid.nightly"/g' app_fdroid/android/app/build.gradle.kts
+          
+          # Update Play Store app name and package ID
+          sed -i 's/resValue("string", "app_name", "Repertoire")/resValue("string", "app_name", "Repertoire Nightly")/g' app_playstore/android/app/build.gradle.kts
+          sed -i 's/applicationId = "io.github.adithya_jayan.myrepertoirapp.playstore"/applicationId = "io.github.adithya_jayan.myrepertoirapp.playstore.nightly"/g' app_playstore/android/app/build.gradle.kts
 
       - name: Decode Keystore
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
