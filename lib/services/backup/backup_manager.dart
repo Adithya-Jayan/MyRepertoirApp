@@ -54,6 +54,7 @@ class BackupManager {
     settings['showPracticeCount'] = prefs.getBool('showPracticeCount');
     settings['showLastPracticed'] = prefs.getBool('showLastPracticed');
     settings['showDotPatternBackground'] = prefs.getBool('showDotPatternBackground');
+    settings['useOledBlack'] = prefs.getBool('useOledBlack');
     
     // Backup settings
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
@@ -85,13 +86,35 @@ class BackupManager {
     settings['show_practice_time_stats'] = prefs.getBool('show_practice_time_stats');
     settings['show_practice_notes'] = prefs.getBool('show_practice_notes');
     
+    // Practice stage transitions (legacy migration fields)
+    settings['greenPeriod'] = prefs.getInt('greenPeriod');
+    settings['greenToYellowTransition'] = prefs.getInt('greenToYellowTransition');
+    settings['yellowToRedTransition'] = prefs.getInt('yellowToRedTransition');
+    settings['redToBlackTransition'] = prefs.getInt('redToBlackTransition');
+    
     // App state settings
     settings['hasRunBefore'] = prefs.getBool('hasRunBefore');
     settings['notifyNewReleases'] = prefs.getBool('notifyNewReleases');
     settings['showGradientBackground'] = prefs.getBool('showGradientBackground');
+    settings['dismissed_update_version'] = prefs.getString('dismissed_update_version');
+    settings['last_run_version'] = prefs.getString('last_run_version');
     
     // Debug settings
     settings['debugLogsEnabled'] = prefs.getBool('debugLogsEnabled');
+
+    // Dynamic / Piece-specific & UI state settings
+    final dynamicKeys = prefs.getKeys().where((key) =>
+      key.startsWith('audio_speed_') ||
+      key.startsWith('audio_pitch_') ||
+      key.startsWith('video_playback_speed_') ||
+      key.startsWith('video_pitch_') ||
+      key.startsWith('midi_mutes_') ||
+      key.startsWith('pdf_scroll_speed_') ||
+      key.startsWith('section_expanded_')
+    );
+    for (final key in dynamicKeys) {
+      settings[key] = prefs.get(key);
+    }
     
     AppLogger.log('Collected ${settings.length} app settings for backup');
     return settings;

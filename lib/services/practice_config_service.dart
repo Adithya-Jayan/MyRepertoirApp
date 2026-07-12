@@ -10,6 +10,10 @@ class PracticeConfigService {
 
   static List<PracticeStage>? get cachedStages => _cachedStages;
 
+  static void clearCache() {
+    _cachedStages = null;
+  }
+
   Future<List<PracticeStage>> loadStages() async {
     // If already cached, return it (optional: add a forceRefresh parameter if needed)
     // But we should probably refresh from disk to be safe, then update cache.

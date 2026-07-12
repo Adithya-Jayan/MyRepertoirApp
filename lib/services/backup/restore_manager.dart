@@ -10,6 +10,9 @@ import 'package:archive/archive_io.dart';
 import '../../services/migration_service.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/permissions_utils.dart';
+import 'package:provider/provider.dart';
+import '../../utils/theme_notifier.dart';
+import '../../services/practice_config_service.dart';
 
 import '../../database/music_piece_repository.dart';
 import '../../models/music_piece.dart';
@@ -466,6 +469,10 @@ class RestoreManager {
       await prefs.setBool('showDotPatternBackground', appSettingsJson['showDotPatternBackground']);
       AppLogger.log('RestoreManager: Restored showDotPatternBackground: ${appSettingsJson['showDotPatternBackground']}');
     }
+    if (appSettingsJson['useOledBlack'] != null) {
+      await prefs.setBool('useOledBlack', appSettingsJson['useOledBlack']);
+      AppLogger.log('RestoreManager: Restored useOledBlack: ${appSettingsJson['useOledBlack']}');
+    }
     
     // Backup settings
     if (appSettingsJson['autoBackupEnabled'] != null) {
@@ -580,6 +587,68 @@ class RestoreManager {
       await prefs.setBool('debugLogsEnabled', appSettingsJson['debugLogsEnabled']);
       AppLogger.log('RestoreManager: Restored debugLogsEnabled: ${appSettingsJson['debugLogsEnabled']}');
     }
+
+    // Practice stage transitions (legacy migration fields)
+    if (appSettingsJson['greenPeriod'] != null) {
+      await prefs.setInt('greenPeriod', appSettingsJson['greenPeriod']);
+    }
+    if (appSettingsJson['greenToYellowTransition'] != null) {
+      await prefs.setInt('greenToYellowTransition', appSettingsJson['greenToYellowTransition']);
+    }
+    if (appSettingsJson['yellowToRedTransition'] != null) {
+      await prefs.setInt('yellowToRedTransition', appSettingsJson['yellowToRedTransition']);
+    }
+    if (appSettingsJson['redToBlackTransition'] != null) {
+      await prefs.setInt('redToBlackTransition', appSettingsJson['redToBlackTransition']);
+    }
+
+    // Dismissed version & last run version
+    if (appSettingsJson['dismissed_update_version'] != null) {
+      await prefs.setString('dismissed_update_version', appSettingsJson['dismissed_update_version']);
+    }
+    if (appSettingsJson['last_run_version'] != null) {
+      await prefs.setString('last_run_version', appSettingsJson['last_run_version']);
+    }
+
+    // Restore dynamic / piece-specific & UI state settings
+    final dynamicPrefixes = [
+      'audio_speed_',
+      'audio_pitch_',
+      'video_playback_speed_',
+      'video_pitch_',
+      'midi_mutes_',
+      'pdf_scroll_speed_',
+      'section_expanded_',
+    ];
+
+    for (final entry in appSettingsJson.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (value == null) continue;
+
+      // Check if it matches any dynamic prefix
+      final isDynamic = dynamicPrefixes.any((prefix) => key.startsWith(prefix));
+      if (isDynamic) {
+        if (value is bool) {
+          await prefs.setBool(key, value);
+        } else if (value is int) {
+          await prefs.setInt(key, value);
+        } else if (value is double) {
+          await prefs.setDouble(key, value);
+        } else if (value is num) {
+          await prefs.setDouble(key, value.toDouble());
+        } else if (value is String) {
+          await prefs.setString(key, value);
+        } else if (value is List) {
+          await prefs.setStringList(key, List<String>.from(value));
+        }
+        AppLogger.log('RestoreManager: Restored dynamic setting: $key = $value');
+      }
+    }
+
+    // Clear practice config stages cache to force a reload on next use
+    PracticeConfigService.clearCache();
+    AppLogger.log('RestoreManager: PracticeConfigService cache cleared');
     
     AppLogger.log('RestoreManager: App settings restored successfully');
   }
@@ -667,6 +736,16 @@ class RestoreManager {
 
         _showRestoreMessage(messenger, true, 'Data restored successfully!');
         AppLogger.log('RestoreManager: Data restored successfully');
+
+        // Reload settings in ThemeNotifier to update UI instantly
+        if (context != null && context.mounted) {
+          try {
+            Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+            AppLogger.log('RestoreManager: ThemeNotifier settings reloaded');
+          } catch (e) {
+            AppLogger.log('RestoreManager: Error reloading ThemeNotifier settings: $e');
+          }
+        }
         
         // Force a rebuild of the app to refresh all data
         if (shouldPop && navigator != null && navigator.context.mounted) {
