@@ -2,10 +2,10 @@
 
 ## Overview
 
-This repository uses two primary release workflows to automate the build and release process:
+This repository uses a multi-project, split-flavor structure for the application. Releases are automated using two primary GitHub Actions workflows:
 
-1.  **Create Release:** A manually triggered workflow for creating official and pre-release versions.
-2.  **Nightly Build:** An automated workflow that creates a new build every day with the latest changes.
+1.  **Create Release:** A manually triggered workflow for creating official (stable) and pre-release versions.
+2.  **Nightly Build:** An automated daily workflow that creates rolling builds of the latest code.
 
 ---
 
@@ -14,57 +14,49 @@ This repository uses two primary release workflows to automate the build and rel
 -   **File:** `.github/workflows/release.yml`
 -   **Name:** "Create Release"
 
-This workflow is used to create new official and pre-release versions of the application. It automates version bumping, building for multiple platforms, and creating a GitHub release.
+This workflow updates version identifiers across the workspace, compiles the split F-Droid and Google Play builds, writes release notes, and creates a tagged GitHub release.
 
 ### How to Use
 
 1.  Navigate to the **Actions** tab in the GitHub repository.
 2.  Select the **"Create Release"** workflow.
 3.  Click the **"Run workflow"** button.
-4.  Fill in the required inputs:
-    -   **`release_type`**: Choose the type of release (`patch`, `minor`, or `major`).
-    -   **`prerelease`**: Check this box to create a pre-release version.
-    -   **`release_notes`**: Add any custom notes to be included in the release description.
-5.  Click **"Run workflow"** to start the release process.
-
-**Note:** It is recommended to run this workflow on a commit that has an official release version (e.g., `1.2.3+4`) and not a pre-release version.
+4.  Configure the inputs:
+    -   **`release_type`**: Choose the version bump type (`patch`, `minor`, `major`, or `stabilize`).
+    -   **`prerelease`**: Check this box to generate a pre-release suffix (e.g., `-prerelease.1`).
+    -   **`release_notes`**: Optional custom notes (newlines supported via `\n`).
+    -   **`use_release_file`**: Check this box to read the release description from `RELEASE_NOTES.md` at the project root.
+5.  Click **"Run workflow"**.
 
 ### Versioning Scheme
 
-The versioning is managed by the `version` string in the `pubspec.yaml` file, which is in the format `VERSION_NAME+BUILD_NUMBER` (e.g., `3.1.4+1`).
+The version is defined as `VERSION_NAME+BUILD_NUMBER` (e.g., `5.0.2+39`). The workflow keeps the root `pubspec.yaml`, `app_fdroid/pubspec.yaml`, and `app_playstore/pubspec.yaml` fully synchronized.
 
--   **Official Release:** The `VERSION_NAME` is bumped based on the selected `release_type`, and the `BUILD_NUMBER` is incremented.
--   **Pre-release:** A pre-release is created for the *next* version.
+-   **Official (Stable) Release:** The version name is incremented based on the chosen bump type, and the build number is incremented by 1.
+-   **Pre-release:** Generates an incremental pre-release tag for the next version (e.g., `5.0.3-prerelease.1+40`).
+-   **Stabilize:** Transitions a pre-release version name (e.g., `5.0.2-prerelease.1`) into its stable counterpart (e.g., `5.0.2`) without performing a minor/major/patch bump.
 
-### Version Change Examples
+### Version Bumping Examples
 
-| Current Version | Release Type | Prerelease | New Version             |
-| --------------- | ------------ | ---------- | ----------------------- |
-| `1.1.0+2`       | `patch`      | `false`    | `1.1.1+3`               |
-| `1.1.0+2`       | `patch`      | `true`     | `1.1.1-prerelease.1+3`  |
-| `1.1.0+2`       | `minor`      | `false`    | `1.2.0+3`               |
-| `1.1.0+2`       | `minor`      | `true`     | `1.2.0-prerelease.1+3`  |
-| `1.1.0+2`       | `major`      | `false`    | `2.0.0+3`               |
-| `1.1.0+2`       | `major`      | `true`     | `2.0.0-prerelease.1+3`  |
-
-### F-Droid Versioning
-
-The workflow generates F-Droid compatible version codes for each CPU architecture (ABI) to ensure that F-Droid can correctly handle the updates.
+| Current Version | Release Type | Prerelease | New Version             | Notes |
+| --------------- | ------------ | ---------- | ----------------------- | ----- |
+| `5.0.1+37`      | `patch`      | `false`    | `5.0.2+38`              | Standard patch bump |
+| `5.0.1+37`      | `minor`      | `true`     | `5.1.0-prerelease.1+38` | Pre-release minor bump |
+| `5.0.2-prerelease.1+38` | `stabilize` | `false` | `5.0.2+39`            | Convert pre-release to stable |
 
 ### What the Workflow Does
 
-1.  **Calculates the next version** and build number from `pubspec.yaml`.
-2.  **Updates `pubspec.yaml`** with the new version.
-3.  **Builds the application** for the `fdroid` flavor:
-    -   Android APKs for `armeabi-v7a`, `arm64-v8a`, and `x86_64`.
-    -   Android App Bundle.
-    -   Web build.
-4.  **Generates checksums** for all release assets.
-5.  **Creates a Git tag** in the format `vVERSION_NAME+BUILD_NUMBER`.
-6.  **Commits and pushes** the `pubspec.yaml` file changes to the repository.
-7.  **Generates automated release notes** based on the commits since the last release.
-8.  **Creates an F-Droid changelog** file.
-9.  **Publishes a GitHub release** with the generated assets and release notes.
+1.  **Calculates the next version name and build number** from the root `pubspec.yaml`.
+2.  **Bumps and updates version files** across all three `pubspec.yaml` files.
+3.  **Builds the application** for both flavors:
+    -   **F-Droid (`app_fdroid`):** Builds a single, universal Android APK, an Android App Bundle (AAB), and a zipped Web build.
+    -   **Play Store (`app_playstore`):** Builds an Android App Bundle (AAB).
+4.  **Generates checksums** (SHA-256) for all compiled assets.
+5.  **Creates a Git tag** named `vVERSION_NAME+BUILD_NUMBER` on the commit.
+6.  **Formats & Clears Release Notes:** Reads manual inputs and the optional `RELEASE_NOTES.md` file. It then wipes the contents of `RELEASE_NOTES.md` to prevent carrying old notes to the next run.
+7.  **Publishes F-Droid Changelog:** Creates/updates a Fastlane changelog file at `fastlane/metadata/android/en-US/changelogs/<BUILD_NUMBER>.txt`.
+8.  **Commits and pushes changes** (including pubspec updates and changelogs) back to the repository.
+9.  **Publishes a GitHub Release** containing the build outputs, checksums, and release notes.
 
 ---
 
@@ -73,31 +65,25 @@ The workflow generates F-Droid compatible version codes for each CPU architectur
 -   **File:** `.github/workflows/nightly.yml`
 -   **Name:** "Nightly Build"
 
-This workflow automatically creates a new build every day, providing the latest version of the app for testing.
+This workflow compiles a daily development build from the latest commits.
 
 ### How it Works
 
--   **Trigger:** Runs on a schedule (daily at 16:30 UTC) and can also be triggered manually.
--   **Versioning:** Creates a version with the format `0.0.0-nightly-YYYYMMDD-SHORT_SHA-rRUN_NUMBER`.
--   **Rolling Release:** A single, "rolling" pre-release named "Nightly Build" is updated with the latest build. This release is associated with the `nightly` tag.
--   **Immutable Tag:** A unique, immutable tag (e.g., `nightly-20231025-abcdef-r123`) is created for each nightly build to ensure that every build is traceable.
--   **No Changes:** If no new commits have been pushed since the last successful nightly build, the workflow will skip the build process to save resources.
+-   **Trigger:** Automatically runs daily at 16:30 UTC or can be manually triggered.
+-   **Versioning:** Generates a version string formatted as `0.0.0-nightly-YYYYMMDD-SHORT_SHA-rRUN_NUMBER`.
+-   **Synchronization:** Updates and synchronizes all three `pubspec.yaml` files with the nightly version.
+-   **Rolling Release:** Replaces the files in the single "Nightly Build" release under the `nightly` tag.
+-   **Immutable Tag:** Creates a unique tracking tag (e.g., `nightly-20260705-fadb3b8-r300`) for historical traceability.
+-   **Change Detection:** Skips execution if no commits were made since the last run.
 
-### What the Workflow Does
-
-1.  **Checks for new commits**.
-2.  **Calculates the nightly version**.
-3.  **Updates `pubspec.yaml`** with the new version.
-4.  **Builds the application** for the `nightly` flavor.
-5.  **Generates checksums** for the build assets.
-6.  **Updates the "Nightly Build" release** on GitHub with the new assets.
-7.  **Creates and pushes an immutable Git tag** for the new nightly build.
+---
 
 ## Assets Generated
 
-Both workflows generate the following assets:
+Both release and nightly workflows publish:
 
--   **Android APK**
--   **Android App Bundle**
--   **Web Build (zipped)**
--   **Checksums** for the assets
+1.  **F-Droid Universal APK** (`app-fdroid-release.apk`)
+2.  **F-Droid App Bundle** (`app-fdroid-release.aab`)
+3.  **Play Store App Bundle** (`app-playstore-release.aab` - Official Release only)
+4.  **Zipped Web build** (`web-build.zip`)
+5.  **Checksums** (`sha256sums.txt`)
