@@ -88,6 +88,17 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   void _onTick(Duration elapsed) {
     if (!_isAutoScrolling || !_pdfViewerController.isReady) return;
 
+    // Safety check to ensure layout is ready and dimensions are valid
+    try {
+      final viewSize = _pdfViewerController.viewSize;
+      final docSize = _pdfViewerController.documentSize;
+      if (viewSize.width <= 0 || viewSize.height <= 0 || docSize.width <= 0 || docSize.height <= 0) {
+        return;
+      }
+    } catch (_) {
+      return; // Not fully laid out yet
+    }
+
     if (_lastElapsed == Duration.zero) {
       _lastElapsed = elapsed;
       _lastUpdateElapsed = elapsed;
@@ -120,6 +131,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     final double viewerHeight = _pdfViewerController.viewSize.height;
     final double totalHeight = _pdfViewerController.documentSize.height;
     final double scale = matrix.getMaxScaleOnAxis();
+
+    if (scale <= 0 || scale.isNaN || scale.isInfinite) return;
     
     final double maxScroll = math.max(0.0, (totalHeight * scale) - viewerHeight);
     
@@ -267,9 +280,16 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     final RenderBox? viewerBox = context.findRenderObject() as RenderBox?;
     if (viewerBox == null || !_pdfViewerController.isReady) return;
 
+    double totalHeight;
+    double scale;
+    try {
+      scale = _pdfViewerController.currentZoom;
+      totalHeight = _pdfViewerController.documentSize.height * scale;
+    } catch (_) {
+      return; // Layout or document not fully ready yet
+    }
+
     final double viewerHeight = viewerBox.size.height;
-    final double scale = _pdfViewerController.currentZoom;
-    final double totalHeight = _pdfViewerController.documentSize.height * scale;
     final double maxScroll = math.max(0.0, totalHeight - viewerHeight);
 
     if (maxScroll <= 0) return;
@@ -362,8 +382,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                 controller: _pdfViewerController,
                 params: PdfViewerParams(
                   margin: 8.0,
-                  scrollPhysics: const BouncingScrollPhysics(),
-                  scrollPhysicsScale: const BouncingScrollPhysics(),
                   behaviorControlParams: const PdfViewerBehaviorControlParams(
                     pageImageCachingDelay: Duration.zero,
                     partialImageLoadingDelay: Duration.zero,
@@ -424,13 +442,21 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                     color: Colors.transparent,
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final Matrix4 matrix = _pdfViewerController.value;
-                        final Vector3 translation = matrix.getTranslation();
-                        final double scale = matrix.getMaxScaleOnAxis();
+                        // Safe check for documentSize and value availability
+                        double totalHeight;
+                        double scale;
+                        Vector3 translation;
+                        try {
+                          final docSize = _pdfViewerController.documentSize;
+                          final Matrix4 matrix = _pdfViewerController.value;
+                          translation = matrix.getTranslation();
+                          scale = matrix.getMaxScaleOnAxis();
+                          totalHeight = docSize.height * scale;
+                        } catch (_) {
+                          return const SizedBox.shrink(); // Not fully laid out yet
+                        }
 
                         final double viewerHeight = constraints.maxHeight;
-                        final double totalHeight = _pdfViewerController.documentSize.height * scale;
-                        
                         if (totalHeight <= viewerHeight) return const SizedBox.shrink();
 
                         final double scrollPercentage = (-translation.y / (totalHeight - viewerHeight)).clamp(0.0, 1.0);
@@ -460,7 +486,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
               ),
             ),
 
-          if (_showControls && widget.config.autoScrollEnabled)
+          if (_showControls && widget.config.autoScrollEnabled && _document != null)
             Positioned(
               bottom: 20,
               left: 20,
@@ -493,6 +519,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   }
 
   Widget _buildScrollOverlay() {
+    if (_document == null) return const SizedBox.shrink();
     return Card(
       color: Colors.black87,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
