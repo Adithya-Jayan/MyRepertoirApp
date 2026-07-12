@@ -4,6 +4,7 @@ import 'package:repertoire/services/update_service.dart';
 import 'package:repertoire/models/practice_stage.dart';
 import 'package:repertoire/services/practice_config_service.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
+import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class FunctionalitySettingsScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   bool _showPracticeTimeStats = false;
   bool _showPracticeNotes = false;
   bool _notifyNewReleases = false;
+  bool _isPlayStore = false;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final stages = await _configService.loadStages();
+    final isPlayStore = await isPlayStoreBuild();
     
     if (!mounted) return;
     setState(() {
@@ -39,6 +42,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
       _showPracticeNotes = prefs.getBool('show_practice_notes') ?? false;
       _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? true;
+      _isPlayStore = isPlayStore;
       _isLoading = false;
     });
   }
@@ -340,29 +344,31 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                 ),
               ]),
 
-              const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'Updates', Icons.system_update_outlined),
-              _buildSettingsCard([
-                SwitchListTile(
-                  title: const Text('Notify New Releases'),
-                  subtitle: const Text('Check GitHub for app updates'),
-                  value: _notifyNewReleases,
-                  onChanged: (v) {
-                    setState(() => _notifyNewReleases = v);
-                    _saveOtherSettings();
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('Check for Updates Now'),
-                      onPressed: () => UpdateService().checkForUpdates(context, manual: true),
+              if (!_isPlayStore) ...[
+                const SizedBox(height: 16),
+                _buildCategoryHeader(theme, 'Updates', Icons.system_update_outlined),
+                _buildSettingsCard([
+                  SwitchListTile(
+                    title: const Text('Notify New Releases'),
+                    subtitle: const Text('Check GitHub for app updates'),
+                    value: _notifyNewReleases,
+                    onChanged: (v) {
+                      setState(() => _notifyNewReleases = v);
+                      _saveOtherSettings();
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Center(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Check for Updates Now'),
+                        onPressed: () => UpdateService().checkForUpdates(context, manual: true),
+                      ),
                     ),
                   ),
-                ),
-              ]),
+                ]),
+              ],
               const SizedBox(height: 24),
             ],
           ),
