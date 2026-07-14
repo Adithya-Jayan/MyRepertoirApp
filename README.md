@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/github/license/Adithya-Jayan/MyRepertoirApp?style=flat-square)](./LICENSE)
 
 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp">
-  <img src="./web/icons/Icon.png" alt="Repertoire logo" title="Repertoire logo" width="80"/>
+  <img src="./app_fdroid/web/icons/Icon.png" alt="Repertoire logo" title="Repertoire logo" width="80"/>
 </a>
 
 # Repertoire: Music Practice & Sheet Music Organizer
