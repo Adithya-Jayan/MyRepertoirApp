@@ -90,14 +90,6 @@ unlinked_spec.ds
 **/windows/runner/Profile/
 **/windows/runner/ephemeral
 **/windows/runner/flutter_window.dll
-**/windows/runner/flutter_export.h
-**/windows/runner/flutter_messenger.h
-**/windows/runner/flutter_plugin_registrar.h
-**/windows/runner/flutter_windows.h
-**/windows/runner/runner_app.h
-**/windows/runner/utils.h
-**/windows/runner/win32_window.h
-**/windows/runner/window_configuration.h
 **/windows/runner/Generated.xcconfig
 **/windows/plugins/
 **/windows/CMakeLists.txt.user
@@ -110,9 +102,6 @@ unlinked_spec.ds
 **/linux/runner/Release/
 **/linux/runner/Profile/
 **/linux/runner/ephemeral
-**/linux/my_application.h
-**/linux/my_application.cc
-**/linux/main.cc
 **/linux/CMakeLists.txt.user
 
 # macOS
