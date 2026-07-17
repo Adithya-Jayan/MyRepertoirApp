@@ -255,6 +255,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          flutter pub get
           cd app_fdroid && flutter pub get
           cd ../app_playstore && flutter pub get
 
@@ -378,8 +379,8 @@ jobs:
           git config --local user.name "GitHub Action"
           
           # Add pubspec.yamls, lockfiles, the new changelog file, and RELEASE_NOTES.md (if it exists)
-          git add pubspec.yaml app_fdroid/pubspec.yaml app_playstore/pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
-          git add -f app_fdroid/pubspec.lock app_playstore/pubspec.lock
+          git add pubspec.yaml pubspec.lock app_fdroid/pubspec.yaml app_playstore/pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          git add -f pubspec.lock app_fdroid/pubspec.lock app_playstore/pubspec.lock
           if [ -f RELEASE_NOTES.md ]; then
             git add RELEASE_NOTES.md
           fi
