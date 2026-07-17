@@ -1,1 +1,1 @@
-Minor Patch update with app build flow fix.
+Incremental release with fix for fdroid build.
