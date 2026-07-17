@@ -377,8 +377,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Add pubspec.yamls, the new changelog file, and RELEASE_NOTES.md (if it exists)
+          # Add pubspec.yamls, lockfiles, the new changelog file, and RELEASE_NOTES.md (if it exists)
           git add pubspec.yaml app_fdroid/pubspec.yaml app_playstore/pubspec.yaml "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          git add -f app_fdroid/pubspec.lock app_playstore/pubspec.lock
           if [ -f RELEASE_NOTES.md ]; then
             git add RELEASE_NOTES.md
           fi
