@@ -862,7 +862,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "5.0.5+42"
+    version: "5.0.2+39"
   rxdart:
     dependency: transitive
     description:
