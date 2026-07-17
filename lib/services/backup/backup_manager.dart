@@ -48,6 +48,9 @@ class BackupManager {
     
     // Theme and appearance settings
     settings['appThemePreference'] = prefs.getString('appThemePreference');
+    settings['appLanguagePreference'] = prefs.getString(
+      'appLanguagePreference',
+    );
     settings['appAccentColor'] = prefs.getInt('appAccentColor');
     settings['galleryColumns'] = prefs.getInt('galleryColumns');
     settings['thumbnailStyle'] = prefs.getString('thumbnailStyle');

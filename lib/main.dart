@@ -9,7 +9,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:fvp/fvp.dart' as fvp; // Import fvp
 import 'package:just_audio_mpv/just_audio_mpv.dart'; // Import for Linux audio
 import 'package:repertoire/utils/theme_notifier.dart';
-
+import 'package:repertoire/utils/locale_notifier.dart';
+import 'package:repertoire/l10n/l10n.dart';
 
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/backup_utils.dart';
@@ -21,8 +22,6 @@ import 'package:repertoire/services/migration_service.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/services/share_handler_service.dart';
 import 'package:repertoire/services/section_state_service.dart';
-
-
 
 // Global navigator key for accessing context from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -36,10 +35,12 @@ Future<void> main() async {
 
   // Enable edge-to-edge display and transparent system bars
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.transparent,
-    statusBarColor: Colors.transparent,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.transparent,
+      statusBarColor: Colors.transparent,
+    ),
+  );
 
   await AppLogger.init(); // Initialize the logger
   AppLogger.log('App started.');
@@ -53,29 +54,30 @@ Future<void> main() async {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
-    
-    final Map<String, String> playerOptions = {
-      "audio.resample": "1",
-    };
-    
+
+    final Map<String, String> playerOptions = {"audio.resample": "1"};
+
     if (Platform.isAndroid) {
       playerOptions["audio.backend"] = "null"; // Disable audio output
-      playerOptions["audio.decoders"] = "0";   // Disable audio decoding if possible
-      playerOptions["audio.filter"] = "0";     // Disable audio filters
-      playerOptions["audio.buffer"] = "0";     // Eliminate audio buffer allocation
+      playerOptions["audio.decoders"] =
+          "0"; // Disable audio decoding if possible
+      playerOptions["audio.filter"] = "0"; // Disable audio filters
+      playerOptions["audio.buffer"] = "0"; // Eliminate audio buffer allocation
       playerOptions["audio.period"] = "0";
     } else {
       playerOptions["audio.buffer"] = "100";
       playerOptions["audio.period"] = "20";
     }
 
-    fvp.registerWith(options: {
-      "video.decoders": Platform.isAndroid 
-          ? ["MediaCodec", "FFmpeg"] 
-          : (Platform.isWindows ? ["D3D11", "FFmpeg"] : ["FFmpeg"]),
-      "player": playerOptions,
-    }); // Initialize fvp for video playback on all native platforms
-    
+    fvp.registerWith(
+      options: {
+        "video.decoders": Platform.isAndroid
+            ? ["MediaCodec", "FFmpeg"]
+            : (Platform.isWindows ? ["D3D11", "FFmpeg"] : ["FFmpeg"]),
+        "player": playerOptions,
+      },
+    ); // Initialize fvp for video playback on all native platforms
+
     if (Platform.isLinux || Platform.isWindows) {
       JustAudioMpv.registerWith(); // Initialize just_audio_mpv for desktop audio
     }
@@ -91,8 +93,11 @@ Future<void> main() async {
           create: (_) => ThemeNotifier(ThemeMode.system, Colors.blue),
         ),
         ChangeNotifierProvider(
-          create: (_) => SectionStateService(),
+          create: (_) => LocaleNotifier(
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
         ),
+        ChangeNotifierProvider(create: (_) => SectionStateService()),
       ],
       child: const MyApp(),
     ),
@@ -175,17 +180,20 @@ class _MyAppState extends State<MyApp> {
     _setInitialDefaults().then((_) {
       if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
-      
+      Provider.of<LocaleNotifier>(context, listen: false).loadLocale();
+
       // Request permissions after the first frame, when context is fully available
       // Moved to WelcomeScreen and LibraryScreen
-      
+
       // Trigger auto-backup after app is fully initialized
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           AppLogger.log('MyApp: Triggering auto-backup after initialization');
           // Use a delay to ensure the app is fully loaded before checking auto-backup
           Future.delayed(const Duration(seconds: 2), () {
-            triggerAutoBackup(messenger: ScaffoldMessenger.of(navigatorKey.currentContext!));
+            triggerAutoBackup(
+              messenger: ScaffoldMessenger.of(navigatorKey.currentContext!),
+            );
           });
         }
       });
@@ -215,31 +223,39 @@ class _MyAppState extends State<MyApp> {
         // Once the future completes, build the MaterialApp.
         // Consumer listens to changes in ThemeNotifier and rebuilds
         // the MaterialApp with the updated theme.
-        return Consumer<ThemeNotifier>(
-          builder: (context, themeNotifier, child) {
+        return Consumer2<ThemeNotifier, LocaleNotifier>(
+          builder: (context, themeNotifier, localeNotifier, child) {
             final Widget homeWidget = (snapshot.data ?? false)
                 ? const LibraryScreen()
                 : const WelcomeScreen();
-            
+
             return MaterialApp(
               navigatorKey: navigatorKey, // Use global navigator key
-              title: 'Music Repertoire', // Title of the application
-              themeMode: themeNotifier.themeMode, // Current theme mode (light, dark, system)
+              onGenerateTitle: (context) => context.l10n.appTitle,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: localeNotifier.locale,
+              themeMode: themeNotifier
+                  .themeMode, // Current theme mode (light, dark, system)
               // Defines the light theme for the application.
               theme: ThemeData(
                 // Generates a color scheme based on the selected accent color.
-                colorScheme: ColorScheme.fromSeed(seedColor: themeNotifier.accentColor),
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: themeNotifier.accentColor,
+                ),
                 useMaterial3: true, // Enables Material 3 design features
               ),
               // Defines the dark theme for the application.
               darkTheme: ThemeData(
                 // Generates a dark color scheme based on the selected accent color.
                 colorScheme: ColorScheme.fromSeed(
-                  seedColor: themeNotifier.accentColor, 
+                  seedColor: themeNotifier.accentColor,
                   brightness: Brightness.dark,
                   surface: themeNotifier.useOledBlack ? Colors.black : null,
                 ),
-                scaffoldBackgroundColor: themeNotifier.useOledBlack ? Colors.black : null,
+                scaffoldBackgroundColor: themeNotifier.useOledBlack
+                    ? Colors.black
+                    : null,
                 useMaterial3: true, // Enables Material 3 design features
               ),
               // Sets the home screen based on whether the app has run before.

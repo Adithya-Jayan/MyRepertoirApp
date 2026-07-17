@@ -11,6 +11,7 @@ import '../../services/migration_service.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/permissions_utils.dart';
 import 'package:provider/provider.dart';
+import '../../utils/locale_notifier.dart';
 import '../../utils/theme_notifier.dart';
 import '../../services/practice_config_service.dart';
 
@@ -445,6 +446,15 @@ class RestoreManager {
       await prefs.setString('appThemePreference', appSettingsJson['appThemePreference']);
       AppLogger.log('RestoreManager: Restored appThemePreference: ${appSettingsJson['appThemePreference']}');
     }
+    if (appSettingsJson['appLanguagePreference'] != null) {
+      await prefs.setString(
+        'appLanguagePreference',
+        appSettingsJson['appLanguagePreference'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored appLanguagePreference: ${appSettingsJson['appLanguagePreference']}',
+      );
+    }
     if (appSettingsJson['appAccentColor'] != null) {
       await prefs.setInt('appAccentColor', appSettingsJson['appAccentColor']);
       AppLogger.log('RestoreManager: Restored appAccentColor: ${appSettingsJson['appAccentColor']}');
@@ -737,11 +747,13 @@ class RestoreManager {
         _showRestoreMessage(messenger, true, 'Data restored successfully!');
         AppLogger.log('RestoreManager: Data restored successfully');
 
-        // Reload settings in ThemeNotifier to update UI instantly
+        // Reload appearance and language settings to update the UI instantly.
         if (context != null && context.mounted) {
           try {
             Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+            Provider.of<LocaleNotifier>(context, listen: false).loadLocale();
             AppLogger.log('RestoreManager: ThemeNotifier settings reloaded');
+            AppLogger.log('RestoreManager: LocaleNotifier settings reloaded');
           } catch (e) {
             AppLogger.log('RestoreManager: Error reloading ThemeNotifier settings: $e');
           }
