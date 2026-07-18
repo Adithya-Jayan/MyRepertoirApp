@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// Checks if the current build is the Google Play Store variant.
 Future<bool> isPlayStoreBuild() async {
   if (kIsWeb) return false;
@@ -19,9 +21,10 @@ Future<bool> isPlayStoreBuild() async {
 
 /// Requests necessary permissions for the application.
 /// Handles storage permissions for Android and iOS.
-Future<void> requestPermissions(BuildContext context) async { // Pass BuildContext
+Future<void> requestPermissions(BuildContext context) async {
+  // Pass BuildContext
   AppLogger.log("Attempting to request permissions...");
-  
+
   if (kIsWeb) {
     AppLogger.log("Platform is Web. Skipping permission requests.");
     return;
@@ -29,9 +32,11 @@ Future<void> requestPermissions(BuildContext context) async { // Pass BuildConte
 
   if (Platform.isAndroid) {
     AppLogger.log("Platform is Android.");
-    
+
     if (await isPlayStoreBuild()) {
-      AppLogger.log("Play Store build detected. Skipping MANAGE_EXTERNAL_STORAGE.");
+      AppLogger.log(
+        "Play Store build detected. Skipping MANAGE_EXTERNAL_STORAGE.",
+      );
       return;
     }
 
@@ -43,21 +48,16 @@ Future<void> requestPermissions(BuildContext context) async { // Pass BuildConte
       final bool? shouldRequest = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Storage Permission Needed'),
-          content: const Text(
-            'This app needs "All files access" (Manage External Storage) '
-            'to manage backups in your chosen external storage folder, '
-            'and to access media files that you link from arbitrary locations. '
-            'Without this, backup/restore and linking external media may not work correctly.'
-          ),
+          title: Text(context.l10n.storagePermissionNeeded),
+          content: Text(context.l10n.storagePermissionExplanation),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Deny'),
+              child: Text(context.l10n.deny),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Grant'),
+              child: Text(context.l10n.grant),
             ),
           ],
         ),
@@ -66,12 +66,16 @@ Future<void> requestPermissions(BuildContext context) async { // Pass BuildConte
       if (shouldRequest == true) {
         AppLogger.log("Requesting Manage External Storage permission...");
         status = await Permission.manageExternalStorage.request();
-        AppLogger.log("New Manage External Storage status after request: $status");
+        AppLogger.log(
+          "New Manage External Storage status after request: $status",
+        );
         if (!status.isGranted) {
           AppLogger.log("Manage External Storage permission denied by user.");
         }
       } else {
-        AppLogger.log("Manage External Storage permission request skipped by user.");
+        AppLogger.log(
+          "Manage External Storage permission request skipped by user.",
+        );
       }
     } else {
       AppLogger.log("Manage External Storage permission already granted.");

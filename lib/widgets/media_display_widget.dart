@@ -17,6 +17,8 @@ import 'dart:io' as io;
 import '../utils/app_logger.dart';
 import 'package:repertoire/models/pdf_config.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class MediaDisplayWidget extends StatefulWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
@@ -56,7 +58,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     _currentTitle = widget.musicPiece.mediaItems[widget.mediaItemIndex].title;
     _titleController = TextEditingController(text: _currentTitle);
     _focusNode = FocusNode();
-    
+
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus && _isEditingTitle) {
         setState(() {
@@ -90,12 +92,13 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       _isEditingTitle = false;
       _currentTitle = newTitle;
     });
-    
+
     if (newTitle != widget.musicPiece.mediaItems[widget.mediaItemIndex].title) {
       if (widget.onTitleChanged != null) {
         widget.onTitleChanged!(newTitle);
       } else if (widget.onMediaItemChanged != null) {
-        final updatedItem = widget.musicPiece.mediaItems[widget.mediaItemIndex].copyWith(title: newTitle);
+        final updatedItem = widget.musicPiece.mediaItems[widget.mediaItemIndex]
+            .copyWith(title: newTitle);
         widget.onMediaItemChanged!(updatedItem);
       }
     }
@@ -116,26 +119,37 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     });
   }
 
-  Widget buildFileImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
+  Widget buildFileImage(
+    String path, {
+    double? height,
+    double? width,
+    BoxFit fit = BoxFit.contain,
+  }) {
     final file = io.File(path);
     return FutureBuilder<DateTime>(
       future: file.lastModified(),
       builder: (context, snapshot) {
         return Image.file(
           file,
-          key: ValueKey('${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}'),
+          key: ValueKey(
+            '${path}_${snapshot.data?.millisecondsSinceEpoch ?? 0}',
+          ),
           height: height,
           width: width,
           fit: fit,
           // Limit the resolution in memory to prevent lag from huge images
-          cacheWidth: 400, 
+          cacheWidth: 400,
           errorBuilder: (context, error, stackTrace) {
-            AppLogger.log('MediaDisplayWidget: Error loading image file ($path): $error');
+            AppLogger.log(
+              'MediaDisplayWidget: Error loading image file ($path): $error',
+            );
             return Container(
               height: height ?? 200,
               width: width,
               color: Colors.grey[300],
-              child: const Center(child: Icon(Icons.error_outline, color: Colors.red)),
+              child: const Center(
+                child: Icon(Icons.error_outline, color: Colors.red),
+              ),
             );
           },
         );
@@ -147,7 +161,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    final currentMediaItem =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex];
 
     if (currentMediaItem.type == MediaType.thumbnails && !widget.isEditable) {
       return const SizedBox.shrink();
@@ -163,7 +178,7 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
           child: FilledButton.icon(
             onPressed: () => _openMedia(context),
             icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('View PDF'),
+            label: Text(context.l10n.viewPdf),
           ),
         );
         break;
@@ -176,18 +191,30 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             child: SizedBox(
               height: 200,
               width: double.infinity,
-              child: kIsWeb 
-                ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.cover)
-                : buildFileImage(currentMediaItem.pathOrUrl, height: 200, width: double.infinity, fit: BoxFit.cover),
+              child: kIsWeb
+                  ? Image.network(currentMediaItem.pathOrUrl, fit: BoxFit.cover)
+                  : buildFileImage(
+                      currentMediaItem.pathOrUrl,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
         );
         break;
       case MediaType.localVideo:
-        content = VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+        content = VideoPlayerWidget(
+          musicPiece: widget.musicPiece,
+          mediaItemIndex: widget.mediaItemIndex,
+        );
         break;
       case MediaType.midi:
-        content = MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged);
+        content = MidiPlayerWidget(
+          musicPiece: widget.musicPiece,
+          mediaItemIndex: widget.mediaItemIndex,
+          onMediaItemChanged: widget.onMediaItemChanged,
+        );
         break;
       case MediaType.audio:
         if (widget.isEditable) {
@@ -197,23 +224,30 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12.0),
-              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.music_note, size: 40, color: colorScheme.primary),
                 const SizedBox(height: 8),
-                Text('Audio File', style: theme.textTheme.labelLarge),
+                Text(context.l10n.audioFile, style: theme.textTheme.labelLarge),
               ],
             ),
           );
         } else {
-          content = AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex);
+          content = AudioPlayerWidget(
+            musicPiece: widget.musicPiece,
+            mediaItemIndex: widget.mediaItemIndex,
+          );
         }
         break;
       case MediaType.mediaLink:
-        final hasThumbnail = currentMediaItem.thumbnailPath != null && currentMediaItem.thumbnailPath!.isNotEmpty;
+        final hasThumbnail =
+            currentMediaItem.thumbnailPath != null &&
+            currentMediaItem.thumbnailPath!.isNotEmpty;
         content = GestureDetector(
           onTap: () => _openMedia(context),
           child: Container(
@@ -223,32 +257,47 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
               color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12.0),
             ),
-            child: hasThumbnail 
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: kIsWeb
-                    ? Image.network(currentMediaItem.thumbnailPath!, fit: BoxFit.cover)
-                    : buildFileImage(currentMediaItem.thumbnailPath!, height: 150, width: double.infinity, fit: BoxFit.cover),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.link, size: 40, color: colorScheme.secondary),
-                    const SizedBox(height: 8),
-                    Text('Open Link', style: theme.textTheme.labelLarge),
-                  ],
-                ),
+            child: hasThumbnail
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: kIsWeb
+                        ? Image.network(
+                            currentMediaItem.thumbnailPath!,
+                            fit: BoxFit.cover,
+                          )
+                        : buildFileImage(
+                            currentMediaItem.thumbnailPath!,
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.link, size: 40, color: colorScheme.secondary),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.l10n.openLink,
+                        style: theme.textTheme.labelLarge,
+                      ),
+                    ],
+                  ),
           ),
         );
         break;
       case MediaType.learningProgress:
-        final config = LearningProgressConfig.decode(currentMediaItem.pathOrUrl);
+        final config = LearningProgressConfig.decode(
+          currentMediaItem.pathOrUrl,
+        );
         content = LearningProgressWidget(
           config: config,
           isEditable: !widget.isEditable,
           onProgressChanged: (newProgress) {
             final newConfig = config.copyWith(current: newProgress);
-            final updatedItem = currentMediaItem.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig));
+            final updatedItem = currentMediaItem.copyWith(
+              pathOrUrl: LearningProgressConfig.encode(newConfig),
+            );
             widget.onMediaItemChanged?.call(updatedItem);
           },
         );
@@ -258,47 +307,64 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if ((widget.isEditable || widget.isTitleEditable) && currentMediaItem.type != MediaType.thumbnails) ...[
+        if ((widget.isEditable || widget.isTitleEditable) &&
+            currentMediaItem.type != MediaType.thumbnails) ...[
           _isEditingTitle
-            ? TextFormField(
-                controller: _titleController,
-                focusNode: _focusNode,
-                decoration: const InputDecoration(
-                  labelText: 'Media Name',
-                  isDense: true,
-                  border: OutlineInputBorder(),
-                ),
-                onFieldSubmitted: (_) => _saveTitle(),
-              )
-            : InkWell(
-                onTap: _startEditing,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Rename: ${_currentTitle ?? currentMediaItem.type.name}',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ? TextFormField(
+                  controller: _titleController,
+                  focusNode: _focusNode,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.mediaName,
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onFieldSubmitted: (_) => _saveTitle(),
+                )
+              : InkWell(
+                  onTap: _startEditing,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            context.l10n.renameMedia(
+                              _currentTitle ??
+                                  currentMediaItem.type.localizedName(
+                                    context.l10n,
+                                  ),
+                            ),
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '(Tap to edit)',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                          fontStyle: FontStyle.italic,
+                        const SizedBox(width: 8),
+                        Text(
+                          context.l10n.tapToEdit,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.5,
+                            ),
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
           const SizedBox(height: 12),
         ],
         content,
@@ -307,28 +373,67 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
   }
 
   void _openMedia(BuildContext context) {
-    final currentMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+    final currentMediaItem =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex];
     switch (currentMediaItem.type) {
       case MediaType.pdf:
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: currentMediaItem.pathOrUrl, config: PdfConfig.fromJson(currentMediaItem.configData ?? '{}'))));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PdfViewerScreen(
+              pdfPath: currentMediaItem.pathOrUrl,
+              config: PdfConfig.fromJson(currentMediaItem.configData ?? '{}'),
+            ),
+          ),
+        );
         break;
       case MediaType.image:
       case MediaType.thumbnails:
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) =>
+                ImageViewerScreen(imagePath: currentMediaItem.pathOrUrl),
+          ),
+        );
         break;
       case MediaType.localVideo:
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => VideoPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerWidget(
+              musicPiece: widget.musicPiece,
+              mediaItemIndex: widget.mediaItemIndex,
+            ),
+          ),
+        );
         break;
       case MediaType.audio:
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => AudioPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AudioPlayerWidget(
+              musicPiece: widget.musicPiece,
+              mediaItemIndex: widget.mediaItemIndex,
+            ),
+          ),
+        );
         break;
       case MediaType.midi:
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => MidiPlayerWidget(musicPiece: widget.musicPiece, mediaItemIndex: widget.mediaItemIndex, onMediaItemChanged: widget.onMediaItemChanged)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => MidiPlayerWidget(
+              musicPiece: widget.musicPiece,
+              mediaItemIndex: widget.mediaItemIndex,
+              onMediaItemChanged: widget.onMediaItemChanged,
+            ),
+          ),
+        );
         break;
       case MediaType.mediaLink:
-        launchUrl(Uri.parse(currentMediaItem.pathOrUrl), mode: LaunchMode.externalApplication);
+        launchUrl(
+          Uri.parse(currentMediaItem.pathOrUrl),
+          mode: LaunchMode.externalApplication,
+        );
         break;
-      default: break;
+      default:
+        break;
     }
   }
 }

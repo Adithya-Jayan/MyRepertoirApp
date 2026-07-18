@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LibraryBottomAppBar extends StatelessWidget {
   final bool isMultiSelectMode;
   final VoidCallback onDeleteSelectedPieces;
@@ -28,17 +30,17 @@ class LibraryBottomAppBar extends StatelessWidget {
         children: [
           TextButton.icon(
             icon: const Icon(Icons.delete),
-            label: const Text('Delete'),
+            label: Text(context.l10n.delete),
             onPressed: isSelectionEmpty ? null : onDeleteSelectedPieces,
           ),
           TextButton.icon(
             icon: const Icon(Icons.copy),
-            label: const Text('Duplicate'),
+            label: Text(context.l10n.duplicate),
             onPressed: selectedCount == 1 ? onDuplicateSelectedPiece : null,
           ),
           TextButton.icon(
             icon: const Icon(Icons.group_work),
-            label: const Text('Modify Group'),
+            label: Text(context.l10n.modifyGroup),
             onPressed: isSelectionEmpty ? null : onModifyGroupOfSelectedPieces,
           ),
         ],

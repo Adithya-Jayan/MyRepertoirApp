@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/group.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that displays and manages group selection for a music piece.
 class GroupsSection extends StatelessWidget {
   final List<Group> availableGroups;
@@ -17,12 +19,12 @@ class GroupsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      title: const Text('Groups'),
+      title: Text(context.l10n.groups),
       initiallyExpanded: false,
       children: [
         ...availableGroups.map((group) {
           return CheckboxListTile(
-            title: Text(group.name),
+            title: Text(group.localizedName(context.l10n)),
             value: selectedGroupIds.contains(group.id),
             onChanged: (bool? value) {
               final newSelectedGroupIds = Set<String>.from(selectedGroupIds);
@@ -38,4 +40,4 @@ class GroupsSection extends StatelessWidget {
       ],
     );
   }
-} 
+}

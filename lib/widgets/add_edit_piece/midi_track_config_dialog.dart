@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/midi_track_config.dart';
 import '../../utils/midi_utils.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class MidiTrackConfigDialog extends StatefulWidget {
   final String midiPath;
   final MidiTrackConfig initialConfig;
@@ -42,7 +44,7 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
           // Priority: 1. Existing custom name from initialConfig, 2. Name from MIDI file, 3. null
           final existingConfig = widget.initialConfig.channels[ch];
           final customName = existingConfig?.name;
-          
+
           if (customName != null && customName.trim().isNotEmpty) {
             _channelNames[ch] = customName.trim();
           } else {
@@ -90,7 +92,7 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('MIDI Channel Names'),
+      title: Text(context.l10n.midiChannelNames),
       content: _isLoading
           ? const SizedBox(
               height: 100,
@@ -101,10 +103,10 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(bottom: 16.0),
                     child: Text(
-                      '(Double tap name to edit)',
+                      context.l10n.doubleTapNameToEdit,
                       style: TextStyle(
                         fontSize: 12.0,
                         color: Colors.grey,
@@ -123,15 +125,18 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: InkWell( // Use InkWell for better touch feedback
+                          child: InkWell(
+                            // Use InkWell for better touch feedback
                             onDoubleTap: () => _startEditing(ch),
                             child: Row(
                               children: [
                                 SizedBox(
                                   width: 60,
                                   child: Text(
-                                    'Ch ${ch + 1} : ',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    context.l10n.midiChannelNumber(ch + 1),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -141,7 +146,11 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
                                           focusNode: _focusNode,
                                           decoration: const InputDecoration(
                                             isDense: true,
-                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 8,
+                                                ),
                                             border: OutlineInputBorder(),
                                           ),
                                           onSubmitted: (_) => _saveEdit(),
@@ -149,16 +158,33 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
                                           autofocus: true,
                                         )
                                       : Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12.0,
+                                            horizontal: 8.0,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.03),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.03,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
-                                            (name != null && name.isNotEmpty) ? name : 'Blank',
+                                            (name != null && name.isNotEmpty)
+                                                ? name
+                                                : context.l10n.blank,
                                             style: TextStyle(
-                                              color: (name != null && name.isNotEmpty) ? null : Colors.grey,
-                                              fontStyle: (name != null && name.isNotEmpty) ? null : FontStyle.italic,
+                                              color:
+                                                  (name != null &&
+                                                      name.isNotEmpty)
+                                                  ? null
+                                                  : Colors.grey,
+                                              fontStyle:
+                                                  (name != null &&
+                                                      name.isNotEmpty)
+                                                  ? null
+                                                  : FontStyle.italic,
                                             ),
                                           ),
                                         ),
@@ -176,14 +202,16 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         ElevatedButton(
           onPressed: () {
             // Save current edit if any
             if (_editingChannel != null) _saveEdit();
 
-            final Map<int, ChannelConfig> updatedChannels = Map.from(widget.initialConfig.channels);
+            final Map<int, ChannelConfig> updatedChannels = Map.from(
+              widget.initialConfig.channels,
+            );
             _channelNames.forEach((ch, name) {
               final existing = updatedChannels[ch] ?? ChannelConfig();
               // Explicitly set the name to allow clearing (setting to null)
@@ -193,9 +221,12 @@ class _MidiTrackConfigDialogState extends State<MidiTrackConfigDialog> {
                 mute: existing.mute,
               );
             });
-            Navigator.pop(context, widget.initialConfig.copyWith(channels: updatedChannels));
+            Navigator.pop(
+              context,
+              widget.initialConfig.copyWith(channels: updatedChannels),
+            );
           },
-          child: const Text('Save All'),
+          child: Text(context.l10n.saveAll),
         ),
       ],
     );

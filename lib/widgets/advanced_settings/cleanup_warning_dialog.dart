@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../services/media_cleanup_service.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A dialog that warns the user before performing media cleanup.
 class CleanupWarningDialog extends StatelessWidget {
   final MediaCleanupInfo cleanupInfo;
 
-  const CleanupWarningDialog({
-    super.key,
-    required this.cleanupInfo,
-  });
+  const CleanupWarningDialog({super.key, required this.cleanupInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +19,7 @@ class CleanupWarningDialog extends StatelessWidget {
         children: [
           Icon(Icons.warning_amber_rounded, color: colorScheme.error),
           const SizedBox(width: 12),
-          const Text('Purge Unused Media'),
+          Text(context.l10n.purgeUnusedMedia),
         ],
       ),
       content: Column(
@@ -28,19 +27,33 @@ class CleanupWarningDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'This will permanently delete unused media files that are no longer referenced by any music pieces.',
-            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+            context
+                .l10n
+                .thisWillPermanentlyDeleteUnusedMediaFilesThatAreNoLongerReferenced,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 20),
-          _buildInfoRow(theme, 'Files to delete', '${cleanupInfo.unusedFilesFound}'),
-          _buildInfoRow(theme, 'Space to free', cleanupInfo.unusedSizeFormatted),
+          _buildInfoRow(
+            theme,
+            context.l10n.filesToDelete,
+            '${cleanupInfo.unusedFilesFound}',
+          ),
+          _buildInfoRow(
+            theme,
+            context.l10n.spaceToFree,
+            cleanupInfo.unusedSizeFormatted,
+          ),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: colorScheme.errorContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.error.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: colorScheme.error.withValues(alpha: 0.2),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +62,9 @@ class CleanupWarningDialog extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'This action cannot be undone. Make sure you have a backup before proceeding.',
+                    context
+                        .l10n
+                        .thisActionCannotBeUndoneMakeSureYouHaveABackupBefore,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onErrorContainer,
                       fontWeight: FontWeight.w500,
@@ -64,7 +79,7 @@ class CleanupWarningDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -74,7 +89,7 @@ class CleanupWarningDialog extends StatelessWidget {
             backgroundColor: colorScheme.error,
             foregroundColor: colorScheme.onError,
           ),
-          child: const Text('Delete Files'),
+          child: Text(context.l10n.deleteFiles),
         ),
       ],
     );
@@ -86,10 +101,20 @@ class CleanupWarningDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
-} 
+}

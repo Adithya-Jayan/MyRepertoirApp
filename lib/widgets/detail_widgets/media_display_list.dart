@@ -9,6 +9,8 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:repertoire/models/media_item.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that displays a reorderable list of media items associated with a music piece.
 ///
 /// It allows reordering of media items and persists the new order to the database.
@@ -54,7 +56,10 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
       switch (item.type) {
         case MediaType.mediaLink:
         case MediaType.markdown:
-          params = ShareParams(text: item.pathOrUrl, sharePositionOrigin: shareOrigin);
+          params = ShareParams(
+            text: item.pathOrUrl,
+            sharePositionOrigin: shareOrigin,
+          );
           break;
         case MediaType.audio:
         case MediaType.image:
@@ -62,24 +67,37 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
         case MediaType.localVideo:
         case MediaType.midi:
           if (kIsWeb) {
-             params = ShareParams(text: item.pathOrUrl, sharePositionOrigin: shareOrigin);
+            params = ShareParams(
+              text: item.pathOrUrl,
+              sharePositionOrigin: shareOrigin,
+            );
           } else {
             final file = io.File(item.pathOrUrl);
             if (await file.exists()) {
-              params = ShareParams(files: [XFile(item.pathOrUrl)], sharePositionOrigin: shareOrigin);
+              params = ShareParams(
+                files: [XFile(item.pathOrUrl)],
+                sharePositionOrigin: shareOrigin,
+              );
             } else {
-               if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found to share.')));
-               }
-               return;
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(context.l10n.fileNotFoundToShare)),
+                );
+              }
+              return;
             }
           }
           break;
-        default: return;
+        default:
+          return;
       }
       await SharePlus.instance.share(params);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.errorSharing(e.toString()))),
+        );
+      }
     }
   }
 
@@ -89,16 +107,18 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
       onSelected: (value) async {
         if (value == 'share') {
           final RenderBox? box = context.findRenderObject() as RenderBox?;
-          final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+          final rect = box != null
+              ? box.localToGlobal(Offset.zero) & box.size
+              : null;
           await _shareMediaItem(item, rect);
         }
       },
       itemBuilder: (_) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'share',
           child: ListTile(
             leading: Icon(Icons.share_outlined, size: 20),
-            title: Text('Share'),
+            title: Text(context.l10n.share),
             dense: true,
           ),
         ),
@@ -131,7 +151,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
               final item = _musicPiece.mediaItems[mediaIndex];
               return CollapsibleSection(
                 key: ValueKey(item.id),
-                title: item.title ?? item.type.name,
+                title: item.title ?? item.type.localizedName(context.l10n),
                 persistenceKey: 'media_item_${item.id}',
                 trailing: _buildPieceActions(item),
                 child: MediaDisplayWidget(
@@ -158,14 +178,14 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
                 if (newIndex > oldIndex) {
                   newIndex -= 1;
                 }
-                
+
                 // Map visual indices back to original indices
                 final originalOldIndex = visibleItemsIndices[oldIndex];
                 final originalNewIndex = visibleItemsIndices[newIndex];
-                
+
                 final item = _musicPiece.mediaItems.removeAt(originalOldIndex);
                 _musicPiece.mediaItems.insert(originalNewIndex, item);
-                
+
                 _repository.updateMusicPiece(_musicPiece);
                 widget.onMusicPieceChanged(_musicPiece);
               });
@@ -177,7 +197,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
               final item = _musicPiece.mediaItems[mediaIndex];
               return CollapsibleSection(
                 key: ValueKey(item.id),
-                title: item.title ?? item.type.name,
+                title: item.title ?? item.type.localizedName(context.l10n),
                 persistenceKey: 'media_item_${item.id}',
                 trailing: _buildPieceActions(item),
                 child: MediaDisplayWidget(

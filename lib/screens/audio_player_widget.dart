@@ -5,6 +5,7 @@ import 'package:repertoire/services/pitch_controllable_player.dart'; // Import t
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
+import 'package:repertoire/l10n/l10n.dart';
 import '../models/music_piece.dart'; // Import MusicPiece
 import '../models/bookmark.dart'; // Import Bookmark
 import '../database/music_piece_repository.dart'; // Import MusicPieceRepository
@@ -29,13 +30,16 @@ class AudioPlayerWidget extends StatefulWidget {
 /// The state class for [AudioPlayerWidget].
 /// Manages the audio player, its state, and the speed/pitch controls.
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  final PitchControllablePlayer _player = PitchControllablePlayer(); // Use the new player
+  final PitchControllablePlayer _player =
+      PitchControllablePlayer(); // Use the new player
   double _speed = 1.0; // Current playback speed.
   double _pitch = 0.0; // Current pitch in half-step units.
-  bool _isInitialized = false; // Whether the audio source was successfully initialized.
+  bool _isInitialized =
+      false; // Whether the audio source was successfully initialized.
   String? _errorMessage; // Specific error message if initialization fails.
   List<Bookmark> _bookmarks = []; // List of bookmarks for the current audio.
-  final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for saving music piece.
+  final MusicPieceRepository _repository =
+      MusicPieceRepository(); // Repository for saving music piece.
   final Uuid _uuid = Uuid(); // For generating unique bookmark IDs.
   late Future<void> _playerInitFuture;
   Timer? _skipTimer;
@@ -43,8 +47,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null).toList();
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    _bookmarks = widget.musicPiece.bookmarks
+        .where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null)
+        .toList();
     _playerInitFuture = _initializeSequence();
   }
 
@@ -52,8 +59,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     if (!_isInitialized) return;
     final current = _player.player.position;
     final duration = _player.player.duration ?? Duration.zero;
-    final amount = fine ? const Duration(milliseconds: 50) : Duration(seconds: seconds);
-    
+    final amount = fine
+        ? const Duration(milliseconds: 50)
+        : Duration(seconds: seconds);
+
     Duration newPos;
     if (forward) {
       newPos = current + amount;
@@ -62,14 +71,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       newPos = current - amount;
       if (newPos < Duration.zero) newPos = Duration.zero;
     }
-    
+
     _player.player.seek(newPos);
   }
 
   void _startSkipTimer(bool forward, bool fine) {
     _skipTimer?.cancel();
     _skip(forward, fine: fine);
-    
+
     // Use a periodic timer for rapid skipping
     _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       _skip(forward, fine: fine);
@@ -88,22 +97,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     final speed = prefs.getDouble('audio_speed_${widget.musicPiece.id}') ?? 1.0;
     final pitch = prefs.getDouble('audio_pitch_${widget.musicPiece.id}') ?? 0.0;
-    
+
     if (mounted) {
       setState(() {
         _speed = speed;
         _pitch = pitch;
       });
     }
-    
+
     // Apply settings to the audio player
     try {
       await _player.setSpeed(_speed);
       await _player.setPitch(_pitch); // Directly set semitones
-      AppLogger.log('AudioPlayerWidget: Settings loaded - Speed: $_speed, Pitch: $_pitch');
+      AppLogger.log(
+        'AudioPlayerWidget: Settings loaded - Speed: $_speed, Pitch: $_pitch',
+      );
     } catch (e) {
       AppLogger.log('AudioPlayerWidget: Error applying settings: $e');
     }
@@ -112,35 +123,67 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   /// Saves the current speed and pitch settings to [SharedPreferences].
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('audio_speed_${widget.musicPiece.id}', _speed); // Save current playback speed.
-    await prefs.setDouble('audio_pitch_${widget.musicPiece.id}', _pitch); // Save current pitch setting.
-    AppLogger.log('AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch');
+    await prefs.setDouble(
+      'audio_speed_${widget.musicPiece.id}',
+      _speed,
+    ); // Save current playback speed.
+    await prefs.setDouble(
+      'audio_pitch_${widget.musicPiece.id}',
+      _pitch,
+    ); // Save current pitch setting.
+    AppLogger.log(
+      'AudioPlayerWidget: Settings saved - Speed: $_speed, Pitch: $_pitch',
+    );
   }
 
-  Future<void> _initAudio() async { // Removed audioPlayerService parameter
+  Future<void> _initAudio() async {
+    // Removed audioPlayerService parameter
     try {
-      final audioMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
+      final audioMediaItem =
+          widget.musicPiece.mediaItems[widget.mediaItemIndex];
       if (audioMediaItem.type != MediaType.audio) {
-        throw Exception('Media item at index ${widget.mediaItemIndex} is not an audio type.');
+        throw Exception(
+          'Media item at index ${widget.mediaItemIndex} is not an audio type.',
+        );
       }
 
       final audioPath = audioMediaItem.pathOrUrl;
-      
-      AppLogger.log('AudioPlayerWidget: Initializing audio with path: $audioPath');
 
-      if (Platform.isWindows && (audioPath.startsWith('http') || audioPath.contains('%'))) {
-        AppLogger.log('AudioPlayerWidget: Windows limitation with URL/encoded paths');
+      AppLogger.log(
+        'AudioPlayerWidget: Initializing audio with path: $audioPath',
+      );
+
+      if (Platform.isWindows &&
+          (audioPath.startsWith('http') || audioPath.contains('%'))) {
+        AppLogger.log(
+          'AudioPlayerWidget: Windows limitation with URL/encoded paths',
+        );
       }
 
       // Validate file extension
-      final validExtensions = ['.mp3', '.wav', '.aac', '.m4a', '.ogg', '.flac', '.wma', '.amr'];
-      final hasValidExtension = validExtensions.any((ext) => audioPath.toLowerCase().endsWith(ext));
+      final validExtensions = [
+        '.mp3',
+        '.wav',
+        '.aac',
+        '.m4a',
+        '.ogg',
+        '.flac',
+        '.wma',
+        '.amr',
+      ];
+      final hasValidExtension = validExtensions.any(
+        (ext) => audioPath.toLowerCase().endsWith(ext),
+      );
 
       if (!hasValidExtension) {
-        AppLogger.log('AudioPlayerWidget: Invalid audio file extension: $audioPath');
+        AppLogger.log(
+          'AudioPlayerWidget: Invalid audio file extension: $audioPath',
+        );
         if (mounted) {
           setState(() {
-            _errorMessage = 'Invalid audio file type. Supported: ${validExtensions.join(", ")}';
+            _errorMessage = context.l10n.invalidAudioFileType(
+              validExtensions.join(', '),
+            );
             _isInitialized = false;
           });
         }
@@ -148,22 +191,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       }
 
       // Validate file path for special characters that might cause issues
-      if (audioPath.contains('*') || audioPath.contains('?') || audioPath.contains('<') || audioPath.contains('>')) {
-        AppLogger.log('AudioPlayerWidget: Warning - File path contains special characters that may cause issues');
+      if (audioPath.contains('*') ||
+          audioPath.contains('?') ||
+          audioPath.contains('<') ||
+          audioPath.contains('>')) {
+        AppLogger.log(
+          'AudioPlayerWidget: Warning - File path contains special characters that may cause issues',
+        );
       }
 
       // Check if file exists
       final file = File(audioPath);
       if (!await file.exists()) {
-        AppLogger.log('AudioPlayerWidget: Audio file does not exist: $audioPath');
+        AppLogger.log(
+          'AudioPlayerWidget: Audio file does not exist: $audioPath',
+        );
         setState(() {
-          _errorMessage = 'Audio file does not exist';
+          _errorMessage = context.l10n.audioFileDoesNotExist;
           _isInitialized = false;
         });
         return;
       }
 
-      AppLogger.log('AudioPlayerWidget: Audio file exists, size: ${await file.length()} bytes');
+      AppLogger.log(
+        'AudioPlayerWidget: Audio file exists, size: ${await file.length()} bytes',
+      );
 
       if (!mounted) return;
 
@@ -182,9 +234,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         artist: widget.musicPiece.artistComposer,
         artUri: artUri,
       ); // Use setUrl from PitchControllablePlayer
-      
+
       if (!mounted) return;
-      
+
       await _player.play();
 
       // Small delay to allow the player to stabilize (helps with threading issues)
@@ -207,7 +259,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       AppLogger.log('AudioPlayerWidget: Error initializing audio: $e');
       if (mounted) {
         setState(() {
-          _errorMessage = 'Error initializing audio: $e';
+          _errorMessage = context.l10n.errorInitializingAudio(e.toString());
           _isInitialized = false;
         });
       }
@@ -240,7 +292,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'Error initializing player: ${snapshot.error}',
+                context.l10n.errorInitializingPlayer(snapshot.error.toString()),
                 style: const TextStyle(color: Colors.red),
                 textAlign: TextAlign.center,
               ),
@@ -252,11 +304,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         if (_errorMessage != null) {
           return Column(
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 64.0,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 64.0),
               const SizedBox(height: 8.0),
               Text(
                 _errorMessage!,
@@ -265,7 +313,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               ),
               const SizedBox(height: 8.0),
               Text(
-                'Path: ${audioMediaItem.pathOrUrl}',
+                context.l10n.pathValue(audioMediaItem.pathOrUrl),
                 style: const TextStyle(fontSize: 12.0, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -291,12 +339,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     final playerState = snapshot.data;
                     final processingState = playerState?.processingState;
                     final playing = playerState?.playing;
-                    
+
                     // Only show loading/playing state if it's OUR audio
-                    final isProcessing = isMyAudio && (processingState == ja.ProcessingState.loading ||
-                        processingState == ja.ProcessingState.buffering);
+                    final isProcessing =
+                        isMyAudio &&
+                        (processingState == ja.ProcessingState.loading ||
+                            processingState == ja.ProcessingState.buffering);
                     final isPlaying = isMyAudio && (playing == true);
-                    final isCompleted = isMyAudio && (processingState == ja.ProcessingState.completed);
+                    final isCompleted =
+                        isMyAudio &&
+                        (processingState == ja.ProcessingState.completed);
 
                     // Define the main control button based on state
                     Widget mainButton;
@@ -304,9 +356,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       mainButton = const SizedBox(
                         width: 80.0,
                         height: 80.0,
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: Center(child: CircularProgressIndicator()),
                       );
                     } else if (isCompleted) {
                       mainButton = IconButton(
@@ -325,7 +375,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         icon: const Icon(Icons.play_arrow),
                         iconSize: 64.0,
                         onPressed: () async {
-                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+                          final scaffoldMessenger = ScaffoldMessenger.of(
+                            context,
+                          );
+                          final l10n = context.l10n;
                           try {
                             // Always init if not my audio, effectively switching source
                             if (!_isInitialized || !isMyAudio) {
@@ -334,9 +387,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                               await _player.play();
                             }
                           } catch (e) {
-                            AppLogger.log('AudioPlayerWidget: Error in play button: $e');
+                            AppLogger.log(
+                              'AudioPlayerWidget: Error in play button: $e',
+                            );
                             scaffoldMessenger.showSnackBar(
-                              SnackBar(content: Text('Error playing audio: $e')),
+                              SnackBar(
+                                content: Text(
+                                  l10n.errorPlayingAudio(e.toString()),
+                                ),
+                              ),
                             );
                           }
                         },
@@ -351,22 +410,30 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         IconButton(
                           icon: const Icon(Icons.replay_5),
                           iconSize: 32.0,
-                          tooltip: 'Rewind 5s',
-                          onPressed: isMyAudio ? () => _skip(false, seconds: 5) : null,
+                          tooltip: context.l10n.rewind5s,
+                          onPressed: isMyAudio
+                              ? () => _skip(false, seconds: 5)
+                              : null,
                         ),
                         // Rewind 1s / Fine Button (Hold for fine)
                         Tooltip(
-                          message: 'Rewind 1s (Hold for 50ms fine skip)',
+                          message: context.l10n.rewind1sHoldFor50msFineSkip,
                           child: GestureDetector(
                             onTap: isMyAudio ? () => _skip(false) : null,
-                            onLongPressStart: isMyAudio ? (_) => _startSkipTimer(false, true) : null,
+                            onLongPressStart: isMyAudio
+                                ? (_) => _startSkipTimer(false, true)
+                                : null,
                             onLongPressEnd: (_) => _stopSkipTimer(),
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Icon(
-                                Icons.chevron_left, 
+                                Icons.chevron_left,
                                 size: 28.0,
-                                color: isMyAudio ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
+                                color: isMyAudio
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface.withValues(
+                                        alpha: 0.3,
+                                      ),
                               ),
                             ),
                           ),
@@ -376,66 +443,92 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         const SizedBox(width: 8),
                         // Forward 1s / Fine Button (Hold for fine)
                         Tooltip(
-                          message: 'Forward 1s (Hold for 50ms fine skip)',
+                          message: context.l10n.forward1sHoldFor50msFineSkip,
                           child: GestureDetector(
                             onTap: isMyAudio ? () => _skip(true) : null,
-                            onLongPressStart: isMyAudio ? (_) => _startSkipTimer(true, true) : null,
+                            onLongPressStart: isMyAudio
+                                ? (_) => _startSkipTimer(true, true)
+                                : null,
                             onLongPressEnd: (_) => _stopSkipTimer(),
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Icon(
-                                Icons.chevron_right, 
+                                Icons.chevron_right,
                                 size: 28.0,
-                                color: isMyAudio ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
+                                color: isMyAudio
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface.withValues(
+                                        alpha: 0.3,
+                                      ),
                               ),
                             ),
                           ),
                         ),
                         // Forward 5s Button
-                        isCompleted 
-                        ? const SizedBox(width: 48.0)
-                        : IconButton(
-                          icon: const Icon(Icons.forward_5),
-                          iconSize: 32.0,
-                          tooltip: 'Forward 5s',
-                          onPressed: isMyAudio ? () => _skip(true, seconds: 5) : null,
-                        ),
+                        isCompleted
+                            ? const SizedBox(width: 48.0)
+                            : IconButton(
+                                icon: const Icon(Icons.forward_5),
+                                iconSize: 32.0,
+                                tooltip: context.l10n.forward5s,
+                                onPressed: isMyAudio
+                                    ? () => _skip(true, seconds: 5)
+                                    : null,
+                              ),
                       ],
                     );
                   },
                 ),
-                
+
                 // Position/Duration Slider
-                StreamBuilder<Duration?>( // Changed to Duration?
-                  stream: _player.durationStream, // Use new player's duration stream
+                StreamBuilder<Duration?>(
+                  // Changed to Duration?
+                  stream: _player
+                      .durationStream, // Use new player's duration stream
                   builder: (context, snapshot) {
                     // Only show duration if it's my audio
-                    final duration = isMyAudio ? (snapshot.data ?? Duration.zero) : Duration.zero;
-                    
+                    final duration = isMyAudio
+                        ? (snapshot.data ?? Duration.zero)
+                        : Duration.zero;
+
                     return StreamBuilder<Duration>(
-                      stream: _player.positionStream, // Use new player's position stream
+                      stream: _player
+                          .positionStream, // Use new player's position stream
                       builder: (context, snapshot) {
                         // Only show position if it's my audio
-                        final position = isMyAudio ? (snapshot.data ?? Duration.zero) : Duration.zero;
-                        
+                        final position = isMyAudio
+                            ? (snapshot.data ?? Duration.zero)
+                            : Duration.zero;
+
                         final min = 0.0;
                         final max = duration.inMilliseconds.toDouble();
-                        final value = position.inMilliseconds.clamp(min, max).toDouble();
-                        
+                        final value = position.inMilliseconds
+                            .clamp(min, max)
+                            .toDouble();
+
                         return Column(
                           children: [
                             Slider(
                               min: min,
-                              max: max > 0 ? max : 1.0, // Prevent division by zero
+                              max: max > 0
+                                  ? max
+                                  : 1.0, // Prevent division by zero
                               value: max > 0 ? value : 0.0,
-                              onChanged: (isMyAudio && max > 0) ? (value) {
-                                _player.player.seek(Duration(milliseconds: value.toInt())); // Use new player's seek
-                              } : null, // Disable slider if not my audio
+                              onChanged: (isMyAudio && max > 0)
+                                  ? (value) {
+                                      _player.player.seek(
+                                        Duration(milliseconds: value.toInt()),
+                                      ); // Use new player's seek
+                                    }
+                                  : null, // Disable slider if not my audio
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(_formatDuration(position)),
                                   Text(_formatDuration(duration)),
@@ -448,13 +541,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     );
                   },
                 ),
-                
+
                 // Speed Control
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      const Text('Speed:'),
+                      Text(context.l10n.speed),
                       Expanded(
                         child: Slider(
                           min: 0.2,
@@ -468,23 +561,25 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                             });
                             // Only apply to player if we are currently controlling it
                             if (isMyAudio) {
-                              await _player.setSpeed(value); 
+                              await _player.setSpeed(value);
                             }
                             await _saveSettings();
                           },
                         ),
                       ),
-                      Text('${_speed.toStringAsFixed(1)}x'),
+                      Text(
+                        context.l10n.speedMultiplier(_speed.toStringAsFixed(1)),
+                      ),
                     ],
                   ),
                 ),
-                
+
                 // Pitch Control
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      const Text('Pitch:'),
+                      Text(context.l10n.pitch),
                       Expanded(
                         child: Slider(
                           min: -12.0, // One octave down
@@ -508,7 +603,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     ],
                   ),
                 ),
-                
+
                 // Reset Controls Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -519,26 +614,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         _pitch = 0.0;
                       });
                       if (isMyAudio) {
-                        await _player.setSpeed(1.0); 
+                        await _player.setSpeed(1.0);
                         await _player.setPitch(0.0);
                       }
                       await _saveSettings();
                     },
                     icon: const Icon(Icons.restore),
-                    label: const Text('Reset Controls'),
+                    label: Text(context.l10n.resetControls),
                   ),
                 ),
-                
+
                 // Add Bookmark Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: ElevatedButton.icon(
-                    onPressed: isMyAudio ? _addBookmark : null, // Disable if not playing
+                    onPressed: isMyAudio
+                        ? _addBookmark
+                        : null, // Disable if not playing
                     icon: const Icon(Icons.bookmark_add),
-                    label: const Text('Add Bookmark'),
+                    label: Text(context.l10n.addBookmark),
                   ),
                 ),
-                
+
                 // Bookmarks List
                 if (_bookmarks.isNotEmpty)
                   ListView.builder(
@@ -553,7 +653,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         onDismissed: (direction) {
                           _removeBookmark(bookmark.id);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${bookmark.name} dismissed')),
+                            SnackBar(
+                              content: Text(
+                                context.l10n.bookmarkDismissed(bookmark.name),
+                              ),
+                            ),
                           );
                         },
                         background: Container(
@@ -564,43 +668,59 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         ),
                         child: GestureDetector(
                           onDoubleTap: () async {
-                            final controller = TextEditingController(text: bookmark.name);
+                            final controller = TextEditingController(
+                              text: bookmark.name,
+                            );
                             final newName = await showDialog<String>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: const Text('Rename Bookmark'),
+                                title: Text(context.l10n.renameBookmark),
                                 content: TextField(
                                   controller: controller,
                                   autofocus: true,
-                                  onSubmitted: (value) => Navigator.of(context).pop(value),
+                                  onSubmitted: (value) =>
+                                      Navigator.of(context).pop(value),
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: const Text('Cancel'),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: Text(context.l10n.cancel),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(controller.text),
-                                    child: const Text('Rename'),
+                                    onPressed: () => Navigator.of(
+                                      context,
+                                    ).pop(controller.text),
+                                    child: Text(context.l10n.rename),
                                   ),
                                 ],
                               ),
                             );
-                            if (newName != null && newName.isNotEmpty && newName != bookmark.name) {
+                            if (newName != null &&
+                                newName.isNotEmpty &&
+                                newName != bookmark.name) {
                               _renameBookmark(bookmark.id, newName);
                             }
                           },
                           child: ListTile(
                             title: Text(bookmark.name),
                             subtitle: Text(_formatDuration(bookmark.timestamp)),
-                            onTap: isMyAudio ? () => _seekToBookmark(bookmark.timestamp) : null, // Disable if not my audio
+                            onTap: isMyAudio
+                                ? () => _seekToBookmark(bookmark.timestamp)
+                                : null, // Disable if not my audio
                             trailing: IconButton(
                               icon: const Icon(Icons.delete),
-                              tooltip: 'Delete bookmark',
+                              tooltip: context.l10n.deleteBookmark,
                               onPressed: () {
                                 _removeBookmark(bookmark.id);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('${bookmark.name} deleted')),
+                                  SnackBar(
+                                    content: Text(
+                                      context.l10n.bookmarkDeleted(
+                                        bookmark.name,
+                                      ),
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -618,7 +738,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   String _getPitchDisplayString(double semitones) {
-    if (semitones == 0) return 'Normal';
+    if (semitones == 0) return context.l10n.normal;
     return '${semitones > 0 ? '+' : ''}${semitones.round()} st';
   }
 
@@ -635,23 +755,27 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     if (!_isInitialized || _player.player.duration == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Audio not loaded yet. Please wait.')),
+          SnackBar(content: Text(context.l10n.audioNotLoadedYetPleaseWait)),
         );
       }
-    	return;
+      return;
     }
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    final currentPosition = _player.player.position; // Use new player's position
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    final currentPosition =
+        _player.player.position; // Use new player's position
     final newBookmark = Bookmark(
       id: _uuid.v4(),
       timestamp: currentPosition,
-      name: 'Bookmark ${_bookmarks.length + 1}',
+      name: context.l10n.bookmarkDefaultName(_bookmarks.length + 1),
       mediaItemId: currentMediaId,
     );
 
     setState(() {
       _bookmarks.add(newBookmark);
-      _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp)); // Keep sorted
+      _bookmarks.sort(
+        (a, b) => a.timestamp.compareTo(b.timestamp),
+      ); // Keep sorted
     });
     await _saveBookmarks();
   }
@@ -665,7 +789,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> _renameBookmark(String bookmarkId, String newName) async {
     setState(() {
-      final index = _bookmarks.indexWhere((bookmark) => bookmark.id == bookmarkId);
+      final index = _bookmarks.indexWhere(
+        (bookmark) => bookmark.id == bookmarkId,
+      );
       if (index != -1) {
         _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
       }
@@ -679,23 +805,28 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> _saveBookmarks() async {
     // Fetch latest piece to avoid overwriting other widgets' changes
-    final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+    final latestPiece = await _repository.getMusicPieceById(
+      widget.musicPiece.id,
+    );
     if (latestPiece == null) return;
 
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+
     // Get bookmarks that do NOT belong to this audio file (preserve them)
     // We are managing bookmarks with (id == current OR id == null).
     // So "others" are those where (id != current AND id != null).
-    final otherBookmarks = latestPiece.bookmarks.where((b) => 
-      b.mediaItemId != currentMediaId && b.mediaItemId != null
-    ).toList();
+    final otherBookmarks = latestPiece.bookmarks
+        .where((b) => b.mediaItemId != currentMediaId && b.mediaItemId != null)
+        .toList();
 
     // Combine with our current list (which includes new ones and legacy ones)
     final allBookmarks = [...otherBookmarks, ..._bookmarks];
 
     final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
-    AppLogger.log('AudioPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}');
+    AppLogger.log(
+      'AudioPlayerWidget: Bookmarks saved for ${widget.musicPiece.title}',
+    );
   }
 }

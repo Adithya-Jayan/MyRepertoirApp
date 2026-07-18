@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme_notifier.dart';
+import '../utils/locale_notifier.dart';
 import '../utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
 
 /// A screen for managing personalization settings of the application.
 ///
@@ -43,14 +45,16 @@ class PersonalizationSettingsScreenState
       defaultColumns = 2;
     }
     setState(() {
-      _galleryColumns =
-          (prefs.getInt('galleryColumns') ?? defaultColumns).toDouble();
+      _galleryColumns = (prefs.getInt('galleryColumns') ?? defaultColumns)
+          .toDouble();
       _hideEmptyGroups = prefs.getBool('hideEmptyGroups') ?? false;
     });
   }
 
   Future<void> _saveGalleryColumns(double value) async {
-    AppLogger.log('PersonalizationSettingsScreen: Saving galleryColumns: ${value.toInt()}');
+    AppLogger.log(
+      'PersonalizationSettingsScreen: Saving galleryColumns: ${value.toInt()}',
+    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('galleryColumns', value.toInt());
     if (!mounted) return;
@@ -68,6 +72,17 @@ class PersonalizationSettingsScreenState
     });
   }
 
+  Widget _buildLanguageName(Locale locale) {
+    return Localizations.override(
+      context: context,
+      locale: locale,
+      delegates: AppLocalizations.localizationsDelegates,
+      child: Builder(
+        builder: (localizedContext) => Text(localizedContext.l10n.languageName),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     AppLogger.log('PersonalizationSettingsScreen: dispose called');
@@ -78,6 +93,7 @@ class PersonalizationSettingsScreenState
   Widget build(BuildContext context) {
     AppLogger.log('PersonalizationSettingsScreen: build called');
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final localeNotifier = Provider.of<LocaleNotifier>(context);
     final theme = Theme.of(context);
 
     return PopScope(
@@ -88,7 +104,7 @@ class PersonalizationSettingsScreenState
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Personalization'),
+          title: Text(context.l10n.personalization),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -98,43 +114,93 @@ class PersonalizationSettingsScreenState
         ),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             children: [
-              _buildCategoryHeader(theme, 'App Theme', Icons.palette_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.appLanguage,
+                Icons.language_outlined,
+              ),
               _buildSettingsCard([
-                const Padding(
+                RadioGroup<String>(
+                  groupValue: localeNotifier.preference,
+                  onChanged: (preference) {
+                    if (preference != null) {
+                      localeNotifier.setLocale(
+                        localeNotifier.localeForPreference(preference),
+                      );
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: Text(context.l10n.systemDefault),
+                        value: LocaleNotifier.systemPreference,
+                      ),
+                      ...localeNotifier.supportedLocales.map(
+                        (locale) => RadioListTile<String>(
+                          title: _buildLanguageName(locale),
+                          value: locale.toLanguageTag(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.appTheme,
+                Icons.palette_outlined,
+              ),
+              _buildSettingsCard([
+                Padding(
                   padding: EdgeInsets.only(left: 16.0, top: 16.0),
-                  child: Text('Theme Mode', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    context.l10n.themeMode,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 RadioGroup<ThemeMode>(
                   groupValue: themeNotifier.themeMode,
                   onChanged: (v) {
                     if (v != null) themeNotifier.setTheme(v);
                   },
-                  child: const Column(
+                  child: Column(
                     children: [
                       RadioListTile<ThemeMode>(
-                        title: Text('System Default'),
+                        title: Text(context.l10n.systemDefault),
                         value: ThemeMode.system,
                       ),
                       RadioListTile<ThemeMode>(
-                        title: Text('Light'),
+                        title: Text(context.l10n.light),
                         value: ThemeMode.light,
                       ),
                       RadioListTile<ThemeMode>(
-                        title: Text('Dark'),
+                        title: Text(context.l10n.dark),
                         value: ThemeMode.dark,
                       ),
                     ],
                   ),
                 ),
                 const Divider(indent: 16, endIndent: 16),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 16.0, top: 8.0, bottom: 12.0),
-                  child: Text('Accent Color', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    context.l10n.accentColor,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+                  padding: const EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    bottom: 16.0,
+                  ),
                   child: Wrap(
                     spacing: 12.0,
                     runSpacing: 12.0,
@@ -155,7 +221,10 @@ class PersonalizationSettingsScreenState
                             ),
                             boxShadow: [
                               if (themeNotifier.accentColor == color)
-                                BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8)
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                ),
                             ],
                           ),
                         ),
@@ -164,15 +233,19 @@ class PersonalizationSettingsScreenState
                   ),
                 ),
                 SwitchListTile(
-                  title: const Text('Use OLED Black'),
-                  subtitle: const Text('True black background in dark mode'),
+                  title: Text(context.l10n.useOledBlack),
+                  subtitle: Text(context.l10n.trueBlackBackgroundInDarkMode),
                   value: themeNotifier.useOledBlack,
                   onChanged: (v) => themeNotifier.setUseOledBlack(v),
                 ),
               ]),
 
               const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'Gallery Layout', Icons.grid_view_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.galleryLayout,
+                Icons.grid_view_outlined,
+              ),
               _buildSettingsCard([
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -182,9 +255,17 @@ class PersonalizationSettingsScreenState
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Columns', style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text('${_galleryColumns.toInt()}', 
-                            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                          Text(
+                            context.l10n.columns,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${_galleryColumns.toInt()}',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       Slider(
@@ -198,23 +279,26 @@ class PersonalizationSettingsScreenState
                   ),
                 ),
                 const Divider(indent: 16, endIndent: 16),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 16.0, top: 8.0),
-                  child: Text('Thumbnail Style', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    context.l10n.thumbnailStyle,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 RadioGroup<ThumbnailStyle>(
                   groupValue: themeNotifier.thumbnailStyle,
                   onChanged: (v) {
                     if (v != null) themeNotifier.setThumbnailStyle(v);
                   },
-                  child: const Column(
+                  child: Column(
                     children: [
                       RadioListTile<ThumbnailStyle>(
-                        title: Text('Outline Text'),
+                        title: Text(context.l10n.outlineText),
                         value: ThumbnailStyle.outline,
                       ),
                       RadioListTile<ThumbnailStyle>(
-                        title: Text('Gradient Overlay'),
+                        title: Text(context.l10n.gradientOverlay),
                         value: ThumbnailStyle.gradient,
                       ),
                     ],
@@ -223,31 +307,38 @@ class PersonalizationSettingsScreenState
               ]),
 
               const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'Display Options', Icons.visibility_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.displayOptions,
+                Icons.visibility_outlined,
+              ),
               _buildSettingsCard([
                 SwitchListTile(
-                  title: const Text('Show Practice Count'),
+                  title: Text(context.l10n.showPracticeCount),
                   value: themeNotifier.showPracticeCount,
                   onChanged: (v) => themeNotifier.setShowPracticeCount(v),
                 ),
                 SwitchListTile(
-                  title: const Text('Show Last Practiced'),
+                  title: Text(context.l10n.showLastPracticed),
                   value: themeNotifier.showLastPracticed,
                   onChanged: (v) => themeNotifier.setShowLastPracticed(v),
                 ),
                 SwitchListTile(
-                  title: const Text('Hide Empty Groups'),
-                  subtitle: const Text('Do not show groups with no matching pieces'),
+                  title: Text(context.l10n.hideEmptyGroups),
+                  subtitle: Text(
+                    context.l10n.doNotShowGroupsWithNoMatchingPieces,
+                  ),
                   value: _hideEmptyGroups,
                   onChanged: (v) => _saveHideEmptyGroups(v),
                 ),
                 SwitchListTile(
-                  title: const Text('Show Dot Pattern'),
+                  title: Text(context.l10n.showDotPattern),
                   value: themeNotifier.showDotPatternBackground,
-                  onChanged: (v) => themeNotifier.setShowDotPatternBackground(v),
+                  onChanged: (v) =>
+                      themeNotifier.setShowDotPatternBackground(v),
                 ),
                 SwitchListTile(
-                  title: const Text('Show Gradient Background'),
+                  title: Text(context.l10n.showGradientBackground),
                   value: themeNotifier.showGradientBackground,
                   onChanged: (v) => themeNotifier.setShowGradientBackground(v),
                 ),
@@ -287,7 +378,9 @@ class PersonalizationSettingsScreenState
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,

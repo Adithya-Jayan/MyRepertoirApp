@@ -3,6 +3,8 @@ import 'package:repertoire/models/tag_group.dart';
 import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget for displaying and editing a single TagGroup.
 ///
 /// Allows users to modify the tag group's name, color, and associated tags.
@@ -15,7 +17,6 @@ class TagGroupSection extends StatefulWidget {
   final Future<List<String>> Function(String) onGetAllTagsForTagGroup;
   final Future<int?> Function(String) onFetchMostCommonColor;
   final bool isNewlyAdded;
-
 
   const TagGroupSection({
     super.key,
@@ -52,10 +53,11 @@ class _TagGroupSectionState extends State<TagGroupSection> {
   @override
   void didUpdateWidget(TagGroupSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Sync group name controller if the name changed externally (e.g. from parent)
     if (widget.tagGroup.name != oldWidget.tagGroup.name) {
-      if (_groupNameController != null && _groupNameController!.text != widget.tagGroup.name) {
+      if (_groupNameController != null &&
+          _groupNameController!.text != widget.tagGroup.name) {
         _groupNameController!.text = widget.tagGroup.name;
       }
     }
@@ -74,9 +76,12 @@ class _TagGroupSectionState extends State<TagGroupSection> {
   }
 
   Future<List<String>> _getAvailableTags() {
-    if (_availableTagsFuture == null || _lastGroupNameForFuture != widget.tagGroup.name) {
+    if (_availableTagsFuture == null ||
+        _lastGroupNameForFuture != widget.tagGroup.name) {
       _lastGroupNameForFuture = widget.tagGroup.name;
-      _availableTagsFuture = widget.onGetAllTagsForTagGroup(widget.tagGroup.name);
+      _availableTagsFuture = widget.onGetAllTagsForTagGroup(
+        widget.tagGroup.name,
+      );
     }
     return _availableTagsFuture!;
   }
@@ -95,57 +100,60 @@ class _TagGroupSectionState extends State<TagGroupSection> {
     0xFFC0C0C0, // Silver
   ];
 
-  static const List<String> _colorNames = [
-    'Default',
-    'Coral',
-    'Teal',
-    'Sky Blue',
-    'Yellow',
-    'Mint Green',
-    'Light Salmon',
-    'Light Pink',
-    'Sky Blue',
-    'Tan',
-    'Silver',
-  ];
-
   Widget _buildColorDropdown() {
+    final colorNames = [
+      context.l10n.defaultColor,
+      context.l10n.coral,
+      context.l10n.teal,
+      context.l10n.skyBlue,
+      context.l10n.yellow,
+      context.l10n.mintGreen,
+      context.l10n.lightSalmon,
+      context.l10n.lightPink,
+      context.l10n.skyBlue,
+      context.l10n.tan,
+      context.l10n.silver,
+    ];
     // Get the current color options, ensuring the current color is included
     final currentColor = widget.tagGroup.color;
     final colorOptions = List<int?>.from(_colorOptions);
-    
+
     // If the current color is not null and not in our predefined list, add it
     if (currentColor != null && !colorOptions.contains(currentColor)) {
       colorOptions.add(currentColor);
     }
-    
+
     // Use the current color directly (null is handled by the dropdown)
     final dropdownValue = currentColor;
-    
+
     return DropdownButton<int?>(
       value: dropdownValue,
       onChanged: (int? newColor) {
-        AppLogger.log('TagGroupSection: Color dropdown changed from ${widget.tagGroup.color} to $newColor');
-        
+        AppLogger.log(
+          'TagGroupSection: Color dropdown changed from ${widget.tagGroup.color} to $newColor',
+        );
+
         // Use different copyWith methods based on whether we're setting to null or a color
-        final updatedTagGroup = newColor == null 
+        final updatedTagGroup = newColor == null
             ? widget.tagGroup.copyWithColorNull()
             : widget.tagGroup.copyWith(color: newColor);
-            
+
         widget.onUpdateTagGroup(widget.tagGroup, updatedTagGroup);
       },
       items: colorOptions.asMap().entries.map((entry) {
         final color = entry.value;
         String colorName;
-        
+
         // Find the name for this color
         if (color == null) {
-          colorName = 'Default';
+          colorName = context.l10n.defaultColor;
         } else {
           final predefinedIndex = _colorOptions.indexOf(color);
-          colorName = predefinedIndex >= 0 ? _colorNames[predefinedIndex] : 'Custom Color';
+          colorName = predefinedIndex >= 0
+              ? colorNames[predefinedIndex]
+              : context.l10n.customColor;
         }
-        
+
         return DropdownMenuItem<int?>(
           value: color,
           child: Row(
@@ -192,9 +200,7 @@ class _TagGroupSectionState extends State<TagGroupSection> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -212,7 +218,9 @@ class _TagGroupSectionState extends State<TagGroupSection> {
             Container(
               width: 48,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 border: Border(
                   right: BorderSide(
                     color: theme.dividerColor.withValues(alpha: 0.08),
@@ -230,9 +238,13 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
                     onPressed: () => widget.onDeleteTagGroup(widget.tagGroup),
-                    tooltip: 'Delete tag group',
+                    tooltip: context.l10n.deleteTagGroup2,
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -252,53 +264,93 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       children: [
                         Expanded(
                           child: Autocomplete<String>(
-                            initialValue: TextEditingValue(text: widget.tagGroup.name),
-                            fieldViewBuilder: (context, fieldTextEditingController, focusNode, onFieldSubmitted) {
-                              _groupNameController = fieldTextEditingController;
-                              
-                              if (widget.isNewlyAdded && !focusNode.hasFocus) {
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (mounted && !focusNode.hasFocus) {
-                                    focusNode.requestFocus();
-                                  }
-                                });
-                              }
+                            initialValue: TextEditingValue(
+                              text: widget.tagGroup.name,
+                            ),
+                            fieldViewBuilder:
+                                (
+                                  context,
+                                  fieldTextEditingController,
+                                  focusNode,
+                                  onFieldSubmitted,
+                                ) {
+                                  _groupNameController =
+                                      fieldTextEditingController;
 
-                              return TextFormField(
-                                controller: fieldTextEditingController,
-                                focusNode: focusNode,
-                                decoration: const InputDecoration(
-                                  labelText: 'Group Name',
-                                  isDense: true,
-                                  border: UnderlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                                ),
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                onChanged: (value) {
-                                  widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
-                                },
-                                onFieldSubmitted: (value) async {
-                                  widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: value));
-                                  onFieldSubmitted();
-                                  final mostCommonColor = await widget.onFetchMostCommonColor(value);
-                                  if (mostCommonColor != null) {
-                                    widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor), isAutofill: true);
+                                  if (widget.isNewlyAdded &&
+                                      !focusNode.hasFocus) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (mounted && !focusNode.hasFocus) {
+                                            focusNode.requestFocus();
+                                          }
+                                        });
                                   }
+
+                                  return TextFormField(
+                                    controller: fieldTextEditingController,
+                                    focusNode: focusNode,
+                                    decoration: InputDecoration(
+                                      labelText: context.l10n.groupName,
+                                      isDense: true,
+                                      border: UnderlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                    onChanged: (value) {
+                                      widget.onUpdateTagGroup(
+                                        widget.tagGroup,
+                                        widget.tagGroup.copyWith(name: value),
+                                      );
+                                    },
+                                    onFieldSubmitted: (value) async {
+                                      widget.onUpdateTagGroup(
+                                        widget.tagGroup,
+                                        widget.tagGroup.copyWith(name: value),
+                                      );
+                                      onFieldSubmitted();
+                                      final mostCommonColor = await widget
+                                          .onFetchMostCommonColor(value);
+                                      if (mostCommonColor != null) {
+                                        widget.onUpdateTagGroup(
+                                          widget.tagGroup,
+                                          widget.tagGroup.copyWith(
+                                            color: mostCommonColor,
+                                          ),
+                                          isAutofill: true,
+                                        );
+                                      }
+                                    },
+                                  );
                                 },
+                            optionsBuilder: (textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return widget.allTagGroupNames.where(
+                                (option) => option.toLowerCase().contains(
+                                  textEditingValue.text.toLowerCase(),
+                                ),
                               );
                             },
-                            optionsBuilder: (textEditingValue) {
-                              if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
-                              return widget.allTagGroupNames.where((option) =>
-                                option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
-                            },
                             onSelected: (selection) async {
-                              widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(name: selection));
-                              final mostCommonColor = await widget.onFetchMostCommonColor(selection);
+                              widget.onUpdateTagGroup(
+                                widget.tagGroup,
+                                widget.tagGroup.copyWith(name: selection),
+                              );
+                              final mostCommonColor = await widget
+                                  .onFetchMostCommonColor(selection);
                               if (mostCommonColor != null) {
-                                widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(color: mostCommonColor), isAutofill: true);
+                                widget.onUpdateTagGroup(
+                                  widget.tagGroup,
+                                  widget.tagGroup.copyWith(
+                                    color: mostCommonColor,
+                                  ),
+                                  isAutofill: true,
+                                );
                               }
                             },
                           ),
@@ -323,7 +375,9 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.15,
+                        ),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Column(
@@ -334,25 +388,48 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                             runSpacing: 8.0,
                             children: [
                               ...widget.tagGroup.tags.map((tag) {
-                                final color = widget.tagGroup.color != null ? Color(widget.tagGroup.color!) : null;
-                                final tagColor = color != null ? adjustColorForBrightness(color, brightness) : null;
-                                
+                                final color = widget.tagGroup.color != null
+                                    ? Color(widget.tagGroup.color!)
+                                    : null;
+                                final tagColor = color != null
+                                    ? adjustColorForBrightness(
+                                        color,
+                                        brightness,
+                                      )
+                                    : null;
+
                                 return Chip(
-                                  label: Text(tag, style: theme.textTheme.bodySmall),
+                                  label: Text(
+                                    tag,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
                                   backgroundColor: tagColor,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   padding: EdgeInsets.zero,
-                                  labelPadding: const EdgeInsets.only(left: 8.0, right: 4.0),
+                                  labelPadding: const EdgeInsets.only(
+                                    left: 8.0,
+                                    right: 4.0,
+                                  ),
                                   side: BorderSide.none,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
                                   deleteIcon: const Icon(Icons.close, size: 14),
                                   onDeleted: () {
-                                    final updatedTags = List<String>.from(widget.tagGroup.tags)..remove(tag);
-                                    widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
+                                    final updatedTags = List<String>.from(
+                                      widget.tagGroup.tags,
+                                    )..remove(tag);
+                                    widget.onUpdateTagGroup(
+                                      widget.tagGroup,
+                                      widget.tagGroup.copyWith(
+                                        tags: updatedTags,
+                                      ),
+                                    );
                                   },
                                 );
                               }),
-                              
+
                               if (!_isAddingTag)
                                 InkWell(
                                   onTap: () => setState(() {
@@ -361,17 +438,34 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                   }),
                                   borderRadius: BorderRadius.circular(20),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10.0,
+                                      vertical: 4.0,
+                                    ),
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: colorScheme.primary.withValues(alpha: 0.5)),
+                                      border: Border.all(
+                                        color: colorScheme.primary.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.add, size: 14, color: colorScheme.primary),
+                                        Icon(
+                                          Icons.add,
+                                          size: 14,
+                                          color: colorScheme.primary,
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text('Add tag', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.primary)),
+                                        Text(
+                                          context.l10n.addTag,
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: colorScheme.primary,
+                                              ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -387,56 +481,100 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                 final availableTags = snapshot.data ?? [];
                                 return Autocomplete<String>(
                                   optionsBuilder: (textEditingValue) {
-                                    if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
-                                    return availableTags.where((option) =>
-                                      option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                                    if (textEditingValue.text.isEmpty) {
+                                      return const Iterable<String>.empty();
+                                    }
+                                    return availableTags.where(
+                                      (option) => option.toLowerCase().contains(
+                                        textEditingValue.text.toLowerCase(),
+                                      ),
+                                    );
                                   },
                                   onSelected: (selection) {
-                                    if (!widget.tagGroup.tags.contains(selection)) {
-                                      final updatedTags = List<String>.from(widget.tagGroup.tags)..add(selection);
-                                      widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
+                                    if (!widget.tagGroup.tags.contains(
+                                      selection,
+                                    )) {
+                                      final updatedTags = List<String>.from(
+                                        widget.tagGroup.tags,
+                                      )..add(selection);
+                                      widget.onUpdateTagGroup(
+                                        widget.tagGroup,
+                                        widget.tagGroup.copyWith(
+                                          tags: updatedTags,
+                                        ),
+                                      );
                                     }
                                     _addTagController?.clear();
                                     setState(() => _isAddingTag = false);
                                   },
-                                  fieldViewBuilder: (context, fieldTextEditingController, focusNode, onFieldSubmitted) {
-                                    _addTagController = fieldTextEditingController;
-                                    
-                                    if (_shouldFocusAddTag) {
-                                      _shouldFocusAddTag = false;
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        if (mounted && !focusNode.hasFocus) {
-                                          focusNode.requestFocus();
-                                        }
-                                      });
-                                    }
+                                  fieldViewBuilder:
+                                      (
+                                        context,
+                                        fieldTextEditingController,
+                                        focusNode,
+                                        onFieldSubmitted,
+                                      ) {
+                                        _addTagController =
+                                            fieldTextEditingController;
 
-                                    return TextFormField(
-                                      controller: fieldTextEditingController,
-                                      focusNode: focusNode,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Tag name (or comma-separated list)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      style: theme.textTheme.bodyMedium,
-                                      onTapOutside: (_) {
-                                        if (fieldTextEditingController.text.isEmpty) {
-                                          setState(() => _isAddingTag = false);
+                                        if (_shouldFocusAddTag) {
+                                          _shouldFocusAddTag = false;
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                                if (mounted &&
+                                                    !focusNode.hasFocus) {
+                                                  focusNode.requestFocus();
+                                                }
+                                              });
                                         }
+
+                                        return TextFormField(
+                                          controller:
+                                              fieldTextEditingController,
+                                          focusNode: focusNode,
+                                          decoration: InputDecoration(
+                                            labelText: context
+                                                .l10n
+                                                .tagNameOrCommaSeparatedList,
+                                            isDense: true,
+                                            border: OutlineInputBorder(),
+                                          ),
+                                          style: theme.textTheme.bodyMedium,
+                                          onTapOutside: (_) {
+                                            if (fieldTextEditingController
+                                                .text
+                                                .isEmpty) {
+                                              setState(
+                                                () => _isAddingTag = false,
+                                              );
+                                            }
+                                          },
+                                          onFieldSubmitted: (value) {
+                                            if (value.isNotEmpty) {
+                                              final tagsToAdd = value
+                                                  .split(',')
+                                                  .map((e) => e.trim())
+                                                  .where((e) => e.isNotEmpty)
+                                                  .toList();
+                                              final updatedTags =
+                                                  List<String>.from(
+                                                    widget.tagGroup.tags,
+                                                  )..addAll(tagsToAdd);
+                                              widget.onUpdateTagGroup(
+                                                widget.tagGroup,
+                                                widget.tagGroup.copyWith(
+                                                  tags: updatedTags,
+                                                ),
+                                              );
+                                            }
+                                            fieldTextEditingController.clear();
+                                            setState(
+                                              () => _isAddingTag = false,
+                                            );
+                                            onFieldSubmitted();
+                                          },
+                                        );
                                       },
-                                      onFieldSubmitted: (value) {
-                                        if (value.isNotEmpty) {
-                                          final tagsToAdd = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                                          final updatedTags = List<String>.from(widget.tagGroup.tags)..addAll(tagsToAdd);
-                                          widget.onUpdateTagGroup(widget.tagGroup, widget.tagGroup.copyWith(tags: updatedTags));
-                                        }
-                                        fieldTextEditingController.clear();
-                                        setState(() => _isAddingTag = false);
-                                        onFieldSubmitted();
-                                      },
-                                    );
-                                  },
                                 );
                               },
                             ),

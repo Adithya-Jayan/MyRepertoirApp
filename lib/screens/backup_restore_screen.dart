@@ -11,6 +11,8 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import '../utils/permissions_utils.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen for managing backup and restore operations of the application data.
 ///
 /// This includes options for manual backup/restore, and configuring automatic backups.
@@ -60,18 +62,24 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       });
 
       final prefs = await SharedPreferences.getInstance();
-      _backupRestoreService = BackupRestoreService(MusicPieceRepository(), prefs);
-      
+      _backupRestoreService = BackupRestoreService(
+        MusicPieceRepository(),
+        prefs,
+      );
+
       await _loadAutoBackupSettings();
       final isPlayStore = await isPlayStoreBuild();
-      
+
       setState(() {
         _isPlayStore = isPlayStore;
-        _currentStoragePath = prefs.getString('appStoragePath') ?? _getDefaultStoragePath();
+        _currentStoragePath =
+            prefs.getString('appStoragePath') ?? _getDefaultStoragePath();
         _isInitializing = false;
       });
-      
-      utils.AppLogger.log('BackupRestoreScreen: Initialization completed successfully');
+
+      utils.AppLogger.log(
+        'BackupRestoreScreen: Initialization completed successfully',
+      );
     } catch (e) {
       utils.AppLogger.log('BackupRestoreScreen: Initialization error: $e');
       setState(() {
@@ -84,25 +92,25 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   /// Gets the default storage path based on platform
   String _getDefaultStoragePath() {
     if (kIsWeb) {
-      return 'Browser Downloads';
+      return context.l10n.browserDownloads;
     } else if (Platform.isWindows) {
-      return 'Documents/RepertoireApp';
+      return context.l10n.documentsRepertoireApp;
     } else if (Platform.isAndroid) {
-      return 'Internal Storage/RepertoireApp';
+      return context.l10n.internalStorageRepertoireApp;
     } else if (Platform.isIOS) {
-      return 'App Documents';
+      return context.l10n.appDocuments;
     } else if (Platform.isMacOS) {
-      return 'Documents/RepertoireApp';
+      return context.l10n.documentsRepertoireApp;
     } else if (Platform.isLinux) {
-      return 'Home/RepertoireApp';
+      return context.l10n.homeRepertoireApp;
     }
-    return 'Not set';
+    return context.l10n.notSet;
   }
 
   /// Loads the saved automatic backup settings from [SharedPreferences].
   Future<void> _loadAutoBackupSettings() async {
     final prefs = _backupRestoreService.prefs;
-    
+
     _autoBackupEnabled = prefs.getBool('autoBackupEnabled') ?? false;
     _autoBackupFrequency = prefs.getDouble('autoBackupFrequency') ?? 7.0;
     _autoBackupCount = prefs.getInt('autoBackupCount') ?? 5;
@@ -115,15 +123,28 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   /// Saves the current automatic backup settings to [SharedPreferences].
   Future<void> _saveAutoBackupSettings() async {
     try {
-      await _backupRestoreService.prefs.setBool('autoBackupEnabled', _autoBackupEnabled);
-      await _backupRestoreService.prefs.setDouble('autoBackupFrequency', _autoBackupFrequency);
-      await _backupRestoreService.prefs.setInt('autoBackupCount', _autoBackupCount);
+      await _backupRestoreService.prefs.setBool(
+        'autoBackupEnabled',
+        _autoBackupEnabled,
+      );
+      await _backupRestoreService.prefs.setDouble(
+        'autoBackupFrequency',
+        _autoBackupFrequency,
+      );
+      await _backupRestoreService.prefs.setInt(
+        'autoBackupCount',
+        _autoBackupCount,
+      );
       utils.AppLogger.log('BackupRestoreScreen: Auto backup settings saved');
     } catch (e) {
-      utils.AppLogger.log('BackupRestoreScreen: Error saving auto backup settings: $e');
+      utils.AppLogger.log(
+        'BackupRestoreScreen: Error saving auto backup settings: $e',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving settings: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorSavingSettings(e.toString())),
+          ),
         );
       }
     }
@@ -132,24 +153,20 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Backup & Restore'),
-        ),
-        body: SafeArea(
-          child: _buildBody(),
-        ),
+      appBar: AppBar(title: Text(context.l10n.backupAndRestore)),
+      body: SafeArea(child: _buildBody()),
     );
   }
 
   Widget _buildBody() {
     if (_isInitializing) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Initializing backup settings...'),
+            Text(context.l10n.initializingBackupSettings),
           ],
         ),
       );
@@ -162,13 +179,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 64),
             const SizedBox(height: 16),
-            const Text('Failed to initialize backup settings'),
+            Text(context.l10n.failedToInitializeBackupSettings),
             const SizedBox(height: 8),
             Text(_initializationError!, style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _initializeServiceAndSettings,
-              child: const Text('Retry'),
+              child: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -194,24 +211,29 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Manual Backup & Restore',
+              context.l10n.manualBackupAndRestore,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.backup),
-            title: const Text('Create Local Backup'),
-            subtitle: const Text('Create a backup of all your data'),
+            title: Text(context.l10n.createLocalBackup),
+            subtitle: Text(context.l10n.createABackupOfAllYourData),
             onTap: () async {
               try {
-                await _backupRestoreService.backupData(manual: true, messenger: ScaffoldMessenger.of(context));
+                await _backupRestoreService.backupData(
+                  manual: true,
+                  messenger: ScaffoldMessenger.of(context),
+                );
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Backup failed: $e')),
+                    SnackBar(
+                      content: Text(context.l10n.backupFailed(e.toString())),
+                    ),
                   );
                 }
               }
@@ -219,21 +241,29 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.restore),
-            title: const Text('Restore from Local Backup'),
-            subtitle: const Text('Restore data from a previous backup'),
+            title: Text(context.l10n.restoreFromLocalBackup),
+            subtitle: Text(context.l10n.restoreDataFromAPreviousBackup),
             onTap: () async {
               try {
-                utils.AppLogger.log('BackupRestoreScreen: Starting restore process');
+                utils.AppLogger.log(
+                  'BackupRestoreScreen: Starting restore process',
+                );
                 await _backupRestoreService.restoreData(context: context);
                 if (mounted) {
-                  utils.AppLogger.log('BackupRestoreScreen: Restore completed, navigating back with refresh flag');
-                  Navigator.of(context).pop(true); // Pass true to indicate data was restored
+                  utils.AppLogger.log(
+                    'BackupRestoreScreen: Restore completed, navigating back with refresh flag',
+                  );
+                  Navigator.of(
+                    context,
+                  ).pop(true); // Pass true to indicate data was restored
                 }
               } catch (e) {
                 utils.AppLogger.log('BackupRestoreScreen: Restore error: $e');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Restore failed: $e')),
+                    SnackBar(
+                      content: Text(context.l10n.restoreFailed(e.toString())),
+                    ),
                   );
                 }
               }
@@ -249,27 +279,27 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Storage Location',
+              context.l10n.storageLocation,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.folder),
-            title: const Text('Change Storage Folder'),
+            title: Text(context.l10n.changeStorageFolder),
             subtitle: Text(_currentStoragePath),
             onTap: _canChangeStorageFolder() ? _changeStorageFolder : null,
-            trailing: _canChangeStorageFolder() 
-                ? const Icon(Icons.arrow_forward_ios) 
+            trailing: _canChangeStorageFolder()
+                ? const Icon(Icons.arrow_forward_ios)
                 : const Icon(Icons.info_outline, color: Colors.grey),
           ),
           if (!_canChangeStorageFolder())
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text(
-                'Storage folder selection not available on this platform',
+                context.l10n.storageFolderSelectionNotAvailableOnThisPlatform,
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ),
@@ -283,16 +313,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Automatic Backups',
+              context.l10n.automaticBackups,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           SwitchListTile(
-            title: const Text('Enable Automatic Backups'),
-            subtitle: const Text('Automatically create backups at regular intervals'),
+            title: Text(context.l10n.enableAutomaticBackups),
+            subtitle: Text(
+              context.l10n.automaticallyCreateBackupsAtRegularIntervals,
+            ),
             value: _autoBackupEnabled,
             onChanged: (value) {
               setState(() {
@@ -304,16 +336,21 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           if (_autoBackupEnabled) ...[
             const Divider(height: 1),
             ListTile(
-              title: const Text('Backup Frequency (days)'),
-              subtitle: const Text('How often to create automatic backups'),
+              title: Text(context.l10n.backupFrequencyDays),
+              subtitle: Text(context.l10n.howOftenToCreateAutomaticBackups),
               trailing: SizedBox(
                 width: 80,
                 child: TextField(
                   controller: _frequencyController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                   ),
                   onSubmitted: (value) {
                     final newValue = double.tryParse(value);
@@ -321,15 +358,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       _autoBackupFrequency = newValue;
                       _saveAutoBackupSettings();
                     } else {
-                      _frequencyController.text = _autoBackupFrequency.toString();
+                      _frequencyController.text = _autoBackupFrequency
+                          .toString();
                     }
                   },
                 ),
               ),
             ),
             ListTile(
-              title: const Text('Number of Backups to Keep'),
-              subtitle: const Text('Maximum number of automatic backups to retain'),
+              title: Text(context.l10n.numberOfBackupsToKeep),
+              subtitle: Text(
+                context.l10n.maximumNumberOfAutomaticBackupsToRetain,
+              ),
               trailing: SizedBox(
                 width: 60,
                 child: TextField(
@@ -337,7 +377,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                   ),
                   onSubmitted: (value) {
                     final newValue = int.tryParse(value);
@@ -354,33 +397,37 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             FutureBuilder<Duration?>(
               future: getTimeSinceLastAutoBackup(),
               builder: (context, snapshot) {
-                String timeSinceLastBackup = 'Never';
+                String timeSinceLastBackup = context.l10n.never;
                 Color? textColor;
-                
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  timeSinceLastBackup = 'Loading...';
+                  timeSinceLastBackup = context.l10n.loading;
                 } else if (snapshot.hasError) {
-                  timeSinceLastBackup = 'Error loading';
+                  timeSinceLastBackup = context.l10n.errorLoading;
                   textColor = Colors.red;
                 } else if (snapshot.hasData && snapshot.data != null) {
                   final duration = snapshot.data!;
                   if (duration.inDays > 0) {
-                    timeSinceLastBackup = '${duration.inDays} days ago';
+                    timeSinceLastBackup = context.l10n.daysAgo(duration.inDays);
                     if (duration.inDays > _autoBackupFrequency) {
                       textColor = Colors.orange;
                     }
                   } else if (duration.inHours > 0) {
-                    timeSinceLastBackup = '${duration.inHours} hours ago';
+                    timeSinceLastBackup = context.l10n.hoursAgo(
+                      duration.inHours,
+                    );
                   } else if (duration.inMinutes > 0) {
-                    timeSinceLastBackup = '${duration.inMinutes} minutes ago';
+                    timeSinceLastBackup = context.l10n.minutesAgo(
+                      duration.inMinutes,
+                    );
                   } else {
-                    timeSinceLastBackup = 'Just now';
+                    timeSinceLastBackup = context.l10n.justNow;
                     textColor = Colors.green;
                   }
                 }
-                
+
                 return ListTile(
-                  title: const Text('Last Automatic Backup'),
+                  title: Text(context.l10n.lastAutomaticBackup),
                   subtitle: Text(
                     timeSinceLastBackup,
                     style: TextStyle(color: textColor),
@@ -391,15 +438,22 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.backup_outlined),
-              title: const Text('Run Auto-backup Now'),
-              subtitle: const Text('Manually trigger an automatic backup'),
+              title: Text(context.l10n.runAutoBackupNow),
+              subtitle: Text(context.l10n.manuallyTriggerAnAutomaticBackup),
               onTap: () async {
                 try {
-                  await _backupRestoreService.triggerAutoBackup(_autoBackupCount, messenger: ScaffoldMessenger.of(context));
+                  await _backupRestoreService.triggerAutoBackup(
+                    _autoBackupCount,
+                    messenger: ScaffoldMessenger.of(context),
+                  );
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Auto-backup failed: $e')),
+                      SnackBar(
+                        content: Text(
+                          context.l10n.autoBackupFailed(e.toString()),
+                        ),
+                      ),
                     );
                   }
                 }
@@ -414,55 +468,68 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   /// Check if storage folder can be changed on this platform
   bool _canChangeStorageFolder() {
     if (_isPlayStore) return false;
-    return !kIsWeb && (Platform.isWindows || Platform.isAndroid || Platform.isMacOS || Platform.isLinux);
+    return !kIsWeb &&
+        (Platform.isWindows ||
+            Platform.isAndroid ||
+            Platform.isMacOS ||
+            Platform.isLinux);
   }
 
   Future<void> _changeStorageFolder() async {
     if (!_canChangeStorageFolder()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Storage folder selection not available on this platform')),
+        SnackBar(
+          content: Text(
+            context.l10n.storageFolderSelectionNotAvailableOnThisPlatform,
+          ),
+        ),
       );
       return;
     }
 
     try {
       utils.AppLogger.log('Attempting to change storage folder.');
-      
+
       // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const AlertDialog(
+        builder: (context) => AlertDialog(
           content: Row(
             children: [
               CircularProgressIndicator(),
               SizedBox(width: 16),
-              Text('Opening folder selector...'),
+              Text(context.l10n.openingFolderSelector),
             ],
           ),
         ),
       );
 
       final selectedDirectory = await FilePicker.platform.getDirectoryPath();
-      
+
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
 
       if (selectedDirectory != null) {
-        utils.AppLogger.log('Selected new storage directory: $selectedDirectory');
-        await _backupRestoreService.prefs.setString('appStoragePath', selectedDirectory);
-        
+        utils.AppLogger.log(
+          'Selected new storage directory: $selectedDirectory',
+        );
+        await _backupRestoreService.prefs.setString(
+          'appStoragePath',
+          selectedDirectory,
+        );
+
         // Reinitialize the logger with the new storage path
         await utils.AppLogger.reinitialize();
-        
+
         setState(() {
           _currentStoragePath = selectedDirectory;
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Storage folder updated successfully'),
+              content: Text(context.l10n.storageFolderUpdatedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -471,7 +538,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Folder selection cancelled')),
+            SnackBar(content: Text(context.l10n.folderSelectionCancelled)),
           );
         }
         utils.AppLogger.log('Storage folder selection cancelled.');
@@ -479,12 +546,14 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     } catch (e) {
       // Close loading dialog if it's still open
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
-      
+
       utils.AppLogger.log('Error changing storage folder: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error changing storage folder: $e'),
+            content: Text(
+              context.l10n.errorChangingStorageFolder(e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -497,20 +566,26 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final prefs = await SharedPreferences.getInstance();
       final storagePath = prefs.getString('appStoragePath');
       if (storagePath == null || storagePath.isEmpty) return [];
-      
-      final backupDir = Directory(p.join(storagePath, 'Backups', 'Autobackups'));
+
+      final backupDir = Directory(
+        p.join(storagePath, 'Backups', 'Autobackups'),
+      );
       if (!await backupDir.exists()) return [];
-      
+
       final files = await backupDir.list().toList();
       final zipFiles = files
           .whereType<File>()
           .where((f) => f.path.endsWith('.zip'))
           .toList();
-      
-      zipFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+
+      zipFiles.sort(
+        (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+      );
       return zipFiles;
     } catch (e) {
-      utils.AppLogger.log('BackupRestoreScreen: Error listing auto backups: $e');
+      utils.AppLogger.log(
+        'BackupRestoreScreen: Error listing auto backups: $e',
+      );
       return [];
     }
   }
@@ -518,18 +593,25 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   Future<void> _exportBackup(File file) async {
     try {
       final box = context.findRenderObject() as RenderBox?;
-      final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
-      
-      await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path)],
-        text: 'Repertoire Backup',
-        sharePositionOrigin: rect,
-      ));
+      final rect = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Repertoire Backup',
+          sharePositionOrigin: rect,
+        ),
+      );
     } catch (e) {
       utils.AppLogger.log('BackupRestoreScreen: Error sharing backup: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error exporting backup: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(context.l10n.errorExportingBackup(e.toString())),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -539,53 +621,55 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Restore'),
-        content: const Text(
-          'Are you sure you want to restore from this backup? '
-          'This will replace all your current data.'
-        ),
+        title: Text(context.l10n.confirmRestore),
+        content: Text(context.l10n.confirmRestoreMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
+            child: Text(context.l10n.restore),
           ),
         ],
       ),
     );
-    
+
     if (confirmed == true && mounted) {
       try {
-        utils.AppLogger.log('BackupRestoreScreen: Starting restore from path: $filePath');
-        
+        utils.AppLogger.log(
+          'BackupRestoreScreen: Starting restore from path: $filePath',
+        );
+
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const AlertDialog(
+          builder: (context) => AlertDialog(
             content: Row(
               children: [
                 CircularProgressIndicator(),
                 SizedBox(width: 16),
-                Text('Restoring backup...'),
+                Text(context.l10n.restoringBackup),
               ],
             ),
           ),
         );
-        
+
         final success = await _backupRestoreService.restoreData(
           context: context,
           filePath: filePath,
           shouldPop: false,
         );
-        
+
         if (mounted) {
           Navigator.pop(context); // Close loading dialog
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup restored successfully.'), backgroundColor: Colors.green),
+              SnackBar(
+                content: Text(context.l10n.backupRestoredSuccessfully),
+                backgroundColor: Colors.green,
+              ),
             );
             Navigator.of(context).pop(true);
           }
@@ -595,7 +679,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Restore failed: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(context.l10n.restoreFailed(e.toString())),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -607,10 +694,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Automatic Backups',
+              context.l10n.automaticBackups,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
@@ -623,13 +710,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Padding(
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data!.isEmpty) {
+                return Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Text('No automatic backups found.', style: TextStyle(color: Colors.grey)),
+                  child: Text(
+                    context.l10n.noAutomaticBackupsFound,
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 );
               }
-              
+
               final files = snapshot.data!;
               return ListView.separated(
                 shrinkWrap: true,
@@ -640,23 +732,28 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   final file = files[index];
                   final fileName = p.basename(file.path);
                   final modTime = file.statSync().modified;
-                  final formattedDate = '${modTime.year}-${modTime.month.toString().padLeft(2, '0')}-${modTime.day.toString().padLeft(2, '0')} ${modTime.hour.toString().padLeft(2, '0')}:${modTime.minute.toString().padLeft(2, '0')}';
-                  
+                  final formattedDate =
+                      '${modTime.year}-${modTime.month.toString().padLeft(2, '0')}-${modTime.day.toString().padLeft(2, '0')} ${modTime.hour.toString().padLeft(2, '0')}:${modTime.minute.toString().padLeft(2, '0')}';
+
                   return ListTile(
                     leading: const Icon(Icons.folder_zip, color: Colors.orange),
                     title: Text(fileName, style: const TextStyle(fontSize: 14)),
-                    subtitle: Text('Created: $formattedDate', style: const TextStyle(fontSize: 12)),
+                    subtitle: Text(
+                      context.l10n.createdAt(formattedDate),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.restore, color: Colors.blue),
-                          tooltip: 'Restore this backup',
-                          onPressed: () => _confirmAndRestoreFromPath(file.path),
+                          tooltip: context.l10n.restoreThisBackup,
+                          onPressed: () =>
+                              _confirmAndRestoreFromPath(file.path),
                         ),
                         IconButton(
                           icon: const Icon(Icons.share, color: Colors.green),
-                          tooltip: 'Share/Export backup',
+                          tooltip: context.l10n.shareExportBackup,
                           onPressed: () => _exportBackup(file),
                         ),
                       ],

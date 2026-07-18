@@ -5,6 +5,8 @@ import '../utils/app_logger.dart';
 import 'group_management/group_dialog_manager.dart';
 import 'group_management/group_operations_manager.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class GroupManagementScreen extends StatefulWidget {
   const GroupManagementScreen({super.key});
 
@@ -40,7 +42,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       AppLogger.log('GroupManagementScreen: Error loading groups: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading groups: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorLoadingGroups(e.toString())),
+          ),
         );
       }
     } finally {
@@ -64,7 +68,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error adding group: $e')),
+            SnackBar(
+              content: Text(context.l10n.errorAddingGroup(e.toString())),
+            ),
           );
         }
       }
@@ -72,7 +78,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   }
 
   Future<void> _editGroup(Group group) async {
-    final editedGroupName = await GroupDialogManager.showEditGroupDialog(context, group);
+    final editedGroupName = await GroupDialogManager.showEditGroupDialog(
+      context,
+      group,
+    );
     if (editedGroupName != null) {
       try {
         final updatedGroup = group.copyWith(name: editedGroupName);
@@ -84,7 +93,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating group: $e')),
+            SnackBar(
+              content: Text(context.l10n.errorUpdatingGroup(e.toString())),
+            ),
           );
         }
       }
@@ -92,7 +103,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   }
 
   Future<void> _deleteGroup(Group group) async {
-    final confirmDelete = await GroupDialogManager.showDeleteGroupDialog(context, group);
+    final confirmDelete = await GroupDialogManager.showDeleteGroupDialog(
+      context,
+      group,
+    );
     if (confirmDelete) {
       try {
         await _operationsManager.deleteGroup(group.id);
@@ -103,7 +117,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting group: $e')),
+            SnackBar(
+              content: Text(context.l10n.errorDeletingGroup(e.toString())),
+            ),
           );
         }
       }
@@ -121,7 +137,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       AppLogger.log('GroupManagementScreen: Error saving group order: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving group order: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorSavingGroupOrder(e.toString())),
+          ),
         );
       }
     }
@@ -129,7 +147,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
   Future<void> _toggleGroupVisibility(Group group) async {
     try {
-      final updatedGroup = await _operationsManager.toggleGroupVisibility(group);
+      final updatedGroup = await _operationsManager.toggleGroupVisibility(
+        group,
+      );
       final index = _groups.indexWhere((g) => g.id == group.id);
       if (index != -1) {
         setState(() {
@@ -140,7 +160,11 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error toggling group visibility: $e')),
+          SnackBar(
+            content: Text(
+              context.l10n.errorTogglingGroupVisibility(e.toString()),
+            ),
+          ),
         );
       }
     }
@@ -165,7 +189,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Manage Groups'),
+          title: Text(context.l10n.manageGroups),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -175,8 +199,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         ),
         body: SafeArea(
           child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _buildGroupList(),
+              ? const Center(child: CircularProgressIndicator())
+              : _buildGroupList(),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: _addGroup,
@@ -208,12 +232,19 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: ListTile(
               leading: const Icon(Icons.drag_handle, color: Colors.grey),
-              title: Text('${group.name} (${group.itemCount})'),
+              title: Text(
+                context.l10n.groupItemCount(
+                  group.localizedName(context.l10n),
+                  group.itemCount,
+                ),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(group.isHidden ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(
+                      group.isHidden ? Icons.visibility_off : Icons.visibility,
+                    ),
                     onPressed: () => _toggleGroupVisibility(group),
                   ),
                   if (group.id != 'all_group' && group.id != 'ungrouped_group')

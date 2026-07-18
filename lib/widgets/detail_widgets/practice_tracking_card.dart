@@ -7,6 +7,8 @@ import 'package:repertoire/utils/app_logger.dart';
 import '../../screens/practice_logs_screen.dart';
 import '../practice_logs/practice_log_dialog.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A card widget to display and manage practice tracking for a music piece.
 ///
 /// Allows enabling/disabling practice tracking, logging practice sessions,
@@ -117,7 +119,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       } else {
         await _repository.logPracticeSession(_musicPiece.id);
       }
-      
+
       // Refresh the music piece data and latest log
       final updatedPiece = await _repository.getMusicPieceById(_musicPiece.id);
       if (updatedPiece != null) {
@@ -151,8 +153,10 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
       children: [
         if (widget.showTitle) ...[
           Text(
-            'Practice Tracking',
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            context.l10n.practiceTracking,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16.0),
         ],
@@ -163,10 +167,12 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
               child: FilledButton.icon(
                 onPressed: _logPractice,
                 icon: const Icon(Icons.add_task),
-                label: const Text('Log Practice'),
+                label: Text(context.l10n.logPractice),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -177,16 +183,17 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
                 onPressed: () async {
                   await Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => PracticeLogsScreen(
-                        musicPiece: _musicPiece,
-                      ),
+                      builder: (context) =>
+                          PracticeLogsScreen(musicPiece: _musicPiece),
                     ),
                   );
                   await _refreshMusicPieceData();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Icon(Icons.history),
               ),
@@ -202,7 +209,9 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
               Icon(Icons.event, size: 16, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Last practiced: ${_latestPracticeLog!.formattedTimestamp}',
+                context.l10n.lastPracticedAt(
+                  _latestPracticeLog!.formattedTimestamp(context.l10n),
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
@@ -210,7 +219,8 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
               ),
             ],
           ),
-          if (_latestPracticeLog!.notes != null && _latestPracticeLog!.notes!.isNotEmpty) ...[
+          if (_latestPracticeLog!.notes != null &&
+              _latestPracticeLog!.notes!.isNotEmpty) ...[
             const SizedBox(height: 8.0),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,15 +240,20 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
             ),
           ],
         ] else if (_musicPiece.practiceCount > 0) ...[
-           const SizedBox(height: 16.0),
-           const Divider(),
-           const SizedBox(height: 8.0),
-           Row(
+          const SizedBox(height: 16.0),
+          const Divider(),
+          const SizedBox(height: 8.0),
+          Row(
             children: [
               Icon(Icons.event, size: 16, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Last practiced: ${_musicPiece.lastPracticeTime?.toLocal().toString().split('.')[0] ?? 'Unknown'}',
+                context.l10n.lastPracticedAt(
+                  _musicPiece.lastPracticeTime?.toLocal().toString().split(
+                        '.',
+                      )[0] ??
+                      context.l10n.unknown,
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
@@ -253,10 +268,7 @@ class _PracticeTrackingCardState extends State<PracticeTrackingCard> {
     if (widget.useCard) {
       return Card(
         margin: const EdgeInsets.only(bottom: 16.0),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: content,
-        ),
+        child: Padding(padding: const EdgeInsets.all(16.0), child: content),
       );
     }
 

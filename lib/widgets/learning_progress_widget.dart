@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/learning_progress_config.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LearningProgressWidget extends StatelessWidget {
   final LearningProgressConfig config;
   final Function(double) onProgressChanged;
@@ -31,8 +33,11 @@ class LearningProgressWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Progress', style: TextStyle(fontWeight: FontWeight.w500)),
-            Text('${config.current.toInt()}%'),
+            Text(
+              context.l10n.progress,
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Text(context.l10n.progressPercent(config.current.toInt())),
           ],
         ),
         Slider(
@@ -40,7 +45,7 @@ class LearningProgressWidget extends StatelessWidget {
           min: 0,
           max: 100,
           divisions: 100,
-          label: '${config.current.toInt()}%',
+          label: context.l10n.progressPercent(config.current.toInt()),
           onChanged: isEditable ? onProgressChanged : null,
         ),
       ],
@@ -55,17 +60,24 @@ class LearningProgressWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Count: $current / $max', style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(
+              context.l10n.countProgress(current, max),
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
             if (isEditable)
               Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: current > 0 ? () => onProgressChanged((current - 1).toDouble()) : null,
+                    onPressed: current > 0
+                        ? () => onProgressChanged((current - 1).toDouble())
+                        : null,
                   ),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline),
-                    onPressed: current < max ? () => onProgressChanged((current + 1).toDouble()) : null,
+                    onPressed: current < max
+                        ? () => onProgressChanged((current + 1).toDouble())
+                        : null,
                   ),
                 ],
               ),
@@ -84,47 +96,62 @@ class LearningProgressWidget extends StatelessWidget {
     final currentStageIndex = config.current.toInt();
     final stages = config.stages;
 
-    if (stages.isEmpty) return const Text('No stages defined');
+    if (stages.isEmpty) return Text(context.l10n.noStagesDefined);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (currentStageIndex >= 0 && currentStageIndex < stages.length)
-             Padding(
-               padding: const EdgeInsets.only(bottom: 8.0),
-               child: Text(
-                 'Current Stage: ${stages[currentStageIndex]}',
-                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-               ),
-             ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              context.l10n.currentStage(stages[currentStageIndex]),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: List.generate(stages.length, (index) {
               final isCompleted = index < currentStageIndex;
               final isCurrent = index == currentStageIndex;
-              
+
               return GestureDetector(
-                onTap: isEditable ? () => onProgressChanged(index.toDouble()) : null,
+                onTap: isEditable
+                    ? () => onProgressChanged(index.toDouble())
+                    : null,
                 child: Container(
                   margin: const EdgeInsets.only(right: 8.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
                   decoration: BoxDecoration(
-                    color: isCurrent 
-                        ? Theme.of(context).colorScheme.primary 
-                        : (isCompleted ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3) : Colors.grey[200]),
+                    color: isCurrent
+                        ? Theme.of(context).colorScheme.primary
+                        : (isCompleted
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.3)
+                              : Colors.grey[200]),
                     borderRadius: BorderRadius.circular(16.0),
                     border: Border.all(
-                      color: isCurrent ? Theme.of(context).colorScheme.primary : Colors.grey[400]!,
+                      color: isCurrent
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey[400]!,
                     ),
                   ),
                   child: Text(
                     stages[index],
                     style: TextStyle(
-                      color: isCurrent 
-                          ? Theme.of(context).colorScheme.onPrimary 
-                          : (isCompleted ? Theme.of(context).colorScheme.onSurface : Colors.grey[600]),
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      color: isCurrent
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : (isCompleted
+                                ? Theme.of(context).colorScheme.onSurface
+                                : Colors.grey[600]),
+                      fontWeight: isCurrent
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),

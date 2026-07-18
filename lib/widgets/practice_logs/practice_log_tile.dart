@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/practice_log.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that displays a single practice log entry in a list tile.
 class PracticeLogTile extends StatelessWidget {
   final PracticeLog log;
@@ -23,14 +25,12 @@ class PracticeLogTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.music_note),
-        ),
-        title: Text(log.formattedTimestamp),
+        leading: const CircleAvatar(child: Icon(Icons.music_note)),
+        title: Text(log.formattedTimestamp(context.l10n)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showTimeStats) Text(log.formattedDuration),
+            if (showTimeStats) Text(log.formattedDuration(context.l10n)),
             if (showNotes && log.notes != null && log.notes!.isNotEmpty)
               Text(
                 log.notes!,
@@ -52,23 +52,26 @@ class PracticeLogTile extends StatelessWidget {
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
                   Icon(Icons.edit),
                   SizedBox(width: 8),
-                  Text('Edit'),
+                  Text(context.l10n.edit),
                 ],
               ),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [
                   Icon(Icons.delete, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
+                  Text(
+                    context.l10n.delete,
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ],
               ),
             ),
@@ -77,4 +80,4 @@ class PracticeLogTile extends StatelessWidget {
       ),
     );
   }
-} 
+}

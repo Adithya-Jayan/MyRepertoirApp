@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class TagGroupFilterDialog extends StatefulWidget {
   final Map<String, List<String>> availableTags;
   final Map<String, List<String>> initialSelectedTags;
@@ -22,7 +24,9 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
   void initState() {
     super.initState();
     // Deep copy the initial selected tags to avoid modifying the original lists
-    _selectedTags = widget.initialSelectedTags.map((key, value) => MapEntry(key, List<String>.from(value)));
+    _selectedTags = widget.initialSelectedTags.map(
+      (key, value) => MapEntry(key, List<String>.from(value)),
+    );
   }
 
   List<String> _getFilteredTags(String tagName, List<String> tags) {
@@ -45,7 +49,7 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
         children: [
           const Icon(Icons.filter_alt_outlined, size: 20),
           const SizedBox(width: 8),
-          const Text('Filter by Tags'),
+          Text(context.l10n.filterByTags),
           const Spacer(),
           if (_selectedTags.isNotEmpty)
             TextButton(
@@ -54,7 +58,10 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
                   _selectedTags.clear();
                 });
               },
-              child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+              child: Text(
+                context.l10n.clearAll,
+                style: TextStyle(fontSize: 12),
+              ),
             ),
         ],
       ),
@@ -67,14 +74,18 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 8.0,
+              ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search tags...',
+                  hintText: context.l10n.searchTags,
                   prefixIcon: const Icon(Icons.search, size: 20),
                   isDense: true,
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -99,35 +110,65 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
                   final selectedInSet = _selectedTags[tagSetName] ?? [];
 
                   return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+                      color: theme.colorScheme.surfaceContainerLow.withValues(
+                        alpha: 0.5,
+                      ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+                      border: Border.all(
+                        color: theme.dividerColor.withValues(alpha: 0.05),
+                      ),
                     ),
                     child: ExpansionTile(
-                      title: Text(tagSetName, 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: selectedInSet.isNotEmpty 
-                        ? Text('${selectedInSet.length} selected', style: TextStyle(color: theme.colorScheme.primary, fontSize: 12))
-                        : null,
-                      shape: const RoundedRectangleBorder(side: BorderSide.none),
-                      collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
+                      title: Text(
+                        tagSetName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: selectedInSet.isNotEmpty
+                          ? Text(
+                              context.l10n.itemsSelected(selectedInSet.length),
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontSize: 12,
+                              ),
+                            )
+                          : null,
+                      shape: const RoundedRectangleBorder(
+                        side: BorderSide.none,
+                      ),
+                      collapsedShape: const RoundedRectangleBorder(
+                        side: BorderSide.none,
+                      ),
                       children: filteredTags.map((tag) {
                         final isSelected = selectedInSet.contains(tag);
                         return CheckboxListTile(
-                          title: Text(tag, style: const TextStyle(fontSize: 14)),
+                          title: Text(
+                            tag,
+                            style: const TextStyle(fontSize: 14),
+                          ),
                           value: isSelected,
                           dense: true,
                           controlAffinity: ListTileControlAffinity.leading,
-                          checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          checkboxShape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           onChanged: (bool? value) {
                             setState(() {
                               if (value == true) {
-                                _selectedTags.putIfAbsent(tagSetName, () => []).add(tag);
+                                _selectedTags
+                                    .putIfAbsent(tagSetName, () => [])
+                                    .add(tag);
                               } else {
                                 _selectedTags[tagSetName]?.remove(tag);
-                                if (_selectedTags[tagSetName]?.isEmpty ?? false) {
+                                if (_selectedTags[tagSetName]?.isEmpty ??
+                                    false) {
                                   _selectedTags.remove(tagSetName);
                                 }
                               }
@@ -146,11 +187,11 @@ class _TagGroupFilterDialogState extends State<TagGroupFilterDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_selectedTags),
-          child: const Text('Apply Filters'),
+          child: Text(context.l10n.applyFilters),
         ),
       ],
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

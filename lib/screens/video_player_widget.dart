@@ -12,6 +12,8 @@ import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:uuid/uuid.dart';
 import '../utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that provides video playback functionality with advanced controls.
 class VideoPlayerWidget extends StatefulWidget {
   final MusicPiece musicPiece;
@@ -43,7 +45,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   double _pitch = 0.0; // Current pitch in half-step units.
   double? _dragValue;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   Timer? _syncTimer;
   Timer? _skipTimer;
 
@@ -64,18 +66,23 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   void _initializeBookmarks() {
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId).toList();
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    _bookmarks = widget.musicPiece.bookmarks
+        .where((b) => b.mediaItemId == currentMediaId)
+        .toList();
     _bookmarks.sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
   void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
-    
+
     final current = _controller.value.position;
     final duration = _controller.value.duration;
-    final amount = fine ? const Duration(milliseconds: 33) : Duration(seconds: seconds);
-    
+    final amount = fine
+        ? const Duration(milliseconds: 33)
+        : Duration(seconds: seconds);
+
     Duration targetPos;
     if (forward) {
       targetPos = current + amount;
@@ -84,7 +91,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       targetPos = current - amount;
       if (targetPos < Duration.zero) targetPos = Duration.zero;
     }
-    
+
     _controller.seekTo(targetPos);
     _audioPlayer.player.seek(targetPos);
   }
@@ -92,7 +99,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _startSkipTimer(bool forward, bool fine) {
     _skipTimer?.cancel();
     _skip(forward, fine: fine);
-    
+
     _skipTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       _skip(forward, fine: fine);
     });
@@ -106,16 +113,19 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedSpeed = prefs.getDouble('video_playback_speed_${widget.musicPiece.id}') ?? 1.0;
-      final savedPitch = prefs.getDouble('video_pitch_${widget.musicPiece.id}') ?? 0.0;
-      
+      final savedSpeed =
+          prefs.getDouble('video_playback_speed_${widget.musicPiece.id}') ??
+          1.0;
+      final savedPitch =
+          prefs.getDouble('video_pitch_${widget.musicPiece.id}') ?? 0.0;
+
       if (mounted) {
         setState(() {
           _playbackSpeed = savedSpeed;
           _pitch = savedPitch;
         });
       }
-      
+
       if (_isInitialized) {
         await _controller.setPlaybackSpeed(savedSpeed);
         await _audioPlayer.setSpeed(savedSpeed);
@@ -129,7 +139,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   Future<void> _saveSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('video_playback_speed_${widget.musicPiece.id}', _playbackSpeed);
+      await prefs.setDouble(
+        'video_playback_speed_${widget.musicPiece.id}',
+        _playbackSpeed,
+      );
       await prefs.setDouble('video_pitch_${widget.musicPiece.id}', _pitch);
     } catch (e) {
       AppLogger.log('Error saving video settings: $e');
@@ -148,14 +161,15 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _initializePlayer() async {
     await _audioPlayer.initialize();
-    
+
     if (widget.controller != null) {
       _controller = widget.controller!;
       _isInitialized = true;
     } else {
       _controllerIsLocal = true;
-      final videoPath = widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
-      
+      final videoPath =
+          widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
+
       if (videoPath.startsWith('http')) {
         _controller = VideoPlayerController.networkUrl(Uri.parse(videoPath));
       } else {
@@ -164,10 +178,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
       try {
         await _controller.initialize();
-        
+
         // Mute video so we only hear the high-quality external audio
         await _controller.setVolume(0);
-        
+
         // Initialize external audio with the SAME video file
         await _audioPlayer.setUrl(
           videoPath,
@@ -184,7 +198,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         AppLogger.log('Error initializing video player: $e');
       }
     }
-    
+
     // Do NOT add listener to _controller to avoid UI jitter from fvp progress reports.
     // We will use the master audio clock for progress.
     _startSyncTimer();
@@ -194,18 +208,19 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted || !_isInitialized) return;
-      
+
       // Update UI from Master Audio Clock
       setState(() {});
 
       if (!_controller.value.isPlaying) return;
-      
+
       final videoPos = _controller.value.position;
       final audioPos = _audioPlayer.player.position;
-      
+
       // Softer sync: check drift every 1s (using counter or longer timer)
       // but keep UI update fast.
-      if (timer.tick % 10 == 0) { // Every 1 second
+      if (timer.tick % 10 == 0) {
+        // Every 1 second
         final drift = (videoPos.inMilliseconds - audioPos.inMilliseconds).abs();
         if (drift > 300) {
           AppLogger.log('[VideoPlayer] Syncing drift: ${drift}ms');
@@ -233,8 +248,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   String _getPitchDisplayString(double semitones) {
-    if (semitones == 0) return 'Normal';
-    return '${semitones > 0 ? '+' : ''}${semitones.round()} st';
+    if (semitones == 0) return context.l10n.normal;
+    final value = '${semitones > 0 ? '+' : ''}${semitones.round()}';
+    return context.l10n.semitonesValue(value);
   }
 
   String _formatDuration(Duration duration) {
@@ -246,14 +262,15 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _addBookmark() async {
     if (!_controller.value.isInitialized) return;
-    
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     final currentPosition = _controller.value.position;
-    
+
     final newBookmark = Bookmark(
       id: _uuid.v4(),
       timestamp: currentPosition,
-      name: 'Bookmark ${_bookmarks.length + 1}',
+      name: context.l10n.bookmarkDefaultName(_bookmarks.length + 1),
       mediaItemId: currentMediaId,
     );
 
@@ -274,7 +291,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _renameBookmark(String bookmarkId, String newName) async {
     setState(() {
-      final index = _bookmarks.indexWhere((bookmark) => bookmark.id == bookmarkId);
+      final index = _bookmarks.indexWhere(
+        (bookmark) => bookmark.id == bookmarkId,
+      );
       if (index != -1) {
         _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
       }
@@ -283,13 +302,18 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _saveBookmarks() async {
-    final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+    final latestPiece = await _repository.getMusicPieceById(
+      widget.musicPiece.id,
+    );
     if (latestPiece == null) return;
 
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    final otherBookmarks = latestPiece.bookmarks.where((b) => b.mediaItemId != currentMediaId).toList();
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    final otherBookmarks = latestPiece.bookmarks
+        .where((b) => b.mediaItemId != currentMediaId)
+        .toList();
     final allBookmarks = [...otherBookmarks, ..._bookmarks];
-    
+
     final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
   }
@@ -300,20 +324,22 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     } else {
       // Hide system UI for true fullscreen
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => VideoPlayerWidget(
-            musicPiece: widget.musicPiece,
-            mediaItemIndex: widget.mediaItemIndex,
-            controller: _controller,
-            isFullscreen: true,
-          ),
-        ),
-      ).then((_) {
-        // Restore system UI when back
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      });
+
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute(
+              builder: (context) => VideoPlayerWidget(
+                musicPiece: widget.musicPiece,
+                mediaItemIndex: widget.mediaItemIndex,
+                controller: _controller,
+                isFullscreen: true,
+              ),
+            ),
+          )
+          .then((_) {
+            // Restore system UI when back
+            SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+          });
     }
   }
 
@@ -323,7 +349,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'No bookmarks added yet',
+            context.l10n.noBookmarksAddedYet,
             style: TextStyle(color: isDrawer ? Colors.white70 : Colors.grey),
           ),
         ),
@@ -332,7 +358,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
     return ListView.builder(
       shrinkWrap: !isDrawer,
-      physics: isDrawer ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+      physics: isDrawer
+          ? const AlwaysScrollableScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       itemCount: _bookmarks.length,
       itemBuilder: (context, index) {
         final bookmark = _bookmarks[index];
@@ -342,7 +370,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           onDismissed: (direction) {
             _removeBookmark(bookmark.id);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${bookmark.name} dismissed')),
+              SnackBar(
+                content: Text(context.l10n.bookmarkDismissed(bookmark.name)),
+              ),
             );
           },
           background: Container(
@@ -352,8 +382,14 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             child: const Icon(Icons.delete, color: Colors.white),
           ),
           child: ListTile(
-            title: Text(bookmark.name, style: TextStyle(color: isDrawer ? Colors.white : null)),
-            subtitle: Text(_formatDuration(bookmark.timestamp), style: TextStyle(color: isDrawer ? Colors.white70 : null)),
+            title: Text(
+              bookmark.name,
+              style: TextStyle(color: isDrawer ? Colors.white : null),
+            ),
+            subtitle: Text(
+              _formatDuration(bookmark.timestamp),
+              style: TextStyle(color: isDrawer ? Colors.white70 : null),
+            ),
             onTap: () {
               _controller.seekTo(bookmark.timestamp);
               if (isDrawer) Navigator.of(context).pop();
@@ -363,15 +399,21 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               final newName = await showDialog<String>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Rename Bookmark'),
+                  title: Text(context.l10n.renameBookmark),
                   content: TextField(
                     controller: controller,
                     autofocus: true,
                     onSubmitted: (value) => Navigator.of(context).pop(value),
                   ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Rename')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(context.l10n.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, controller.text),
+                      child: Text(context.l10n.rename),
+                    ),
                   ],
                 ),
               );
@@ -389,19 +431,23 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     );
   }
 
-  Future<void> _reinitializeController({Duration? startAt, bool autoPlay = true}) async {
+  Future<void> _reinitializeController({
+    Duration? startAt,
+    bool autoPlay = true,
+  }) async {
     if (_controllerIsLocal) {
       AppLogger.log('[VideoPlayer] Re-initializing controller...');
-      
-      final videoPath = widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
-      final newController = videoPath.startsWith('http') 
+
+      final videoPath =
+          widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
+      final newController = videoPath.startsWith('http')
           ? VideoPlayerController.networkUrl(Uri.parse(videoPath))
           : VideoPlayerController.file(File(videoPath));
-      
+
       try {
         await newController.initialize();
         await newController.setVolume(0); // Ensure muted
-        
+
         if (_playbackSpeed != 1.0) {
           await newController.setPlaybackSpeed(_playbackSpeed);
         }
@@ -413,14 +459,14 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
         final oldController = _controller;
         oldController.removeListener(_onControllerUpdate);
-        
+
         setState(() {
           _controller = newController;
           _controller.addListener(_onControllerUpdate);
         });
-        
+
         await oldController.dispose();
-        
+
         AppLogger.log('[VideoPlayer] Controller re-initialized.');
         if (autoPlay) {
           await _controller.play();
@@ -430,7 +476,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         AppLogger.log('[VideoPlayer] Error re-initializing player: $e');
       }
     } else {
-      AppLogger.log('[VideoPlayer] External controller. Using fallback seek...');
+      AppLogger.log(
+        '[VideoPlayer] External controller. Using fallback seek...',
+      );
       if (startAt != null) {
         await _controller.seekTo(startAt);
         await _audioPlayer.player.seek(startAt);
@@ -456,25 +504,32 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   Future<void> _onSeekBack() async {
     final newPos = _controller.value.position - const Duration(seconds: 5);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
-    
+
     // Check if we are finished or very close to end (stale state risk)
-    bool isFinished = _controller.value.isInitialized && 
+    bool isFinished =
+        _controller.value.isInitialized &&
         (_controller.value.position >= _controller.value.duration ||
-         (_controller.value.duration - _controller.value.position).inMilliseconds < 200);
+            (_controller.value.duration - _controller.value.position)
+                    .inMilliseconds <
+                200);
 
     if (isFinished && _controllerIsLocal) {
-        AppLogger.log('[VideoPlayer] Seek back from finished state. Re-initializing to prevent freeze...');
-        // Don't auto-play on seek back, just show the frame
-        await _reinitializeController(startAt: targetPos, autoPlay: false);
+      AppLogger.log(
+        '[VideoPlayer] Seek back from finished state. Re-initializing to prevent freeze...',
+      );
+      // Don't auto-play on seek back, just show the frame
+      await _reinitializeController(startAt: targetPos, autoPlay: false);
     } else {
-        await _controller.seekTo(targetPos);
-        await _audioPlayer.player.seek(targetPos);
+      await _controller.seekTo(targetPos);
+      await _audioPlayer.player.seek(targetPos);
     }
   }
 
   Future<void> _onSeekForward() async {
     final newPos = _controller.value.position + const Duration(seconds: 5);
-    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    final targetPos = newPos > _controller.value.duration
+        ? _controller.value.duration
+        : newPos;
     await _controller.seekTo(targetPos);
     await _audioPlayer.player.seek(targetPos);
   }
@@ -488,21 +543,28 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _onSeekFineForward() async {
     final newPos = _controller.value.position + const Duration(seconds: 1);
-    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    final targetPos = newPos > _controller.value.duration
+        ? _controller.value.duration
+        : newPos;
     await _controller.seekTo(targetPos);
     await _audioPlayer.player.seek(targetPos);
   }
 
   Future<void> _onStepBack() async {
-    final newPos = _controller.value.position - const Duration(milliseconds: 33); // Approx 1 frame at 30fps
+    final newPos =
+        _controller.value.position -
+        const Duration(milliseconds: 33); // Approx 1 frame at 30fps
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
     await _controller.seekTo(targetPos);
     await _audioPlayer.player.seek(targetPos);
   }
 
   Future<void> _onStepForward() async {
-    final newPos = _controller.value.position + const Duration(milliseconds: 33);
-    final targetPos = newPos > _controller.value.duration ? _controller.value.duration : newPos;
+    final newPos =
+        _controller.value.position + const Duration(milliseconds: 33);
+    final targetPos = newPos > _controller.value.duration
+        ? _controller.value.duration
+        : newPos;
     await _controller.seekTo(targetPos);
     await _audioPlayer.player.seek(targetPos);
   }
@@ -558,8 +620,14 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           child: SafeArea(
             child: Column(
               children: [
-                const ListTile(
-                  title: Text('Video Controls', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ListTile(
+                  title: Text(
+                    context.l10n.videoControls,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const Divider(color: Colors.white24),
                 Padding(
@@ -568,7 +636,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                     children: [
                       Row(
                         children: [
-                          const Text('Speed:', style: TextStyle(color: Colors.white70)),
+                          Text(
+                            context.l10n.speed,
+                            style: TextStyle(color: Colors.white70),
+                          ),
                           Expanded(
                             child: Slider(
                               min: 0.2,
@@ -586,12 +657,20 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                               },
                             ),
                           ),
-                          Text('${_playbackSpeed.toStringAsFixed(1)}x', style: const TextStyle(color: Colors.white)),
+                          Text(
+                            context.l10n.speedMultiplier(
+                              _playbackSpeed.toStringAsFixed(1),
+                            ),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ],
                       ),
                       Row(
                         children: [
-                          const Text('Pitch:', style: TextStyle(color: Colors.white70)),
+                          Text(
+                            context.l10n.pitch,
+                            style: TextStyle(color: Colors.white70),
+                          ),
                           Expanded(
                             child: Slider(
                               min: -12.0,
@@ -608,7 +687,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                               },
                             ),
                           ),
-                          Text(_getPitchDisplayString(_pitch), style: const TextStyle(color: Colors.white)),
+                          Text(
+                            _getPitchDisplayString(_pitch),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ],
                       ),
                       ElevatedButton.icon(
@@ -623,14 +705,20 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                           await _saveSettings();
                         },
                         icon: const Icon(Icons.restore),
-                        label: const Text('Reset'),
+                        label: Text(context.l10n.reset),
                       ),
                     ],
                   ),
                 ),
                 const Divider(color: Colors.white24),
-                const ListTile(
-                  title: Text('Bookmarks', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ListTile(
+                  title: Text(
+                    context.l10n.bookmarks,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const Divider(color: Colors.white24),
                 Expanded(child: _buildBookmarksList(isDrawer: true)),
@@ -639,7 +727,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                   child: ElevatedButton.icon(
                     onPressed: _addBookmark,
                     icon: const Icon(Icons.bookmark_add),
-                    label: const Text('Add Bookmark'),
+                    label: Text(context.l10n.addBookmark),
                   ),
                 ),
               ],
@@ -656,7 +744,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     }
 
     final duration = _controller.value.duration.inMilliseconds.toDouble();
-    final masterPosition = _audioPlayer.player.position.inMilliseconds.toDouble();
+    final masterPosition = _audioPlayer.player.position.inMilliseconds
+        .toDouble();
     final position = _dragValue ?? masterPosition;
 
     return Column(
@@ -665,7 +754,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           aspectRatio: _controller.value.aspectRatio,
           child: videoPlayer,
         ),
-        
+
         // Progress Slider
         Column(
           children: [
@@ -711,7 +800,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             children: [
               Row(
                 children: [
-                  const Text('Speed:'),
+                  Text(context.l10n.speed),
                   Expanded(
                     child: Slider(
                       min: 0.2,
@@ -729,12 +818,16 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                       },
                     ),
                   ),
-                  Text('${_playbackSpeed.toStringAsFixed(1)}x'),
+                  Text(
+                    context.l10n.speedMultiplier(
+                      _playbackSpeed.toStringAsFixed(1),
+                    ),
+                  ),
                 ],
               ),
               Row(
                 children: [
-                  const Text('Pitch:'),
+                  Text(context.l10n.pitch),
                   Expanded(
                     child: Slider(
                       min: -12.0, // One octave down
@@ -766,7 +859,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                   await _saveSettings();
                 },
                 icon: const Icon(Icons.restore),
-                label: const Text('Reset Controls'),
+                label: Text(context.l10n.resetControls),
               ),
             ],
           ),
@@ -778,7 +871,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           child: ElevatedButton.icon(
             onPressed: _addBookmark,
             icon: const Icon(Icons.bookmark_add),
-            label: const Text('Add Bookmark'),
+            label: Text(context.l10n.addBookmark),
           ),
         ),
 
@@ -828,11 +921,14 @@ class _ControlsOverlay extends StatelessWidget {
     if (!controller.value.isInitialized) return false;
     // Check if position is at or very close to the end (within 200ms)
     return controller.value.position >= controller.value.duration ||
-           (controller.value.duration - controller.value.position).inMilliseconds < 200;
+        (controller.value.duration - controller.value.position).inMilliseconds <
+            200;
   }
 
   void _togglePlay() {
-    AppLogger.log('[VideoPlayer] Toggle play called. isFinished: $_isFinished, isPlaying: ${controller.value.isPlaying}');
+    AppLogger.log(
+      '[VideoPlayer] Toggle play called. isFinished: $_isFinished, isPlaying: ${controller.value.isPlaying}',
+    );
 
     if (_isFinished) {
       onReplay();
@@ -852,16 +948,15 @@ class _ControlsOverlay extends StatelessWidget {
     return Stack(
       children: <Widget>[
         // Tap to play/pause
-        GestureDetector(
-          onTap: _togglePlay,
-          behavior: HitTestBehavior.opaque,
-        ),
-        
+        GestureDetector(onTap: _togglePlay, behavior: HitTestBehavior.opaque),
+
         // Removed semi-transparent background and center icons
 
         // Top Controls
         Positioned(
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -881,18 +976,34 @@ class _ControlsOverlay extends StatelessWidget {
                 // Speed Control
                 PopupMenuButton<double>(
                   initialValue: playbackSpeed,
-                  tooltip: 'Playback Speed',
+                  tooltip: context.l10n.playbackSpeed,
                   onSelected: onSpeedChanged,
-                  itemBuilder: (context) => [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0]
-                      .map((speed) => PopupMenuItem(value: speed, child: Text('${speed}x')))
-                      .toList(),
+                  itemBuilder: (context) =>
+                      [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0]
+                          .map(
+                            (speed) => PopupMenuItem(
+                              value: speed,
+                              child: Text(
+                                context.l10n.speedMultiplier(speed.toString()),
+                              ),
+                            ),
+                          )
+                          .toList(),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
                       children: [
                         const Icon(Icons.speed, color: Colors.white, size: 20),
                         const SizedBox(width: 4),
-                        Text('${playbackSpeed}x', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        Text(
+                          context.l10n.speedMultiplier(
+                            playbackSpeed.toString(),
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -904,7 +1015,10 @@ class _ControlsOverlay extends StatelessWidget {
                     onPressed: onOpenBookmarks,
                   ),
                 IconButton(
-                  icon: Icon(isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen, color: Colors.white),
+                  icon: Icon(
+                    isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                    color: Colors.white,
+                  ),
                   onPressed: onToggleFullscreen,
                 ),
               ],
@@ -914,10 +1028,12 @@ class _ControlsOverlay extends StatelessWidget {
 
         // Center / Bottom Controls (Skip and Progress)
         Positioned(
-          bottom: 0, left: 0, right: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
           child: Container(
-             padding: const EdgeInsets.only(bottom: 8.0),
-             decoration: const BoxDecoration(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -928,28 +1044,34 @@ class _ControlsOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isFullscreen)
-                  VideoProgressIndicator(controller, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.blue)),
+                  VideoProgressIndicator(
+                    controller,
+                    allowScrubbing: true,
+                    colors: const VideoProgressColors(playedColor: Colors.blue),
+                  ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.replay_5, color: Colors.white),
                       onPressed: onSeekBack,
-                      tooltip: 'Back 5s',
+                      tooltip: context.l10n.back5s,
                     ),
                     _FineSeekButton(
                       icon: Icons.chevron_left,
                       onPressed: onSeekFineBack,
                       onStartSkip: () => onStartSkip(false, true),
                       onStopSkip: onStopSkip,
-                      tooltip: 'Back 1s (Hold for frame skip)',
+                      tooltip: context.l10n.back1sHoldForFrameSkip,
                     ),
                     const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(
-                        _isFinished 
-                            ? Icons.replay 
-                            : (controller.value.isPlaying ? Icons.pause : Icons.play_arrow),
+                        _isFinished
+                            ? Icons.replay
+                            : (controller.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow),
                         color: Colors.white,
                       ),
                       iconSize: 40,
@@ -961,12 +1083,12 @@ class _ControlsOverlay extends StatelessWidget {
                       onPressed: onSeekFineForward,
                       onStartSkip: () => onStartSkip(true, true),
                       onStopSkip: onStopSkip,
-                      tooltip: 'Forward 1s (Hold for frame skip)',
+                      tooltip: context.l10n.forward1sHoldForFrameSkip,
                     ),
                     IconButton(
                       icon: const Icon(Icons.forward_5, color: Colors.white),
                       onPressed: onSeekForward,
-                      tooltip: 'Forward 5s',
+                      tooltip: context.l10n.forward5s,
                     ),
                   ],
                 ),

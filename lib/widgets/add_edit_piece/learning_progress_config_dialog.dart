@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../models/learning_progress_config.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LearningProgressConfigDialog extends StatefulWidget {
   final LearningProgressConfig? initialConfig;
 
   const LearningProgressConfigDialog({super.key, this.initialConfig});
 
   @override
-  State<LearningProgressConfigDialog> createState() => _LearningProgressConfigDialogState();
+  State<LearningProgressConfigDialog> createState() =>
+      _LearningProgressConfigDialogState();
 }
 
-class _LearningProgressConfigDialogState extends State<LearningProgressConfigDialog> {
+class _LearningProgressConfigDialogState
+    extends State<LearningProgressConfigDialog> {
   late LearningProgressType _type;
   late TextEditingController _maxCountController;
   late List<String> _stages;
@@ -19,14 +23,23 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
   @override
   void initState() {
     super.initState();
-    final config = widget.initialConfig ?? LearningProgressConfig(type: LearningProgressType.percentage);
+    final config =
+        widget.initialConfig ??
+        LearningProgressConfig(type: LearningProgressType.percentage);
     _type = config.type;
-    _maxCountController = TextEditingController(text: config.maxCount.toString());
+    _maxCountController = TextEditingController(
+      text: config.maxCount.toString(),
+    );
     _stages = List.from(config.stages);
-    if (_stages.isEmpty && _type == LearningProgressType.stages) {
-      _stages.add('Stage 1');
-    }
     _stageController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_stages.isEmpty && _type == LearningProgressType.stages) {
+      _stages.add(context.l10n.stageDefaultName(1));
+    }
   }
 
   @override
@@ -39,22 +52,28 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 24.0,
+        vertical: 24.0,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Configure Learning Progress', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              context.l10n.configureLearningProgress,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<LearningProgressType>(
               initialValue: _type,
-              decoration: const InputDecoration(labelText: 'Type'),
+              decoration: InputDecoration(labelText: context.l10n.type),
               items: LearningProgressType.values.map((type) {
                 return DropdownMenuItem(
                   value: type,
-                  child: Text(type.name.toUpperCase()),
+                  child: Text(type.localizedName(context.l10n)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -66,18 +85,21 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
               },
             ),
             const SizedBox(height: 16),
-            
+
             if (_type == LearningProgressType.count) ...[
               TextFormField(
                 controller: _maxCountController,
-                decoration: const InputDecoration(labelText: 'Max Count'),
+                decoration: InputDecoration(labelText: context.l10n.maxCount),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
             ],
 
             if (_type == LearningProgressType.stages) ...[
-              const Text('Stages:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                context.l10n.stages,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Flexible(
                 child: ReorderableListView.builder(
@@ -91,7 +113,9 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
                       contentPadding: EdgeInsets.zero,
                       title: GestureDetector(
                         onDoubleTap: () => _renameStage(index),
-                        child: Text('${index + 1}. $stage'),
+                        child: Text(
+                          context.l10n.numberedStage(index + 1, stage),
+                        ),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -99,7 +123,7 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () => _renameStage(index),
-                            tooltip: 'Rename',
+                            tooltip: context.l10n.rename,
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete),
@@ -108,7 +132,7 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
                                 _stages.removeAt(index);
                               });
                             },
-                            tooltip: 'Delete',
+                            tooltip: context.l10n.delete,
                           ),
                           ReorderableDragStartListener(
                             index: index,
@@ -135,12 +159,18 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
                   Expanded(
                     child: TextField(
                       controller: _stageController,
-                      decoration: const InputDecoration(labelText: 'New Stage Name'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.newStageName,
+                      ),
                       onSubmitted: (value) {
-                         if (value.isNotEmpty) {
+                        if (value.isNotEmpty) {
                           if (_stages.contains(value)) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stage already exists')));
-                             return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(context.l10n.stageAlreadyExists),
+                              ),
+                            );
+                            return;
                           }
                           setState(() {
                             _stages.add(value);
@@ -155,8 +185,12 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
                     onPressed: () {
                       if (_stageController.text.isNotEmpty) {
                         if (_stages.contains(_stageController.text)) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stage already exists')));
-                             return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(context.l10n.stageAlreadyExists),
+                            ),
+                          );
+                          return;
                         }
                         setState(() {
                           _stages.add(_stageController.text);
@@ -175,12 +209,9 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
-                TextButton(
-                  onPressed: _save,
-                  child: const Text('Save'),
-                ),
+                TextButton(onPressed: _save, child: Text(context.l10n.save)),
               ],
             ),
           ],
@@ -194,47 +225,59 @@ class _LearningProgressConfigDialogState extends State<LearningProgressConfigDia
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Stage'),
+        title: Text(context.l10n.renameStage),
         content: TextField(
           controller: controller,
           autofocus: true,
           onSubmitted: (val) => Navigator.pop(context, val),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Rename')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(context.l10n.rename),
+          ),
         ],
       ),
     );
 
     if (newName != null && newName.isNotEmpty && newName != _stages[index]) {
-       if (_stages.contains(newName)) {
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stage name exists')));
-          return;
-       }
-       setState(() {
-         _stages[index] = newName;
-       });
+      if (_stages.contains(newName)) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l10n.stageNameExists)));
+        }
+        return;
+      }
+      setState(() {
+        _stages[index] = newName;
+      });
     }
   }
 
   void _save() {
     final newMax = int.tryParse(_maxCountController.text) ?? 10;
     double current = widget.initialConfig?.current ?? 0.0;
-    
+
     // Reset current if type changed
     if (widget.initialConfig?.type != _type) {
-       current = 0.0;
+      current = 0.0;
     } else {
-       // If staying same type, clamp if necessary
-       if (_type == LearningProgressType.count) {
-          if (current > newMax) current = newMax.toDouble();
-       }
-       // For stages, if stages removed, clamp index
-       if (_type == LearningProgressType.stages) {
-          if (current >= _stages.length) current = (_stages.isNotEmpty ? _stages.length - 1 : 0).toDouble();
-          if (current < 0) current = 0.0;
-       }
+      // If staying same type, clamp if necessary
+      if (_type == LearningProgressType.count) {
+        if (current > newMax) current = newMax.toDouble();
+      }
+      // For stages, if stages removed, clamp index
+      if (_type == LearningProgressType.stages) {
+        if (current >= _stages.length) {
+          current = (_stages.isNotEmpty ? _stages.length - 1 : 0).toDouble();
+        }
+        if (current < 0) current = 0.0;
+      }
     }
 
     final config = LearningProgressConfig(

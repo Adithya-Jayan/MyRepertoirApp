@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../services/media_cleanup_service.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A dialog that displays detailed cleanup results with Material 3 styling.
 class CleanupDetailsDialog extends StatelessWidget {
   final MediaCleanupResult result;
 
-  const CleanupDetailsDialog({
-    super.key,
-    required this.result,
-  });
+  const CleanupDetailsDialog({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +18,13 @@ class CleanupDetailsDialog extends StatelessWidget {
       title: Row(
         children: [
           Icon(
-            result.success ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+            result.success
+                ? Icons.check_circle_outline
+                : Icons.warning_amber_rounded,
             color: result.success ? Colors.green : colorScheme.error,
           ),
           const SizedBox(width: 12),
-          const Text('Cleanup Summary'),
+          Text(context.l10n.cleanupSummary),
         ],
       ),
       content: SizedBox(
@@ -32,16 +33,28 @@ class CleanupDetailsDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildResultRow(theme, 'Files Deleted', '${result.filesDeleted}', Icons.delete_outline),
-            _buildResultRow(theme, 'Space Freed', result.freedSizeFormatted, Icons.auto_delete_outlined),
             _buildResultRow(
-              theme, 
-              'Status', 
-              result.success ? 'Success' : 'Partial Success', 
+              theme,
+              context.l10n.filesDeleted,
+              '${result.filesDeleted}',
+              Icons.delete_outline,
+            ),
+            _buildResultRow(
+              theme,
+              context.l10n.spaceFreed,
+              result.freedSizeFormatted,
+              Icons.auto_delete_outlined,
+            ),
+            _buildResultRow(
+              theme,
+              context.l10n.status,
+              result.success
+                  ? context.l10n.success
+                  : context.l10n.partialSuccess,
               result.success ? Icons.done_all : Icons.priority_high,
               valueColor: result.success ? Colors.green : colorScheme.error,
             ),
-            
+
             if (result.errors.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
@@ -52,7 +65,7 @@ class CleanupDetailsDialog extends StatelessWidget {
                   Icon(Icons.error_outline, size: 16, color: colorScheme.error),
                   const SizedBox(width: 8),
                   Text(
-                    'Errors encountered:',
+                    context.l10n.errorsEncountered,
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: colorScheme.error,
                       fontWeight: FontWeight.bold,
@@ -74,11 +87,16 @@ class CleanupDetailsDialog extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text(
+                            '• ',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           Expanded(
                             child: Text(
                               result.errors[index],
-                              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.error,
+                              ),
                             ),
                           ),
                         ],
@@ -94,18 +112,28 @@ class CleanupDetailsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(context.l10n.close),
         ),
       ],
     );
   }
 
-  Widget _buildResultRow(ThemeData theme, String label, String value, IconData icon, {Color? valueColor}) {
+  Widget _buildResultRow(
+    ThemeData theme,
+    String label,
+    String value,
+    IconData icon, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
+          Icon(
+            icon,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
           const SizedBox(width: 12),
           Text(label, style: theme.textTheme.bodyMedium),
           const Spacer(),

@@ -22,12 +22,19 @@ import 'dart:io';
 import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class AddEditPieceScreen extends StatefulWidget {
   final MusicPiece? musicPiece;
   final String? selectedGroupId;
   final List<String>? newlyAddedIds;
 
-  const AddEditPieceScreen({super.key, this.musicPiece, this.selectedGroupId, this.newlyAddedIds});
+  const AddEditPieceScreen({
+    super.key,
+    this.musicPiece,
+    this.selectedGroupId,
+    this.newlyAddedIds,
+  });
 
   @override
   State<AddEditPieceScreen> createState() => _AddEditPieceScreenState();
@@ -39,7 +46,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   List<Group> _availableGroups = [];
   Set<String> _selectedGroupIds = {};
   List<String> _allTagGroupNames = [];
-  
+
   late final AddEditPieceMediaManager _mediaManager;
   late final AddEditPieceTagManager _tagManager;
   late final AddEditPieceFormHandler _formHandler;
@@ -63,13 +70,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    
+
     // Stop any active playback when leaving the add/edit screen
     PitchControllablePlayer().stop();
     if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
       FlutterPcmSound.stop();
     }
-    
+
     super.dispose();
   }
 
@@ -95,10 +102,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   Future<void> _loadData() async {
-    await Future.wait([
-      _loadGroups(),
-      _loadTagGroupNames(),
-    ]);
+    await Future.wait([_loadGroups(), _loadTagGroupNames()]);
   }
 
   Future<void> _loadGroups() async {
@@ -141,7 +145,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   void _onMediaItemsChanged(List<MediaItem> newMediaItems) {
     final currentIds = _musicPiece.mediaItems.map((e) => e.id).toSet();
-    final newId = newMediaItems.map((e) => e.id).firstWhere((id) => !currentIds.contains(id), orElse: () => '');
+    final newId = newMediaItems
+        .map((e) => e.id)
+        .firstWhere((id) => !currentIds.contains(id), orElse: () => '');
 
     setState(() {
       _musicPiece = _musicPiece.copyWith(mediaItems: newMediaItems);
@@ -157,9 +163,13 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   }
 
   void _onTagGroupsChanged(List<TagGroup> newTagGroups) {
-    AppLogger.log('AddEditPieceScreen: Tag groups updated - ${newTagGroups.length} groups');
+    AppLogger.log(
+      'AddEditPieceScreen: Tag groups updated - ${newTagGroups.length} groups',
+    );
     final currentIds = _musicPiece.tagGroups.map((e) => e.id).toSet();
-    final newId = newTagGroups.map((e) => e.id).firstWhere((id) => !currentIds.contains(id), orElse: () => '');
+    final newId = newTagGroups
+        .map((e) => e.id)
+        .firstWhere((id) => !currentIds.contains(id), orElse: () => '');
 
     setState(() {
       _musicPiece = _musicPiece.copyWith(tagGroups: newTagGroups);
@@ -170,21 +180,29 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
-  Future<void> _handleUpdateTagGroup(TagGroup oldGroup, TagGroup newGroup, {bool isAutofill = false}) async {
-    if (!isAutofill && oldGroup.color != newGroup.color && newGroup.color != null) {
+  Future<void> _handleUpdateTagGroup(
+    TagGroup oldGroup,
+    TagGroup newGroup, {
+    bool isAutofill = false,
+  }) async {
+    if (!isAutofill &&
+        oldGroup.color != newGroup.color &&
+        newGroup.color != null) {
       final shouldUpdateAll = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Update All?'),
-          content: Text('Do you want to update the color of tag group "${newGroup.name}" across all pieces?'),
+          title: Text(context.l10n.updateAll),
+          content: Text(
+            context.l10n.updateTagGroupColorQuestion(newGroup.name),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('No'),
+              child: Text(context.l10n.no),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Yes'),
+              child: Text(context.l10n.yes),
             ),
           ],
         ),
@@ -203,18 +221,18 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
 
   Future<void> _savePiece() async {
     if (_isSaving || _hasSaved) return; // Prevent multiple saves
-    
+
     setState(() {
       _isSaving = true;
     });
-    
+
     try {
       final success = await _formHandler.validateAndSave(
         _formKey,
         _musicPiece,
         _selectedGroupIds,
       );
-      
+
       if (success && mounted) {
         _hasSaved = true; // Prevent any further saves while popping
         if (Navigator.of(context).canPop()) {
@@ -233,14 +251,21 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   bool _hasChanges() {
     // Basic fields
     if (_musicPiece.title != (widget.musicPiece?.title ?? '') ||
-        _musicPiece.artistComposer != (widget.musicPiece?.artistComposer ?? 'Unknown Artist') ||
-        _musicPiece.enablePracticeTracking != (widget.musicPiece?.enablePracticeTracking ?? true)) {
+        _musicPiece.artistComposer !=
+            (widget.musicPiece?.artistComposer ?? '') ||
+        _musicPiece.enablePracticeTracking !=
+            (widget.musicPiece?.enablePracticeTracking ?? true)) {
       return true;
     }
 
     // Groups
-    final originalGroupIds = widget.musicPiece?.groupIds.toSet() ?? (widget.selectedGroupId != null ? {widget.selectedGroupId!} : <String>{});
-    if (_selectedGroupIds.length != originalGroupIds.length || !_selectedGroupIds.containsAll(originalGroupIds)) {
+    final originalGroupIds =
+        widget.musicPiece?.groupIds.toSet() ??
+        (widget.selectedGroupId != null
+            ? {widget.selectedGroupId!}
+            : <String>{});
+    if (_selectedGroupIds.length != originalGroupIds.length ||
+        !_selectedGroupIds.containsAll(originalGroupIds)) {
       return true;
     }
 
@@ -250,7 +275,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     for (int i = 0; i < _musicPiece.tagGroups.length; i++) {
       if (_musicPiece.tagGroups[i].name != originalTagGroups[i].name ||
           _musicPiece.tagGroups[i].color != originalTagGroups[i].color ||
-          _musicPiece.tagGroups[i].tags.join(',') != originalTagGroups[i].tags.join(',')) {
+          _musicPiece.tagGroups[i].tags.join(',') !=
+              originalTagGroups[i].tags.join(',')) {
         return true;
       }
     }
@@ -260,8 +286,10 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     if (_musicPiece.mediaItems.length != originalMediaItems.length) return true;
     for (int i = 0; i < _musicPiece.mediaItems.length; i++) {
       if (_musicPiece.mediaItems[i].id != originalMediaItems[i].id ||
-          _musicPiece.mediaItems[i].pathOrUrl != originalMediaItems[i].pathOrUrl ||
-          _musicPiece.mediaItems[i].configData != originalMediaItems[i].configData) {
+          _musicPiece.mediaItems[i].pathOrUrl !=
+              originalMediaItems[i].pathOrUrl ||
+          _musicPiece.mediaItems[i].configData !=
+              originalMediaItems[i].configData) {
         return true;
       }
     }
@@ -273,14 +301,16 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
   Widget build(BuildContext context) {
     AppLogger.log('AddEditPieceScreen: build called');
     final theme = Theme.of(context);
-    final hasThumbnail = _musicPiece.mediaItems.any((item) => item.type == MediaType.thumbnails);
+    final hasThumbnail = _musicPiece.mediaItems.any(
+      (item) => item.type == MediaType.thumbnails,
+    );
 
     return SafeArea(
       child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
-          
+
           if (!_hasChanges()) {
             if (mounted) Navigator.of(context).pop();
             return;
@@ -290,16 +320,20 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           final shouldPop = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Unsaved Changes'),
-              content: const Text('You have unsaved changes. Are you sure you want to discard them?'),
+              title: Text(context.l10n.unsavedChanges),
+              content: Text(
+                context
+                    .l10n
+                    .youHaveUnsavedChangesAreYouSureYouWantToDiscardThem,
+              ),
               actions: [
                 TextButton(
                   onPressed: () => navigator.pop(false),
-                  child: const Text('Stay'),
+                  child: Text(context.l10n.stay),
                 ),
                 TextButton(
                   onPressed: () => navigator.pop(true),
-                  child: const Text('Discard'),
+                  child: Text(context.l10n.discard),
                 ),
               ],
             ),
@@ -311,7 +345,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text(widget.musicPiece == null ? 'Add Piece' : 'Edit Piece'),
+            title: Text(
+              widget.musicPiece == null
+                  ? context.l10n.addPiece
+                  : context.l10n.editPiece,
+            ),
             actions: [
               if (_isSaving)
                 const Padding(
@@ -323,33 +361,42 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                   ),
                 )
               else
-                IconButton(
-                  icon: const Icon(Icons.save),
-                  onPressed: _savePiece,
-                ),
+                IconButton(icon: const Icon(Icons.save), onPressed: _savePiece),
             ],
           ),
           body: Form(
             key: _formKey,
             child: ListView(
               controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               children: [
-                _buildCategoryHeader(theme, 'Basic Details', Icons.info_outline),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.basicDetails,
+                  Icons.info_outline,
+                ),
                 _buildSectionCard(theme, [
                   Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: BasicDetailsSection(
                       musicPiece: _musicPiece,
                       onTitleChanged: (value) => _musicPiece.title = value,
-                      onArtistComposerChanged: (value) => _musicPiece.artistComposer = value,
+                      onArtistComposerChanged: (value) =>
+                          _musicPiece.artistComposer = value,
                       onSaveRequested: _savePiece,
                     ),
                   ),
                 ]),
 
                 const SizedBox(height: 16),
-                _buildCategoryHeader(theme, 'Classification', Icons.category_outlined),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.classification,
+                  Icons.category_outlined,
+                ),
                 _buildSectionCard(theme, [
                   GroupsSection(
                     availableGroups: _availableGroups,
@@ -363,22 +410,32 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 ]),
 
                 const SizedBox(height: 16),
-                _buildCategoryHeader(theme, 'Practice Tracking', Icons.timeline_outlined),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.practiceTracking,
+                  Icons.timeline_outlined,
+                ),
                 _buildSectionCard(theme, [
                   SwitchListTile(
-                    title: const Text('Enable Practice Tracking'),
-                    subtitle: const Text('Keep track of sessions and status'),
+                    title: Text(context.l10n.enablePracticeTracking),
+                    subtitle: Text(context.l10n.keepTrackOfSessionsAndStatus),
                     value: _musicPiece.enablePracticeTracking,
                     onChanged: (bool value) {
                       setState(() {
-                        _musicPiece = _musicPiece.copyWith(enablePracticeTracking: value);
+                        _musicPiece = _musicPiece.copyWith(
+                          enablePracticeTracking: value,
+                        );
                       });
                     },
                   ),
                 ]),
 
                 const SizedBox(height: 16),
-                _buildCategoryHeader(theme, 'Tag Groups', Icons.label_outline),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.tagGroups,
+                  Icons.label_outline,
+                ),
                 _buildSectionCard(theme, [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -386,12 +443,18 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       tagGroups: _musicPiece.tagGroups,
                       allTagGroupNames: _allTagGroupNames,
                       onUpdateTagGroup: _handleUpdateTagGroup,
-                      onDeleteTagGroup: (tagGroup) => 
-                        _tagManager.deleteTagGroup(tagGroup, _musicPiece.tagGroups),
-                      onGetAllTagsForTagGroup: _tagManager.getAllTagsForTagGroup,
-                      onReorderTagGroups: (oldIndex, newIndex) => 
-                        _tagManager.reorderTagGroups(oldIndex, newIndex, _musicPiece.tagGroups),
-                      onAddTagGroup: () => _tagManager.addTagGroup(_musicPiece.tagGroups),
+                      onDeleteTagGroup: (tagGroup) => _tagManager
+                          .deleteTagGroup(tagGroup, _musicPiece.tagGroups),
+                      onGetAllTagsForTagGroup:
+                          _tagManager.getAllTagsForTagGroup,
+                      onReorderTagGroups: (oldIndex, newIndex) =>
+                          _tagManager.reorderTagGroups(
+                            oldIndex,
+                            newIndex,
+                            _musicPiece.tagGroups,
+                          ),
+                      onAddTagGroup: () =>
+                          _tagManager.addTagGroup(_musicPiece.tagGroups),
                       onFetchMostCommonColor: _fetchMostCommonColor,
                       newlyAddedIds: _newlyAddedIds,
                       onHighlightComplete: () {
@@ -405,7 +468,11 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 ]),
 
                 const SizedBox(height: 16),
-                _buildCategoryHeader(theme, 'Media', Icons.perm_media_outlined),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.media,
+                  Icons.perm_media_outlined,
+                ),
                 _buildSectionCard(theme, [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -434,6 +501,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           floatingActionButton: SpeedDialWidget(
             hasThumbnail: hasThumbnail,
             onAddMediaItem: (mediaType) async {
+              final l10n = context.l10n;
               if (mediaType == MediaType.learningProgress) {
                 final config = await showDialog<LearningProgressConfig>(
                   context: context,
@@ -441,10 +509,19 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 );
                 if (config != null) {
                   final configJson = LearningProgressConfig.encode(config);
-                  _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems), configData: configJson);
+                  _mediaManager.addMediaItem(
+                    mediaType,
+                    List<MediaItem>.from(_musicPiece.mediaItems),
+                    configData: configJson,
+                    defaultTitle: l10n.learningProgress,
+                  );
                 }
               } else {
-                _mediaManager.addMediaItem(mediaType, List<MediaItem>.from(_musicPiece.mediaItems));
+                _mediaManager.addMediaItem(
+                  mediaType,
+                  List<MediaItem>.from(_musicPiece.mediaItems),
+                  defaultTitle: l10n.learningProgress,
+                );
               }
             },
           ),

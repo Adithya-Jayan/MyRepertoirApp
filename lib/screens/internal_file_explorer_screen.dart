@@ -8,37 +8,37 @@ import '../database/music_piece_repository.dart';
 import './pdf_viewer_screen.dart';
 import './image_viewer_screen.dart';
 
-enum FileExplorerViewMode {
-  physical,
-  byPiece,
-  byType,
-}
+import 'package:repertoire/l10n/l10n.dart';
+
+enum FileExplorerViewMode { physical, byPiece, byType }
 
 class InternalFileExplorerScreen extends StatefulWidget {
   const InternalFileExplorerScreen({super.key});
 
   @override
-  State<InternalFileExplorerScreen> createState() => _InternalFileExplorerScreenState();
+  State<InternalFileExplorerScreen> createState() =>
+      _InternalFileExplorerScreenState();
 }
 
-class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen> {
+class _InternalFileExplorerScreenState
+    extends State<InternalFileExplorerScreen> {
   FileExplorerViewMode _viewMode = FileExplorerViewMode.physical;
-  
+
   // Navigation state
   io.Directory? _rootDirectory;
   io.Directory? _currentDirectory; // For physical mode
   final List<String> _virtualPath = []; // For virtual modes
-  
+
   // Data
   final List<FileSystemItem> _items = [];
   Map<String, String> _pieceIdToTitle = {};
   Map<String, List<io.File>> _filesByPiece = {};
   Map<String, List<io.File>> _filesByType = {};
-  
+
   // Selection
   final Set<String> _selectedPaths = {};
   bool _isSelectionMode = false;
-  
+
   bool _isLoading = true;
   String? _error;
 
@@ -53,11 +53,11 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     try {
       _rootDirectory = await getApplicationDocumentsDirectory();
       _currentDirectory = _rootDirectory;
-      
+
       final repository = MusicPieceRepository();
       final pieces = await repository.getMusicPieces();
       _pieceIdToTitle = {for (var p in pieces) p.id: p.title};
-      
+
       await _scanFiles();
       _updateDisplayItems();
     } catch (e) {
@@ -69,49 +69,56 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
   }
 
   Future<void> _scanFiles() async {
+    final l10n = context.l10n;
     _filesByPiece.clear();
     _filesByType.clear();
-    
+
     if (_rootDirectory == null) return;
-    
+
     final mediaDir = io.Directory(p.join(_rootDirectory!.path, 'media'));
     if (!await mediaDir.exists()) return;
 
-    final List<io.FileSystemEntity> allEntities = await mediaDir.list(recursive: true).toList();
-    
+    final List<io.FileSystemEntity> allEntities = await mediaDir
+        .list(recursive: true)
+        .toList();
+
     for (final entity in allEntities) {
       if (entity is io.File) {
         // By Type
         final ext = p.extension(entity.path).toLowerCase();
-        String type = 'Other';
+        String type = l10n.other;
         if (['.mp3', '.wav', '.m4a', '.flac'].contains(ext)) {
-          type = 'Audio';
+          type = l10n.audio;
         } else if (['.pdf'].contains(ext)) {
-          type = 'PDFs';
+          type = l10n.pdfs;
         } else if (['.jpg', '.jpeg', '.png', '.webp'].contains(ext)) {
-          type = 'Images';
+          type = l10n.images;
         } else if (['.mp4', '.mkv', '.mov'].contains(ext)) {
-          type = 'Video';
+          type = l10n.video;
         }
-        
+
         _filesByType.putIfAbsent(type, () => []).add(entity);
-        
+
         // By Piece
         final relative = p.relative(entity.path, from: mediaDir.path);
         final parts = p.split(relative);
         if (parts.isNotEmpty) {
           final pieceId = parts[0];
-          final title = _pieceIdToTitle[pieceId] ?? 'Unknown Piece ($pieceId)';
+          final title = _pieceIdToTitle[pieceId] ?? l10n.unknownPiece(pieceId);
           _filesByPiece.putIfAbsent(title, () => []).add(entity);
         }
       }
     }
-    
+
     // Sort keys
-    final sortedByType = Map.fromEntries(_filesByType.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+    final sortedByType = Map.fromEntries(
+      _filesByType.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
+    );
     _filesByType = sortedByType;
 
-    final sortedByPiece = Map.fromEntries(_filesByPiece.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+    final sortedByPiece = Map.fromEntries(
+      _filesByPiece.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
+    );
     _filesByPiece = sortedByPiece;
   }
 
@@ -129,7 +136,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       } else if (_viewMode == FileExplorerViewMode.byType) {
         _loadByTypeItems();
       }
-      
+
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() {
@@ -145,16 +152,21 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     entities.sort((a, b) {
       if (a is io.Directory && b is! io.Directory) return -1;
       if (a is! io.Directory && b is io.Directory) return 1;
-      return p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase());
+      return p
+          .basename(a.path)
+          .toLowerCase()
+          .compareTo(p.basename(b.path).toLowerCase());
     });
-    
+
     for (final entity in entities) {
-      _items.add(FileSystemItem(
-        name: p.basename(entity.path),
-        path: entity.path,
-        isDirectory: entity is io.Directory,
-        entity: entity,
-      ));
+      _items.add(
+        FileSystemItem(
+          name: p.basename(entity.path),
+          path: entity.path,
+          isDirectory: entity is io.Directory,
+          entity: entity,
+        ),
+      );
     }
   }
 
@@ -162,24 +174,28 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (_virtualPath.isEmpty) {
       // Root: List of pieces
       for (final pieceTitle in _filesByPiece.keys) {
-        _items.add(FileSystemItem(
-          name: pieceTitle,
-          path: pieceTitle,
-          isDirectory: true,
-          isVirtual: true,
-        ));
+        _items.add(
+          FileSystemItem(
+            name: pieceTitle,
+            path: pieceTitle,
+            isDirectory: true,
+            isVirtual: true,
+          ),
+        );
       }
     } else {
       // Inside a piece folder
       final pieceTitle = _virtualPath[0];
       final files = _filesByPiece[pieceTitle] ?? [];
       for (final file in files) {
-        _items.add(FileSystemItem(
-          name: p.basename(file.path),
-          path: file.path,
-          isDirectory: false,
-          entity: file,
-        ));
+        _items.add(
+          FileSystemItem(
+            name: p.basename(file.path),
+            path: file.path,
+            isDirectory: false,
+            entity: file,
+          ),
+        );
       }
     }
   }
@@ -188,24 +204,28 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (_virtualPath.isEmpty) {
       // Root: List of types
       for (final type in _filesByType.keys) {
-        _items.add(FileSystemItem(
-          name: type,
-          path: type,
-          isDirectory: true,
-          isVirtual: true,
-        ));
+        _items.add(
+          FileSystemItem(
+            name: type,
+            path: type,
+            isDirectory: true,
+            isVirtual: true,
+          ),
+        );
       }
     } else {
       // Inside a type folder
       final type = _virtualPath[0];
       final files = _filesByType[type] ?? [];
       for (final file in files) {
-        _items.add(FileSystemItem(
-          name: p.basename(file.path),
-          path: file.path,
-          isDirectory: false,
-          entity: file,
-        ));
+        _items.add(
+          FileSystemItem(
+            name: p.basename(file.path),
+            path: file.path,
+            isDirectory: false,
+            entity: file,
+          ),
+        );
       }
     }
   }
@@ -228,16 +248,24 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       }
       _updateDisplayItems();
     } else {
-       _openFile(item.path);
+      _openFile(item.path);
     }
   }
 
   void _openFile(String path) {
     final extension = p.extension(path).toLowerCase();
     if (extension == '.pdf') {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: path)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfPath: path)),
+      );
     } else if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => ImageViewerScreen(imagePath: path)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ImageViewerScreen(imagePath: path),
+        ),
+      );
     } else {
       // Use open_filex for other files to handle content URIs on Android
       OpenFilex.open(path);
@@ -267,14 +295,15 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
 
     if (filesToShare.isNotEmpty) {
       final box = context.findRenderObject() as RenderBox?;
-      final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
-      await SharePlus.instance.share(ShareParams(
-        files: filesToShare,
-        sharePositionOrigin: rect,
-      ));
+      final rect = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+      await SharePlus.instance.share(
+        ShareParams(files: filesToShare, sharePositionOrigin: rect),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No shareable files selected.')),
+        SnackBar(content: Text(context.l10n.noShareableFilesSelected)),
       );
     }
   }
@@ -283,14 +312,19 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Items?'),
-        content: Text('Are you sure you want to delete ${_selectedPaths.length} items? This might break links in your music pieces.'),
+        title: Text(context.l10n.deleteItems),
+        content: Text(
+          context.l10n.deleteFileItemsConfirmation(_selectedPaths.length),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.cancel),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -352,15 +386,17 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
 
   @override
   Widget build(BuildContext context) {
-    String title = 'File Explorer';
+    String title = context.l10n.fileExplorer;
     if (_isSelectionMode) {
-      title = '${_selectedPaths.length} selected';
+      title = context.l10n.itemsSelected(_selectedPaths.length);
     } else if (_viewMode == FileExplorerViewMode.physical) {
-      title = p.basename(_currentDirectory?.path ?? 'Root');
+      title = p.basename(_currentDirectory?.path ?? context.l10n.root);
     } else if (_virtualPath.isNotEmpty) {
       title = _virtualPath.last;
     } else {
-      title = _viewMode == FileExplorerViewMode.byPiece ? 'All Pieces' : 'File Types';
+      title = _viewMode == FileExplorerViewMode.byPiece
+          ? context.l10n.allPieces
+          : context.l10n.fileTypes;
     }
 
     return PopScope(
@@ -374,8 +410,14 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
           title: Text(title),
           actions: [
             if (_isSelectionMode) ...[
-              IconButton(icon: const Icon(Icons.share), onPressed: _shareSelected),
-              IconButton(icon: const Icon(Icons.delete), onPressed: _deleteSelected),
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: _shareSelected,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: _deleteSelected,
+              ),
             ] else ...[
               PopupMenuButton<FileExplorerViewMode>(
                 icon: const Icon(Icons.grid_view),
@@ -388,9 +430,18 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
                   _updateDisplayItems();
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: FileExplorerViewMode.physical, child: Text('Physical View')),
-                  const PopupMenuItem(value: FileExplorerViewMode.byPiece, child: Text('Group by Piece')),
-                  const PopupMenuItem(value: FileExplorerViewMode.byType, child: Text('Group by Type')),
+                  PopupMenuItem(
+                    value: FileExplorerViewMode.physical,
+                    child: Text(context.l10n.physicalView),
+                  ),
+                  PopupMenuItem(
+                    value: FileExplorerViewMode.byPiece,
+                    child: Text(context.l10n.groupByPiece),
+                  ),
+                  PopupMenuItem(
+                    value: FileExplorerViewMode.byType,
+                    child: Text(context.l10n.groupByType),
+                  ),
                 ],
               ),
               IconButton(
@@ -400,7 +451,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
                   _updateDisplayItems();
                 },
               ),
-            ]
+            ],
           ],
         ),
         body: _buildBody(),
@@ -410,17 +461,36 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
 
   Widget _buildBody() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) return Center(child: Padding(padding: const EdgeInsets.all(16), child: Text('Error: $_error', textAlign: TextAlign.center)));
-    if (_items.isEmpty) return const Center(child: Text('Empty'));
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            context.l10n.errorWithDetails(_error!),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    if (_items.isEmpty) return Center(child: Text(context.l10n.empty));
 
     final theme = Theme.of(context);
 
-    if ((_viewMode == FileExplorerViewMode.byPiece || _viewMode == FileExplorerViewMode.byType) && _virtualPath.isEmpty) {
+    if ((_viewMode == FileExplorerViewMode.byPiece ||
+            _viewMode == FileExplorerViewMode.byType) &&
+        _virtualPath.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildCategoryHeader(theme, _viewMode == FileExplorerViewMode.byPiece ? 'Music Pieces' : 'File Categories', 
-            _viewMode == FileExplorerViewMode.byPiece ? Icons.library_music_outlined : Icons.category_outlined),
+          _buildCategoryHeader(
+            theme,
+            _viewMode == FileExplorerViewMode.byPiece
+                ? context.l10n.musicPieces
+                : context.l10n.fileCategories,
+            _viewMode == FileExplorerViewMode.byPiece
+                ? Icons.library_music_outlined
+                : Icons.category_outlined,
+          ),
           _buildSettingsCard([
             for (final item in _items)
               ListTile(
@@ -444,11 +514,19 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
         return ListTile(
           leading: _getItemLeading(item),
           title: Text(item.name, style: const TextStyle(fontSize: 14)),
-          subtitle: item.isDirectory ? null : Text(_getFileSize(item.path), style: const TextStyle(fontSize: 12)),
+          subtitle: item.isDirectory
+              ? null
+              : Text(
+                  _getFileSize(item.path),
+                  style: const TextStyle(fontSize: 12),
+                ),
           selected: isSelected,
-          trailing: _isSelectionMode 
-            ? Checkbox(value: isSelected, onChanged: (_) => _toggleSelection(item.path)) 
-            : _buildItemMenu(item),
+          trailing: _isSelectionMode
+              ? Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => _toggleSelection(item.path),
+                )
+              : _buildItemMenu(item),
           onTap: () => _onItemTap(item),
           onLongPress: () => _toggleSelection(item.path),
         );
@@ -476,19 +554,26 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'rename',
               child: ListTile(
                 leading: Icon(Icons.edit_outlined, size: 18),
-                title: Text('Rename'),
+                title: Text(context.l10n.rename),
                 dense: true,
               ),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'delete',
               child: ListTile(
-                leading: Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                title: Text('Delete', style: TextStyle(color: Colors.red)),
+                leading: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Colors.red,
+                ),
+                title: Text(
+                  context.l10n.delete,
+                  style: TextStyle(color: Colors.red),
+                ),
                 dense: true,
               ),
             ),
@@ -502,7 +587,7 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
     if (item.isDirectory) {
       return const Icon(Icons.folder, color: Colors.amber);
     }
-    
+
     final extension = p.extension(item.path).toLowerCase();
     if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
       return ClipRRect(
@@ -513,11 +598,12 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
           height: 40,
           fit: BoxFit.cover,
           cacheWidth: 100,
-          errorBuilder: (context, error, stackTrace) => Icon(_getFileIconData(item.path)),
+          errorBuilder: (context, error, stackTrace) =>
+              Icon(_getFileIconData(item.path)),
         ),
       );
     }
-    
+
     return Icon(_getFileIconData(item.path));
   }
 
@@ -548,7 +634,9 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(children: children),
     );
   }
@@ -556,32 +644,35 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
   Future<void> _renameItem(FileSystemItem item) async {
     final nameController = TextEditingController(text: item.name);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+    final l10n = context.l10n;
+
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename File'),
+        title: Text(context.l10n.renameFile),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'WARNING: Renaming files may break links if not handled correctly. '
-              'The app will attempt to update all piece references automatically.',
+            Text(
+              context.l10n.renameFileWarning,
               style: TextStyle(color: Colors.orange, fontSize: 12),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'New Name'),
+              decoration: InputDecoration(labelText: context.l10n.newName),
               autofocus: true,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, nameController.text),
-            child: const Text('Rename'),
+            child: Text(context.l10n.rename),
           ),
         ],
       ),
@@ -592,15 +683,16 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       try {
         final parentPath = p.dirname(item.path);
         final newPath = p.join(parentPath, newName);
-        
-        if (await io.File(newPath).exists() || await io.Directory(newPath).exists()) {
-          throw Exception('An item with that name already exists.');
+
+        if (await io.File(newPath).exists() ||
+            await io.Directory(newPath).exists()) {
+          throw Exception(l10n.itemNameAlreadyExists);
         }
 
         if (item.isDirectory) {
-           await io.Directory(item.path).rename(newPath);
+          await io.Directory(item.path).rename(newPath);
         } else {
-           await io.File(item.path).rename(newPath);
+          await io.File(item.path).rename(newPath);
         }
 
         final repository = MusicPieceRepository();
@@ -608,8 +700,10 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
 
         await _scanFiles();
         _updateDisplayItems();
-        
-        scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Renamed successfully.')));
+
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(l10n.renamedSuccessfully)),
+        );
       } catch (e) {
         setState(() {
           _error = e.toString();
@@ -622,23 +716,31 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
   IconData _getFileIconData(String path) {
     final extension = p.extension(path).toLowerCase();
     switch (extension) {
-      case '.pdf': return Icons.picture_as_pdf;
+      case '.pdf':
+        return Icons.picture_as_pdf;
       case '.jpg':
       case '.jpeg':
       case '.png':
-      case '.webp': return Icons.image;
+      case '.webp':
+        return Icons.image;
       case '.mp3':
       case '.wav':
       case '.m4a':
-      case '.flac': return Icons.audiotrack;
+      case '.flac':
+        return Icons.audiotrack;
       case '.mp4':
       case '.mkv':
-      case '.mov': return Icons.video_library;
-      case '.json': return Icons.code;
+      case '.mov':
+        return Icons.video_library;
+      case '.json':
+        return Icons.code;
       case '.txt':
-      case '.log': return Icons.description;
-      case '.zip': return Icons.archive;
-      default: return Icons.insert_drive_file;
+      case '.log':
+        return Icons.description;
+      case '.zip':
+        return Icons.archive;
+      default:
+        return Icons.insert_drive_file;
     }
   }
 
@@ -648,7 +750,9 @@ class _InternalFileExplorerScreenState extends State<InternalFileExplorerScreen>
       final bytes = file.lengthSync();
       if (bytes < 1024) return '$bytes B';
       if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-      if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+      if (bytes < 1024 * 1024 * 1024) {
+        return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+      }
       return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
     } catch (e) {
       return '';

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/music_piece.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class BasicDetailsSection extends StatelessWidget {
   final MusicPiece musicPiece;
   final ValueChanged<String> onTitleChanged;
@@ -21,15 +23,16 @@ class BasicDetailsSection extends StatelessWidget {
       children: [
         TextFormField(
           initialValue: musicPiece.title,
-          decoration: const InputDecoration(labelText: 'Title'),
+          decoration: InputDecoration(labelText: context.l10n.title),
           textInputAction: TextInputAction.next,
-          validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
+          validator: (value) =>
+              value!.isEmpty ? context.l10n.pleaseEnterATitle : null,
           onChanged: onTitleChanged,
           onSaved: (value) => onTitleChanged(value!),
         ),
         TextFormField(
           initialValue: musicPiece.artistComposer,
-          decoration: const InputDecoration(labelText: 'Artist / Composer'),
+          decoration: InputDecoration(labelText: context.l10n.artistComposer),
           textInputAction: TextInputAction.done,
           onChanged: onArtistComposerChanged,
           onSaved: (value) => onArtistComposerChanged(value!),

@@ -24,6 +24,7 @@ import 'package:repertoire/widgets/gradient_background.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
 import '../utils/permissions_utils.dart';
 import '../services/share_handler_service.dart';
+import 'package:repertoire/l10n/l10n.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -32,8 +33,8 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserver {
-  
+class _LibraryScreenState extends State<LibraryScreen>
+    with WidgetsBindingObserver {
   LibraryScreenNotifier? _notifier;
   bool _hasReturnedFromSettings = false;
 
@@ -44,7 +45,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
     // Listen for data changes from external sources (like ShareHandlerService)
     ShareHandlerService.dataChangeNotifier.addListener(_onExternalDataChanged);
     _initialize();
-    
+
     // Check for updates and permissions after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
@@ -60,7 +61,9 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
   }
 
   void _onExternalDataChanged() {
-    AppLogger.log('LibraryScreen: External data change detected, reloading data');
+    AppLogger.log(
+      'LibraryScreen: External data change detected, reloading data',
+    );
     if (mounted) {
       _notifier?.reloadData();
     }
@@ -70,7 +73,11 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _notifier = LibraryScreenNotifier(MusicPieceRepository(), prefs);
+        _notifier = LibraryScreenNotifier(
+          MusicPieceRepository(),
+          prefs,
+          context.l10n,
+        );
       });
     }
   }
@@ -78,7 +85,9 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    ShareHandlerService.dataChangeNotifier.removeListener(_onExternalDataChanged);
+    ShareHandlerService.dataChangeNotifier.removeListener(
+      _onExternalDataChanged,
+    );
     _notifier?.dispose();
     super.dispose();
   }
@@ -101,11 +110,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     if (_notifier == null) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final themeNotifier = Provider.of<ThemeNotifier>(context);
@@ -118,9 +123,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
 
           if (!notifier.isInitialized) {
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: Center(child: CircularProgressIndicator()),
             );
           }
 
@@ -128,13 +131,17 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
           return PopScope(
             canPop: !notifier.isMultiSelectMode,
             onPopInvokedWithResult: (didPop, result) async {
-              AppLogger.log('LibraryScreen: PopScope triggered - didPop: $didPop, result: $result');
+              AppLogger.log(
+                'LibraryScreen: PopScope triggered - didPop: $didPop, result: $result',
+              );
               if (didPop) {
                 // Mark that we've returned from settings/navigation
                 _hasReturnedFromSettings = true;
                 // Always refresh data when returning to the library screen
                 // This ensures the gallery updates regardless of how the user navigates back
-                AppLogger.log('LibraryScreen: Reloading data after navigation return');
+                AppLogger.log(
+                  'LibraryScreen: Reloading data after navigation return',
+                );
                 await notifier.reloadData();
                 AppLogger.log('LibraryScreen: Data reload completed');
               } else if (notifier.isMultiSelectMode) {
@@ -153,7 +160,7 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
               },
               child: Stack(
                 children: [
-                   // Base background color (behind everything)
+                  // Base background color (behind everything)
                   Positioned.fill(
                     child: Container(
                       color: Theme.of(context).colorScheme.surface,
@@ -169,7 +176,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                   Positioned.fill(
                     child: SafeArea(
                       child: Scaffold(
-                        backgroundColor: Colors.transparent, // Transparent to show backgrounds
+                        backgroundColor: Colors
+                            .transparent, // Transparent to show backgrounds
                         appBar: LibraryAppBar(
                           isMultiSelectMode: notifier.isMultiSelectMode,
                           searchQuery: notifier.searchQuery,
@@ -181,7 +189,8 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                           onClearFilter: notifier.clearFilter,
                           sortOption: notifier.sortOption,
                           onSortOptionChanged: notifier.setSortOption,
-                          onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
+                          onToggleMultiSelectMode:
+                              notifier.toggleMultiSelectMode,
                           selectedPieceCount: notifier.selectedPieceIds.length,
                           onSelectAll: notifier.selectAllPieces,
                           repository: MusicPieceRepository(),
@@ -195,28 +204,33 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                         body: ValueListenableBuilder<int>(
                           valueListenable: notifier.galleryColumnsNotifier,
                           builder: (context, galleryColumns, child) {
-                            AppLogger.log('LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns');
+                            AppLogger.log(
+                              'LibraryScreen: ValueListenableBuilder rebuild with galleryColumns: $galleryColumns',
+                            );
                             return LibraryBody(
-                                visibleGroups: visibleGroups,
-                                selectedGroupId: notifier.selectedGroupId,
-                                allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                                musicPieces: notifier.musicPiecesNotifier.value,
-                                isLoading: notifier.isLoadingNotifier.value,
-                                errorMessage: notifier.errorMessageNotifier.value,
-                                galleryColumns: galleryColumns,
-                                groupListKey: notifier.groupListKey,
-                                isMultiSelectMode: notifier.isMultiSelectMode,
-                                selectedPieceIds: notifier.selectedPieceIds,
-                                pressedKeys: notifier.pressedKeys,
-                                onPieceSelected: notifier.onPieceSelected,
-                                onReloadData: notifier.reloadData,
-                                onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                                onGroupSelected: notifier.onGroupSelected,
-                                searchQuery: notifier.searchQuery,
-                                filterOptions: notifier.filterOptions,
-                                sortOption: notifier.sortOption,
-                                getFilteredPiecesForGroup: notifier.getFilteredPiecesForGroup,
-                              );
+                              visibleGroups: visibleGroups,
+                              selectedGroupId: notifier.selectedGroupId,
+                              allMusicPieces:
+                                  notifier.allMusicPiecesNotifier.value,
+                              musicPieces: notifier.musicPiecesNotifier.value,
+                              isLoading: notifier.isLoadingNotifier.value,
+                              errorMessage: notifier.errorMessageNotifier.value,
+                              galleryColumns: galleryColumns,
+                              groupListKey: notifier.groupListKey,
+                              isMultiSelectMode: notifier.isMultiSelectMode,
+                              selectedPieceIds: notifier.selectedPieceIds,
+                              pressedKeys: notifier.pressedKeys,
+                              onPieceSelected: notifier.onPieceSelected,
+                              onReloadData: notifier.reloadData,
+                              onToggleMultiSelectMode:
+                                  notifier.toggleMultiSelectMode,
+                              onGroupSelected: notifier.onGroupSelected,
+                              searchQuery: notifier.searchQuery,
+                              filterOptions: notifier.filterOptions,
+                              sortOption: notifier.sortOption,
+                              getFilteredPiecesForGroup:
+                                  notifier.getFilteredPiecesForGroup,
+                            );
                           },
                         ),
                         bottomNavigationBar: notifier.isMultiSelectMode
@@ -225,28 +239,47 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                                 onDeleteSelectedPieces: () {
                                   LibraryActions(
                                     repository: MusicPieceRepository(),
-                                    onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
-                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                                  ).deleteSelectedPieces(context, notifier.selectedPieceIds);
+                                    onReloadMusicPieces: notifier
+                                        .reloadData, // CHANGED from loadMusicPieces
+                                    onToggleMultiSelectMode:
+                                        notifier.toggleMultiSelectMode,
+                                    allMusicPieces:
+                                        notifier.allMusicPiecesNotifier.value,
+                                  ).deleteSelectedPieces(
+                                    context,
+                                    notifier.selectedPieceIds,
+                                  );
                                 },
                                 onDuplicateSelectedPiece: () {
                                   LibraryActions(
                                     repository: MusicPieceRepository(),
                                     onReloadMusicPieces: notifier.reloadData,
-                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                                  ).duplicateSelectedPiece(context, notifier.selectedPieceIds);
+                                    onToggleMultiSelectMode:
+                                        notifier.toggleMultiSelectMode,
+                                    allMusicPieces:
+                                        notifier.allMusicPiecesNotifier.value,
+                                  ).duplicateSelectedPiece(
+                                    context,
+                                    notifier.selectedPieceIds,
+                                  );
                                 },
                                 onModifyGroupOfSelectedPieces: () {
                                   LibraryActions(
                                     repository: MusicPieceRepository(),
-                                    onReloadMusicPieces: notifier.reloadData, // CHANGED from loadMusicPieces
-                                    onToggleMultiSelectMode: notifier.toggleMultiSelectMode,
-                                    allMusicPieces: notifier.allMusicPiecesNotifier.value,
-                                  ).modifyGroupOfSelectedPieces(context, notifier.selectedPieceIds, notifier.groupsNotifier.value);
+                                    onReloadMusicPieces: notifier
+                                        .reloadData, // CHANGED from loadMusicPieces
+                                    onToggleMultiSelectMode:
+                                        notifier.toggleMultiSelectMode,
+                                    allMusicPieces:
+                                        notifier.allMusicPiecesNotifier.value,
+                                  ).modifyGroupOfSelectedPieces(
+                                    context,
+                                    notifier.selectedPieceIds,
+                                    notifier.groupsNotifier.value,
+                                  );
                                 },
-                                isSelectionEmpty: notifier.selectedPieceIds.isEmpty,
+                                isSelectionEmpty:
+                                    notifier.selectedPieceIds.isEmpty,
                                 selectedCount: notifier.selectedPieceIds.length,
                               )
                             : null,
@@ -254,9 +287,16 @@ class _LibraryScreenState extends State<LibraryScreen> with WidgetsBindingObserv
                             ? null
                             : FloatingActionButton(
                                 onPressed: () async {
-                                  final result = await Navigator.of(context).push<bool?>(
-                                    MaterialPageRoute(builder: (context) => AddEditPieceScreen(selectedGroupId: notifier.selectedGroupId)),
-                                  );
+                                  final result = await Navigator.of(context)
+                                      .push<bool?>(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              AddEditPieceScreen(
+                                                selectedGroupId:
+                                                    notifier.selectedGroupId,
+                                              ),
+                                        ),
+                                      );
                                   if (result == true) {
                                     await notifier.reloadData();
                                   }

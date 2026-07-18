@@ -16,9 +16,12 @@ class AddEditPieceMediaManager {
     required this.onMediaItemsChanged,
   });
 
-  Future<void> pickFile(MediaType type, List<MediaItem> currentMediaItems) async {
+  Future<void> pickFile(
+    MediaType type,
+    List<MediaItem> currentMediaItems,
+  ) async {
     FilePickerResult? result;
-    
+
     switch (type) {
       case MediaType.image:
       case MediaType.thumbnails:
@@ -26,14 +29,22 @@ class AddEditPieceMediaManager {
         break;
       case MediaType.pdf:
         result = await FilePicker.platform.pickFiles(
-          type: FileType.custom, 
-          allowedExtensions: ['pdf']
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
         );
         break;
       case MediaType.audio:
         result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
-          allowedExtensions: ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'mid', 'midi'],
+          allowedExtensions: [
+            'mp3',
+            'wav',
+            'm4a',
+            'flac',
+            'ogg',
+            'mid',
+            'midi',
+          ],
         );
         break;
       case MediaType.localVideo:
@@ -50,13 +61,13 @@ class AddEditPieceMediaManager {
         break;
       case MediaType.markdown:
         result = await FilePicker.platform.pickFiles(
-          type: FileType.custom, 
-          allowedExtensions: ['md', 'txt']
+          type: FileType.custom,
+          allowedExtensions: ['md', 'txt'],
         );
         break;
       case MediaType.mediaLink:
       case MediaType.learningProgress: // Handled separately
-        return; 
+        return;
     }
 
     if (result != null && result.files.single.path != null) {
@@ -70,18 +81,16 @@ class AddEditPieceMediaManager {
         }
 
         final newPath = await MediaStorageManager.copyMediaToLocal(
-          result.files.single.path!, 
-          musicPieceId, 
-          finalType
+          result.files.single.path!,
+          musicPieceId,
+          finalType,
         );
-        
+
         final newMediaItems = List<MediaItem>.from(currentMediaItems);
-        newMediaItems.add(MediaItem(
-          id: const Uuid().v4(),
-          type: finalType,
-          pathOrUrl: newPath,
-        ));
-        
+        newMediaItems.add(
+          MediaItem(id: const Uuid().v4(), type: finalType, pathOrUrl: newPath),
+        );
+
         onMediaItemsChanged(newMediaItems);
       } catch (e) {
         AppLogger.log('Error copying file: $e');
@@ -90,22 +99,31 @@ class AddEditPieceMediaManager {
     }
   }
 
-  void addMediaItem(MediaType type, List<MediaItem> currentMediaItems, {String? configData}) {
+  void addMediaItem(
+    MediaType type,
+    List<MediaItem> currentMediaItems, {
+    String? configData,
+    String? defaultTitle,
+  }) {
     final newMediaItems = List<MediaItem>.from(currentMediaItems);
     if (type == MediaType.mediaLink || type == MediaType.markdown) {
-      newMediaItems.add(MediaItem(
-        id: const Uuid().v4(),
-        type: type,
-        pathOrUrl: '',
-      ));
+      newMediaItems.add(
+        MediaItem(id: const Uuid().v4(), type: type, pathOrUrl: ''),
+      );
       onMediaItemsChanged(newMediaItems);
     } else if (type == MediaType.learningProgress) {
-      newMediaItems.add(MediaItem(
-        id: const Uuid().v4(),
-        type: type,
-        pathOrUrl: configData ?? LearningProgressConfig.encode(LearningProgressConfig(type: LearningProgressType.percentage)),
-        title: 'Learning Progress',
-      ));
+      newMediaItems.add(
+        MediaItem(
+          id: const Uuid().v4(),
+          type: type,
+          pathOrUrl:
+              configData ??
+              LearningProgressConfig.encode(
+                LearningProgressConfig(type: LearningProgressType.percentage),
+              ),
+          title: defaultTitle,
+        ),
+      );
       onMediaItemsChanged(newMediaItems);
     } else {
       pickFile(type, newMediaItems);
@@ -114,17 +132,22 @@ class AddEditPieceMediaManager {
 
   void updateMediaItem(MediaItem newItem, List<MediaItem> currentMediaItems) {
     final updatedMediaItems = List<MediaItem>.from(currentMediaItems);
-    final index = updatedMediaItems.indexWhere((element) => element.id == newItem.id);
+    final index = updatedMediaItems.indexWhere(
+      (element) => element.id == newItem.id,
+    );
     if (index != -1) {
       updatedMediaItems[index] = newItem;
       onMediaItemsChanged(updatedMediaItems);
     }
   }
 
-  Future<void> deleteMediaItem(MediaItem item, List<MediaItem> currentMediaItems) async {
+  Future<void> deleteMediaItem(
+    MediaItem item,
+    List<MediaItem> currentMediaItems,
+  ) async {
     await MediaStorageManager.deleteLocalMediaFile(item.pathOrUrl);
     final updatedMediaItems = List<MediaItem>.from(currentMediaItems);
     updatedMediaItems.remove(item);
     onMediaItemsChanged(updatedMediaItems);
   }
-} 
+}
