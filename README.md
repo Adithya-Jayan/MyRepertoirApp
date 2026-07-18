@@ -143,16 +143,19 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) before getting starte
 2. Choose the project variant to run:
    * **F-Droid Build (FOSS)**:
      ```sh
+     flutter pub get
      cd app_fdroid
      flutter pub get
      flutter run
      ```
    * **Play Store Build (Google Play)**:
      ```sh
+     flutter pub get
      cd app_playstore
      flutter pub get
      flutter run
      ```
+     *(Note: Because of our flavor setup, dependencies must be fetched in both the root directory and the specific variant directory).*
 
 **Prerequisites:** Ensure you have the Flutter SDK installed. See the [official Flutter installation guide](https://flutter.dev/docs/get-started/install).
 
