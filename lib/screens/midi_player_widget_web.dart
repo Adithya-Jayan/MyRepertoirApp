@@ -3,6 +3,8 @@ import '../models/music_piece.dart';
 
 import '../models/media_item.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class MidiPlayerWidget extends StatelessWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
@@ -17,7 +19,7 @@ class MidiPlayerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -25,12 +27,14 @@ class MidiPlayerWidget extends StatelessWidget {
             Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
             SizedBox(height: 8),
             Text(
-              'MIDI playback is not supported on Web.',
+              context.l10n.midiPlaybackIsNotSupportedOnWeb,
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'Please use the Android, Windows, or Linux version for MIDI support.',
+              context
+                  .l10n
+                  .pleaseUseTheAndroidWindowsOrLinuxVersionForMidiSupport,
               textAlign: TextAlign.center,
             ),
           ],

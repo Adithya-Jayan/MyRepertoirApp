@@ -11,6 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen for viewing PDF documents with optional auto-scroll and hyperlink support.
 class PdfViewerScreen extends StatefulWidget {
   final String pdfPath;
@@ -26,7 +28,8 @@ class PdfViewerScreen extends StatefulWidget {
   State<PdfViewerScreen> createState() => _PdfViewerScreenState();
 }
 
-class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderStateMixin {
+class _PdfViewerScreenState extends State<PdfViewerScreen>
+    with TickerProviderStateMixin {
   late PdfViewerController _pdfViewerController;
   late Ticker _ticker;
   bool _isAutoScrolling = false;
@@ -48,23 +51,23 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     _pdfViewerController = PdfViewerController();
     _scrollSpeed = widget.config.defaultSpeed;
     _ticker = createTicker(_onTick);
-    
+
     _scrollbarOpacityController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
       value: 0.0, // Initially hidden
     );
-    
+
     _pdfViewerController.addListener(_onTransformationChanged);
     _loadSavedSpeed();
-    
+
     // Show initially, then fade out
     _showScrollbar();
   }
 
   void _showScrollbar() {
     if (_isAutoScrolling) return; // Stay hidden while auto-scrolling
-    
+
     _scrollbarOpacityController.forward();
     _scrollbarHideTimer?.cancel();
     _scrollbarHideTimer = Timer(const Duration(seconds: 2), () {
@@ -92,7 +95,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     try {
       final viewSize = _pdfViewerController.viewSize;
       final docSize = _pdfViewerController.documentSize;
-      if (viewSize.width <= 0 || viewSize.height <= 0 || docSize.width <= 0 || docSize.height <= 0) {
+      if (viewSize.width <= 0 ||
+          viewSize.height <= 0 ||
+          docSize.width <= 0 ||
+          docSize.height <= 0) {
         return;
       }
     } catch (_) {
@@ -119,37 +125,43 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
 
     // 1.0 speed = 40 pixels per second
     final double pixelsPerSecond = _scrollSpeed * 40.0;
-    final double moveAmount = pixelsPerSecond * (updateDelta.inMicroseconds / 1000000.0);
+    final double moveAmount =
+        pixelsPerSecond * (updateDelta.inMicroseconds / 1000000.0);
 
     final Matrix4 matrix = _pdfViewerController.value.clone();
     final Vector3 translation = matrix.getTranslation();
-    
+
     // Note: PDF layouts scroll down, reducing Y translation
     final double newY = translation.y - moveAmount;
-    
+
     // Boundary check using document size
     final double viewerHeight = _pdfViewerController.viewSize.height;
     final double totalHeight = _pdfViewerController.documentSize.height;
     final double scale = matrix.getMaxScaleOnAxis();
 
     if (scale <= 0 || scale.isNaN || scale.isInfinite) return;
-    
-    final double maxScroll = math.max(0.0, (totalHeight * scale) - viewerHeight);
-    
+
+    final double maxScroll = math.max(
+      0.0,
+      (totalHeight * scale) - viewerHeight,
+    );
+
     if (-newY >= maxScroll - 5) {
       _toggleAutoScroll(false);
       matrix.setTranslationRaw(translation.x, -maxScroll, 0);
     } else {
       matrix.setTranslationRaw(translation.x, newY, 0);
     }
-    
+
     _pdfViewerController.value = matrix;
   }
 
   Future<void> _loadSavedSpeed() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedSpeed = prefs.getDouble('pdf_scroll_speed_${widget.pdfPath.hashCode}');
+      final savedSpeed = prefs.getDouble(
+        'pdf_scroll_speed_${widget.pdfPath.hashCode}',
+      );
       if (savedSpeed != null && mounted) {
         setState(() {
           _scrollSpeed = savedSpeed;
@@ -163,7 +175,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   Future<void> _saveSpeed(double speed) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('pdf_scroll_speed_${widget.pdfPath.hashCode}', speed);
+      await prefs.setDouble(
+        'pdf_scroll_speed_${widget.pdfPath.hashCode}',
+        speed,
+      );
     } catch (e) {
       AppLogger.log('Error saving PDF speed: $e');
     }
@@ -196,12 +211,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   void _updateZoom(double factor) {
     if (!_pdfViewerController.isReady) return;
     final double currentScale = _pdfViewerController.currentZoom;
-    final double newScale = (currentScale * factor).clamp(_pdfViewerController.minScale, 4.0);
-    
-    _pdfViewerController.setZoom(
-      _pdfViewerController.centerPosition,
-      newScale,
+    final double newScale = (currentScale * factor).clamp(
+      _pdfViewerController.minScale,
+      4.0,
     );
+
+    _pdfViewerController.setZoom(_pdfViewerController.centerPosition, newScale);
   }
 
   void _resetZoom() {
@@ -213,7 +228,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     if (!_pdfViewerController.isReady) return;
     final currentZoom = _pdfViewerController.currentZoom;
     final minZoom = _pdfViewerController.minScale;
-    
+
     // Zoom out to fit page width if we are currently zoomed in
     if (currentZoom > minZoom + 0.01) {
       _pdfViewerController.setZoom(
@@ -230,23 +245,29 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
   }
 
   Future<void> _jumpToPage(int pageNumber) async {
-    if (!_pdfViewerController.isReady || pageNumber < 1 || pageNumber > _pdfViewerController.pageCount) return;
+    if (!_pdfViewerController.isReady ||
+        pageNumber < 1 ||
+        pageNumber > _pdfViewerController.pageCount) {
+      return;
+    }
     await _pdfViewerController.goToPage(pageNumber: pageNumber);
   }
 
   void _showJumpToPageDialog() {
     if (!_pdfViewerController.isReady || _document == null) return;
-    final TextEditingController controller = TextEditingController(text: _currentPage.toString());
+    final TextEditingController controller = TextEditingController(
+      text: _currentPage.toString(),
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Go to Page'),
+        title: Text(context.l10n.goToPage),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'Enter page number (1-${_document!.pages.length})',
+            hintText: context.l10n.pageNumberHint(_document!.pages.length),
           ),
           onSubmitted: (value) {
             final page = int.tryParse(value);
@@ -259,7 +280,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -269,7 +290,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                 Navigator.pop(context);
               }
             },
-            child: const Text('Go'),
+            child: Text(context.l10n.go),
           ),
         ],
       ),
@@ -322,34 +343,38 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: const Text('PDF Viewer'),
+        title: Text(context.l10n.pdfViewer),
         actions: [
           IconButton(
             icon: const Icon(Icons.zoom_out),
             onPressed: () => _updateZoom(0.8),
-            tooltip: 'Zoom Out',
+            tooltip: context.l10n.zoomOut,
           ),
           IconButton(
             icon: const Icon(Icons.zoom_in),
             onPressed: () => _updateZoom(1.2),
-            tooltip: 'Zoom In',
+            tooltip: context.l10n.zoomIn,
           ),
           IconButton(
             icon: const Icon(Icons.settings_backup_restore),
             onPressed: _resetZoom,
-            tooltip: 'Reset Zoom',
+            tooltip: context.l10n.resetZoom,
           ),
           if (widget.config.autoScrollEnabled && !_showControls)
             IconButton(
               icon: Icon(_isAutoScrolling ? Icons.pause : Icons.play_arrow),
               onPressed: () => _toggleAutoScroll(!_isAutoScrolling),
-              tooltip: _isAutoScrolling ? 'Pause' : 'Play',
+              tooltip: _isAutoScrolling
+                  ? context.l10n.pause
+                  : context.l10n.play,
             ),
           if (widget.config.autoScrollEnabled)
             IconButton(
-              icon: Icon(_showControls ? Icons.visibility : Icons.visibility_off),
+              icon: Icon(
+                _showControls ? Icons.visibility : Icons.visibility_off,
+              ),
               onPressed: () => setState(() => _showControls = !_showControls),
-              tooltip: 'Toggle Controls',
+              tooltip: context.l10n.toggleControls,
             ),
         ],
       ),
@@ -370,9 +395,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
               onPointerSignal: (pointerSignal) {
                 _showScrollbar();
                 if (pointerSignal is PointerScrollEvent) {
-                  final isControlPressed = HardwareKeyboard.instance.isControlPressed;
+                  final isControlPressed =
+                      HardwareKeyboard.instance.isControlPressed;
                   if (isControlPressed) {
-                    final zoomDelta = pointerSignal.scrollDelta.dy > 0 ? 0.9 : 1.1;
+                    final zoomDelta = pointerSignal.scrollDelta.dy > 0
+                        ? 0.9
+                        : 1.1;
                     _updateZoom(zoomDelta);
                   }
                 }
@@ -414,9 +442,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
               ),
             ),
           ),
-          
-          if (!_isLoaded)
-            const Center(child: CircularProgressIndicator()),
+
+          if (!_isLoaded) const Center(child: CircularProgressIndicator()),
 
           // Scrollbar implementation
           if (_isLoaded && _document != null)
@@ -457,11 +484,19 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                         }
 
                         final double viewerHeight = constraints.maxHeight;
-                        if (totalHeight <= viewerHeight) return const SizedBox.shrink();
+                        if (totalHeight <= viewerHeight) {
+                          return const SizedBox.shrink();
+                        }
 
-                        final double scrollPercentage = (-translation.y / (totalHeight - viewerHeight)).clamp(0.0, 1.0);
-                        final double thumbHeight = math.max(40.0, (viewerHeight / totalHeight) * viewerHeight);
-                        final double thumbTop = scrollPercentage * (viewerHeight - thumbHeight);
+                        final double scrollPercentage =
+                            (-translation.y / (totalHeight - viewerHeight))
+                                .clamp(0.0, 1.0);
+                        final double thumbHeight = math.max(
+                          40.0,
+                          (viewerHeight / totalHeight) * viewerHeight,
+                        );
+                        final double thumbTop =
+                            scrollPercentage * (viewerHeight - thumbHeight);
 
                         return Stack(
                           children: [
@@ -472,7 +507,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                                 width: 8,
                                 height: thumbHeight,
                                 decoration: BoxDecoration(
-                                  color: _isDraggingScrollbar ? Colors.white70 : Colors.white38,
+                                  color: _isDraggingScrollbar
+                                      ? Colors.white70
+                                      : Colors.white38,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -486,7 +523,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
               ),
             ),
 
-          if (_showControls && widget.config.autoScrollEnabled && _document != null)
+          if (_showControls &&
+              widget.config.autoScrollEnabled &&
+              _document != null)
             Positioned(
               bottom: 20,
               left: 20,
@@ -501,13 +540,19 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
               child: GestureDetector(
                 onTap: _showJumpToPageDialog,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Text(
-                    '$_currentPage / ${_document!.pages.length}',
+                    context.l10n.pageIndicator(
+                      _currentPage,
+                      _document!.pages.length,
+                    ),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
@@ -529,10 +574,16 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(_isAutoScrolling ? Icons.pause : Icons.play_arrow, color: Colors.white),
+              icon: Icon(
+                _isAutoScrolling ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+              ),
               onPressed: () => _toggleAutoScroll(!_isAutoScrolling),
             ),
-            const Text('Speed:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            Text(
+              context.l10n.speed,
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
             Expanded(
               child: Slider(
                 value: _scrollSpeed,
@@ -557,8 +608,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with TickerProviderSt
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$_currentPage / ${_document!.pages.length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  context.l10n.pageIndicator(
+                    _currentPage,
+                    _document!.pages.length,
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

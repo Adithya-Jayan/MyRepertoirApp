@@ -4,6 +4,8 @@ import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/screens/music_piece_grid_view.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LibraryBody extends StatefulWidget {
   final List<Group> visibleGroups;
   final String? selectedGroupId;
@@ -52,7 +54,8 @@ class LibraryBody extends StatefulWidget {
   State<LibraryBody> createState() => _LibraryBodyState();
 }
 
-class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin {
+class _LibraryBodyState extends State<LibraryBody>
+    with TickerProviderStateMixin {
   TabController? _tabController;
 
   @override
@@ -66,7 +69,9 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
 
     int initialIndex = 0;
     if (widget.selectedGroupId != null) {
-      initialIndex = widget.visibleGroups.indexWhere((g) => g.id == widget.selectedGroupId);
+      initialIndex = widget.visibleGroups.indexWhere(
+        (g) => g.id == widget.selectedGroupId,
+      );
       if (initialIndex == -1) initialIndex = 0;
     }
 
@@ -77,7 +82,7 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
     );
     _tabController!.addListener(_onTabChanged);
 
-    // Ensure the notifier is in sync with the actual initial tab, 
+    // Ensure the notifier is in sync with the actual initial tab,
     // especially if we fell back to index 0 because the selected group became hidden.
     final actualInitialGroupId = widget.visibleGroups[initialIndex].id;
     if (widget.selectedGroupId != actualInitialGroupId) {
@@ -90,9 +95,12 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
   @override
   void didUpdateWidget(LibraryBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    bool groupsChanged = oldWidget.visibleGroups.length != widget.visibleGroups.length ||
-        !oldWidget.visibleGroups.every((g) => widget.visibleGroups.any((ng) => ng.id == g.id));
+
+    bool groupsChanged =
+        oldWidget.visibleGroups.length != widget.visibleGroups.length ||
+        !oldWidget.visibleGroups.every(
+          (g) => widget.visibleGroups.any((ng) => ng.id == g.id),
+        );
 
     if (groupsChanged) {
       final oldController = _tabController;
@@ -103,9 +111,14 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
           oldController.dispose();
         });
       }
-    } else if (widget.selectedGroupId != oldWidget.selectedGroupId && widget.selectedGroupId != null) {
-      final index = widget.visibleGroups.indexWhere((g) => g.id == widget.selectedGroupId);
-      if (index != -1 && _tabController != null && _tabController!.index != index) {
+    } else if (widget.selectedGroupId != oldWidget.selectedGroupId &&
+        widget.selectedGroupId != null) {
+      final index = widget.visibleGroups.indexWhere(
+        (g) => g.id == widget.selectedGroupId,
+      );
+      if (index != -1 &&
+          _tabController != null &&
+          _tabController!.index != index) {
         _tabController!.animateTo(index);
       }
     }
@@ -113,9 +126,10 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
 
   void _onTabChanged() {
     if (_tabController == null || !_tabController!.indexIsChanging) return;
-    
+
     final newIndex = _tabController!.index;
-    if (widget.visibleGroups.isNotEmpty && newIndex < widget.visibleGroups.length) {
+    if (widget.visibleGroups.isNotEmpty &&
+        newIndex < widget.visibleGroups.length) {
       final newGroupId = widget.visibleGroups[newIndex].id;
       if (widget.selectedGroupId != newGroupId) {
         widget.onGroupSelected(newGroupId);
@@ -150,7 +164,9 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
               ),
             ),
             child: TabBar(
-              key: ValueKey('tabbar_${widget.visibleGroups.length}'), // Force rebuild when count changes
+              key: ValueKey(
+                'tabbar_${widget.visibleGroups.length}',
+              ), // Force rebuild when count changes
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
@@ -158,61 +174,75 @@ class _LibraryBodyState extends State<LibraryBody> with TickerProviderStateMixin
               indicatorColor: theme.colorScheme.primary,
               labelColor: theme.colorScheme.primary,
               unselectedLabelColor: theme.colorScheme.onSurface.withAlpha(179),
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 14,
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               splashFactory: NoSplash.splashFactory,
               overlayColor: WidgetStateProperty.all(Colors.transparent),
               tabs: widget.visibleGroups.map((group) {
-                final pieceCount = widget.getFilteredPiecesForGroup(group.id).length;
+                final pieceCount = widget
+                    .getFilteredPiecesForGroup(group.id)
+                    .length;
                 return Tab(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Text('${group.name} ($pieceCount)'),
+                    child: Text(
+                      context.l10n.groupPieceCount(
+                        group.localizedName(context.l10n),
+                        pieceCount,
+                      ),
+                    ),
                   ),
                 );
               }).toList(),
             ),
           ),
-          if (_tabController == null)
-            const Expanded(child: Center(child: Text("No visible groups.")))
-          else
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: widget.visibleGroups.map((group) {
-                    if (widget.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (widget.errorMessage != null) {
-                      return Center(child: Text(widget.errorMessage!));
-                    }
+        if (_tabController == null)
+          Expanded(child: Center(child: Text(context.l10n.noVisibleGroups)))
+        else
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: widget.visibleGroups.map((group) {
+                if (widget.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (widget.errorMessage != null) {
+                  return Center(child: Text(widget.errorMessage!));
+                }
 
-                    final filteredAndSortedPieces = widget.getFilteredPiecesForGroup(group.id);
-                    
-                    if (filteredAndSortedPieces.isEmpty) {
-                      return SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.6,
-                        child: const Center(child: Text('This group is empty.')),
-                      );
-                    }
+                final filteredAndSortedPieces = widget
+                    .getFilteredPiecesForGroup(group.id);
 
-                    return MusicPieceGridView(
-                      key: ValueKey('grid_${group.id}_${widget.galleryColumns}'),
-                      musicPieces: filteredAndSortedPieces,
-                      isLoading: widget.isLoading,
-                      errorMessage: widget.errorMessage,
-                      galleryColumns: widget.galleryColumns,
-                      selectedPieceIds: widget.selectedPieceIds,
-                      pressedKeys: widget.pressedKeys,
-                      isMultiSelectMode: widget.isMultiSelectMode,
-                      onPieceSelected: widget.onPieceSelected,
-                      onReloadData: widget.onReloadData,
-                      onToggleMultiSelectMode: widget.onToggleMultiSelectMode,
-                      currentPageGroupId: group.id,
-                    );
-                }).toList(),
-              ),
+                if (filteredAndSortedPieces.isEmpty) {
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(child: Text(context.l10n.thisGroupIsEmpty)),
+                  );
+                }
+
+                return MusicPieceGridView(
+                  key: ValueKey('grid_${group.id}_${widget.galleryColumns}'),
+                  musicPieces: filteredAndSortedPieces,
+                  isLoading: widget.isLoading,
+                  errorMessage: widget.errorMessage,
+                  galleryColumns: widget.galleryColumns,
+                  selectedPieceIds: widget.selectedPieceIds,
+                  pressedKeys: widget.pressedKeys,
+                  isMultiSelectMode: widget.isMultiSelectMode,
+                  onPieceSelected: widget.onPieceSelected,
+                  onReloadData: widget.onReloadData,
+                  onToggleMultiSelectMode: widget.onToggleMultiSelectMode,
+                  currentPageGroupId: group.id,
+                );
+              }).toList(),
             ),
+          ),
       ],
     );
   }

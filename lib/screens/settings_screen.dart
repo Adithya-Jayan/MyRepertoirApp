@@ -11,6 +11,8 @@ import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/screens/functionality_settings_screen.dart';
 import 'package:repertoire/screens/personalization_settings_screen.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen that displays various settings options for the application.
 ///
 /// This screen provides navigation to different sub-settings screens like
@@ -37,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     AppLogger.log('SettingsScreen: build called');
     final theme = Theme.of(context);
-    
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -45,76 +47,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.of(context).pop(_changesMade);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Settings'),
-        ),
+        appBar: AppBar(title: Text(context.l10n.settings)),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             children: [
-              _buildCategoryHeader(theme, 'Content & Display', Icons.dashboard_customize_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.contentAndDisplay,
+                Icons.dashboard_customize_outlined,
+              ),
               _buildSettingsCard([
                 _buildSettingsTile(
                   context,
                   icon: Icons.folder_open,
-                  title: 'Groups',
-                  subtitle: 'Manage and reorder groups',
+                  title: context.l10n.groups,
+                  subtitle: context.l10n.manageAndReorderGroups,
                   onTap: () async {
-                    final bool? changes = await Navigator.of(context).push<bool?>(
-                      MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
-                    );
+                    final bool? changes = await Navigator.of(context)
+                        .push<bool?>(
+                          MaterialPageRoute(
+                            builder: (context) => const GroupManagementScreen(),
+                          ),
+                        );
                     if (changes == true) _markChanges();
                   },
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.label_outline,
-                  title: 'Tagging',
-                  subtitle: 'Bulk edit tag groups and colors',
+                  title: context.l10n.tagging,
+                  subtitle: context.l10n.bulkEditTagGroupsAndColors,
                   onTap: () async {
-                    final bool? changes = await Navigator.of(context).push<bool?>(
-                      MaterialPageRoute(builder: (context) => const TagGroupManagementScreen()),
-                    );
+                    final bool? changes = await Navigator.of(context)
+                        .push<bool?>(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const TagGroupManagementScreen(),
+                          ),
+                        );
                     if (changes == true) _markChanges();
                   },
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.palette_outlined,
-                  title: 'Personalization',
-                  subtitle: 'Theme, colors, and layout',
+                  title: context.l10n.personalization,
+                  subtitle: context.l10n.themeColorsAndLayout,
                   onTap: () async {
-                    final bool? changes = await Navigator.of(context).push<bool?>(
-                      MaterialPageRoute(builder: (context) => const PersonalizationSettingsScreen()),
-                    );
+                    final bool? changes = await Navigator.of(context)
+                        .push<bool?>(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const PersonalizationSettingsScreen(),
+                          ),
+                        );
                     if (changes == true) _markChanges();
                   },
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.tune_outlined,
-                  title: 'Functionality',
-                  subtitle: 'Practice stages and statistics',
+                  title: context.l10n.functionality,
+                  subtitle: context.l10n.practiceStagesAndStatistics,
                   onTap: () async {
-                    final bool? changes = await Navigator.of(context).push<bool?>(
-                      MaterialPageRoute(builder: (context) => const FunctionalitySettingsScreen()),
-                    );
+                    final bool? changes = await Navigator.of(context)
+                        .push<bool?>(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const FunctionalitySettingsScreen(),
+                          ),
+                        );
                     if (changes == true) _markChanges();
                   },
                 ),
               ]),
 
               const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'System & Maintenance', Icons.settings_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.systemAndMaintenance,
+                Icons.settings_outlined,
+              ),
               _buildSettingsCard([
                 _buildSettingsTile(
                   context,
                   icon: Icons.backup_outlined,
-                  title: 'Backup & Restore',
-                  subtitle: 'Protect and sync your data',
+                  title: context.l10n.backupAndRestore,
+                  subtitle: context.l10n.protectAndSyncYourData,
                   onTap: () async {
                     final bool? changes = await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const BackupRestoreScreen(),
+                      ),
                     );
                     if (changes == true) _markChanges();
                   },
@@ -122,36 +150,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSettingsTile(
                   context,
                   icon: Icons.settings_applications_outlined,
-                  title: 'Advanced Settings',
-                  subtitle: 'Logging and developer options',
+                  title: context.l10n.advancedSettings,
+                  subtitle: context.l10n.loggingAndDeveloperOptions,
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AdvancedSettingsScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const AdvancedSettingsScreen(),
+                      ),
                     );
                   },
                 ),
               ]),
 
               const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'Information', Icons.info_outline),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.information,
+                Icons.info_outline,
+              ),
               _buildSettingsCard([
                 _buildSettingsTile(
                   context,
                   icon: Icons.info_outlined,
-                  title: 'About',
-                  subtitle: 'Version and contributor info',
+                  title: context.l10n.about,
+                  subtitle: context.l10n.versionAndContributorInfo,
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.help_outline,
-                  title: 'Help',
-                  subtitle: 'Guides and troubleshooting',
+                  title: context.l10n.help,
+                  subtitle: context.l10n.guidesAndTroubleshooting,
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpScreen(),
+                      ),
+                    );
                   },
                 ),
               ]),
@@ -197,12 +241,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(children: children),
     );
   }
 
-  Widget _buildSettingsTile(BuildContext context, {
+  Widget _buildSettingsTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,

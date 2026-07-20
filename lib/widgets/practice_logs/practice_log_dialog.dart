@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import 'package:repertoire/l10n/l10n.dart';
 
 /// A dialog for adding or editing practice logs.
 class PracticeLogDialog extends StatefulWidget {
@@ -89,26 +92,34 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialTimestamp != null;
-    
+
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Practice Session' : 'Add Practice Session'),
+      title: Text(
+        isEditing
+            ? context.l10n.editPracticeSession
+            : context.l10n.addPracticeSession,
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.schedule),
-              title: const Text('Date & Time'),
-              subtitle: Text(_selectedDateTime.toString().split('.')[0]),
+              title: Text(context.l10n.dateAndTime),
+              subtitle: Text(
+                DateFormat.yMd(
+                  context.l10n.localeName,
+                ).add_jm().format(_selectedDateTime),
+              ),
               onTap: _selectDateTime,
             ),
             if (widget.showTimeStats) ...[
               const SizedBox(height: 16),
               TextField(
                 controller: _durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Duration (minutes)',
-                  hintText: 'e.g., 30',
+                decoration: InputDecoration(
+                  labelText: context.l10n.durationMinutesLabel,
+                  hintText: context.l10n.eG30,
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
@@ -118,9 +129,10 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
-                  hintText: 'e.g., Worked on dynamics, focused on difficult passages',
+                decoration: InputDecoration(
+                  labelText: context.l10n.notesOptional,
+                  hintText:
+                      context.l10n.eGWorkedOnDynamicsFocusedOnDifficultPassages,
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -132,7 +144,7 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         ElevatedButton(
           onPressed: () {
@@ -140,12 +152,14 @@ class _PracticeLogDialogState extends State<PracticeLogDialog> {
             Navigator.of(context).pop({
               'timestamp': _selectedDateTime,
               'durationMinutes': durationMinutes,
-              'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+              'notes': _notesController.text.trim().isEmpty
+                  ? null
+                  : _notesController.text.trim(),
             });
           },
-          child: Text(isEditing ? 'Update' : 'Add'),
+          child: Text(isEditing ? context.l10n.update : context.l10n.add),
         ),
       ],
     );
   }
-} 
+}

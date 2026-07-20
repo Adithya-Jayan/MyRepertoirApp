@@ -1,0 +1,1408 @@
+{
+  "@@locale": "en",
+  "aLongWhile": "A long while",
+  "about": "About",
+  "accentColor": "Accent Color",
+  "add": "Add",
+  "addBookmark": "Add Bookmark",
+  "addNewGroup": "Add New Group",
+  "addPiece": "Add Piece",
+  "addPracticeSession": "Add Practice Session",
+  "addStage": "Add Stage",
+  "addTag": "Add tag",
+  "addTagGroup": "Add Tag Group",
+  "addToRepertoire": "Add to Repertoire",
+  "adithyaJayan": "Adithya Jayan",
+  "adithyajayanInMyrepertoirapp": "adithyajayan.in/MyRepertoirApp/",
+  "advancedSettings": "Advanced Settings",
+  "all": "All",
+  "allPieces": "All Pieces",
+  "allowAddingNotesToSessions": "Allow adding notes to sessions",
+  "alphabetical": "Alphabetical",
+  "anyTime": "Any Time",
+  "apache20": "Apache 2.0",
+  "appDocuments": "App Documents",
+  "appInformation": "App Information",
+  "appLanguage": "App Language",
+  "languageName": "English",
+  "appTheme": "App Theme",
+  "appTitle": "Music Repertoire",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "appearanceAnswer": "Go to Settings > Personalization to switch themes, accent colors, and layout options.",
+  "appearanceQuestion": "How do I change the app's appearance?",
+  "apply": "Apply",
+  "applyAndClose": "Apply & Close",
+  "applyFilters": "Apply Filters",
+  "areYouSureYouWantToDeleteTheDebugLogFile": "Are you sure you want to delete the debug log file?",
+  "areYouSureYouWantToDeleteThisMusicPiece": "Are you sure you want to delete this music piece?",
+  "areYouSureYouWantToDeleteThisPracticeSessionThisAction": "Are you sure you want to delete this practice session? This action cannot be undone.",
+  "artistComposer": "Artist / Composer",
+  "associatedTags": "Associated Tags:",
+  "audio": "Audio",
+  "audioFile": "Audio File",
+  "audioFileDoesNotExist": "Audio file does not exist",
+  "audioMidi": "Audio/MIDI",
+  "audioNotLoadedYetPleaseWait": "Audio not loaded yet. Please wait.",
+  "autoBackupCompletedSuccessfully": "Auto-backup completed successfully!",
+  "autoBackupFailed": "Auto-backup failed: {error}",
+  "@autoBackupFailed": {
+    "description": "Localized message for autoBackupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "autoBackupFailedStoragePathNotConfigured": "Auto-backup failed: Storage path not configured.",
+  "autoBackupStartingInAFewSeconds": "Auto-backup starting in a few seconds...",
+  "autoScrollEnabled": "Auto Scroll Enabled",
+  "automaticBackupFoundMessage": "An automatic backup was found in the selected storage folder. Would you like to restore it?\n\nNote: This will replace any template data created during installation.",
+  "@automaticBackupFoundMessage": {
+    "description": "Explanation shown when an automatic backup is discovered during setup."
+  },
+  "automaticBackups": "Automatic Backups",
+  "automaticallyCreateBackupsAtRegularIntervals": "Automatically create backups at regular intervals",
+  "averageTime": "Average Time",
+  "back1sHoldForFrameSkip": "Back 1s (Hold for frame skip)",
+  "back5s": "Back 5s",
+  "backingUpData": "Backing up data...",
+  "backupAndRestore": "Backup & Restore",
+  "backupAnswer": "Yes, visit Settings > Backup & Restore to perform manual or automatic local backups.",
+  "backupCancelled": "Backup cancelled.",
+  "backupFailed": "Backup failed: {error}",
+  "@backupFailed": {
+    "description": "Localized message for backupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailedStoragePathNotConfigured": "Backup failed: Storage path not configured.",
+  "backupFrequencyDays": "Backup Frequency (days)",
+  "backupQuestion": "Is there a way to backup my data?",
+  "backupRestoredSuccessfully": "Backup restored successfully.",
+  "basicDetails": "Basic Details",
+  "beenAWhile": "Been a while",
+  "beenTooLong": "Been too long",
+  "blank": "Blank",
+  "bookmarkDefaultName": "Bookmark {number}",
+  "@bookmarkDefaultName": {
+    "description": "Localized message for bookmarkDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "bookmarkDeleted": "{bookmarkName} deleted",
+  "@bookmarkDeleted": {
+    "description": "Localized message for bookmarkDeleted.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarkDismissed": "{bookmarkName} dismissed",
+  "@bookmarkDismissed": {
+    "description": "Localized message for bookmarkDismissed.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarks": "Bookmarks",
+  "browseAndManageInternalAppFiles": "Browse and manage internal app files",
+  "browserDownloads": "Browser Downloads",
+  "bulkEditTagGroupsAndColors": "Bulk edit tag groups and colors",
+  "cancel": "Cancel",
+  "captureTechnicalLogsForTroubleshooting": "Capture technical logs for troubleshooting",
+  "changeColor": "Change Color",
+  "changeImage": "Change Image",
+  "changeStorageFolder": "Change Storage Folder",
+  "channelDefaultName": "Channel {number}",
+  "@channelDefaultName": {
+    "description": "Localized message for channelDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "checkForUpdatesNow": "Check for Updates Now",
+  "checkGithubForAppUpdates": "Check GitHub for app updates",
+  "chooseGroupColor": "Choose Group Color",
+  "chooseYourAccentColor": "Choose your accent color:",
+  "classification": "Classification",
+  "cleanup": "Cleanup",
+  "cleanupPartialMessage": "Deleted {deletedCount, plural, =1{1 file} other{{deletedCount} files}} but encountered {errorCount, plural, =1{1 error} other{{errorCount} errors}}.",
+  "@cleanupPartialMessage": {
+    "description": "Localized message for cleanupPartialMessage.",
+    "placeholders": {
+      "deletedCount": {
+        "type": "int"
+      },
+      "errorCount": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupSuccessMessage": "Successfully deleted {count, plural, =1{1 unused file} other{{count} unused files}} ({size} freed).",
+  "@cleanupSuccessMessage": {
+    "description": "Localized message for cleanupSuccessMessage.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupSummary": "Cleanup Summary",
+  "clearAll": "Clear All",
+  "clearFilter": "Clear Filter",
+  "close": "Close",
+  "color": "Color",
+  "columns": "Columns",
+  "count": "Count",
+  "configureAutoScroll": "Configure Auto Scroll",
+  "configureLearningProgress": "Configure Learning Progress",
+  "configureMidiTracks": "Configure MIDI Tracks",
+  "configurePdfViewer": "Configure PDF Viewer",
+  "configureProgressBar": "Configure Progress Bar",
+  "confirmRestore": "Confirm Restore",
+  "confirmRestoreMessage": "Are you sure you want to restore from this backup? This will replace all your current data.",
+  "@confirmRestoreMessage": {
+    "description": "Localized message for confirmRestoreMessage."
+  },
+  "contentAndDisplay": "Content & Display",
+  "contributionCount": "{count, plural, =1{1 contribution} other{{count} contributions}}",
+  "@contributionCount": {
+    "description": "Localized message for contributionCount.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contributors": "Contributors",
+  "coral": "Coral",
+  "couldNotOpenLogFile": "Could not open log file",
+  "countProgress": "Count: {current} / {max}",
+  "@countProgress": {
+    "description": "Localized message for countProgress.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "create": "Create",
+  "createABackupOfAllYourData": "Create a backup of all your data",
+  "createLocalBackup": "Create Local Backup",
+  "createNewPiece": "Create New Piece",
+  "createdAt": "Created: {date}",
+  "@createdAt": {
+    "description": "Localized message for createdAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creatingAutoBackup": "Creating auto-backup...",
+  "credits": "Credits",
+  "currentStage": "Current Stage: {stage}",
+  "@currentStage": {
+    "description": "Localized message for currentStage.",
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "customCategoriesAnswer": "Yes, navigate to Settings > Groups to create and manage custom groups for your pieces.",
+  "customCategoriesQuestion": "Can I organize my music into custom categories?",
+  "customColor": "Custom Color",
+  "dark": "Dark",
+  "dataBackedUpSuccessfully": "Data backed up successfully!",
+  "dataManagement": "Data Management",
+  "dataRestoredSuccessfully": "Data restored successfully!",
+  "dateAndTime": "Date & Time",
+  "daysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@daysAgo": {
+    "description": "Localized message for daysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultColor": "Default",
+  "delete": "Delete",
+  "deleteBookmark": "Delete bookmark",
+  "deleteConfirmation": "Delete Confirmation",
+  "deleteFileItemsConfirmation": "Are you sure you want to delete {count, plural, =1{1 item} other{{count} items}}? This might break links in your music pieces.",
+  "@deleteFileItemsConfirmation": {
+    "description": "Localized message for deleteFileItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFiles": "Delete Files",
+  "deleteGroup": "Delete Group",
+  "deleteGroupConfirmation": "Are you sure you want to delete the group \"{groupName}\"?",
+  "@deleteGroupConfirmation": {
+    "description": "Localized message for deleteGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGroupWithItemsConfirmation": "Are you sure you want to delete the group \"{groupName}\"?\n\nThis group contains {count, plural, =1{1 item} other{{count} items}}. Music pieces associated ONLY with this group will be moved to the \"Ungrouped\" group.",
+  "@deleteGroupWithItemsConfirmation": {
+    "description": "Localized message for deleteGroupWithItemsConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteItem": "Delete Item",
+  "deleteItems": "Delete Items?",
+  "deleteLogFile": "Delete Log File?",
+  "deleteLogs": "Delete Logs",
+  "deleteLogs2": "Delete Logs?",
+  "deleteMediaItem": "Delete media item",
+  "deleteMusicPiece": "Delete Music Piece",
+  "deleteNamedItem": "Delete \"{name}\"",
+  "@deleteNamedItem": {
+    "description": "Localized message for deleteNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePracticeSession": "Delete Practice Session",
+  "deleteSelectedItemsConfirmation": "Are you sure you want to delete {count, plural, =1{1 selected item} other{{count} selected items}}?",
+  "@deleteSelectedItemsConfirmation": {
+    "description": "Localized message for deleteSelectedItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTag": "Delete Tag",
+  "deleteTagGroup": "Delete Tag Group",
+  "deleteTagGroup2": "Delete tag group",
+  "deleteTagGroupConfirmation": "Are you sure you want to delete the tag group \"{groupName}\" and remove it from all pieces?",
+  "@deleteTagGroupConfirmation": {
+    "description": "Localized message for deleteTagGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deny": "Deny",
+  "details": "Details",
+  "developedBy": "Developed by",
+  "developerTools": "Developer Tools",
+  "discard": "Discard",
+  "dismiss": "Dismiss",
+  "displayOptions": "Display Options",
+  "doNotShowGroupsWithNoMatchingPieces": "Do not show groups with no matching pieces",
+  "documentsRepertoireApp": "Documents/RepertoireApp",
+  "doubleTapNameToEdit": "(Double tap name to edit)",
+  "duplicate": "Duplicate",
+  "durationHours": "{hours, plural, =1{1 hour} other{{hours} hours}}",
+  "@durationHours": {
+    "description": "Localized message for durationHours.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours, plural, =1{1 hour} other{{hours} hours}} {minutes, plural, =1{1 minute} other{{minutes} minutes}}",
+  "@durationHoursMinutes": {
+    "description": "Localized message for durationHoursMinutes.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{minutes, plural, =1{1 minute} other{{minutes} minutes}}",
+  "@durationMinutes": {
+    "description": "Localized message for durationMinutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutesLabel": "Duration (minutes)",
+  "eG30": "e.g., 30",
+  "eGWorkedOnDynamicsFocusedOnDifficultPassages": "e.g., Worked on dynamics, focused on difficult passages",
+  "edit": "Edit",
+  "editGroupName": "Edit Group Name",
+  "editPiece": "Edit Piece",
+  "editPracticeSession": "Edit Practice Session",
+  "empty": "Empty",
+  "enableAutomaticBackups": "Enable Automatic Backups",
+  "enableDebugLogs": "Enable Debug Logs",
+  "enablePracticeTracking": "Enable Practice Tracking",
+  "enterFilterName": "Enter filter name",
+  "enterTitleForTheNewPiece": "Enter title for the new piece",
+  "errorAddingGroup": "Error adding group: {error}",
+  "@errorAddingGroup": {
+    "description": "Localized message for errorAddingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAddingMedia": "Error adding media: {error}",
+  "@errorAddingMedia": {
+    "description": "Shown when shared media cannot be added to a piece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaAddedToPiece": "Media added to \"{title}\"",
+  "@mediaAddedToPiece": {
+    "description": "Shown after shared media is added to an existing piece.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "newPieceCreatedWithSharedMedia": "New piece \"{title}\" created with shared media",
+  "@newPieceCreatedWithSharedMedia": {
+    "description": "Shown after creating a piece from shared media.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "repertoireAppDebugLog": "Repertoire app debug log",
+  "sharedMedia": "Shared Media",
+  "errorChangingStorageFolder": "Error changing storage folder: {error}",
+  "@errorChangingStorageFolder": {
+    "description": "Localized message for errorChangingStorageFolder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingGroup": "Error deleting group: {error}",
+  "@errorDeletingGroup": {
+    "description": "Localized message for errorDeletingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogFile": "Error deleting log file: {error}",
+  "@errorDeletingLogFile": {
+    "description": "Localized message for errorDeletingLogFile.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogs": "Error deleting logs: {error}",
+  "@errorDeletingLogs": {
+    "description": "Localized message for errorDeletingLogs.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingMusicPieces": "Error deleting music pieces: {error}",
+  "@errorDeletingMusicPieces": {
+    "description": "Localized message for errorDeletingMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingPracticeSession": "Error deleting practice session: {error}",
+  "@errorDeletingPracticeSession": {
+    "description": "Localized message for errorDeletingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDuplicatingMusicPiece": "Error duplicating music piece: {error}",
+  "@errorDuplicatingMusicPiece": {
+    "description": "Localized message for errorDuplicatingMusicPiece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorExportingBackup": "Error exporting backup: {error}",
+  "@errorExportingBackup": {
+    "description": "Localized message for errorExportingBackup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingThumbnail": "Error fetching thumbnail: {error}",
+  "@errorFetchingThumbnail": {
+    "description": "Localized message for errorFetchingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratingThumbnail": "Error generating thumbnail: {error}",
+  "@errorGeneratingThumbnail": {
+    "description": "Localized message for errorGeneratingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingAudio": "Error initializing audio: {error}",
+  "@errorInitializingAudio": {
+    "description": "Localized message for errorInitializingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingPlayer": "Error initializing player: {error}",
+  "@errorInitializingPlayer": {
+    "description": "Localized message for errorInitializingPlayer.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoading": "Error loading",
+  "errorLoadingGroups": "Error loading groups: {error}",
+  "@errorLoadingGroups": {
+    "description": "Localized message for errorLoadingGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoggingPracticeSession": "Error logging practice session: {error}",
+  "@errorLoggingPracticeSession": {
+    "description": "Localized message for errorLoggingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPerformingCleanup": "Error performing cleanup: {error}",
+  "@errorPerformingCleanup": {
+    "description": "Localized message for errorPerformingCleanup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlayingAudio": "Error playing audio: {error}",
+  "@errorPlayingAudio": {
+    "description": "Localized message for errorPlayingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessingFile": "Error processing {fileName}: {error}",
+  "@errorProcessingFile": {
+    "description": "Localized message for errorProcessingFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingGroupOrder": "Error saving group order: {error}",
+  "@errorSavingGroupOrder": {
+    "description": "Localized message for errorSavingGroupOrder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingSettings": "Error saving settings: {error}",
+  "@errorSavingSettings": {
+    "description": "Localized message for errorSavingSettings.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorScanningUnusedMedia": "Error scanning for unused media: {error}",
+  "@errorScanningUnusedMedia": {
+    "description": "Localized message for errorScanningUnusedMedia.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSharing": "Error sharing: {error}",
+  "@errorSharing": {
+    "description": "Localized message for errorSharing.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTogglingGroupVisibility": "Error toggling group visibility: {error}",
+  "@errorTogglingGroupVisibility": {
+    "description": "Localized message for errorTogglingGroupVisibility.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingGroup": "Error updating group: {error}",
+  "@errorUpdatingGroup": {
+    "description": "Localized message for errorUpdatingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingPracticeSession": "Error updating practice session: {error}",
+  "@errorUpdatingPracticeSession": {
+    "description": "Localized message for errorUpdatingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithDetails": "Error: {error}",
+  "@errorWithDetails": {
+    "description": "Localized message for errorWithDetails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorsEncountered": "Errors encountered:",
+  "existingBackupFound": "Existing Backup Found",
+  "fDRoid": "F-Droid",
+  "fDroidOrgMyrepertoirapp": "f-droid.org/.../myrepertoirapp",
+  "failedToDeleteFile": "Failed to delete {fileName}: {error}",
+  "@failedToDeleteFile": {
+    "description": "Localized message for failedToDeleteFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToFetchThumbnail": "Failed to fetch thumbnail.",
+  "failedToGeneratePdfThumbnail": "Failed to generate PDF thumbnail.",
+  "failedToGenerateVideoThumbnail": "Failed to generate video thumbnail.",
+  "failedToInitializeBackupSettings": "Failed to initialize backup settings",
+  "failedToLoadGroups": "Failed to load groups: {error}",
+  "@failedToLoadGroups": {
+    "description": "Localized message for failedToLoadGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadMusicPieces": "Failed to load music pieces: {error}",
+  "@failedToLoadMusicPieces": {
+    "description": "Localized message for failedToLoadMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateImage": "Failed to update image: {error}",
+  "@failedToUpdateImage": {
+    "description": "Localized message for failedToUpdateImage.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "fetching": "Fetching...",
+  "fileCategories": "File Categories",
+  "fileExplorer": "File Explorer",
+  "fileMissing": "File missing",
+  "fileNotFoundToShare": "File not found to share.",
+  "fileTypeAndName": "{fileType} • {fileName}",
+  "@fileTypeAndName": {
+    "description": "Localized message for fileTypeAndName.",
+    "placeholders": {
+      "fileType": {
+        "type": "String"
+      },
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTypes": "File Types",
+  "filesDeleted": "Files Deleted",
+  "filesToDelete": "Files to delete",
+  "filterByTags": "Filter by Tags",
+  "filterOptions": "Filter Options",
+  "filterSaved": "Filter \"{name}\" saved",
+  "@filterSaved": {
+    "description": "Localized message for filterSaved.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldAll": "Fold All",
+  "folderSelectionCancelled": "Folder selection cancelled",
+  "folderSelectionCancelled2": "Folder selection cancelled.",
+  "forward1sHoldFor50msFineSkip": "Forward 1s (Hold for 50ms fine skip)",
+  "forward1sHoldForFrameSkip": "Forward 1s (Hold for frame skip)",
+  "forward5s": "Forward 5s",
+  "frequentlyAskedQuestions": "Frequently Asked Questions",
+  "functionality": "Functionality",
+  "galleryLayout": "Gallery Layout",
+  "generalSettings": "General Settings",
+  "getPdfThumbnail": "Get PDF thumbnail",
+  "getVideoThumbnail": "Get video thumbnail",
+  "github": "GitHub",
+  "githubComAdithyaJayanMyrepertoirapp": "github.com/Adithya-Jayan/MyRepertoirApp",
+  "githubComMyrepertoirapp": "github.com/.../MyRepertoirApp",
+  "go": "Go",
+  "goToPage": "Go to Page",
+  "gradient": "Gradient",
+  "gradientOverlay": "Gradient Overlay",
+  "grant": "Grant",
+  "groupByPiece": "Group by Piece",
+  "groupByType": "Group by Type",
+  "groupItemCount": "{groupName} ({count})",
+  "@groupItemCount": {
+    "description": "Localized message for groupItemCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupName": "Group Name",
+  "groupPieceCount": "{groupName} ({count})",
+  "@groupPieceCount": {
+    "description": "Localized message for groupPieceCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groups": "Groups",
+  "guidesAndTroubleshooting": "Guides and troubleshooting",
+  "help": "Help",
+  "helpAndFaq": "Help & FAQ",
+  "hideEmptyGroups": "Hide Empty Groups",
+  "hold": "Hold",
+  "homeRepertoireApp": "Home/RepertoireApp",
+  "hoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@hoursAgo": {
+    "description": "Localized message for hoursAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "howFindPieceAnswer": "Use the search bar at the top of the main library screen. You can search by title, artist/composer, or tags.",
+  "howFindPieceQuestion": "How do I quickly find a specific music piece?",
+  "howOftenToCreateAutomaticBackups": "How often to create automatic backups",
+  "image": "Image",
+  "imageUpdatedSuccessfully": "Image updated successfully",
+  "imageViewer": "Image Viewer",
+  "images": "Images",
+  "information": "Information",
+  "initializingBackupSettings": "Initializing backup settings...",
+  "inspiredBy": "Inspired by",
+  "internalFileExplorer": "Internal File Explorer",
+  "internalStorageRepertoireApp": "Internal Storage/RepertoireApp",
+  "invalidAudioFileType": "Invalid audio file type. Supported: {extensions}",
+  "@invalidAudioFileType": {
+    "description": "Localized message for invalidAudioFileType.",
+    "placeholders": {
+      "extensions": {
+        "type": "String"
+      }
+    }
+  },
+  "itemNameAlreadyExists": "An item with that name already exists.",
+  "itemsSelected": "{count, plural, =1{1 selected} other{{count} selected}}",
+  "@itemsSelected": {
+    "description": "Localized message for itemsSelected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "Just now",
+  "keepTrackOfSessionsAndStatus": "Keep track of sessions and status",
+  "lastAutomaticBackup": "Last Automatic Backup",
+  "lastPracticed": "Last Practiced",
+  "lastPracticedAt": "Last practiced: {date}",
+  "@lastPracticedAt": {
+    "description": "Localized message for lastPracticedAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lastPracticedDaysAgo": "Last practiced: {count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@lastPracticedDaysAgo": {
+    "description": "Localized message for lastPracticedDaysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPracticedToday": "Last practiced: Today",
+  "lastPracticedYesterday": "Last practiced: Yesterday",
+  "learningProgress": "Learning Progress",
+  "letSGetYourRepertoireSetUpYouCanAlwaysChangeThese": "Let's get your repertoire set up. You can always change these settings later.",
+  "license": "License",
+  "light": "Light",
+  "lightPink": "Light Pink",
+  "lightSalmon": "Light Salmon",
+  "link": "Link",
+  "links": "Links",
+  "loading": "Loading...",
+  "localVideo": "Local Video",
+  "logFileDeleted": "Log file deleted.",
+  "logPractice": "Log Practice",
+  "loggingAndDeveloperOptions": "Logging and developer options",
+  "logsDeleted": "Logs deleted.",
+  "longOverdue": "Long overdue",
+  "manageAndReorderGroups": "Manage and reorder groups",
+  "manageFilter": "Manage Filter: {name}",
+  "@manageFilter": {
+    "description": "Localized message for manageFilter.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageGroups": "Manage Groups",
+  "manageTags": "Manage Tags",
+  "manualBackupAndRestore": "Manual Backup & Restore",
+  "manuallyTriggerAnAutomaticBackup": "Manually trigger an automatic backup",
+  "markdownContent": "Markdown Content",
+  "markdownText": "Markdown Text",
+  "maxCount": "Max Count",
+  "maximumNumberOfAutomaticBackupsToRetain": "Maximum number of automatic backups to retain",
+  "media": "Media",
+  "mediaName": "Media Name",
+  "midiChannelNames": "MIDI Channel Names",
+  "midiChannelNumber": "Ch {number}:",
+  "@midiChannelNumber": {
+    "description": "Localized message for midiChannelNumber.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "midiDesktopUnsupported": "MIDI playback is currently not supported on desktop platforms.",
+  "midiFileNotFound": "MIDI file not found at {path}",
+  "@midiFileNotFound": {
+    "description": "Localized message for midiFileNotFound.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "midi": "MIDI",
+  "midiPlaybackIsNotSupportedOnWeb": "MIDI playback is not supported on Web.",
+  "mihon": "Mihon",
+  "mintGreen": "Mint Green",
+  "minutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@minutesAgo": {
+    "description": "Localized message for minutesAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "missingBackupWarning": "Warning: Last backup file missing (expected at {date}). Creating new backup.",
+  "@missingBackupWarning": {
+    "description": "Localized message for missingBackupWarning.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "modifyGroup": "Modify Group",
+  "modifyGroups": "Modify Groups",
+  "musicPieceUpdatedSuccessfully": "Music piece updated successfully.",
+  "musicPieces": "Music Pieces",
+  "musicRepertoireApp": "Music Repertoire App",
+  "needsAttention": "Needs attention",
+  "never": "Never",
+  "neverPracticed": "Never practiced",
+  "newName": "New Name",
+  "newPieceTitle": "New Piece Title",
+  "newStageName": "New Stage Name",
+  "newTagName": "New Tag Name",
+  "newUpdateAvailable": "New Update Available!",
+  "next": "Next",
+  "no": "No",
+  "noAppWasFoundToOpenTheLogFileWouldYouLike": "No app was found to open the log file. Would you like to share it instead?",
+  "noAutomaticBackupsFound": "No automatic backups found.",
+  "noBookmarksAddedYet": "No bookmarks added yet",
+  "noContributorsFound": "No contributors found.",
+  "noDurationRecorded": "No duration recorded",
+  "noLogFileFound": "No log file found.",
+  "noPiecesFound": "No pieces found.",
+  "noPracticeSessionsRecordedYetTapThePlusButtonToAddYour": "No practice sessions recorded yet.\nTap the + button to add your first practice session.",
+  "noShareableFilesSelected": "No shareable files selected.",
+  "noStagesDefined": "No stages defined",
+  "noStorageLocationSet": "No storage location set",
+  "noTagFiltersActive": "No tag filters active",
+  "noTagGroupsFoundInYourLibrary": "No tag groups found in your library.",
+  "noTagsInThisGroup": "No tags in this group.",
+  "noUnusedFilesFoundToCleanUp": "No unused files found to clean up.",
+  "noVisibleGroups": "No visible groups.",
+  "normal": "Normal",
+  "notInLast30Days": "Not in last 30 days",
+  "notSet": "Not set",
+  "noteFDRoidMayTakeAFewDaysToReflectThe": "Note: F-Droid may take a few days to reflect the new version.",
+  "notesOptional": "Notes (optional)",
+  "notifyNewReleases": "Notify New Releases",
+  "numberOfBackupsToKeep": "Number of Backups to Keep",
+  "numberedStage": "{number}. {stage}",
+  "@numberedStage": {
+    "description": "Localized message for numberedStage.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "openLink": "Open Link",
+  "openLogs": "Open Logs",
+  "openingFolderSelector": "Opening folder selector...",
+  "organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney": "Organize your music pieces, attach media, and track your practice journey.",
+  "other": "Other",
+  "outline": "Outline",
+  "outlineText": "Outline Text",
+  "pageIndicator": "{currentPage} / {totalPages}",
+  "@pageIndicator": {
+    "description": "Localized message for pageIndicator.",
+    "placeholders": {
+      "currentPage": {
+        "type": "int"
+      },
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "pageNumberHint": "Enter page number (1-{totalPages})",
+  "@pageNumberHint": {
+    "description": "Localized message for pageNumberHint.",
+    "placeholders": {
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "partialSuccess": "Partial Success",
+  "pathOrUrl": "Path or URL",
+  "pathValue": "Path: {path}",
+  "@pathValue": {
+    "description": "Localized message for pathValue.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "pause": "Pause",
+  "pdf": "PDF",
+  "pdfFilePathIsEmpty": "PDF file path is empty",
+  "pdfThumbnailGeneratedSuccessfully": "PDF thumbnail generated successfully!",
+  "pdfViewer": "PDF Viewer",
+  "pdfs": "PDFs",
+  "personalization": "Personalization",
+  "percentage": "Percentage",
+  "physicalView": "Physical View",
+  "pieceDuplicatedSuccessfully": "Piece duplicated successfully",
+  "pitch": "Pitch:",
+  "play": "Play",
+  "playbackSpeed": "Playback Speed",
+  "pleaseEnterATitle": "Please enter a title",
+  "pleaseGenerateAThumbnailFirst": "Please generate a thumbnail first.",
+  "pleaseUseTheAndroidWindowsOrLinuxVersionForMidiSupport": "Please use the Android, Windows, or Linux version for MIDI support.",
+  "practiceCountLabel": "Practice count: {count}",
+  "@practiceCountLabel": {
+    "description": "Localized message for practiceCountLabel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceLogsForPiece": "Practice Logs - {pieceTitle}",
+  "@practiceLogsForPiece": {
+    "description": "Localized message for practiceLogsForPiece.",
+    "placeholders": {
+      "pieceTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "practiceNotes": "Practice Notes",
+  "practiceOptions": "Practice Options",
+  "practiceSessionDeletedSuccessfully": "Practice session deleted successfully",
+  "practiceSessionLoggedSuccessfully": "Practice session logged successfully",
+  "practiceSessionUpdatedSuccessfully": "Practice session updated successfully",
+  "practiceStagesAndStatistics": "Practice stages and statistics",
+  "practiceStatus": "Practice Status",
+  "practiceSummary": "Practice Summary",
+  "practiceTimeStats": "Practice Time Stats",
+  "practiceTracking": "Practice Tracking",
+  "practicedRecently": "Practiced recently",
+  "progress": "Progress",
+  "progressPercent": "{value}%",
+  "@progressPercent": {
+    "description": "Localized message for progressPercent.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "protectAndSyncYourData": "Protect and sync your data",
+  "purgeUnusedMedia": "Purge Unused Media",
+  "purging": "Purging...",
+  "quickFilters": "Quick Filters",
+  "recentlyPracticed": "Recently practiced",
+  "refresh": "Refresh",
+  "releaseNotes": "Release Notes",
+  "removeMediaFilesNoLongerReferenced": "Remove media files no longer referenced",
+  "removeTagFromGroupConfirmation": "Remove tag \"{tagName}\" from group \"{groupName}\" across all pieces?",
+  "@removeTagFromGroupConfirmation": {
+    "description": "Localized message for removeTagFromGroupConfirmation.",
+    "placeholders": {
+      "tagName": {
+        "type": "String"
+      },
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "Rename",
+  "renameBookmark": "Rename Bookmark",
+  "renameFile": "Rename File",
+  "renameFileWarning": "WARNING: Renaming files may break links if not handled correctly. The app will attempt to update all piece references automatically.",
+  "@renameFileWarning": {
+    "description": "Localized message for renameFileWarning."
+  },
+  "renameGroup": "Rename Group",
+  "renameMedia": "Rename: {name}",
+  "@renameMedia": {
+    "description": "Localized message for renameMedia.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameNamedItem": "Rename \"{name}\"",
+  "@renameNamedItem": {
+    "description": "Localized message for renameNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameQuickFilter": "Rename Quick Filter",
+  "renameStage": "Rename Stage",
+  "renameTagGroup": "Rename Tag Group",
+  "renameTagInGroup": "Rename Tag in \"{groupName}\"",
+  "@renameTagInGroup": {
+    "description": "Localized message for renameTagInGroup.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "renamedSuccessfully": "Renamed successfully.",
+  "reorderMediaAnswer": "On the Edit Piece screen, use the drag handles on the left of media items to reorder them.",
+  "reorderMediaQuestion": "How can I reorder media or tags?",
+  "reset": "Reset",
+  "resetControls": "Reset Controls",
+  "resetZoom": "Reset Zoom",
+  "restore": "Restore",
+  "restoreCancelled": "Restore cancelled.",
+  "restoreDataFromAPreviousBackup": "Restore data from a previous backup",
+  "restoreFailed": "Restore failed: {error}",
+  "@restoreFailed": {
+    "description": "Localized message for restoreFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreFailedStoragePathNotConfigured": "Restore failed: Storage path not configured.",
+  "restoreFromLocalBackup": "Restore from Local Backup",
+  "restoreInProgress": "Restore in progress...",
+  "restoreLatest": "Restore Latest",
+  "restoreThisBackup": "Restore this backup",
+  "restoringBackup": "Restoring backup...",
+  "restoringData": "Restoring data...",
+  "retry": "Retry",
+  "revertedToDefaultStoragePath": "Reverted to default app storage path: {path}",
+  "@revertedToDefaultStoragePath": {
+    "description": "Localized message for revertedToDefaultStoragePath.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "rewind1sHoldFor50msFineSkip": "Rewind 1s (Hold for 50ms fine skip)",
+  "rewind5s": "Rewind 5s",
+  "root": "Root",
+  "runAutoBackupNow": "Run Auto-backup Now",
+  "save": "Save",
+  "saveAll": "Save All",
+  "saveAsQuickFilter": "Save as Quick Filter",
+  "saveQuickFilter": "Save Quick Filter",
+  "scanResults": "Scan Results",
+  "searchExistingPiece": "Search Existing Piece",
+  "searchItems": "Search items...",
+  "searchTags": "Search tags...",
+  "selectAFolder": "Select a folder",
+  "selectAFolderWhereTheAppWillStoreItsFiles": "Select a folder where the app will store its files:",
+  "selectColor": "Select Color",
+  "selectManually": "Select Manually",
+  "selectOrderedTags": "Select Ordered Tags",
+  "selectedPathNotWritable": "Selected path is not writable: {error}. Please choose a different location.",
+  "@selectedPathNotWritable": {
+    "description": "Localized message for selectedPathNotWritable.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedPieceNoLongerExists": "Selected piece no longer exists.",
+  "semitonesValue": "{value} st",
+  "@semitonesValue": {
+    "description": "Localized message for semitonesValue.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settings": "Settings",
+  "share": "Share",
+  "shareExportBackup": "Share/Export backup",
+  "shareLogFile": "Share Log File",
+  "showAll": "Show All",
+  "showDotPattern": "Show Dot Pattern",
+  "showDurationAndStatsInLogs": "Show duration and stats in logs",
+  "showGradientBackground": "Show Gradient Background",
+  "showLastPracticed": "Show Last Practiced",
+  "showPracticeCount": "Show Practice Count",
+  "showScrollControlsInTheViewer": "Show scroll controls in the viewer",
+  "silver": "Silver",
+  "skip": "Skip",
+  "skyBlue": "Sky Blue",
+  "someThemeChangesMayRequireAnAppRestartToTakeFullEffect": "Some theme changes may require an app restart to take full effect.",
+  "sortOptions": "Sort Options",
+  "sourceCodeOnGithub": "Source Code on GitHub",
+  "spaceFreed": "Space Freed",
+  "spaceToFree": "Space to free",
+  "speed": "Speed:",
+  "speedMultiplier": "{speed}x",
+  "@speedMultiplier": {
+    "description": "Localized message for speedMultiplier.",
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "stageAlreadyExists": "Stage already exists",
+  "stageDefaultName": "Stage {number}",
+  "@stageDefaultName": {
+    "description": "Localized message for stageDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "stageNameExists": "Stage name exists",
+  "stages": "Stages:",
+  "stagesLabel": "Stages",
+  "stagesForPracticeIndicatorsDragToReorderDoubleTapNameToEdit": "Stages for practice indicators. Drag to reorder. Double tap name to edit.",
+  "startApp": "Start App",
+  "status": "Status",
+  "stay": "Stay",
+  "storageFolder": "Storage Folder",
+  "storageFolderSelectionNotAvailableOnThisPlatform": "Storage folder selection not available on this platform",
+  "storageFolderUpdatedSuccessfully": "Storage folder updated successfully",
+  "storageLocation": "Storage Location",
+  "storagePathUpdated": "Storage path updated.",
+  "storagePermissionExplanation": "This app needs \"All files access\" (Manage External Storage) to manage backups in your chosen external storage folder, and to access media files that you link from arbitrary locations. Without this, backup/restore and linking external media may not work correctly.",
+  "@storagePermissionExplanation": {
+    "description": "Localized message for storagePermissionExplanation."
+  },
+  "storagePermissionNeeded": "Storage Permission Needed",
+  "success": "Success",
+  "supportAndResources": "Support & Resources",
+  "system": "System",
+  "systemAndMaintenance": "System & Maintenance",
+  "systemDefault": "System Default",
+  "tagGroups": "Tag Groups",
+  "tagName": "Tag Name",
+  "tagNameOrCommaSeparatedList": "Tag name (or comma-separated list)",
+  "tagSetsActive": "{count, plural, =1{1 tag set active} other{{count} tag sets active}}",
+  "@tagSetsActive": {
+    "description": "Localized message for tagSetsActive.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagging": "Tagging",
+  "taggingManagement": "Tagging Management",
+  "tags": "Tags",
+  "tagsAndCategories": "Tags & Categories",
+  "tan": "Tan",
+  "tapToEdit": "(Tap to edit)",
+  "teal": "Teal",
+  "textSearch": "Text Search",
+  "theAppHasBeenUpdatedCheckTheReleaseNotesOnGithubFor": "The app has been updated! Check the release notes on GitHub for details.",
+  "theFollowingFilesAreNotReferencedByAnyPiecesAndCanBe": "The following files are not referenced by any pieces and can be safely purged.",
+  "themeColorsAndLayout": "Theme, colors, and layout",
+  "themeMode": "Theme Mode",
+  "thisActionCannotBeUndoneMakeSureYouHaveABackupBefore": "This action cannot be undone. Make sure you have a backup before proceeding.",
+  "thisGroupIsEmpty": "This group is empty.",
+  "thisWillPermanentlyDeleteUnusedMediaFilesThatAreNoLongerReferenced": "This will permanently delete unused media files that are no longer referenced by any music pieces.",
+  "thumbnail": "Thumbnail",
+  "thumbnailFetchedSuccessfully": "Thumbnail fetched successfully!",
+  "thumbnailStyle": "Thumbnail Style",
+  "thumbnailWidgetVisibleInEditModeOnly": "Thumbnail Widget (Visible in Edit Mode only)",
+  "title": "Title",
+  "titleContains": "Title contains...",
+  "todayAt": "Today at {time}",
+  "@todayAt": {
+    "description": "Localized message for todayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "toggleControls": "Toggle Controls",
+  "totalFiles": "Total Files",
+  "totalSessions": "Total Sessions",
+  "totalSize": "Total Size",
+  "totalTime": "Total Time",
+  "trackControls": "Track Controls",
+  "tracking": "Tracking",
+  "trackingDisabled": "Tracking Disabled",
+  "trackingEnabled": "Tracking Enabled",
+  "trackingStages": "Tracking Stages",
+  "trans": "Trans",
+  "trueBlackBackgroundInDarkMode": "True black background in dark mode",
+  "type": "Type",
+  "ungrouped": "Ungrouped",
+  "unknown": "Unknown",
+  "@unknown": {
+    "description": "Localized message for unknown."
+  },
+  "unknownArtist": "Unknown Artist",
+  "unknownPiece": "Unknown Piece ({pieceId})",
+  "@unknownPiece": {
+    "description": "Localized message for unknownPiece.",
+    "placeholders": {
+      "pieceId": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChanges": "Unsaved Changes",
+  "unusedFiles": "Unused Files",
+  "unusedMediaDetails": "Unused Media Details",
+  "unusedSize": "Unused Size",
+  "update": "Update",
+  "updateAll": "Update All?",
+  "updateTagGroupColorQuestion": "Do you want to update the color of tag group \"{groupName}\" across all pieces?",
+  "@updateTagGroupColorQuestion": {
+    "description": "Localized message for updateTagGroupColorQuestion.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedToVersion": "Updated to v{version}",
+  "@updatedToVersion": {
+    "description": "Localized message for updatedToVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updates": "Updates",
+  "updatesAreManagedByTheGooglePlayStore": "Updates are managed by the Google Play Store.",
+  "urlIsEmpty": "URL is empty",
+  "useOledBlack": "Use OLED Black",
+  "useThePlusSignToAddMedia": "Use the '+' sign to add media",
+  "usedInPieces": "Used in {count, plural, =1{1 piece} other{{count} pieces}}",
+  "@usedInPieces": {
+    "description": "Localized message for usedInPieces.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "version": "Version",
+  "versionAndContributorInfo": "Version and contributor info",
+  "versionAvailable": "Version {version} is available.",
+  "@versionAvailable": {
+    "description": "Localized message for versionAvailable.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "video": "Video",
+  "videoControls": "Video Controls",
+  "videoFilePathIsEmpty": "Video file path is empty",
+  "videoThumbnailGeneratedSuccessfully": "Video thumbnail generated successfully!",
+  "viewAllContributors": "View All Contributors",
+  "viewPdf": "View PDF",
+  "viewUnusedFiles": "View Unused Files",
+  "website": "Website",
+  "websiteAndDocumentation": "Website & Documentation",
+  "welcome": "Welcome!",
+  "whatsNewInVersion": "What's New in v{version}",
+  "@whatsNewInVersion": {
+    "description": "Localized message for whatsNewInVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "withinLast7Days": "Within last 7 days",
+  "wouldYouLikeToDeleteTheExistingDebugLogs": "Would you like to delete the existing debug logs?",
+  "yellow": "Yellow",
+  "yes": "Yes",
+  "yesDelete": "Yes, delete",
+  "yesterdayAt": "Yesterday at {time}",
+  "@yesterdayAt": {
+    "description": "Localized message for yesterdayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "youAreOnTheLatestVersion": "You are on the latest version.",
+  "youHaveUnsavedChangesAreYouSureYouWantToDiscardThem": "You have unsaved changes. Are you sure you want to discard them?",
+  "yourMediaLibraryIsClean": "Your media library is clean!",
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out"
+}

@@ -3,12 +3,14 @@ import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class GroupsDisplay extends StatelessWidget {
   final MusicPiece musicPiece;
   final bool showTitle;
 
   const GroupsDisplay({
-    super.key, 
+    super.key,
     required this.musicPiece,
     this.showTitle = true,
   });
@@ -39,24 +41,33 @@ class GroupsDisplay extends StatelessWidget {
           children: [
             if (showTitle) ...[
               Text(
-                'Groups',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                context.l10n.groups,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16.0),
             ],
             Container(
               padding: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.2,
+                ),
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
               ),
               child: Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
                 children: groups.map((group) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 6.0,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(20.0),

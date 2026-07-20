@@ -12,6 +12,8 @@ import '../services/media_storage_manager.dart';
 import '../utils/app_logger.dart';
 import '../screens/add_edit_piece_screen.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class ShareHandlerService {
   StreamSubscription? _intentDataStreamSubscription;
   final MusicPieceRepository _repository = MusicPieceRepository();
@@ -22,16 +24,23 @@ class ShareHandlerService {
 
   void init(GlobalKey<NavigatorState> navigatorKey) {
     // For sharing images coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
-      if (value.isNotEmpty) {
-        _handleSharedFiles(navigatorKey, value);
-      }
-    }, onError: (err) {
-      AppLogger.log("getIntentDataStream error: $err");
-    });
+    _intentDataStreamSubscription = ReceiveSharingIntent.instance
+        .getMediaStream()
+        .listen(
+          (List<SharedMediaFile> value) {
+            if (value.isNotEmpty) {
+              _handleSharedFiles(navigatorKey, value);
+            }
+          },
+          onError: (err) {
+            AppLogger.log("getIntentDataStream error: $err");
+          },
+        );
 
     // For sharing images coming from outside the app when the app is closed
-    ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
+    ReceiveSharingIntent.instance.getInitialMedia().then((
+      List<SharedMediaFile> value,
+    ) {
       if (value.isNotEmpty) {
         _handleSharedFiles(navigatorKey, value);
         ReceiveSharingIntent.instance.reset();
@@ -43,17 +52,24 @@ class ShareHandlerService {
     _intentDataStreamSubscription?.cancel();
   }
 
-  Future<void> _handleSharedFiles(GlobalKey<NavigatorState> navigatorKey, List<SharedMediaFile> files) async {
+  Future<void> _handleSharedFiles(
+    GlobalKey<NavigatorState> navigatorKey,
+    List<SharedMediaFile> files,
+  ) async {
     if (_isHandling) {
-      AppLogger.log('ShareHandlerService: Already handling a share intent. Skipping.');
+      AppLogger.log(
+        'ShareHandlerService: Already handling a share intent. Skipping.',
+      );
       return;
     }
 
     final context = navigatorKey.currentContext;
     if (context == null) {
-      // If context is null, the app might still be initializing. 
+      // If context is null, the app might still be initializing.
       // We wait a bit and try again, but only for initial media which might trigger very early.
-      AppLogger.log('ShareHandlerService: Navigator context is null. Retrying in 1 second...');
+      AppLogger.log(
+        'ShareHandlerService: Navigator context is null. Retrying in 1 second...',
+      );
       await Future.delayed(const Duration(seconds: 1));
       if (navigatorKey.currentContext == null) return;
     }
@@ -63,12 +79,21 @@ class ShareHandlerService {
       if (files.isEmpty) return;
 
       // Filter out items that are essentially empty (sometimes happens with text shares)
-      final validFiles = files.where((f) => f.path.isNotEmpty || (f.type == SharedMediaType.text || f.type == SharedMediaType.url)).toList();
+      final validFiles = files
+          .where(
+            (f) =>
+                f.path.isNotEmpty ||
+                (f.type == SharedMediaType.text ||
+                    f.type == SharedMediaType.url),
+          )
+          .toList();
 
       if (validFiles.isEmpty) return;
 
       // Show dialog to select music piece or create new
-      final dynamic selectionResult = await _showMusicPieceSelectionDialog(navigatorKey);
+      final dynamic selectionResult = await _showMusicPieceSelectionDialog(
+        navigatorKey,
+      );
       if (selectionResult == null) return;
 
       bool anySuccess = false;
@@ -79,7 +104,7 @@ class ShareHandlerService {
         // Re-fetch piece to ensure we have latest version
         currentPiece = await _repository.getMusicPieceById(selectionResult.id);
         if (currentPiece == null) {
-          _showError(navigatorKey, 'Selected piece no longer exists.');
+          _showError(navigatorKey, (l10n) => l10n.selectedPieceNoLongerExists);
           return;
         }
       } else if (selectionResult == 'create_new') {
@@ -90,7 +115,7 @@ class ShareHandlerService {
         currentPiece = MusicPiece(
           id: const Uuid().v4(),
           title: newTitle.trim(),
-          artistComposer: 'Unknown Artist',
+          artistComposer: navigatorKey.currentContext!.l10n.unknownArtist,
           lastAccessed: DateTime.now(),
         );
       }
@@ -98,8 +123,12 @@ class ShareHandlerService {
       if (currentPiece == null) return;
 
       // Refresh context check
-      if (navigatorKey.currentContext == null || !navigatorKey.currentContext!.mounted) return;
+      if (navigatorKey.currentContext == null ||
+          !navigatorKey.currentContext!.mounted) {
+        return;
+      }
       final mountedContext = navigatorKey.currentContext!;
+      final l10n = mountedContext.l10n;
 
       List<MediaItem> newItems = [];
 
@@ -107,38 +136,42 @@ class ShareHandlerService {
         try {
           final MediaType? type = _mapSharedTypeToMediaType(file);
           if (type == null) {
-             AppLogger.log('ShareHandlerService: Unsupported shared file type: ${file.type} for path: ${file.path}');
-             continue;
+            AppLogger.log(
+              'ShareHandlerService: Unsupported shared file type: ${file.type} for path: ${file.path}',
+            );
+            continue;
           }
 
           String pathOrUrl = file.path;
-          
+
           // Handling for Text/URL
-          if (file.type == SharedMediaType.text || file.type == SharedMediaType.url) {
-             pathOrUrl = file.path;
+          if (file.type == SharedMediaType.text ||
+              file.type == SharedMediaType.url) {
+            pathOrUrl = file.path;
           } else if (type == MediaType.markdown) {
-             // For markdown files, we read the content instead of copying the file
-             try {
-               final fileObj = File(file.path);
-               if (await fileObj.exists()) {
-                 pathOrUrl = await fileObj.readAsString();
-               }
-             } catch (e) {
-               AppLogger.log('Error reading markdown file: $e');
-               // Fallback to path if reading fails (though widget might not show it)
-               pathOrUrl = file.path;
-             }
+            // For markdown files, we read the content instead of copying the file
+            try {
+              final fileObj = File(file.path);
+              if (await fileObj.exists()) {
+                pathOrUrl = await fileObj.readAsString();
+              }
+            } catch (e) {
+              AppLogger.log('Error reading markdown file: $e');
+              // Fallback to path if reading fails (though widget might not show it)
+              pathOrUrl = file.path;
+            }
           } else {
-             // It's a binary file, we need to copy it
-             pathOrUrl = await MediaStorageManager.copyMediaToLocal(
-                file.path, 
-                currentPiece.id, 
-                type
-              );
+            // It's a binary file, we need to copy it
+            pathOrUrl = await MediaStorageManager.copyMediaToLocal(
+              file.path,
+              currentPiece.id,
+              type,
+            );
           }
 
-          String itemTitle = 'Shared Media';
-          if (file.type == SharedMediaType.text || file.type == SharedMediaType.url) {
+          String itemTitle = l10n.sharedMedia;
+          if (file.type == SharedMediaType.text ||
+              file.type == SharedMediaType.url) {
             itemTitle = pathOrUrl;
             if (itemTitle.length > 50) {
               itemTitle = '${itemTitle.substring(0, 47)}...';
@@ -158,12 +191,16 @@ class ShareHandlerService {
           anySuccess = true;
         } catch (e) {
           AppLogger.log('Error processing shared file: $e');
-          _showError(navigatorKey, 'Error adding media: $e');
+          _showError(
+            navigatorKey,
+            (l10n) => l10n.errorAddingMedia(e.toString()),
+          );
         }
       }
 
       if (anySuccess) {
-        final updatedMediaItems = List<MediaItem>.from(currentPiece.mediaItems)..addAll(newItems);
+        final updatedMediaItems = List<MediaItem>.from(currentPiece.mediaItems)
+          ..addAll(newItems);
         currentPiece = currentPiece.copyWith(mediaItems: updatedMediaItems);
 
         if (selectionResult == 'create_new') {
@@ -171,15 +208,19 @@ class ShareHandlerService {
         } else {
           await _repository.updateMusicPiece(currentPiece);
         }
-        
+
         // Notify listeners (like LibraryScreen) that data has changed
         dataChangeNotifier.value = !dataChangeNotifier.value;
-        
+
         if (mountedContext.mounted) {
           ScaffoldMessenger.of(mountedContext).showSnackBar(
-            SnackBar(content: Text(selectionResult == 'create_new' 
-              ? 'New piece "${currentPiece.title}" created with shared media'
-              : 'Media added to "${currentPiece.title}"'))
+            SnackBar(
+              content: Text(
+                selectionResult == 'create_new'
+                    ? l10n.newPieceCreatedWithSharedMedia(currentPiece.title)
+                    : l10n.mediaAddedToPiece(currentPiece.title),
+              ),
+            ),
           );
 
           // Open the piece in edit mode so the user can see/configure the new items
@@ -199,10 +240,15 @@ class ShareHandlerService {
     }
   }
 
-  void _showError(GlobalKey<NavigatorState> navigatorKey, String message) {
+  void _showError(
+    GlobalKey<NavigatorState> navigatorKey,
+    String Function(AppLocalizations l10n) messageBuilder,
+  ) {
     final context = navigatorKey.currentContext;
     if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(messageBuilder(context.l10n))));
     }
   }
 
@@ -217,20 +263,24 @@ class ShareHandlerService {
         if (ext == '.pdf') return MediaType.pdf;
         if (ext == '.md' || ext == '.txt') return MediaType.markdown;
         if (ext == '.mid' || ext == '.midi') return MediaType.midi;
-        return null; 
+        return null;
       case SharedMediaType.text:
-         if (Uri.tryParse(file.path)?.hasAbsolutePath ?? false) {
-            return MediaType.mediaLink;
-         }
-         return MediaType.markdown;
+        if (Uri.tryParse(file.path)?.hasAbsolutePath ?? false) {
+          return MediaType.mediaLink;
+        }
+        return MediaType.markdown;
       case SharedMediaType.url:
-         return MediaType.mediaLink;
+        return MediaType.mediaLink;
     }
   }
 
-  Future<dynamic> _showMusicPieceSelectionDialog(GlobalKey<NavigatorState> navigatorKey) async {
+  Future<dynamic> _showMusicPieceSelectionDialog(
+    GlobalKey<NavigatorState> navigatorKey,
+  ) async {
     final pieces = await _repository.getMusicPieces();
-    pieces.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    pieces.sort(
+      (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+    );
 
     final context = navigatorKey.currentContext;
     if (context == null || !context.mounted) return null;
@@ -243,7 +293,9 @@ class ShareHandlerService {
     );
   }
 
-  Future<String?> _showNewPieceTitleDialog(GlobalKey<NavigatorState> navigatorKey) async {
+  Future<String?> _showNewPieceTitleDialog(
+    GlobalKey<NavigatorState> navigatorKey,
+  ) async {
     final context = navigatorKey.currentContext;
     if (context == null || !context.mounted) return null;
 
@@ -251,16 +303,24 @@ class ShareHandlerService {
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Piece Title'),
+        title: Text(context.l10n.newPieceTitle),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Enter title for the new piece'),
+          decoration: InputDecoration(
+            hintText: context.l10n.enterTitleForTheNewPiece,
+          ),
           autofocus: true,
           onSubmitted: (val) => Navigator.pop(context, val),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Create')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(context.l10n.create),
+          ),
         ],
       ),
     );
@@ -273,10 +333,12 @@ class _MusicPieceSelectionDialog extends StatefulWidget {
   const _MusicPieceSelectionDialog({required this.pieces});
 
   @override
-  State<_MusicPieceSelectionDialog> createState() => _MusicPieceSelectionDialogState();
+  State<_MusicPieceSelectionDialog> createState() =>
+      _MusicPieceSelectionDialogState();
 }
 
-class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> {
+class _MusicPieceSelectionDialogState
+    extends State<_MusicPieceSelectionDialog> {
   List<MusicPiece> _filteredPieces = [];
   final TextEditingController _searchController = TextEditingController();
 
@@ -289,8 +351,13 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
   void _filterPieces(String query) {
     setState(() {
       _filteredPieces = widget.pieces
-          .where((piece) => piece.title.toLowerCase().contains(query.toLowerCase()) || 
-                            piece.artistComposer.toLowerCase().contains(query.toLowerCase()))
+          .where(
+            (piece) =>
+                piece.title.toLowerCase().contains(query.toLowerCase()) ||
+                piece.artistComposer.toLowerCase().contains(
+                  query.toLowerCase(),
+                ),
+          )
           .toList();
     });
   }
@@ -298,7 +365,7 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add to Repertoire'),
+      title: Text(context.l10n.addToRepertoire),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -306,7 +373,13 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
           children: [
             ListTile(
               leading: const Icon(Icons.add_box, color: Colors.blue),
-              title: const Text('Create New Piece', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+              title: Text(
+                context.l10n.createNewPiece,
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onTap: () {
                 Navigator.of(context).pop('create_new');
               },
@@ -314,33 +387,34 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
             const Divider(),
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search Existing Piece',
+              decoration: InputDecoration(
+                labelText: context.l10n.searchExistingPiece,
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: _filterPieces,
             ),
             const SizedBox(height: 10),
             Flexible(
-              child: _filteredPieces.isEmpty && _searchController.text.isNotEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Text('No pieces found.'),
-                )
-              : ListView.builder(
-                shrinkWrap: true,
-                itemCount: _filteredPieces.length,
-                itemBuilder: (context, index) {
-                  final piece = _filteredPieces[index];
-                  return ListTile(
-                    title: Text(piece.title),
-                    subtitle: Text(piece.artistComposer),
-                    onTap: () {
-                      Navigator.of(context).pop(piece);
-                    },
-                  );
-                },
-              ),
+              child:
+                  _filteredPieces.isEmpty && _searchController.text.isNotEmpty
+                  ? Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text(context.l10n.noPiecesFound),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _filteredPieces.length,
+                      itemBuilder: (context, index) {
+                        final piece = _filteredPieces[index];
+                        return ListTile(
+                          title: Text(piece.title),
+                          subtitle: Text(piece.artistComposer),
+                          onTap: () {
+                            Navigator.of(context).pop(piece);
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -348,7 +422,7 @@ class _MusicPieceSelectionDialogState extends State<_MusicPieceSelectionDialog> 
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
       ],
     );

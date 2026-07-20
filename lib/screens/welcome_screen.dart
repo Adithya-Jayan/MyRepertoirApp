@@ -12,6 +12,8 @@ import '../database/music_piece_repository.dart';
 import '../utils/permissions_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// The initial screen displayed to the user on their first launch of the application.
 ///
 /// This screen guides the user through an initial setup process, including
@@ -39,11 +41,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('appStoragePath', appDocDir.path);
           await AppLogger.reinitialize();
-          
+
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const ColorSchemeScreen()),
+              MaterialPageRoute(
+                builder: (context) => const ColorSchemeScreen(),
+              ),
             );
           }
           return;
@@ -56,16 +60,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   /// Opens a directory picker for the user to select a storage folder.
   ///
-/// The selected path is then saved to [SharedPreferences].
+  /// The selected path is then saved to [SharedPreferences].
   Future<void> _selectStorageFolder() async {
-    final result = await FilePicker.platform.getDirectoryPath(); // Open directory picker.
+    final result = await FilePicker.platform
+        .getDirectoryPath(); // Open directory picker.
     if (result != null) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('appStoragePath', result); // Save the selected path.
-      
+      await prefs.setString(
+        'appStoragePath',
+        result,
+      ); // Save the selected path.
+
       // Reinitialize the logger with the new storage path
       await AppLogger.reinitialize();
-      
+
       setState(() {
         _storagePath = result; // Update the UI with the selected path.
       });
@@ -80,12 +88,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (await backupsDir.exists()) {
       final files = await backupsDir.list().toList();
       final zipFiles = files.where((f) => f.path.endsWith('.zip')).toList();
-      
+
       if (zipFiles.isNotEmpty && mounted) {
         // Sort by modified date desc (newest first)
-        zipFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+        zipFiles.sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+        );
         final latestBackup = zipFiles.first;
-        
+
         await _showRestoreDialog(latestBackup.path);
       }
     }
@@ -96,24 +106,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Existing Backup Found'),
-        content: const Text(
-          'An automatic backup was found in the selected storage folder. '
-          'Would you like to restore it?\n\n'
-          'Note: This will replace any template data created during installation.',
-        ),
+        title: Text(context.l10n.existingBackupFound),
+        content: Text(context.l10n.automaticBackupFoundMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, 'skip'),
-            child: const Text('Skip'),
+            child: Text(context.l10n.skip),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, 'manual'),
-            child: const Text('Select Manually'),
+            child: Text(context.l10n.selectManually),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, 'restore'),
-            child: const Text('Restore Latest'),
+            child: Text(context.l10n.restoreLatest),
           ),
         ],
       ),
@@ -128,27 +134,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     bool restoreSuccess = false;
     try {
       if (action == 'restore') {
-         if (!mounted) return; // Added mounted check
-         restoreSuccess = await service.restoreData(
-           context: context, 
-           filePath: latestBackupPath, 
-           isFreshRestore: true,
-           shouldPop: false // Don't pop WelcomeScreen
-         );
+        if (!mounted) return; // Added mounted check
+        restoreSuccess = await service.restoreData(
+          context: context,
+          filePath: latestBackupPath,
+          isFreshRestore: true,
+          shouldPop: false, // Don't pop WelcomeScreen
+        );
       } else if (action == 'manual') {
-         restoreSuccess = await service.restoreData(
-           context: context, 
-           isFreshRestore: true,
-           shouldPop: false // Don't pop WelcomeScreen
-         );
+        restoreSuccess = await service.restoreData(
+          context: context,
+          isFreshRestore: true,
+          shouldPop: false, // Don't pop WelcomeScreen
+        );
       }
-      
+
       if (restoreSuccess && mounted) {
-          // Skip setup screens and go to home
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LibraryScreen()),
-          );
+        // Skip setup screens and go to home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LibraryScreen()),
+        );
       }
     } catch (e) {
       AppLogger.log('WelcomeScreen: Restore error: $e');
@@ -186,25 +192,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    'Welcome!',
+                    context.l10n.welcome,
                     style: theme.textTheme.displaySmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Let\'s get your repertoire set up. You can always change these settings later.',
+                    context
+                        .l10n
+                        .letSGetYourRepertoireSetUpYouCanAlwaysChangeThese,
                     style: theme.textTheme.titleMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
                   Text(
-                    'Select a folder where the app will store its files:',
+                    context.l10n.selectAFolderWhereTheAppWillStoreItsFiles,
                     style: theme.textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _storagePath ?? 'No storage location set',
+                    _storagePath ?? context.l10n.noStorageLocationSet,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -213,7 +221,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   const SizedBox(height: 24),
                   FilledButton.tonal(
                     onPressed: _selectStorageFolder,
-                    child: const Text('Select a folder'),
+                    child: Text(context.l10n.selectAFolder),
                   ),
                   const SizedBox(height: 40),
                   ElevatedButton(
@@ -221,11 +229,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ? () {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (context) => const ColorSchemeScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => const ColorSchemeScreen(),
+                              ),
                             );
                           }
                         : null,
-                    child: const Text('Next'),
+                    child: Text(context.l10n.next),
                   ),
                 ],
               ),

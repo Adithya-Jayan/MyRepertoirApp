@@ -18,6 +18,8 @@ import 'package:repertoire/services/share_handler_service.dart';
 import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class PieceDetailScreen extends StatefulWidget {
   final MusicPiece musicPiece;
 
@@ -35,8 +37,10 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   void initState() {
     super.initState();
     _musicPiece = widget.musicPiece;
-    AppLogger.log('PieceDetailScreen: initState for piece: ${_musicPiece.title} (ID: ${_musicPiece.id})');
-    
+    AppLogger.log(
+      'PieceDetailScreen: initState for piece: ${_musicPiece.title} (ID: ${_musicPiece.id})',
+    );
+
     // Listen for data changes from external sources (like ShareHandlerService)
     ShareHandlerService.dataChangeNotifier.addListener(_onDataChanged);
   }
@@ -45,13 +49,13 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
   void dispose() {
     AppLogger.log('PieceDetailScreen: dispose called');
     ShareHandlerService.dataChangeNotifier.removeListener(_onDataChanged);
-    
+
     // Stop any active playback when leaving the detail screen
     PitchControllablePlayer().stop();
     if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
       FlutterPcmSound.stop();
     }
-    
+
     super.dispose();
   }
 
@@ -95,7 +99,9 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
   Widget _buildHeroHeader() {
     final theme = Theme.of(context);
-    final hasThumbnail = _musicPiece.thumbnailPath != null && _musicPiece.thumbnailPath!.isNotEmpty;
+    final hasThumbnail =
+        _musicPiece.thumbnailPath != null &&
+        _musicPiece.thumbnailPath!.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -132,7 +138,9 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               child: Container(
                 color: hasThumbnail
                     ? theme.colorScheme.surface.withValues(alpha: 0.6)
-                    : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    : theme.colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
               ),
             ),
             Padding(
@@ -194,10 +202,14 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.log('PieceDetailScreen: build called for piece: ${_musicPiece.title}');
+    AppLogger.log(
+      'PieceDetailScreen: build called for piece: ${_musicPiece.title}',
+    );
     final stateService = Provider.of<SectionStateService>(context);
     final sectionKeys = _getSectionKeys();
-    final allExpanded = sectionKeys.every((key) => stateService.isExpanded(key));
+    final allExpanded = sectionKeys.every(
+      (key) => stateService.isExpanded(key),
+    );
 
     return SafeArea(
       child: Scaffold(
@@ -206,7 +218,9 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
           actions: [
             IconButton(
               icon: Icon(allExpanded ? Icons.unfold_less : Icons.unfold_more),
-              tooltip: allExpanded ? 'Fold All' : 'Show All',
+              tooltip: allExpanded
+                  ? context.l10n.foldAll
+                  : context.l10n.showAll,
               onPressed: () {
                 stateService.toggleAll(sectionKeys, !allExpanded);
               },
@@ -215,11 +229,11 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               icon: const Icon(Icons.edit),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
+                final l10n = context.l10n;
                 final result = await Navigator.of(context).push<bool?>(
                   MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            AddEditPieceScreen(musicPiece: _musicPiece),
+                    builder: (context) =>
+                        AddEditPieceScreen(musicPiece: _musicPiece),
                   ),
                 );
                 if (result == true) {
@@ -238,9 +252,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                     AppLogger.log('Error refreshing music piece: $e');
                   }
                   messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Music piece updated successfully.'),
-                    ),
+                    SnackBar(content: Text(l10n.musicPieceUpdatedSuccessfully)),
                   );
                 }
               },
@@ -251,23 +263,22 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 final navigator = Navigator.of(context);
                 final confirmDelete = await showDialog<bool>(
                   context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: const Text('Delete Music Piece'),
-                        content: const Text(
-                          'Are you sure you want to delete this music piece?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Delete'),
-                          ),
-                        ],
+                  builder: (context) => AlertDialog(
+                    title: Text(context.l10n.deleteMusicPiece),
+                    content: Text(
+                      context.l10n.areYouSureYouWantToDeleteThisMusicPiece,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(context.l10n.cancel),
                       ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(context.l10n.delete),
+                      ),
+                    ],
+                  ),
                 );
 
                 if (confirmDelete == true) {
@@ -289,13 +300,16 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
               const SizedBox(height: 16.0),
               if (_musicPiece.groupIds.isNotEmpty)
                 CollapsibleSection(
-                  title: 'Groups',
+                  title: context.l10n.groups,
                   persistenceKey: 'groups_${_musicPiece.id}',
-                  child: GroupsDisplay(musicPiece: _musicPiece, showTitle: false),
+                  child: GroupsDisplay(
+                    musicPiece: _musicPiece,
+                    showTitle: false,
+                  ),
                 ),
               if (_musicPiece.enablePracticeTracking)
                 CollapsibleSection(
-                  title: 'Practice Tracking',
+                  title: context.l10n.practiceTracking,
                   persistenceKey: 'practice_tracking_${_musicPiece.id}',
                   child: PracticeTrackingCard(
                     musicPiece: _musicPiece,
@@ -310,7 +324,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 ),
               if (_musicPiece.tagGroups.isNotEmpty)
                 CollapsibleSection(
-                  title: 'Tag Groups',
+                  title: context.l10n.tagGroups,
                   persistenceKey: 'tag_groups_${_musicPiece.id}',
                   child: TagGroupsDisplay(
                     musicPiece: _musicPiece,
@@ -319,8 +333,12 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                 ),
 
               // Only show spacing if there's a top section AND there is visible media to show below it
-              if ((_musicPiece.enablePracticeTracking || _musicPiece.tagGroups.isNotEmpty || _musicPiece.groupIds.isNotEmpty) && 
-                  _musicPiece.mediaItems.any((item) => item.type != MediaType.thumbnails)) ...[
+              if ((_musicPiece.enablePracticeTracking ||
+                      _musicPiece.tagGroups.isNotEmpty ||
+                      _musicPiece.groupIds.isNotEmpty) &&
+                  _musicPiece.mediaItems.any(
+                    (item) => item.type != MediaType.thumbnails,
+                  )) ...[
                 const SizedBox(height: 8.0),
               ],
               MediaDisplayList(

@@ -13,8 +13,8 @@ import 'package:archive/archive_io.dart';
 import '../../utils/app_logger.dart';
 import '../../database/music_piece_repository.dart';
 
-
 import 'package:intl/intl.dart';
+import 'package:repertoire/l10n/l10n.dart';
 
 class BackupManager {
   final MusicPieceRepository _repository;
@@ -34,7 +34,9 @@ class BackupManager {
 
     return {
       'backupVersion': 2,
-      'musicPieces': musicPieces.map((e) => e.toJsonForBackup(storagePath)).toList(),
+      'musicPieces': musicPieces
+          .map((e) => e.toJsonForBackup(storagePath))
+          .toList(),
       'tags': tags.map((e) => e.toJson()).toList(),
       'groups': groups.map((e) => e.toJson()).toList(),
       'practiceLogs': practiceLogs.map((e) => e.toJson()).toList(),
@@ -45,77 +47,95 @@ class BackupManager {
   /// Collects all app settings from SharedPreferences
   Future<Map<String, dynamic>> _collectAppSettings() async {
     final settings = <String, dynamic>{};
-    
+
     // Theme and appearance settings
     settings['appThemePreference'] = prefs.getString('appThemePreference');
+    settings['appLanguagePreference'] = prefs.getString(
+      'appLanguagePreference',
+    );
     settings['appAccentColor'] = prefs.getInt('appAccentColor');
     settings['galleryColumns'] = prefs.getInt('galleryColumns');
     settings['thumbnailStyle'] = prefs.getString('thumbnailStyle');
     settings['showPracticeCount'] = prefs.getBool('showPracticeCount');
     settings['showLastPracticed'] = prefs.getBool('showLastPracticed');
-    settings['showDotPatternBackground'] = prefs.getBool('showDotPatternBackground');
+    settings['showDotPatternBackground'] = prefs.getBool(
+      'showDotPatternBackground',
+    );
     settings['useOledBlack'] = prefs.getBool('useOledBlack');
-    
+
     // Backup settings
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
     settings['autoBackupFrequency'] = prefs.getDouble('autoBackupFrequency');
     settings['autoBackupCount'] = prefs.getInt('autoBackupCount');
-    settings['lastAutoBackupTimestamp'] = prefs.getInt('lastAutoBackupTimestamp');
-    
+    settings['lastAutoBackupTimestamp'] = prefs.getInt(
+      'lastAutoBackupTimestamp',
+    );
+
     // Storage and path settings
     settings['appStoragePath'] = prefs.getString('appStoragePath');
-    
+
     // Library and sorting settings
     settings['sortOption'] = prefs.getString('sortOption');
     settings['hideEmptyGroups'] = prefs.getBool('hideEmptyGroups');
     settings['filterOptions'] = prefs.getString('filterOptions');
     settings['quickFilters'] = prefs.getString('quickFilters');
-    
+
     // Group visibility settings
     settings['all_group_isHidden'] = prefs.getBool('all_group_isHidden');
-    settings['ungrouped_group_isHidden'] = prefs.getBool('ungrouped_group_isHidden');
+    settings['ungrouped_group_isHidden'] = prefs.getBool(
+      'ungrouped_group_isHidden',
+    );
     settings['all_group_order'] = prefs.getInt('all_group_order');
     settings['ungrouped_group_order'] = prefs.getInt('ungrouped_group_order');
-    
+
     // Audio settings
     settings['audio_speed'] = prefs.getDouble('audio_speed');
     settings['audio_pitch'] = prefs.getDouble('audio_pitch');
-    
+
     // Practice settings
     settings['practice_stages'] = prefs.getString('practice_stages');
-    settings['show_practice_time_stats'] = prefs.getBool('show_practice_time_stats');
+    settings['show_practice_time_stats'] = prefs.getBool(
+      'show_practice_time_stats',
+    );
     settings['show_practice_notes'] = prefs.getBool('show_practice_notes');
-    
+
     // Practice stage transitions (legacy migration fields)
     settings['greenPeriod'] = prefs.getInt('greenPeriod');
-    settings['greenToYellowTransition'] = prefs.getInt('greenToYellowTransition');
+    settings['greenToYellowTransition'] = prefs.getInt(
+      'greenToYellowTransition',
+    );
     settings['yellowToRedTransition'] = prefs.getInt('yellowToRedTransition');
     settings['redToBlackTransition'] = prefs.getInt('redToBlackTransition');
-    
+
     // App state settings
     settings['hasRunBefore'] = prefs.getBool('hasRunBefore');
     settings['notifyNewReleases'] = prefs.getBool('notifyNewReleases');
-    settings['showGradientBackground'] = prefs.getBool('showGradientBackground');
-    settings['dismissed_update_version'] = prefs.getString('dismissed_update_version');
+    settings['showGradientBackground'] = prefs.getBool(
+      'showGradientBackground',
+    );
+    settings['dismissed_update_version'] = prefs.getString(
+      'dismissed_update_version',
+    );
     settings['last_run_version'] = prefs.getString('last_run_version');
-    
+
     // Debug settings
     settings['debugLogsEnabled'] = prefs.getBool('debugLogsEnabled');
 
     // Dynamic / Piece-specific & UI state settings
-    final dynamicKeys = prefs.getKeys().where((key) =>
-      key.startsWith('audio_speed_') ||
-      key.startsWith('audio_pitch_') ||
-      key.startsWith('video_playback_speed_') ||
-      key.startsWith('video_pitch_') ||
-      key.startsWith('midi_mutes_') ||
-      key.startsWith('pdf_scroll_speed_') ||
-      key.startsWith('section_expanded_')
+    final dynamicKeys = prefs.getKeys().where(
+      (key) =>
+          key.startsWith('audio_speed_') ||
+          key.startsWith('audio_pitch_') ||
+          key.startsWith('video_playback_speed_') ||
+          key.startsWith('video_pitch_') ||
+          key.startsWith('midi_mutes_') ||
+          key.startsWith('pdf_scroll_speed_') ||
+          key.startsWith('section_expanded_'),
     );
     for (final key in dynamicKeys) {
       settings[key] = prefs.get(key);
     }
-    
+
     AppLogger.log('Collected ${settings.length} app settings for backup');
     return settings;
   }
@@ -123,21 +143,33 @@ class BackupManager {
   // --- Static Methods for Isolate execution ---
 
   /// Creates a zip file with backup data (Run in Isolate)
-  static Future<Uint8List> _createBackupZipTask(Map<String, dynamic> data, bool manual, String appDocPath) async {
+  static Future<Uint8List> _createBackupZipTask(
+    Map<String, dynamic> data,
+    bool manual,
+    String appDocPath,
+  ) async {
     final jsonString = jsonEncode(data);
-    
+
     // Create archive using the archive package directly
     final archive = Archive();
-    
+
     // Add JSON data
     final jsonBytes = utf8.encode(jsonString);
-    final jsonArchiveFile = ArchiveFile('music_repertoire.json', jsonBytes.length, jsonBytes);
+    final jsonArchiveFile = ArchiveFile(
+      'music_repertoire.json',
+      jsonBytes.length,
+      jsonBytes,
+    );
     archive.addFile(jsonArchiveFile);
 
     // Create and add README file
     final readmeContent = await _staticCreateReadmeContent(data);
     final readmeBytes = utf8.encode(readmeContent);
-    final readmeArchiveFile = ArchiveFile('README.txt', readmeBytes.length, readmeBytes);
+    final readmeArchiveFile = ArchiveFile(
+      'README.txt',
+      readmeBytes.length,
+      readmeBytes,
+    );
     archive.addFile(readmeArchiveFile);
 
     // Add media files to archive
@@ -153,42 +185,58 @@ class BackupManager {
   }
 
   /// Creates README content (Static for Isolate)
-  static Future<String> _staticCreateReadmeContent(Map<String, dynamic> data) async {
+  static Future<String> _staticCreateReadmeContent(
+    Map<String, dynamic> data,
+  ) async {
     final musicPieces = data['musicPieces'] as List<dynamic>;
-    
+
     final buffer = StringBuffer();
-    buffer.writeln('Hi there! Looks like you\'ve decided to explore the backup file manually :D');
+    buffer.writeln(
+      'Hi there! Looks like you\'ve decided to explore the backup file manually :D',
+    );
     buffer.writeln('This is how the backup files are structured:');
-    buffer.writeln('  music_repertoire.json - Contains all your music pieces, tags, groups, and settings');
-    buffer.writeln('  media/ - Contains all your media files (sheet music, audio, images, etc.)');
+    buffer.writeln(
+      '  music_repertoire.json - Contains all your music pieces, tags, groups, and settings',
+    );
+    buffer.writeln(
+      '  media/ - Contains all your media files (sheet music, audio, images, etc.)',
+    );
     buffer.writeln('');
     buffer.writeln('The mapping for the pieces are as follows:');
     buffer.writeln('  <piece_id> : piece_title');
-    
+
     for (final piece in musicPieces) {
       final pieceId = piece['id'] as String;
       final pieceTitle = piece['title'] as String;
       buffer.writeln('  $pieceId : $pieceTitle');
     }
-    
+
     buffer.writeln('');
-    buffer.writeln('Each piece_id in the media folder corresponds to a folder containing all media files for that piece.');
-    buffer.writeln('The music_repertoire.json file contains all the metadata and relationships between pieces, tags, and groups.');
+    buffer.writeln(
+      'Each piece_id in the media folder corresponds to a folder containing all media files for that piece.',
+    );
+    buffer.writeln(
+      'The music_repertoire.json file contains all the metadata and relationships between pieces, tags, and groups.',
+    );
     buffer.writeln('');
     buffer.writeln('Happy exploring! 🎵');
-    
+
     return buffer.toString();
   }
 
   /// Recursively adds media files to the archive (Static for Isolate)
-  static Future<void> _staticAddMediaFilesToArchive(Archive archive, Directory dir, String basePath) async {
+  static Future<void> _staticAddMediaFilesToArchive(
+    Archive archive,
+    Directory dir,
+    String basePath,
+  ) async {
     try {
       final entities = await dir.list().toList();
-      
+
       for (final entity in entities) {
         if (entity is File) {
           final relativePath = p.relative(entity.path, from: basePath);
-          
+
           try {
             final bytes = await entity.readAsBytes();
             final archiveFile = ArchiveFile(relativePath, bytes.length, bytes);
@@ -207,9 +255,15 @@ class BackupManager {
   }
 
   /// Saves backup file to the specified location
-  Future<String?> _saveBackupFile(Uint8List zipBytes, String backupDirectory, bool manual) async {
+  Future<String?> _saveBackupFile(
+    Uint8List zipBytes,
+    String backupDirectory,
+    bool manual,
+  ) async {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
-    final fileName = manual ? 'music_repertoire_backup_$timestamp.zip' : 'auto_backup_$timestamp.zip';
+    final fileName = manual
+        ? 'music_repertoire_backup_$timestamp.zip'
+        : 'auto_backup_$timestamp.zip';
 
     if (manual) {
       AppLogger.log('Handling manual backup save.');
@@ -219,8 +273,10 @@ class BackupManager {
         // and let the user move it if needed
         final appDocDir = await getApplicationDocumentsDirectory();
         final defaultPath = p.join(appDocDir.path, fileName);
-        AppLogger.log('Mobile platform detected, using default path: $defaultPath');
-        
+        AppLogger.log(
+          'Mobile platform detected, using default path: $defaultPath',
+        );
+
         outputFile = await FilePicker.platform.saveFile(
           fileName: fileName,
           bytes: zipBytes,
@@ -237,7 +293,9 @@ class BackupManager {
         if (outputFile != null) {
           final outputDirectory = Directory(p.dirname(outputFile));
           if (!await outputDirectory.exists()) {
-            AppLogger.log('Creating output directory for desktop: ${outputDirectory.path}');
+            AppLogger.log(
+              'Creating output directory for desktop: ${outputDirectory.path}',
+            );
             await outputDirectory.create(recursive: true);
           }
           await File(outputFile).writeAsBytes(zipBytes);
@@ -253,34 +311,51 @@ class BackupManager {
   }
 
   /// Shows appropriate success/failure messages
-  void _showBackupMessage(ScaffoldMessengerState? messenger, bool success, String message) {
+  void _showBackupMessage(
+    ScaffoldMessengerState? messenger,
+    bool success,
+    String Function(AppLocalizations l10n) messageBuilder,
+  ) {
     if (messenger != null) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(messageBuilder(messenger.context.l10n)),
           backgroundColor: success ? Colors.green : Colors.red,
-        )
+        ),
       );
     }
   }
 
   /// Performs the complete backup process
-  Future<void> performBackup({bool manual = true, ScaffoldMessengerState? messenger}) async {
+  Future<void> performBackup({
+    bool manual = true,
+    ScaffoldMessengerState? messenger,
+  }) async {
     AppLogger.log('Initiating backup (manual: $manual).');
-    
+
     // Show progress message for both manual and auto-backup
-    _showBackupMessage(messenger, true, manual ? 'Backing up data...' : 'Creating auto-backup...');
-    
+    _showBackupMessage(
+      messenger,
+      true,
+      (l10n) => manual ? l10n.backingUpData : l10n.creatingAutoBackup,
+    );
+
     try {
       final storagePath = prefs.getString('appStoragePath');
       if (storagePath == null) {
         AppLogger.log('Backup failed: Storage path not configured.');
-        _showBackupMessage(messenger, false, 'Backup failed: Storage path not configured.');
+        _showBackupMessage(
+          messenger,
+          false,
+          (l10n) => l10n.backupFailedStoragePathNotConfigured,
+        );
         return;
       }
       AppLogger.log('Storage path: $storagePath');
 
-      final backupSubDir = manual ? p.join('Backups', 'ManualBackups') : p.join('Backups', 'Autobackups');
+      final backupSubDir = manual
+          ? p.join('Backups', 'ManualBackups')
+          : p.join('Backups', 'Autobackups');
       final backupDirectory = Directory(p.join(storagePath, backupSubDir));
       AppLogger.log('Backup directory: ${backupDirectory.path}');
       if (!await backupDirectory.exists()) {
@@ -289,28 +364,46 @@ class BackupManager {
       }
 
       final data = await _createBackupData(storagePath);
-      
+
       // Get App Documents Directory for Media files
       final appDocDir = await getApplicationDocumentsDirectory();
-      
+
       // Run compression in isolate to prevent UI freeze
       AppLogger.log('Starting backup compression in background isolate...');
-      final zipBytes = await Isolate.run(() => _createBackupZipTask(data, manual, appDocDir.path));
+      final zipBytes = await Isolate.run(
+        () => _createBackupZipTask(data, manual, appDocDir.path),
+      );
       AppLogger.log('Backup compression completed.');
-      
-      final outputFile = await _saveBackupFile(zipBytes, backupDirectory.path, manual);
+
+      final outputFile = await _saveBackupFile(
+        zipBytes,
+        backupDirectory.path,
+        manual,
+      );
 
       if (outputFile != null) {
         // Show success banner
-        _showBackupMessage(messenger, true, manual ? 'Data backed up successfully!' : 'Auto-backup completed successfully!');
-        AppLogger.log(manual ? 'Manual backup successful.' : 'Autobackup successful.');
+        _showBackupMessage(
+          messenger,
+          true,
+          (l10n) => manual
+              ? l10n.dataBackedUpSuccessfully
+              : l10n.autoBackupCompletedSuccessfully,
+        );
+        AppLogger.log(
+          manual ? 'Manual backup successful.' : 'Autobackup successful.',
+        );
       } else {
-        _showBackupMessage(messenger, false, 'Backup cancelled.');
+        _showBackupMessage(messenger, false, (l10n) => l10n.backupCancelled);
         AppLogger.log('Backup cancelled by user.');
       }
     } catch (e) {
       AppLogger.log('Backup failed: $e');
-      _showBackupMessage(messenger, false, 'Backup failed: $e');
+      _showBackupMessage(
+        messenger,
+        false,
+        (l10n) => l10n.backupFailed(e.toString()),
+      );
     }
   }
 
@@ -318,14 +411,20 @@ class BackupManager {
   Future<void> cleanupOldBackups(int autoBackupCount) async {
     final storagePath = prefs.getString('appStoragePath');
     if (storagePath != null) {
-      final autoBackupDir = Directory(p.join(storagePath, 'Backups', 'Autobackups'));
+      final autoBackupDir = Directory(
+        p.join(storagePath, 'Backups', 'Autobackups'),
+      );
       if (await autoBackupDir.exists()) {
         AppLogger.log('Auto-backup directory exists: ${autoBackupDir.path}');
         final files = await autoBackupDir.list().toList();
-        files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+        files.sort(
+          (a, b) => a.statSync().modified.compareTo(b.statSync().modified),
+        );
         AppLogger.log('Found ${files.length} auto-backup files.');
         if (files.length > autoBackupCount) {
-          AppLogger.log('Deleting old auto-backup files. Keeping $autoBackupCount.');
+          AppLogger.log(
+            'Deleting old auto-backup files. Keeping $autoBackupCount.',
+          );
           for (int i = 0; i < files.length - autoBackupCount; i++) {
             AppLogger.log('Deleting: ${files[i].path}');
             await files[i].delete();
@@ -334,4 +433,4 @@ class BackupManager {
       }
     }
   }
-} 
+}

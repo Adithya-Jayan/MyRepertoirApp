@@ -8,6 +8,8 @@ import 'dart:io';
 import '../utils/app_logger.dart';
 import '../utils/theme_notifier.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen for managing general application settings.
 ///
 /// This includes options for selecting the application's storage folder
@@ -22,7 +24,8 @@ class GeneralSettingsScreen extends StatefulWidget {
 /// The state class for [GeneralSettingsScreen].
 /// Manages the UI and logic for general application settings.
 class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
-  String? _currentStoragePath; // Stores the currently selected application storage path.
+  String?
+  _currentStoragePath; // Stores the currently selected application storage path.
   ThemeMode? _selectedThemeMode; // Stores the currently selected theme mode.
 
   @override
@@ -50,7 +53,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   Future<void> _selectStorageFolder() async {
     AppLogger.log('Attempting to select storage folder.');
     final messenger = ScaffoldMessenger.of(context);
-    final result = await FilePicker.platform.getDirectoryPath(); // Open the directory picker.
+    final l10n = context.l10n;
+    final result = await FilePicker.platform
+        .getDirectoryPath(); // Open the directory picker.
     if (result != null) {
       AppLogger.log('Selected directory: $result');
       final testDir = Directory(p.join(result, '.test_writable'));
@@ -60,47 +65,55 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         await testDir.delete(recursive: true); // Clean up
         // If we reach here, the path is writable.
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('appStoragePath', result); // Save the newly selected storage path.
-        
+        await prefs.setString(
+          'appStoragePath',
+          result,
+        ); // Save the newly selected storage path.
+
         // Reinitialize the logger with the new storage path
         await AppLogger.reinitialize();
-        
+
         if (mounted) {
           setState(() {
-            _currentStoragePath = result; // Update the state to display the new path.
+            _currentStoragePath =
+                result; // Update the state to display the new path.
           });
         }
         messenger.showSnackBar(
-          const SnackBar(content: Text('Storage path updated.')), // Show a confirmation message.
+          SnackBar(
+            content: Text(l10n.storagePathUpdated),
+          ), // Show a confirmation message.
         );
         AppLogger.log('Storage path updated successfully to: $result');
       } catch (e) {
         // Path is not writable
         AppLogger.log('Selected path is not writable: $e');
         messenger.showSnackBar(
-          SnackBar(content: Text('Selected path is not writable: $e. Please choose a different location.')),
+          SnackBar(content: Text(l10n.selectedPathNotWritable(e.toString()))),
         );
         // Revert to a default writable path
         final defaultPath = (await getApplicationDocumentsDirectory()).path;
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('appStoragePath', defaultPath);
-        
+
         // Reinitialize the logger with the default path
         await AppLogger.reinitialize();
-        
+
         if (mounted) {
           setState(() {
             _currentStoragePath = defaultPath;
           });
         }
         messenger.showSnackBar(
-          SnackBar(content: Text('Reverted to default app storage path: $defaultPath')),
+          SnackBar(
+            content: Text(l10n.revertedToDefaultStoragePath(defaultPath)),
+          ),
         );
         AppLogger.log('Reverted to default app storage path: $defaultPath');
       }
     } else {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Folder selection cancelled.')),
+        SnackBar(content: Text(l10n.folderSelectionCancelled2)),
       );
       AppLogger.log('Storage folder selection cancelled.');
     }
@@ -122,25 +135,23 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   String _getStringFromThemeMode(ThemeMode themeMode) {
     switch (themeMode) {
       case ThemeMode.light:
-        return 'Light';
+        return context.l10n.light;
       case ThemeMode.dark:
-        return 'Dark';
+        return context.l10n.dark;
       case ThemeMode.system:
-        return 'System';
+        return context.l10n.system;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('General Settings'),
-      ),
+      appBar: AppBar(title: Text(context.l10n.generalSettings)),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           ListTile(
-            title: const Text('Storage Folder'),
+            title: Text(context.l10n.storageFolder),
             subtitle: Text(_currentStoragePath ?? 'Not set'),
             trailing: IconButton(
               icon: const Icon(Icons.folder_open),
@@ -149,34 +160,42 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
           ),
           const Divider(),
           ListTile(
-            title: const Text('App Theme'),
-            subtitle: Text(_getStringFromThemeMode(_selectedThemeMode ?? ThemeMode.system)),
+            title: Text(context.l10n.appTheme),
+            subtitle: Text(
+              _getStringFromThemeMode(_selectedThemeMode ?? ThemeMode.system),
+            ),
             trailing: DropdownButton<ThemeMode>(
               value: _selectedThemeMode ?? ThemeMode.system,
               onChanged: (ThemeMode? newValue) {
                 if (newValue != null) {
-                  Provider.of<ThemeNotifier>(context, listen: false).setTheme(newValue);
+                  Provider.of<ThemeNotifier>(
+                    context,
+                    listen: false,
+                  ).setTheme(newValue);
                   setState(() {
                     _selectedThemeMode = newValue;
                   });
                 }
               },
-              items: const <ThemeMode>[
-                ThemeMode.system,
-                ThemeMode.light,
-                ThemeMode.dark,
-              ].map<DropdownMenuItem<ThemeMode>>((ThemeMode value) {
-                return DropdownMenuItem<ThemeMode>(
-                  value: value,
-                  child: Text(_getStringFromThemeMode(value)),
-                );
-              }).toList(),
+              items:
+                  const <ThemeMode>[
+                    ThemeMode.system,
+                    ThemeMode.light,
+                    ThemeMode.dark,
+                  ].map<DropdownMenuItem<ThemeMode>>((ThemeMode value) {
+                    return DropdownMenuItem<ThemeMode>(
+                      value: value,
+                      child: Text(_getStringFromThemeMode(value)),
+                    );
+                  }).toList(),
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              "Some theme changes may require an app restart to take full effect.",
+              context
+                  .l10n
+                  .someThemeChangesMayRequireAnAppRestartToTakeFullEffect,
               style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
             ),
           ),

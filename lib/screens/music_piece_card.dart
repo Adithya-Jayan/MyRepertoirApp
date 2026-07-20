@@ -6,6 +6,7 @@ import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/utils/theme_notifier.dart'; // Import ThemeNotifier
+import 'package:repertoire/l10n/l10n.dart';
 import '../models/music_piece.dart';
 
 /// A widget that displays a single music piece as a card in a grid or list.
@@ -15,10 +16,12 @@ import '../models/music_piece.dart';
 class MusicPieceCard extends StatelessWidget {
   final MusicPiece piece; // The music piece data to display.
   final bool isSelected; // Whether the card is currently selected.
-  final bool isListView; // Whether the card is displayed in a list view (compact).
+  final bool
+  isListView; // Whether the card is displayed in a list view (compact).
   final int galleryColumns; // Current number of gallery columns
   final VoidCallback? onTap; // Callback function when the card is tapped.
-  final VoidCallback? onLongPress; // Callback function when the card is long-pressed.
+  final VoidCallback?
+  onLongPress; // Callback function when the card is long-pressed.
 
   const MusicPieceCard({
     super.key,
@@ -30,14 +33,18 @@ class MusicPieceCard extends StatelessWidget {
     this.onLongPress,
   });
 
-  Widget _buildTagChip(dynamic tg, String tag, Brightness brightness, {double scale = 1.0}) {
+  Widget _buildTagChip(
+    dynamic tg,
+    String tag,
+    Brightness brightness, {
+    double scale = 1.0,
+  }) {
     final color = tg.color != null ? Color(tg.color!) : null;
     Widget chip = Chip(
-      label: Text(
-        tag,
-        style: TextStyle(fontSize: 10 * scale),
-      ),
-      backgroundColor: color != null ? adjustColorForBrightness(color, brightness) : null,
+      label: Text(tag, style: TextStyle(fontSize: 10 * scale)),
+      backgroundColor: color != null
+          ? adjustColorForBrightness(color, brightness)
+          : null,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 0),
@@ -55,22 +62,26 @@ class MusicPieceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context); // Retrieve ThemeNotifier
+    final themeNotifier = Provider.of<ThemeNotifier>(
+      context,
+    ); // Retrieve ThemeNotifier
     final Brightness brightness = Theme.of(context).brightness;
     final colorScheme = Theme.of(context).colorScheme;
-    final bool hasThumbnail = piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty;
+    final bool hasThumbnail =
+        piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty;
     final ThumbnailStyle thumbnailStyle = themeNotifier.thumbnailStyle;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final imageCacheWidth = (isListView
-            ? screenWidth
-            : (screenWidth / galleryColumns)) *
+    final imageCacheWidth =
+        (isListView ? screenWidth : (screenWidth / galleryColumns)) *
         devicePixelRatio;
 
     Widget textWithOutline(String text, TextStyle? style) {
       if (hasThumbnail && thumbnailStyle == ThumbnailStyle.outline) {
-        final shadowColor = brightness == Brightness.dark ? Colors.black : Colors.white;
+        final shadowColor = brightness == Brightness.dark
+            ? Colors.black
+            : Colors.white;
         return Text(
           text,
           style: style?.copyWith(
@@ -120,7 +131,9 @@ class MusicPieceCard extends StatelessWidget {
                     filterQuality: FilterQuality.low,
                     cacheWidth: imageCacheWidth.round(),
                     errorBuilder: (context, error, stackTrace) {
-                      AppLogger.log('MusicPieceCard: Error loading thumbnail for "${piece.title}": $error');
+                      AppLogger.log(
+                        'MusicPieceCard: Error loading thumbnail for "${piece.title}": $error',
+                      );
                       return Container();
                     },
                   ),
@@ -136,9 +149,13 @@ class MusicPieceCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          (brightness == Brightness.dark ? Colors.black : Colors.white)
+                          (brightness == Brightness.dark
+                                  ? Colors.black
+                                  : Colors.white)
                               .withValues(alpha: 0.9),
-                          (brightness == Brightness.dark ? Colors.black : Colors.white)
+                          (brightness == Brightness.dark
+                                  ? Colors.black
+                                  : Colors.white)
                               .withValues(alpha: 0.25),
                         ],
                       ),
@@ -160,7 +177,11 @@ class MusicPieceCard extends StatelessWidget {
                         height: 12,
                         margin: const EdgeInsets.only(bottom: 4.0),
                         decoration: BoxDecoration(
-                          color: PracticeIndicatorUtils.getPracticeIndicatorColorSync(piece.lastPracticeTime) ?? Colors.transparent,
+                          color:
+                              PracticeIndicatorUtils.getPracticeIndicatorColorSync(
+                                piece.lastPracticeTime,
+                              ) ??
+                              Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -189,49 +210,58 @@ class MusicPieceCard extends StatelessWidget {
                             ],
                           )
                         : galleryColumns <= 4
-                            ? SizedBox(
-                                height: 32,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  primary: false,
-                                  physics: const ClampingScrollPhysics(),
-                                  child: Row(
-                                    children: [
-                                      for (final tg in piece.tagGroups)
-                                        for (final tag in tg.tags)
-                                          Padding(
-                                            padding: const EdgeInsets.only(right: 4.0),
-                                            child: _buildTagChip(
-                                              tg,
-                                              tag,
-                                              brightness,
-                                              scale: galleryColumns > 2 ? 0.8 : 1.0,
-                                            ),
-                                          ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Icon(
-                                  Icons.label_outline,
-                                  size: 14,
-                                  color: brightness == Brightness.dark ? Colors.white70 : Colors.black54,
-                                ),
+                        ? SizedBox(
+                            height: 32,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              primary: false,
+                              physics: const ClampingScrollPhysics(),
+                              child: Row(
+                                children: [
+                                  for (final tg in piece.tagGroups)
+                                    for (final tag in tg.tags)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 4.0,
+                                        ),
+                                        child: _buildTagChip(
+                                          tg,
+                                          tag,
+                                          brightness,
+                                          scale: galleryColumns > 2 ? 0.8 : 1.0,
+                                        ),
+                                      ),
+                                ],
                               ),
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Icon(
+                              Icons.label_outline,
+                              size: 14,
+                              color: brightness == Brightness.dark
+                                  ? Colors.white70
+                                  : Colors.black54,
+                            ),
+                          ),
                   if (isListView)
                     const SizedBox(height: 8.0)
                   else
                     const Spacer(),
-                  if (piece.enablePracticeTracking && themeNotifier.showLastPracticed)
+                  if (piece.enablePracticeTracking &&
+                      themeNotifier.showLastPracticed)
                     textWithOutline(
-                      PracticeIndicatorUtils.formatLastPracticeTime(piece.lastPracticeTime),
+                      PracticeIndicatorUtils.formatLastPracticeTime(
+                        piece.lastPracticeTime,
+                        context.l10n,
+                      ),
                       Theme.of(context).textTheme.bodySmall,
                     ),
-                  if (piece.enablePracticeTracking && themeNotifier.showPracticeCount)
+                  if (piece.enablePracticeTracking &&
+                      themeNotifier.showPracticeCount)
                     textWithOutline(
-                      'Practice count: ${piece.practiceCount}',
+                      context.l10n.practiceCountLabel(piece.practiceCount),
                       Theme.of(context).textTheme.bodySmall,
                     ),
                 ],

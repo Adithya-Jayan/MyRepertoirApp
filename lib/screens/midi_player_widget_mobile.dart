@@ -17,9 +17,12 @@ import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
 import '../utils/midi_utils.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// Global controller to ensure only one MIDI player is active at a time.
 class MidiPlayerController {
-  static final MidiPlayerController _instance = MidiPlayerController._internal();
+  static final MidiPlayerController _instance =
+      MidiPlayerController._internal();
   factory MidiPlayerController() => _instance;
   MidiPlayerController._internal();
 
@@ -72,12 +75,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   bool _wasPlayingBeforeScrub = false;
   String? _errorMessage;
   final String _playerId = const Uuid().v4();
-  
+
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   Timer? _audioTimer;
   Timer? _positionTimer;
-  
+
   // Track settings
   MidiTrackConfig _trackConfig = MidiTrackConfig(channels: {});
   final List<bool> _activeChannels = List.generate(16, (_) => false);
@@ -91,12 +94,15 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   @override
   void didUpdateWidget(MidiPlayerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldMediaItem = oldWidget.musicPiece.mediaItems[oldWidget.mediaItemIndex];
+    final oldMediaItem =
+        oldWidget.musicPiece.mediaItems[oldWidget.mediaItemIndex];
     final newMediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
-    
+
     if (oldMediaItem.configData != newMediaItem.configData) {
       setState(() {
-        _trackConfig = MidiTrackConfig.fromJson(newMediaItem.configData ?? '{}');
+        _trackConfig = MidiTrackConfig.fromJson(
+          newMediaItem.configData ?? '{}',
+        );
         // Re-apply track settings to the synthesizer
         for (int i = 0; i < 16; i++) {
           final config = _trackConfig.channels[i] ?? ChannelConfig();
@@ -109,8 +115,11 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    _bookmarks = widget.musicPiece.bookmarks.where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null).toList();
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    _bookmarks = widget.musicPiece.bookmarks
+        .where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null)
+        .toList();
     _initMidi();
   }
 
@@ -118,7 +127,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   Duration _calculateMidiDuration(midi_parser.MidiFile midiFile) {
     try {
       final int division = midiFile.header.ticksPerBeat ?? 480;
-      
+
       // Collect all tempo events
       final List<dynamic> tempoEvents = [];
       for (var track in midiFile.tracks) {
@@ -130,7 +139,9 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           }
         }
       }
-      tempoEvents.sort((a, b) => (a['tick'] as int).compareTo(b['tick'] as int));
+      tempoEvents.sort(
+        (a, b) => (a['tick'] as int).compareTo(b['tick'] as int),
+      );
 
       // Find the absolute maximum tick across all tracks
       int maxTick = 0;
@@ -149,14 +160,18 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       for (var entry in tempoEvents) {
         final int tick = entry['tick'];
         final int delta = tick - lastTick;
-        totalSeconds += (delta * currentMicrosecondsPerBeat) / (division * 1000000);
+        totalSeconds +=
+            (delta * currentMicrosecondsPerBeat) / (division * 1000000);
         lastTick = tick;
-        currentMicrosecondsPerBeat = (entry['event'] as midi_parser.SetTempoEvent).microsecondsPerBeat;
+        currentMicrosecondsPerBeat =
+            (entry['event'] as midi_parser.SetTempoEvent).microsecondsPerBeat;
       }
 
       // Add remaining time until maxTick
       if (maxTick > lastTick) {
-        totalSeconds += ((maxTick - lastTick) * currentMicrosecondsPerBeat) / (division * 1000000);
+        totalSeconds +=
+            ((maxTick - lastTick) * currentMicrosecondsPerBeat) /
+            (division * 1000000);
       }
 
       return Duration(milliseconds: (totalSeconds * 1000).round());
@@ -169,7 +184,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   List<MidiNote> _extractNotes(midi_parser.MidiFile midiFile) {
     final List<MidiNote> notes = [];
     final int division = midiFile.header.ticksPerBeat ?? 480;
-    
+
     // Merge events from all tracks to handle tempo correctly
     final List<dynamic> allEvents = [];
     for (var track in midiFile.tracks) {
@@ -189,9 +204,10 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
     for (var entry in allEvents) {
       final int tick = entry['tick'];
       final dynamic event = entry['event'];
-      
+
       // Update time using delta from last event globally
-      currentTimeSeconds += (tick - lastTick) * (currentTempo / division) / 1000000;
+      currentTimeSeconds +=
+          (tick - lastTick) * (currentTempo / division) / 1000000;
       lastTick = tick;
 
       if (event is midi_parser.SetTempoEvent) {
@@ -203,35 +219,41 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         } else {
           if (pendingNoteStarts.containsKey(key)) {
             final start = pendingNoteStarts.remove(key)!;
-            notes.add(MidiNote(
-              pitch: event.noteNumber,
-              startTimeSeconds: start,
-              durationSeconds: currentTimeSeconds - start,
-              channel: event.channel,
-            ));
+            notes.add(
+              MidiNote(
+                pitch: event.noteNumber,
+                startTimeSeconds: start,
+                durationSeconds: currentTimeSeconds - start,
+                channel: event.channel,
+              ),
+            );
           }
         }
       } else if (event is midi_parser.NoteOffEvent) {
         final key = '${event.channel}_${event.noteNumber}';
         if (pendingNoteStarts.containsKey(key)) {
           final start = pendingNoteStarts.remove(key)!;
-          notes.add(MidiNote(
-            pitch: event.noteNumber,
-            startTimeSeconds: start,
-            durationSeconds: currentTimeSeconds - start,
-            channel: event.channel,
-          ));
+          notes.add(
+            MidiNote(
+              pitch: event.noteNumber,
+              startTimeSeconds: start,
+              durationSeconds: currentTimeSeconds - start,
+              channel: event.channel,
+            ),
+          );
         }
       }
     }
-    return notes..sort((a, b) => a.startTimeSeconds.compareTo(b.startTimeSeconds));
+    return notes
+      ..sort((a, b) => a.startTimeSeconds.compareTo(b.startTimeSeconds));
   }
 
   Future<void> _initMidi() async {
+    final l10n = context.l10n;
     try {
       if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         setState(() {
-          _errorMessage = 'MIDI playback is currently not supported on desktop platforms.';
+          _errorMessage = l10n.midiDesktopUnsupported;
           _isInitialized = true;
         });
         return;
@@ -239,14 +261,17 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       final mediaItem = widget.musicPiece.mediaItems[widget.mediaItemIndex];
       final midiFile = File(mediaItem.pathOrUrl);
       if (!await midiFile.exists()) {
-        throw Exception('MIDI file not found at ${mediaItem.pathOrUrl}');
+        throw Exception(l10n.midiFileNotFound(mediaItem.pathOrUrl));
       }
 
-      _synth = Synthesizer.loadByteData(await rootBundle.load('assets/soundfonts/TimGM6mb.sf2'), SynthesizerSettings(sampleRate: 44100));
+      _synth = Synthesizer.loadByteData(
+        await rootBundle.load('assets/soundfonts/TimGM6mb.sf2'),
+        SynthesizerSettings(sampleRate: 44100),
+      );
 
       // Load track config
       _trackConfig = MidiTrackConfig.fromJson(mediaItem.configData ?? '{}');
-      
+
       // Load legacy mutes if config was empty
       if (mediaItem.configData == null || mediaItem.configData!.isEmpty) {
         final prefs = await SharedPreferences.getInstance();
@@ -264,19 +289,23 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       final midiData = await midiFile.readAsBytes();
       _meltyMidi = MidiFile.fromByteData(ByteData.view(midiData.buffer));
       final parsedMidi = midi_parser.MidiParser().parseMidiFromBuffer(midiData);
-      
+
       _sequencer = MidiFileSequencer(_synth!);
       _duration = _calculateMidiDuration(parsedMidi);
       _extractedNotes = _extractNotes(parsedMidi);
-      
-      final detectedNames = await MidiUtils.getChannelNames(mediaItem.pathOrUrl);
+
+      final detectedNames = await MidiUtils.getChannelNames(
+        mediaItem.pathOrUrl,
+      );
 
       for (var note in _extractedNotes) {
         _activeChannels[note.channel] = true;
       }
 
       // Ensure all active channels have a config, and fill names if missing
-      final updatedChannels = Map<int, ChannelConfig>.from(_trackConfig.channels);
+      final updatedChannels = Map<int, ChannelConfig>.from(
+        _trackConfig.channels,
+      );
       for (int i = 0; i < 16; i++) {
         if (_activeChannels[i]) {
           final existing = updatedChannels[i] ?? ChannelConfig();
@@ -297,7 +326,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
       await FlutterPcmSound.setup(sampleRate: 44100, channelCount: 1);
       await FlutterPcmSound.setFeedThreshold(4096);
-      
+
       _startAudioLoop();
 
       setState(() {
@@ -314,15 +343,33 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   void _applyTrackSettings(int channel, ChannelConfig config) {
     if (_synth == null) return;
     // Volume (CC 7)
-    final int volByte = (config.mute ? 0 : (config.volume * 127).round()).clamp(0, 127);
-    _synth!.processMidiMessage(channel: channel, command: 0xB0, data1: 7, data2: volByte);
+    final int volByte = (config.mute ? 0 : (config.volume * 127).round()).clamp(
+      0,
+      127,
+    );
+    _synth!.processMidiMessage(
+      channel: channel,
+      command: 0xB0,
+      data1: 7,
+      data2: volByte,
+    );
   }
 
   void _clearSynthSounds() {
     if (_synth == null) return;
     for (int i = 0; i < 16; i++) {
-      _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 120, data2: 0);
-      _synth!.processMidiMessage(channel: i, command: 0xB0, data1: 123, data2: 0);
+      _synth!.processMidiMessage(
+        channel: i,
+        command: 0xB0,
+        data1: 120,
+        data2: 0,
+      );
+      _synth!.processMidiMessage(
+        channel: i,
+        command: 0xB0,
+        data1: 123,
+        data2: 0,
+      );
     }
   }
 
@@ -341,7 +388,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
       if (_isPlaying && !_isScrubbing && _sequencer != null && isOwner) {
         _sequencer!.renderMonoInt16(buffer);
         final int16List = Int16List(bufferSize);
-        for(int i=0; i<bufferSize; i++) {
+        for (int i = 0; i < bufferSize; i++) {
           int16List[i] = buffer[i];
         }
         FlutterPcmSound.feed(PcmArrayInt16.fromList(int16List));
@@ -377,11 +424,11 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   void _togglePlay() async {
     if (_sequencer == null) return;
-    
+
     if (!_isPlaying) {
       await FlutterPcmSound.clear();
       MidiPlayerController().setActive(_playerId);
-      
+
       if (_position == Duration.zero || _position >= _duration) {
         _sequencer!.play(_meltyMidi!, loop: false);
       }
@@ -402,25 +449,25 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   void _seek(double value) {
     if (_sequencer == null || _meltyMidi == null) return;
-    
+
     final targetPos = Duration(milliseconds: value.toInt());
-    
+
     _sequencer!.stop();
     _clearSynthSounds();
     _sequencer!.play(_meltyMidi!, loop: false);
-    
+
     final originalSpeed = _sequencer!.speed;
     _sequencer!.speed = 1000.0;
-    
-    const int seekChunkSize = 512; 
+
+    const int seekChunkSize = 512;
     final dummyBuffer = ArrayInt16.zeros(numShorts: seekChunkSize);
-    
+
     int safety = 0;
     while (_sequencer!.position < targetPos && safety < 100000) {
       _sequencer!.renderMonoInt16(dummyBuffer);
       safety++;
     }
-    
+
     _sequencer!.speed = originalSpeed;
     _clearSynthSounds();
 
@@ -443,7 +490,9 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   void _updateTrackConfig(int channel, ChannelConfig newConfig) {
     setState(() {
-      final updatedChannels = Map<int, ChannelConfig>.from(_trackConfig.channels);
+      final updatedChannels = Map<int, ChannelConfig>.from(
+        _trackConfig.channels,
+      );
       updatedChannels[channel] = newConfig;
       _trackConfig = _trackConfig.copyWith(channels: updatedChannels);
       _applyTrackSettings(channel, newConfig);
@@ -466,11 +515,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
 
   Future<void> _addBookmark() async {
     if (!_isInitialized) return;
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
     final newBookmark = Bookmark(
       id: _uuid.v4(),
       timestamp: _position,
-      name: 'Bookmark ${_bookmarks.length + 1}',
+      name: context.l10n.bookmarkDefaultName(_bookmarks.length + 1),
       mediaItemId: currentMediaId,
     );
     setState(() {
@@ -492,12 +542,15 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   }
 
   Future<void> _saveBookmarks() async {
-    final latestPiece = await _repository.getMusicPieceById(widget.musicPiece.id);
+    final latestPiece = await _repository.getMusicPieceById(
+      widget.musicPiece.id,
+    );
     if (latestPiece == null) return;
-    final currentMediaId = widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    final otherBookmarks = latestPiece.bookmarks.where((b) => 
-      b.mediaItemId != currentMediaId && b.mediaItemId != null
-    ).toList();
+    final currentMediaId =
+        widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
+    final otherBookmarks = latestPiece.bookmarks
+        .where((b) => b.mediaItemId != currentMediaId && b.mediaItemId != null)
+        .toList();
     final allBookmarks = [...otherBookmarks, ..._bookmarks];
     final updatedMusicPiece = latestPiece.copyWith(bookmarks: allBookmarks);
     await _repository.updateMusicPiece(updatedMusicPiece);
@@ -517,7 +570,12 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     if (_errorMessage != null) {
-      return Center(child: Text('Error: $_errorMessage', style: const TextStyle(color: Colors.red)));
+      return Center(
+        child: Text(
+          context.l10n.errorWithDetails(_errorMessage!),
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
     }
 
     if (!_isInitialized) {
@@ -572,11 +630,18 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
             ),
           ],
         ),
-        
+
         Slider(
           min: 0,
-          max: _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0,
-          value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble() > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
+          max: _duration.inMilliseconds.toDouble() > 0
+              ? _duration.inMilliseconds.toDouble()
+              : 1.0,
+          value: _position.inMilliseconds.toDouble().clamp(
+            0,
+            _duration.inMilliseconds.toDouble() > 0
+                ? _duration.inMilliseconds.toDouble()
+                : 1.0,
+          ),
           onChangeStart: (value) {
             _wasPlayingBeforeScrub = _isPlaying;
             if (_isPlaying) {
@@ -619,7 +684,7 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           child: ElevatedButton.icon(
             onPressed: _addBookmark,
             icon: const Icon(Icons.bookmark_add),
-            label: const Text('Add Bookmark'),
+            label: Text(context.l10n.addBookmark),
           ),
         ),
 
@@ -647,15 +712,20 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 8.0),
             child: ExpansionTile(
-              title: const Text('Track Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                context.l10n.trackControls,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               leading: const Icon(Icons.settings_input_component),
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     children: activeChannelIndices.map((ch) {
-                      final config = _trackConfig.channels[ch] ?? ChannelConfig();
-                      final channelColor = Colors.accents[ch % Colors.accents.length];
+                      final config =
+                          _trackConfig.channels[ch] ?? ChannelConfig();
+                      final channelColor =
+                          Colors.accents[ch % Colors.accents.length];
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         child: Row(
@@ -672,13 +742,23 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                             Expanded(
                               flex: 3,
                               child: Text(
-                                config.name?.isNotEmpty == true ? config.name! : 'Channel ${ch + 1}',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                config.name?.isNotEmpty == true
+                                    ? config.name!
+                                    : context.l10n.channelDefaultName(ch + 1),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             IconButton(
-                              icon: Icon(config.mute ? Icons.volume_off : Icons.volume_up, size: 20),
+                              icon: Icon(
+                                config.mute
+                                    ? Icons.volume_off
+                                    : Icons.volume_up,
+                                size: 20,
+                              ),
                               color: config.mute ? Colors.grey : channelColor,
                               onPressed: () => _toggleMute(ch),
                               padding: EdgeInsets.zero,
@@ -690,7 +770,9 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
                                 value: config.volume,
                                 onChanged: (val) => _updateVolume(ch, val),
                                 activeColor: channelColor,
-                                inactiveColor: channelColor.withValues(alpha: 0.2),
+                                inactiveColor: channelColor.withValues(
+                                  alpha: 0.2,
+                                ),
                               ),
                             ),
                           ],
@@ -724,17 +806,21 @@ class MidiVisualizerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const double windowSeconds = 4.0;
     const double playheadX = 60.0;
-    final double pixelsPerSecond = (size.width - playheadX) / (windowSeconds - 1.0);
-    
+    final double pixelsPerSecond =
+        (size.width - playheadX) / (windowSeconds - 1.0);
+
     final currentSec = currentPosition.inMilliseconds / 1000.0;
-    
+
     int minPitch = 127;
     int maxPitch = 0;
     for (var n in notes) {
       if (n.pitch < minPitch) minPitch = n.pitch;
       if (n.pitch > maxPitch) maxPitch = n.pitch;
     }
-    if (maxPitch <= minPitch) { minPitch = 40; maxPitch = 80; }
+    if (maxPitch <= minPitch) {
+      minPitch = 40;
+      maxPitch = 80;
+    }
     final pitchRange = (maxPitch - minPitch).toDouble() + 10.0;
 
     final paint = Paint()..style = PaintingStyle.fill;
@@ -742,7 +828,9 @@ class MidiVisualizerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(playheadX, 0),
       Offset(playheadX, size.height),
-      Paint()..color = Colors.red.withValues(alpha: 0.5)..strokeWidth = 2,
+      Paint()
+        ..color = Colors.red.withValues(alpha: 0.5)
+        ..strokeWidth = 2,
     );
 
     for (final note in notes) {
@@ -754,13 +842,14 @@ class MidiVisualizerPainter extends CustomPainter {
 
       final x = playheadX + (relativeStart * pixelsPerSecond);
       final w = note.durationSeconds * pixelsPerSecond;
-      
-      final y = size.height - ((note.pitch - minPitch + 5) / pitchRange * size.height);
+
+      final y =
+          size.height -
+          ((note.pitch - minPitch + 5) / pitchRange * size.height);
       const h = 8.0;
 
-      paint.color = Colors.accents[note.channel % Colors.accents.length].withValues(
-        alpha: config.mute ? 0.1 : 0.8 * config.volume
-      );
+      paint.color = Colors.accents[note.channel % Colors.accents.length]
+          .withValues(alpha: config.mute ? 0.1 : 0.8 * config.volume);
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(
@@ -774,6 +863,7 @@ class MidiVisualizerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant MidiVisualizerPainter oldDelegate) {
-    return oldDelegate.currentPosition != currentPosition || oldDelegate.trackConfig != trackConfig;
+    return oldDelegate.currentPosition != currentPosition ||
+        oldDelegate.trackConfig != trackConfig;
   }
 }

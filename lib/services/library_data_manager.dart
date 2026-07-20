@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:repertoire/l10n/app_localizations.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/group.dart';
 import 'package:repertoire/models/music_piece.dart';
@@ -15,6 +16,7 @@ class LibraryDataManager {
   final ValueNotifier<List<MusicPiece>> _musicPiecesNotifier;
   final ValueNotifier<List<Group>> _groupsNotifier;
   final ValueNotifier<int> _galleryColumnsNotifier;
+  final AppLocalizations _l10n;
 
   LibraryDataManager(
     this._repository,
@@ -25,6 +27,7 @@ class LibraryDataManager {
     this._musicPiecesNotifier,
     this._groupsNotifier,
     this._galleryColumnsNotifier,
+    this._l10n,
   );
 
   Future<void> loadInitialData() async {
@@ -37,7 +40,9 @@ class LibraryDataManager {
   Future<void> loadSettings() async {
     AppLogger.log('LibraryDataManager: _loadSettings called');
     int defaultColumns;
-    if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.linux) {
+    if (kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux) {
       defaultColumns = 4;
     } else if (defaultTargetPlatform == TargetPlatform.windows) {
       defaultColumns = 6;
@@ -55,12 +60,15 @@ class LibraryDataManager {
     _errorMessageNotifier.value = null;
     try {
       final allDbGroups = await _repository.getGroups();
-      AppLogger.log('LibraryDataManager: Loaded ${allDbGroups.length} groups from DB.');
+      AppLogger.log(
+        'LibraryDataManager: Loaded ${allDbGroups.length} groups from DB.',
+      );
 
       final allGroupOrder = _prefs.getInt('all_group_order') ?? -2;
       final allGroupIsHidden = _prefs.getBool('all_group_isHidden') ?? true;
       final ungroupedGroupOrder = _prefs.getInt('ungrouped_group_order') ?? -1;
-      final ungroupedGroupIsHidden = _prefs.getBool('ungrouped_group_isHidden') ?? false;
+      final ungroupedGroupIsHidden =
+          _prefs.getBool('ungrouped_group_isHidden') ?? false;
 
       final allGroup = Group(
         id: 'all_group',
@@ -86,9 +94,11 @@ class LibraryDataManager {
       });
 
       _groupsNotifier.value = combinedGroups;
-      AppLogger.log('LibraryDataManager: All groups (including special): ${_groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
+      AppLogger.log(
+        'LibraryDataManager: All groups (including special): ${_groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}',
+      );
     } catch (e) {
-      _errorMessageNotifier.value = 'Failed to load groups: $e';
+      _errorMessageNotifier.value = _l10n.failedToLoadGroups(e.toString());
       AppLogger.log('LibraryDataManager: Error loading groups: $e');
     } finally {
       _isLoadingNotifier.value = false;
@@ -110,9 +120,13 @@ class LibraryDataManager {
 
       if (selectedGroupId != null && selectedGroupId != 'all_group') {
         if (selectedGroupId == 'ungrouped_group') {
-          currentPieces = currentPieces.where((piece) => piece.groupIds.isEmpty).toList();
+          currentPieces = currentPieces
+              .where((piece) => piece.groupIds.isEmpty)
+              .toList();
         } else {
-          currentPieces = currentPieces.where((piece) => piece.groupIds.contains(selectedGroupId)).toList();
+          currentPieces = currentPieces
+              .where((piece) => piece.groupIds.contains(selectedGroupId))
+              .toList();
         }
       }
 
@@ -123,7 +137,7 @@ class LibraryDataManager {
       );
       _musicPiecesNotifier.value = filter.filterAndSort(currentPieces);
     } catch (e) {
-      _errorMessageNotifier.value = 'Failed to load music pieces: $e';
+      _errorMessageNotifier.value = _l10n.failedToLoadMusicPieces(e.toString());
       AppLogger.log('LibraryDataManager: Error loading music pieces: $e');
     } finally {
       _isLoadingNotifier.value = false;

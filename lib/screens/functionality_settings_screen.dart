@@ -7,6 +7,8 @@ import 'package:repertoire/utils/theme_notifier.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class FunctionalitySettingsScreen extends StatefulWidget {
   const FunctionalitySettingsScreen({super.key});
 
@@ -15,11 +17,12 @@ class FunctionalitySettingsScreen extends StatefulWidget {
       _FunctionalitySettingsScreenState();
 }
 
-class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScreen> {
+class _FunctionalitySettingsScreenState
+    extends State<FunctionalitySettingsScreen> {
   final PracticeConfigService _configService = PracticeConfigService();
   List<PracticeStage> _stages = [];
   bool _isLoading = true;
-  
+
   bool _showPracticeTimeStats = false;
   bool _showPracticeNotes = false;
   bool _notifyNewReleases = false;
@@ -35,11 +38,12 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     final prefs = await SharedPreferences.getInstance();
     final stages = await _configService.loadStages();
     final isPlayStore = await isPlayStoreBuild();
-    
+
     if (!mounted) return;
     setState(() {
       _stages = stages;
-      _showPracticeTimeStats = prefs.getBool('show_practice_time_stats') ?? false;
+      _showPracticeTimeStats =
+          prefs.getBool('show_practice_time_stats') ?? false;
       _showPracticeNotes = prefs.getBool('show_practice_notes') ?? false;
       _notifyNewReleases = prefs.getBool('notifyNewReleases') ?? true;
       _isPlayStore = isPlayStore;
@@ -50,7 +54,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   Future<void> _saveStages() async {
     await _configService.saveStages(_stages);
   }
-  
+
   Future<void> _saveOtherSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('show_practice_time_stats', _showPracticeTimeStats);
@@ -61,13 +65,15 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
   void _addStage() {
     if (_stages.length >= 10) return;
     setState(() {
-      _stages.add(PracticeStage(
-        id: const Uuid().v4(),
-        name: 'New Stage',
-        colorValue: Colors.grey.toARGB32(),
-        holdDays: 0,
-        transitionDays: 7,
-      ));
+      _stages.add(
+        PracticeStage(
+          id: const Uuid().v4(),
+          name: context.l10n.stageDefaultName(_stages.length + 1),
+          colorValue: Colors.grey.toARGB32(),
+          holdDays: 0,
+          transitionDays: 7,
+        ),
+      );
     });
     _saveStages();
   }
@@ -91,56 +97,66 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
     final Color? newColor = await showDialog<Color>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Color'),
+        title: Text(context.l10n.selectColor),
         content: SingleChildScrollView(
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              ...ThemeNotifier.availableAccentColors,
-              Colors.black,
-              Colors.grey,
-              Colors.blueGrey,
-              Colors.brown,
-              Colors.cyan,
-              Colors.lime,
-              Colors.amber,
-              Colors.deepOrange,
-            ].map((color) => GestureDetector(
-              onTap: () => Navigator.pop(context, color),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: stage.colorValue == color.toARGB32() ? Colors.black : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-            )).toList(),
+            children:
+                [
+                      ...ThemeNotifier.availableAccentColors,
+                      Colors.black,
+                      Colors.grey,
+                      Colors.blueGrey,
+                      Colors.brown,
+                      Colors.cyan,
+                      Colors.lime,
+                      Colors.amber,
+                      Colors.deepOrange,
+                    ]
+                    .map(
+                      (color) => GestureDetector(
+                        onTap: () => Navigator.pop(context, color),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: stage.colorValue == color.toARGB32()
+                                  ? Colors.black
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
           ),
         ),
       ),
     );
 
     if (newColor != null) {
-      _updateStage(index, PracticeStage(
-        id: stage.id,
-        name: stage.name,
-        colorValue: newColor.toARGB32(),
-        holdDays: stage.holdDays,
-        transitionDays: stage.transitionDays,
-      ));
+      _updateStage(
+        index,
+        PracticeStage(
+          id: stage.id,
+          name: stage.name,
+          colorValue: newColor.toARGB32(),
+          holdDays: stage.holdDays,
+          transitionDays: stage.transitionDays,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final theme = Theme.of(context);
 
@@ -152,7 +168,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Functionality'),
+          title: Text(context.l10n.functionality),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -162,42 +178,89 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
         ),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             children: [
-              _buildCategoryHeader(theme, 'Practice Tracking', Icons.timeline_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.practiceTracking,
+                Icons.timeline_outlined,
+              ),
               _buildSettingsCard([
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Tracking Stages', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        context.l10n.trackingStages,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       SizedBox(height: 4),
                       Text(
-                         'Stages for practice indicators. Drag to reorder. Double tap name to edit.',
-                         style: TextStyle(color: Colors.grey, fontSize: 12),
+                        context
+                            .l10n
+                            .stagesForPracticeIndicatorsDragToReorderDoubleTapNameToEdit,
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
-                
+
                 // Header Row for stages
-                const Padding(
-                   padding: EdgeInsets.symmetric(horizontal: 12.0),
-                   child: Row(
-                      children: [
-                         SizedBox(width: 24),
-                         SizedBox(width: 8),
-                         Expanded(flex: 3, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                         SizedBox(width: 8),
-                         Text('Color', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                         SizedBox(width: 16),
-                         Expanded(flex: 1, child: Text('Hold', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                         SizedBox(width: 8),
-                         Expanded(flex: 1, child: Text('Trans', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                         SizedBox(width: 32),
-                      ],
-                   ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 24),
+                      SizedBox(width: 8),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          context.l10n.status,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        context.l10n.color,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          context.l10n.hold,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          context.l10n.trans,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 32),
+                    ],
+                  ),
                 ),
                 const Divider(indent: 12, endIndent: 12),
 
@@ -217,15 +280,22 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                   itemBuilder: (context, index) {
                     final stage = _stages[index];
                     final isLast = index == _stages.length - 1;
-                    
+
                     return Padding(
                       key: ValueKey(stage.id),
-                      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 2.0,
+                        horizontal: 8.0,
+                      ),
                       child: Row(
                         children: [
                           ReorderableDragStartListener(
                             index: index,
-                            child: const Icon(Icons.drag_handle, color: Colors.grey, size: 20),
+                            child: const Icon(
+                              Icons.drag_handle,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 8),
 
@@ -242,7 +312,7 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                             ),
                           ),
                           const SizedBox(width: 8),
-                          
+
                           GestureDetector(
                             onTap: () => _pickColor(index),
                             child: Container(
@@ -251,7 +321,11 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                               decoration: BoxDecoration(
                                 color: Color(stage.colorValue),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant,
+                                ),
                               ),
                             ),
                           ),
@@ -260,40 +334,65 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                           Expanded(
                             flex: 1,
                             child: isLast
-                              ? const Center(child: Text('-', style: TextStyle(color: Colors.grey)))
-                              : TextFormField(
-                                  initialValue: stage.holdDays.toString(),
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 13),
-                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6)),
-                                  onChanged: (val) {
-                                    final days = int.tryParse(val) ?? 0;
-                                    _stages[index].holdDays = days;
-                                    _saveStages();
-                                  },
-                                ),
+                                ? const Center(
+                                    child: Text(
+                                      '-',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  )
+                                : TextFormField(
+                                    initialValue: stage.holdDays.toString(),
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 13),
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 6,
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      final days = int.tryParse(val) ?? 0;
+                                      _stages[index].holdDays = days;
+                                      _saveStages();
+                                    },
+                                  ),
                           ),
                           const SizedBox(width: 8),
 
                           Expanded(
                             flex: 1,
-                            child: isLast 
-                              ? const Center(child: Text('-', style: TextStyle(color: Colors.grey)))
-                              : TextFormField(
-                                  initialValue: stage.transitionDays.toString(),
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 13),
-                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6)),
-                                  onChanged: (val) {
-                                    final days = int.tryParse(val) ?? 0;
-                                    _stages[index].transitionDays = days;
-                                    _saveStages();
-                                  },
-                                ),
+                            child: isLast
+                                ? const Center(
+                                    child: Text(
+                                      '-',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  )
+                                : TextFormField(
+                                    initialValue: stage.transitionDays
+                                        .toString(),
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 13),
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 6,
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      final days = int.tryParse(val) ?? 0;
+                                      _stages[index].transitionDays = days;
+                                      _saveStages();
+                                    },
+                                  ),
                           ),
-                          
+
                           if (_stages.length > 1)
                             IconButton(
                               icon: const Icon(Icons.close, size: 18),
@@ -309,24 +408,31 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                     );
                   },
                 ),
-                
+
                 if (_stages.length < 10)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextButton.icon(
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add Stage', style: TextStyle(fontSize: 13)),
-                        onPressed: _addStage,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(
+                        context.l10n.addStage,
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      onPressed: _addStage,
                     ),
                   ),
               ]),
 
               const SizedBox(height: 16),
-              _buildCategoryHeader(theme, 'Practice Options', Icons.auto_graph_outlined),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.practiceOptions,
+                Icons.auto_graph_outlined,
+              ),
               _buildSettingsCard([
                 SwitchListTile(
-                  title: const Text('Practice Time Stats'),
-                  subtitle: const Text('Show duration and stats in logs'),
+                  title: Text(context.l10n.practiceTimeStats),
+                  subtitle: Text(context.l10n.showDurationAndStatsInLogs),
                   value: _showPracticeTimeStats,
                   onChanged: (v) {
                     setState(() => _showPracticeTimeStats = v);
@@ -334,8 +440,8 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Practice Notes'),
-                  subtitle: const Text('Allow adding notes to sessions'),
+                  title: Text(context.l10n.practiceNotes),
+                  subtitle: Text(context.l10n.allowAddingNotesToSessions),
                   value: _showPracticeNotes,
                   onChanged: (v) {
                     setState(() => _showPracticeNotes = v);
@@ -346,11 +452,15 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
 
               if (!_isPlayStore) ...[
                 const SizedBox(height: 16),
-                _buildCategoryHeader(theme, 'Updates', Icons.system_update_outlined),
+                _buildCategoryHeader(
+                  theme,
+                  context.l10n.updates,
+                  Icons.system_update_outlined,
+                ),
                 _buildSettingsCard([
                   SwitchListTile(
-                    title: const Text('Notify New Releases'),
-                    subtitle: const Text('Check GitHub for app updates'),
+                    title: Text(context.l10n.notifyNewReleases),
+                    subtitle: Text(context.l10n.checkGithubForAppUpdates),
                     value: _notifyNewReleases,
                     onChanged: (v) {
                       setState(() => _notifyNewReleases = v);
@@ -362,8 +472,11 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
                     child: Center(
                       child: TextButton.icon(
                         icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('Check for Updates Now'),
-                        onPressed: () => UpdateService().checkForUpdates(context, manual: true),
+                        label: Text(context.l10n.checkForUpdatesNow),
+                        onPressed: () => UpdateService().checkForUpdates(
+                          context,
+                          manual: true,
+                        ),
                       ),
                     ),
                   ),
@@ -404,7 +517,9 @@ class _FunctionalitySettingsScreenState extends State<FunctionalitySettingsScree
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
@@ -438,18 +553,18 @@ class _EditableLabelState extends State<_EditableLabel> {
           _isEditing = false;
         });
         if (_controller.text != widget.value) {
-           widget.onChanged(_controller.text);
+          widget.onChanged(_controller.text);
         }
       }
     });
   }
-  
-  @override 
+
+  @override
   void didUpdateWidget(_EditableLabel oldWidget) {
-      super.didUpdateWidget(oldWidget);
-      if (widget.value != _controller.text && !_isEditing) {
-          _controller.text = widget.value;
-      }
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != _controller.text && !_isEditing) {
+      _controller.text = widget.value;
+    }
   }
 
   @override
@@ -459,7 +574,10 @@ class _EditableLabelState extends State<_EditableLabel> {
         controller: _controller,
         focusNode: _focusNode,
         autofocus: true,
-        decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 8)),
+        decoration: const InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        ),
         style: const TextStyle(fontSize: 13),
         onFieldSubmitted: (val) {
           setState(() {
@@ -479,9 +597,9 @@ class _EditableLabelState extends State<_EditableLabel> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         color: Colors.transparent, // Hit test
         child: Text(
-            widget.value, 
-            style: const TextStyle(fontSize: 13),
-            overflow: TextOverflow.ellipsis,
+          widget.value,
+          style: const TextStyle(fontSize: 13),
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

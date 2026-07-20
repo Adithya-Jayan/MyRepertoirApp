@@ -3,6 +3,8 @@ import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LibraryActions {
   final MusicPieceRepository repository;
   final VoidCallback onReloadMusicPieces;
@@ -17,36 +19,54 @@ class LibraryActions {
   });
 
   /// Deletes all currently selected music pieces after user confirmation.
-  Future<void> deleteSelectedPieces(BuildContext context, Set<String> selectedPieceIds) async {
+  Future<void> deleteSelectedPieces(
+    BuildContext context,
+    Set<String> selectedPieceIds,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Confirmation'),
-        content: Text('Are you sure you want to delete ${selectedPieceIds.length} selected item(s)?'),
+        title: Text(context.l10n.deleteConfirmation),
+        content: Text(
+          context.l10n.deleteSelectedItemsConfirmation(selectedPieceIds.length),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.delete),
+          ),
         ],
       ),
     );
 
     if (confirmed == true) {
       try {
-        await repository.deleteMusicPieces(selectedPieceIds.toList()); // Delete the selected music pieces from the database.
+        await repository.deleteMusicPieces(
+          selectedPieceIds.toList(),
+        ); // Delete the selected music pieces from the database.
         onToggleMultiSelectMode(); // Exit multi-select mode after deletion.
         onReloadMusicPieces(); // Reload music pieces to update the UI.
       } catch (e) {
         if (!context.mounted) return;
         final messenger = ScaffoldMessenger.of(context);
         messenger.showSnackBar(
-          SnackBar(content: Text('Error deleting music pieces: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorDeletingMusicPieces(e.toString())),
+          ),
         );
       }
     }
   }
 
   /// Duplicates the selected music piece.
-  Future<void> duplicateSelectedPiece(BuildContext context, Set<String> selectedPieceIds) async {
+  Future<void> duplicateSelectedPiece(
+    BuildContext context,
+    Set<String> selectedPieceIds,
+  ) async {
     if (selectedPieceIds.length != 1) return;
 
     try {
@@ -54,97 +74,136 @@ class LibraryActions {
       await repository.duplicateMusicPiece(pieceId);
       onToggleMultiSelectMode(); // Exit multi-select mode after duplication.
       onReloadMusicPieces(); // Reload music pieces to update the UI.
-      
+
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Piece duplicated successfully')),
+        SnackBar(content: Text(context.l10n.pieceDuplicatedSuccessfully)),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error duplicating music piece: $e')),
+        SnackBar(
+          content: Text(context.l10n.errorDuplicatingMusicPiece(e.toString())),
+        ),
       );
     }
   }
 
   /// Handles modification of groups for selected music pieces.
-  Future<void> modifyGroupOfSelectedPieces(BuildContext context, Set<String> selectedPieceIds, List<dynamic> groups) async {
+  Future<void> modifyGroupOfSelectedPieces(
+    BuildContext context,
+    Set<String> selectedPieceIds,
+    List<dynamic> groups,
+  ) async {
     AppLogger.log('LibraryActions: modifyGroupOfSelectedPieces called');
     await showDialog(
       context: context,
       builder: (context) {
         // Create a temporary map to hold pending changes
-        final Map<String, bool?> pendingGroupChanges = {}; // Use bool? to represent tristate
+        final Map<String, bool?> pendingGroupChanges =
+            {}; // Use bool? to represent tristate
 
         return AlertDialog(
-          title: const Text('Modify Groups'),
+          title: Text(context.l10n.modifyGroups),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               // Re-evaluate selectedPieces here on each setState
-              final currentSelectedPiecesInDialog = allMusicPieces.where((p) => selectedPieceIds.contains(p.id)).toList();
+              final currentSelectedPiecesInDialog = allMusicPieces
+                  .where((p) => selectedPieceIds.contains(p.id))
+                  .toList();
 
               return SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: groups.where((group) => group.id != 'all_group' && group.id != 'ungrouped_group').map((group) {
-                    // Determine initial state
-                    final isSelectedInAllInitial = currentSelectedPiecesInDialog.every((p) => p.groupIds.contains(group.id));
-                    final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;
+                  children: groups
+                      .where(
+                        (group) =>
+                            group.id != 'all_group' &&
+                            group.id != 'ungrouped_group',
+                      )
+                      .map((group) {
+                        // Determine initial state
+                        final isSelectedInAllInitial =
+                            currentSelectedPiecesInDialog.every(
+                              (p) => p.groupIds.contains(group.id),
+                            );
+                        final isSelectedInSomeInitial =
+                            currentSelectedPiecesInDialog.any(
+                              (p) => p.groupIds.contains(group.id),
+                            ) &&
+                            !isSelectedInAllInitial;
 
-                    AppLogger.log('--- Group Debug ---');
-                    AppLogger.log('Group: ${group.name} (ID: ${group.id})');
-                    AppLogger.log('  isSelectedInAllInitial: $isSelectedInAllInitial');
-                    AppLogger.log('  isSelectedInSomeInitial: $isSelectedInSomeInitial');
+                        AppLogger.log('--- Group Debug ---');
+                        AppLogger.log('Group: ${group.name} (ID: ${group.id})');
+                        AppLogger.log(
+                          '  isSelectedInAllInitial: $isSelectedInAllInitial',
+                        );
+                        AppLogger.log(
+                          '  isSelectedInSomeInitial: $isSelectedInSomeInitial',
+                        );
 
-                    // Determine current checkbox value based on pending changes or initial state
-                    bool? checkboxValue;
-                    if (pendingGroupChanges.containsKey(group.id)) {
-                      checkboxValue = pendingGroupChanges[group.id];
-                    } else {
-                      if (isSelectedInAllInitial) {
-                        checkboxValue = true;
-                      } else if (isSelectedInSomeInitial) {
-                        checkboxValue = null; // Tristate
-                      } else {
-                        checkboxValue = false;
-                      }
-                    }
-                    AppLogger.log('  Calculated checkboxValue: $checkboxValue');
-
-                    return CheckboxListTile(
-                      title: Text(group.name),
-                      value: checkboxValue,
-                      tristate: true, // Always enable tristate
-                      onChanged: (bool? newValueFromCheckbox) {
-                        setState(() {
-                          bool? currentEffectiveValue;
-                          if (pendingGroupChanges.containsKey(group.id)) {
-                            currentEffectiveValue = pendingGroupChanges[group.id];
+                        // Determine current checkbox value based on pending changes or initial state
+                        bool? checkboxValue;
+                        if (pendingGroupChanges.containsKey(group.id)) {
+                          checkboxValue = pendingGroupChanges[group.id];
+                        } else {
+                          if (isSelectedInAllInitial) {
+                            checkboxValue = true;
+                          } else if (isSelectedInSomeInitial) {
+                            checkboxValue = null; // Tristate
                           } else {
-                            // Determine initial state if no pending change
-                            final isSelectedInAllInitial = currentSelectedPiecesInDialog.every((p) => p.groupIds.contains(group.id));
-                            final isSelectedInSomeInitial = currentSelectedPiecesInDialog.any((p) => p.groupIds.contains(group.id)) && !isSelectedInAllInitial;
-                            if (isSelectedInAllInitial) {
-                              currentEffectiveValue = true;
-                            } else if (isSelectedInSomeInitial) {
-                              currentEffectiveValue = null;
-                            } else {
-                              currentEffectiveValue = false;
-                            }
+                            checkboxValue = false;
                           }
+                        }
+                        AppLogger.log(
+                          '  Calculated checkboxValue: $checkboxValue',
+                        );
 
-                          if (currentEffectiveValue == true) {
-                            // If currently checked, uncheck it
-                            pendingGroupChanges[group.id] = false;
-                          } else {
-                            // If currently unchecked or tristate, check it
-                            pendingGroupChanges[group.id] = true;
-                          }
-                          AppLogger.log('  Pending change for ${group.name}: ${pendingGroupChanges[group.id]}');
-                        });
-                      },
-                    );
-                  }).toList(),
+                        return CheckboxListTile(
+                          title: Text(group.localizedName(context.l10n)),
+                          value: checkboxValue,
+                          tristate: true, // Always enable tristate
+                          onChanged: (bool? newValueFromCheckbox) {
+                            setState(() {
+                              bool? currentEffectiveValue;
+                              if (pendingGroupChanges.containsKey(group.id)) {
+                                currentEffectiveValue =
+                                    pendingGroupChanges[group.id];
+                              } else {
+                                // Determine initial state if no pending change
+                                final isSelectedInAllInitial =
+                                    currentSelectedPiecesInDialog.every(
+                                      (p) => p.groupIds.contains(group.id),
+                                    );
+                                final isSelectedInSomeInitial =
+                                    currentSelectedPiecesInDialog.any(
+                                      (p) => p.groupIds.contains(group.id),
+                                    ) &&
+                                    !isSelectedInAllInitial;
+                                if (isSelectedInAllInitial) {
+                                  currentEffectiveValue = true;
+                                } else if (isSelectedInSomeInitial) {
+                                  currentEffectiveValue = null;
+                                } else {
+                                  currentEffectiveValue = false;
+                                }
+                              }
+
+                              if (currentEffectiveValue == true) {
+                                // If currently checked, uncheck it
+                                pendingGroupChanges[group.id] = false;
+                              } else {
+                                // If currently unchecked or tristate, check it
+                                pendingGroupChanges[group.id] = true;
+                              }
+                              AppLogger.log(
+                                '  Pending change for ${group.name}: ${pendingGroupChanges[group.id]}',
+                              );
+                            });
+                          },
+                        );
+                      })
+                      .toList(),
                 ),
               );
             },
@@ -152,13 +211,14 @@ class LibraryActions {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context), // Cancel button
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
                 // Apply all pending changes
                 for (final entry in pendingGroupChanges.entries) {
-                  if (entry.value != null) { // Only apply if a definite state (true/false) is chosen
+                  if (entry.value != null) {
+                    // Only apply if a definite state (true/false) is chosen
                     await repository.updateGroupMembershipForPieces(
                       selectedPieceIds.toList(),
                       entry.key,
@@ -170,7 +230,7 @@ class LibraryActions {
                 if (!context.mounted) return;
                 Navigator.pop(context); // Close the dialog
               },
-              child: const Text('Apply'),
+              child: Text(context.l10n.apply),
             ),
           ],
         );

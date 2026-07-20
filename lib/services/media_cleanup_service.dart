@@ -6,6 +6,8 @@ import '../models/music_piece.dart';
 import '../utils/app_logger.dart';
 import '../utils/path_utils.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// Service for cleaning up unused media files in the app's storage.
 ///
 /// This service identifies media files that are no longer referenced by any
@@ -24,10 +26,10 @@ class MediaCleanupService {
   /// Scans for unused media files and returns information about them
   Future<MediaCleanupInfo> scanForUnusedMedia() async {
     AppLogger.log('Starting media cleanup scan...');
-    
+
     final mediaDir = await _mediaDirectoryPath;
     final mediaDirectory = Directory(mediaDir);
-    
+
     if (!await mediaDirectory.exists()) {
       AppLogger.log('Media directory does not exist, nothing to clean.');
       return MediaCleanupInfo(
@@ -41,20 +43,22 @@ class MediaCleanupService {
 
     // Get all music pieces to find referenced media files
     final musicPieces = await _repository.getMusicPieces();
-    final Map<String, MusicPiece> pieceIdToPiece = { for (var p in musicPieces) p.id: p };
+    final Map<String, MusicPiece> pieceIdToPiece = {
+      for (var p in musicPieces) p.id: p,
+    };
 
     // Collect all referenced media file paths
     // On Windows, paths are case-insensitive, so we normalize to lowercase for comparisons.
     final bool isWindows = Platform.isWindows;
     final Set<String> referencedFiles = <String>{};
-    
+
     // Helper to add path to referenced set, handling potential URL encoding
     Future<void> addReferencedPath(String path) async {
       if (path.isEmpty) return;
-      
+
       final absolutePath = getAbsolutePath(path, mediaDir);
       final normalized = p.normalize(absolutePath);
-      
+
       if (await File(normalized).exists()) {
         referencedFiles.add(isWindows ? normalized.toLowerCase() : normalized);
       } else {
@@ -62,14 +66,16 @@ class MediaCleanupService {
         try {
           final decodedPath = Uri.decodeFull(normalized);
           if (decodedPath != normalized && await File(decodedPath).exists()) {
-            referencedFiles.add(isWindows ? decodedPath.toLowerCase() : decodedPath);
+            referencedFiles.add(
+              isWindows ? decodedPath.toLowerCase() : decodedPath,
+            );
           }
         } catch (e) {
           // Ignore decoding errors
         }
       }
     }
-    
+
     // Collect all referenced media file paths
     for (final piece in musicPieces) {
       for (final mediaItem in piece.mediaItems) {
@@ -83,7 +89,9 @@ class MediaCleanupService {
       }
     }
 
-    AppLogger.log('Found ${referencedFiles.length} unique referenced media files');
+    AppLogger.log(
+      'Found ${referencedFiles.length} unique referenced media files',
+    );
 
     // Scan all files in media directory
     final List<File> allFiles = [];
@@ -96,25 +104,30 @@ class MediaCleanupService {
     for (final file in allFiles) {
       final fileSize = await file.length();
       totalSize += fileSize;
-      
+
       final normalizedFilePath = p.normalize(file.path);
-      final checkPath = isWindows ? normalizedFilePath.toLowerCase() : normalizedFilePath;
-      
+      final checkPath = isWindows
+          ? normalizedFilePath.toLowerCase()
+          : normalizedFilePath;
+
       if (!referencedFiles.contains(checkPath)) {
         // Attempt to identify the piece by walking up the directory structure
         String pieceName = 'Unknown Piece';
         String fileType = 'Unknown Type';
-        
+
         try {
           final mediaDir = await _mediaDirectoryPath;
-          final relativeToMedia = p.relative(normalizedFilePath, from: mediaDir);
+          final relativeToMedia = p.relative(
+            normalizedFilePath,
+            from: mediaDir,
+          );
           final pathParts = p.split(relativeToMedia);
-          
+
           if (pathParts.isNotEmpty) {
             // First part is usually the pieceId or 'thumbnails' (legacy)
             final pieceId = pathParts[0];
             final piece = pieceIdToPiece[pieceId];
-            
+
             if (piece != null) {
               pieceName = piece.title;
             } else if (pieceId == 'thumbnails') {
@@ -136,11 +149,13 @@ class MediaCleanupService {
           AppLogger.log('Error identifying piece for file ${file.path}: $e');
         }
 
-        unusedFiles.add(UnusedFileInfo(
-          pieceName: pieceName,
-          fileType: fileType,
-          filePath: normalizedFilePath,
-        ));
+        unusedFiles.add(
+          UnusedFileInfo(
+            pieceName: pieceName,
+            fileType: fileType,
+            filePath: normalizedFilePath,
+          ),
+        );
         unusedSize += fileSize;
       }
     }
@@ -163,23 +178,26 @@ class MediaCleanupService {
   }
 
   /// Performs the actual cleanup by deleting unused media files.
-  /// 
+  ///
   /// An optional [MediaCleanupInfo] can be provided to avoid re-scanning,
   /// which helps prevent race conditions if files are modified between scan and purge.
-  Future<MediaCleanupResult> performCleanup({MediaCleanupInfo? cleanupInfo}) async {
+  Future<MediaCleanupResult> performCleanup({
+    MediaCleanupInfo? cleanupInfo,
+    required AppLocalizations l10n,
+  }) async {
     AppLogger.log('Starting media cleanup...');
-    
+
     // Always re-scan to get the most up-to-date state and avoid 'file not found' errors
     // if files were moved or deleted since the last scan.
     final info = await scanForUnusedMedia();
-    
+
     if (info.unusedFiles.isEmpty) {
       AppLogger.log('No unused files to clean up.');
       return MediaCleanupResult(
         filesDeleted: 0,
         bytesFreed: 0,
         success: true,
-        message: 'No unused files found to clean up.',
+        message: l10n.noUnusedFilesFoundToCleanUp,
       );
     }
 
@@ -190,14 +208,16 @@ class MediaCleanupService {
     for (final unusedFileInfo in info.unusedFiles) {
       final normalizedPath = p.normalize(unusedFileInfo.filePath);
       final file = File(normalizedPath);
-      
+
       try {
         if (await file.exists()) {
           int fileSize = 0;
           try {
             fileSize = await file.length();
           } catch (e) {
-            AppLogger.log('Could not get size for file before deletion: $normalizedPath - $e');
+            AppLogger.log(
+              'Could not get size for file before deletion: $normalizedPath - $e',
+            );
           }
 
           try {
@@ -210,9 +230,16 @@ class MediaCleanupService {
             // or a race condition, which is fine as the goal was to remove it.
             if (await file.exists()) {
               AppLogger.log('Failed to delete file $normalizedPath: $e');
-              errors.add('Failed to delete ${p.basename(normalizedPath)}: $e');
+              errors.add(
+                l10n.failedToDeleteFile(
+                  p.basename(normalizedPath),
+                  e.toString(),
+                ),
+              );
             } else {
-              AppLogger.log('File disappeared during deletion attempt: $normalizedPath');
+              AppLogger.log(
+                'File disappeared during deletion attempt: $normalizedPath',
+              );
               deletedCount++; // Still count it as deleted since it's gone
               freedBytes += fileSize;
             }
@@ -223,7 +250,9 @@ class MediaCleanupService {
         }
       } catch (e) {
         AppLogger.log('Unexpected error processing file $normalizedPath: $e');
-        errors.add('Error processing ${p.basename(normalizedPath)}: $e');
+        errors.add(
+          l10n.errorProcessingFile(p.basename(normalizedPath), e.toString()),
+        );
       }
     }
 
@@ -234,9 +263,9 @@ class MediaCleanupService {
       filesDeleted: deletedCount,
       bytesFreed: freedBytes,
       success: errors.isEmpty,
-      message: errors.isEmpty 
-        ? 'Successfully deleted $deletedCount unused files (${_formatBytes(freedBytes)} freed).'
-        : 'Deleted $deletedCount files but encountered ${errors.length} errors.',
+      message: errors.isEmpty
+          ? l10n.cleanupSuccessMessage(deletedCount, _formatBytes(freedBytes))
+          : l10n.cleanupPartialMessage(deletedCount, errors.length),
       errors: errors,
     );
 
@@ -245,7 +274,10 @@ class MediaCleanupService {
   }
 
   /// Recursively scans a directory for all files
-  Future<void> _scanDirectoryRecursively(Directory directory, List<File> files) async {
+  Future<void> _scanDirectoryRecursively(
+    Directory directory,
+    List<File> files,
+  ) async {
     try {
       await for (final entity in directory.list(recursive: false)) {
         if (entity is File) {
@@ -259,12 +291,11 @@ class MediaCleanupService {
     }
   }
 
-
   /// Removes empty directories after file cleanup
   Future<void> _cleanupEmptyDirectories() async {
     final mediaDir = await _mediaDirectoryPath;
     final mediaDirectory = Directory(mediaDir);
-    
+
     if (!await mediaDirectory.exists()) return;
 
     try {
@@ -278,14 +309,14 @@ class MediaCleanupService {
   Future<void> _removeEmptyDirectoriesRecursively(Directory directory) async {
     try {
       final entities = await directory.list().toList();
-      
+
       // First, recursively clean up subdirectories
       for (final entity in entities) {
         if (entity is Directory) {
           await _removeEmptyDirectoriesRecursively(entity);
         }
       }
-      
+
       // Then check if this directory is now empty
       final remainingEntities = await directory.list().toList();
       if (remainingEntities.isEmpty) {
@@ -301,7 +332,9 @@ class MediaCleanupService {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }
@@ -340,7 +373,9 @@ class MediaCleanupInfo {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }
@@ -366,7 +401,9 @@ class MediaCleanupResult {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
-} 
+}

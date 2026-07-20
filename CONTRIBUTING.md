@@ -56,6 +56,26 @@ Please follow the existing code style in the project. We use the standard Dart a
 dart format .
 ```
 
+## Adding or Updating Translations
+
+Repertoire uses Flutter's ARB-based localization support. See the dedicated
+[translation guide](docs/TRANSLATIONS.md) for locale naming, native language
+names, placeholders, generated files, validation, and the pull request
+checklist.
+
+To contribute a language:
+
+1. Copy `lib/l10n/app_en.arb` to `lib/l10n/app_<locale>.arb` and update
+   `@@locale`.
+2. Translate `languageName` into the language itself, then translate the other
+   message values while preserving keys, ICU syntax, and placeholders.
+3. Run `flutter gen-l10n`; the generated locale will automatically appear in
+   the in-app language selector.
+4. Run `flutter analyze` and `flutter test` before opening your pull request.
+
+When adding a new user-facing string, add it to `app_en.arb` and access it with
+`context.l10n.<messageName>` instead of embedding the text directly in a widget.
+
 ## Pull Request Guidelines
 
 - Ensure your PR is based on the `main` branch.

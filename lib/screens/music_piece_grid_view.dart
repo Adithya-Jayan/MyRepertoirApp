@@ -5,6 +5,8 @@ import 'package:repertoire/screens/music_piece_card.dart';
 import 'package:repertoire/screens/piece_detail_screen.dart';
 import '../utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class MusicPieceGridView extends StatelessWidget {
   final List<MusicPiece> musicPieces;
   final bool isLoading;
@@ -16,7 +18,8 @@ class MusicPieceGridView extends StatelessWidget {
   final Function(MusicPiece) onPieceSelected;
   final VoidCallback onReloadData;
   final VoidCallback onToggleMultiSelectMode;
-  final String? currentPageGroupId; // Added to provide a unique key for GridView
+  final String?
+  currentPageGroupId; // Added to provide a unique key for GridView
 
   const MusicPieceGridView({
     super.key,
@@ -40,7 +43,7 @@ class MusicPieceGridView extends StatelessWidget {
     } else if (errorMessage != null) {
       return Center(child: Text(errorMessage!));
     } else if (musicPieces.isEmpty) {
-      return const Center(child: Text('This group is empty.'));
+      return Center(child: Text(context.l10n.thisGroupIsEmpty));
     }
 
     if (galleryColumns == 1) {
@@ -52,12 +55,13 @@ class MusicPieceGridView extends StatelessWidget {
           key: ValueKey('list_${currentPageGroupId}_$galleryColumns'),
           padding: const EdgeInsets.all(8.0),
           itemCount: musicPieces.length,
-          cacheExtent: 500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
+          cacheExtent:
+              500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
           addRepaintBoundaries: true,
           physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (context, index) {
-             final piece = musicPieces[index];
-             return _buildMusicPieceCard(context, piece);
+            final piece = musicPieces[index];
+            return _buildMusicPieceCard(context, piece);
           },
         ),
       );
@@ -68,9 +72,12 @@ class MusicPieceGridView extends StatelessWidget {
         onReloadData();
       },
       child: GridView.builder(
-        key: ValueKey('grid_${currentPageGroupId}_$galleryColumns'), // More stable key
+        key: ValueKey(
+          'grid_${currentPageGroupId}_$galleryColumns',
+        ), // More stable key
         padding: const EdgeInsets.all(8.0),
-        cacheExtent: 500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
+        cacheExtent:
+            500.0, // Increased to allow pre-building cards and decoding images before they enter the screen
         addRepaintBoundaries: true,
         physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -91,14 +98,17 @@ class MusicPieceGridView extends StatelessWidget {
   Widget _buildMusicPieceCard(BuildContext context, MusicPiece piece) {
     final isSelected = selectedPieceIds.contains(piece.id);
     return MusicPieceCard(
-      key: ValueKey('card_${piece.id}'), // Simplified key to allow efficient element updates during selection changes
+      key: ValueKey(
+        'card_${piece.id}',
+      ), // Simplified key to allow efficient element updates during selection changes
       piece: piece,
       isSelected: isSelected,
       isListView: galleryColumns == 1,
       galleryColumns: galleryColumns,
       onTap: () async {
         // Check if Shift key is pressed for multi-selection.
-        final isShiftPressed = pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
+        final isShiftPressed =
+            pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
             pressedKeys.contains(LogicalKeyboardKey.shiftRight);
 
         if (isShiftPressed) {
@@ -107,16 +117,22 @@ class MusicPieceGridView extends StatelessWidget {
           }
           onPieceSelected(piece); // Select/deselect the piece.
         } else if (isMultiSelectMode) {
-          onPieceSelected(piece); // Select/deselect the piece in multi-select mode.
+          onPieceSelected(
+            piece,
+          ); // Select/deselect the piece in multi-select mode.
         } else {
           // Navigate to PieceDetailScreen in single-selection mode.
-          AppLogger.log('MusicPieceGridView: Navigating to detail screen for piece: ${piece.title} (${piece.id})');
+          AppLogger.log(
+            'MusicPieceGridView: Navigating to detail screen for piece: ${piece.title} (${piece.id})',
+          );
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => PieceDetailScreen(musicPiece: piece),
             ),
           );
-          AppLogger.log('MusicPieceGridView: Returned from detail screen for piece: ${piece.title}');
+          AppLogger.log(
+            'MusicPieceGridView: Returned from detail screen for piece: ${piece.title}',
+          );
           onReloadData(); // Reload data after returning from detail screen.
         }
       },

@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/screens/settings_screen.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class LibraryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isMultiSelectMode;
   final String searchQuery;
@@ -61,7 +63,6 @@ class LibraryAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _LibraryAppBarState extends State<LibraryAppBar> {
   late TextEditingController _searchController;
 
-
   @override
   void initState() {
     super.initState();
@@ -85,7 +86,9 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
   @override
   Widget build(BuildContext context) {
     AppLogger.log('LibraryAppBar: build called');
-    return widget.isMultiSelectMode ? _buildMultiSelectAppBar(context) : _buildDefaultAppBar(context);
+    return widget.isMultiSelectMode
+        ? _buildMultiSelectAppBar(context)
+        : _buildDefaultAppBar(context);
   }
 
   AppBar _buildDefaultAppBar(BuildContext context) {
@@ -98,15 +101,20 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
       title: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search items...',
+          hintText: context.l10n.searchItems,
           hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.7,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 20,
+          ),
           suffixIcon: widget.searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear),
@@ -150,12 +158,17 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                         children: [
                           const Icon(Icons.tune_outlined, size: 20),
                           const SizedBox(width: 8),
-                          const Text('Filter Options'),
+                          Text(context.l10n.filterOptions),
                         ],
                       ),
                       titlePadding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       content: SizedBox(
                         width: MediaQuery.of(context).size.width * 0.9,
                         child: SingleChildScrollView(
@@ -163,103 +176,213 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildFilterCategoryHeader(theme, 'Text Search', Icons.search),
+                              _buildFilterCategoryHeader(
+                                theme,
+                                context.l10n.textSearch,
+                                Icons.search,
+                              ),
                               _buildFilterCard(theme, [
                                 Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: TextFormField(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Title contains...',
+                                    decoration: InputDecoration(
+                                      labelText: context.l10n.titleContains,
                                       border: OutlineInputBorder(),
                                       isDense: true,
                                       prefixIcon: Icon(Icons.title, size: 18),
                                     ),
                                     initialValue: widget.filterOptions['title'],
                                     onChanged: (value) {
-                                      final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
+                                      final newFilterOptions =
+                                          Map<String, dynamic>.from(
+                                            widget.filterOptions,
+                                          );
                                       newFilterOptions['title'] = value;
-                                      widget.onFilterOptionsChanged(newFilterOptions);
+                                      widget.onFilterOptionsChanged(
+                                        newFilterOptions,
+                                      );
                                     },
                                   ),
                                 ),
                               ]),
-                              
+
                               const SizedBox(height: 12),
-                              _buildFilterCategoryHeader(theme, 'Tags', Icons.label_outline),
+                              _buildFilterCategoryHeader(
+                                theme,
+                                context.l10n.tags,
+                                Icons.label_outline,
+                              ),
                               _buildFilterCard(theme, [
                                 ListTile(
-                                  title: const Text('Select Ordered Tags', style: TextStyle(fontSize: 14)),
-                                  subtitle: widget.filterOptions['orderedTags'] != null && 
-                                           (widget.filterOptions['orderedTags'] as Map).isNotEmpty
-                                      ? Text('${(widget.filterOptions['orderedTags'] as Map).length} tag sets active', 
-                                          style: TextStyle(color: theme.colorScheme.primary, fontSize: 12))
-                                      : const Text('No tag filters active', style: TextStyle(fontSize: 12)),
-                                  trailing: const Icon(Icons.chevron_right, size: 18),
+                                  title: Text(
+                                    context.l10n.selectOrderedTags,
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  subtitle:
+                                      widget.filterOptions['orderedTags'] !=
+                                              null &&
+                                          (widget.filterOptions['orderedTags']
+                                                  as Map)
+                                              .isNotEmpty
+                                      ? Text(
+                                          context.l10n.tagSetsActive(
+                                            (widget.filterOptions['orderedTags']
+                                                    as Map)
+                                                .length,
+                                          ),
+                                          style: TextStyle(
+                                            color: theme.colorScheme.primary,
+                                            fontSize: 12,
+                                          ),
+                                        )
+                                      : Text(
+                                          context.l10n.noTagFiltersActive,
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                  trailing: const Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                  ),
                                   onTap: () async {
-                                    final availableTags = await widget.repository.getAllUniqueTagGroups();
+                                    final availableTags = await widget
+                                        .repository
+                                        .getAllUniqueTagGroups();
                                     if (!context.mounted) return;
-                                    final selectedTags = await showDialog<Map<String, List<String>>>(
-                                      context: context,
-                                      builder: (context) => TagGroupFilterDialog(
-                                        availableTags: availableTags,
-                                        initialSelectedTags: widget.filterOptions['orderedTags'] ?? {},
-                                      ),
-                                    );
+                                    final selectedTags =
+                                        await showDialog<
+                                          Map<String, List<String>>
+                                        >(
+                                          context: context,
+                                          builder: (context) =>
+                                              TagGroupFilterDialog(
+                                                availableTags: availableTags,
+                                                initialSelectedTags:
+                                                    widget
+                                                        .filterOptions['orderedTags'] ??
+                                                    {},
+                                              ),
+                                        );
 
                                     if (selectedTags != null) {
-                                      final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
-                                      newFilterOptions['orderedTags'] = selectedTags;
-                                      widget.onFilterOptionsChanged(newFilterOptions);
-                                      setState(() {}); // Refresh local dialog state
+                                      final newFilterOptions =
+                                          Map<String, dynamic>.from(
+                                            widget.filterOptions,
+                                          );
+                                      newFilterOptions['orderedTags'] =
+                                          selectedTags;
+                                      widget.onFilterOptionsChanged(
+                                        newFilterOptions,
+                                      );
+                                      setState(
+                                        () {},
+                                      ); // Refresh local dialog state
                                     }
                                   },
                                 ),
                               ]),
 
                               const SizedBox(height: 12),
-                              _buildFilterCategoryHeader(theme, 'Practice Status', Icons.history_edu_outlined),
+                              _buildFilterCategoryHeader(
+                                theme,
+                                context.l10n.practiceStatus,
+                                Icons.history_edu_outlined,
+                              ),
                               _buildFilterCard(theme, [
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                    vertical: 8.0,
+                                  ),
                                   child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Tracking', 
-                                      isDense: true, 
+                                    decoration: InputDecoration(
+                                      labelText: context.l10n.tracking,
+                                      isDense: true,
                                       border: OutlineInputBorder(),
                                     ),
                                     style: theme.textTheme.bodyMedium,
-                                    initialValue: widget.filterOptions['practiceTracking'],
-                                    items: const [
-                                      DropdownMenuItem(value: null, child: Text('All Pieces')),
-                                      DropdownMenuItem(value: 'enabled', child: Text('Tracking Enabled')),
-                                      DropdownMenuItem(value: 'disabled', child: Text('Tracking Disabled')),
+                                    initialValue: widget
+                                        .filterOptions['practiceTracking'],
+                                    items: [
+                                      DropdownMenuItem(
+                                        value: null,
+                                        child: Text(context.l10n.allPieces),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'enabled',
+                                        child: Text(
+                                          context.l10n.trackingEnabled,
+                                        ),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'disabled',
+                                        child: Text(
+                                          context.l10n.trackingDisabled,
+                                        ),
+                                      ),
                                     ],
                                     onChanged: (value) {
-                                      final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
-                                      newFilterOptions['practiceTracking'] = value;
-                                      widget.onFilterOptionsChanged(newFilterOptions);
+                                      final newFilterOptions =
+                                          Map<String, dynamic>.from(
+                                            widget.filterOptions,
+                                          );
+                                      newFilterOptions['practiceTracking'] =
+                                          value;
+                                      widget.onFilterOptionsChanged(
+                                        newFilterOptions,
+                                      );
                                     },
-                                    ),
-                                    ),
-                                    Padding(
-                                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                                    child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Last Practiced', 
-                                      isDense: true, 
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    4,
+                                    12,
+                                    12,
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(
+                                      labelText: context.l10n.lastPracticed,
+                                      isDense: true,
                                       border: OutlineInputBorder(),
                                     ),
                                     style: theme.textTheme.bodyMedium,
-                                    initialValue: widget.filterOptions['practiceDuration'],
-                                    items: const [
-                                      DropdownMenuItem(value: null, child: Text('Any Time')),
-                                      DropdownMenuItem(value: 'last7Days', child: Text('Within last 7 days')),
-                                      DropdownMenuItem(value: 'notIn30Days', child: Text('Not in last 30 days')),
-                                      DropdownMenuItem(value: 'neverPracticed', child: Text('Never practiced')),
-                                    ],                                    onChanged: (value) {
-                                      final newFilterOptions = Map<String, dynamic>.from(widget.filterOptions);
-                                      newFilterOptions['practiceDuration'] = value;
-                                      widget.onFilterOptionsChanged(newFilterOptions);
+                                    initialValue: widget
+                                        .filterOptions['practiceDuration'],
+                                    items: [
+                                      DropdownMenuItem(
+                                        value: null,
+                                        child: Text(context.l10n.anyTime),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'last7Days',
+                                        child: Text(
+                                          context.l10n.withinLast7Days,
+                                        ),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'notIn30Days',
+                                        child: Text(
+                                          context.l10n.notInLast30Days,
+                                        ),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'neverPracticed',
+                                        child: Text(
+                                          context.l10n.neverPracticed,
+                                        ),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      final newFilterOptions =
+                                          Map<String, dynamic>.from(
+                                            widget.filterOptions,
+                                          );
+                                      newFilterOptions['practiceDuration'] =
+                                          value;
+                                      widget.onFilterOptionsChanged(
+                                        newFilterOptions,
+                                      );
                                     },
                                   ),
                                 ),
@@ -268,34 +391,62 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                               const SizedBox(height: 16),
                               _buildFilterCard(theme, [
                                 ListTile(
-                                  leading: const Icon(Icons.star_border, size: 20),
-                                  title: const Text('Save as Quick Filter', style: TextStyle(fontSize: 14)),
+                                  leading: const Icon(
+                                    Icons.star_border,
+                                    size: 20,
+                                  ),
+                                  title: Text(
+                                    context.l10n.saveAsQuickFilter,
+                                    style: TextStyle(fontSize: 14),
+                                  ),
                                   onTap: () async {
-                                    final nameController = TextEditingController();
+                                    final nameController =
+                                        TextEditingController();
                                     final name = await showDialog<String>(
                                       context: context,
                                       builder: (context) => AlertDialog(
-                                        title: const Text('Save Quick Filter'),
+                                        title: Text(
+                                          context.l10n.saveQuickFilter,
+                                        ),
                                         content: TextField(
                                           controller: nameController,
-                                          decoration: const InputDecoration(hintText: 'Enter filter name'),
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                context.l10n.enterFilterName,
+                                          ),
                                           autofocus: true,
                                         ),
                                         actions: [
-                                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context, nameController.text),
-                                            child: const Text('Save'),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: Text(context.l10n.cancel),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                              context,
+                                              nameController.text,
+                                            ),
+                                            child: Text(context.l10n.save),
                                           ),
                                         ],
                                       ),
                                     );
                                     if (name != null && name.isNotEmpty) {
-                                      widget.onSaveQuickFilter(name, widget.filterOptions);
+                                      widget.onSaveQuickFilter(
+                                        name,
+                                        widget.filterOptions,
+                                      );
                                       if (!context.mounted) return;
                                       Navigator.pop(context);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Filter "$name" saved')),
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            context.l10n.filterSaved(name),
+                                          ),
+                                        ),
                                       );
                                     }
                                   },
@@ -308,22 +459,22 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
                       actions: [
                         TextButton(
                           onPressed: () {
-                             widget.onClearFilter();
-                             Navigator.pop(context);
+                            widget.onClearFilter();
+                            Navigator.pop(context);
                           },
-                          child: const Text('Clear Filter'),
+                          child: Text(context.l10n.clearFilter),
                         ),
                         FilledButton(
                           onPressed: () {
-                             Navigator.pop(context);
-                             widget.onApplyFilter();
+                            Navigator.pop(context);
+                            widget.onApplyFilter();
                           },
-                          child: const Text('Apply & Close'),
+                          child: Text(context.l10n.applyAndClose),
                         ),
                       ],
                       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     );
-                  }
+                  },
                 ),
               );
             },
@@ -335,25 +486,39 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Sort Options'),
+                title: Text(context.l10n.sortOptions),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      title: const Text('Alphabetical'),
-                      trailing: widget.sortOption.startsWith('alphabetical') ? (widget.sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      title: Text(context.l10n.alphabetical),
+                      trailing: widget.sortOption.startsWith('alphabetical')
+                          ? (widget.sortOption.endsWith('asc')
+                                ? const Icon(Icons.arrow_upward)
+                                : const Icon(Icons.arrow_downward))
+                          : null,
                       onTap: () {
-                        final newSortOption = widget.sortOption == 'alphabetical_asc' ? 'alphabetical_desc' : 'alphabetical_asc';
+                        final newSortOption =
+                            widget.sortOption == 'alphabetical_asc'
+                            ? 'alphabetical_desc'
+                            : 'alphabetical_asc';
                         widget.onSortOptionChanged(newSortOption);
                         widget.prefs.setString('sortOption', newSortOption);
                         Navigator.pop(context);
                       },
                     ),
                     ListTile(
-                      title: const Text('Last Practiced'),
-                      trailing: widget.sortOption.startsWith('last_practiced') ? (widget.sortOption.endsWith('asc') ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward)) : null,
+                      title: Text(context.l10n.lastPracticed),
+                      trailing: widget.sortOption.startsWith('last_practiced')
+                          ? (widget.sortOption.endsWith('asc')
+                                ? const Icon(Icons.arrow_upward)
+                                : const Icon(Icons.arrow_downward))
+                          : null,
                       onTap: () {
-                        final newSortOption = widget.sortOption == 'last_practiced_asc' ? 'last_practiced_desc' : 'last_practiced_asc';
+                        final newSortOption =
+                            widget.sortOption == 'last_practiced_asc'
+                            ? 'last_practiced_desc'
+                            : 'last_practiced_asc';
                         widget.onSortOptionChanged(newSortOption);
                         widget.prefs.setString('sortOption', newSortOption);
                         Navigator.pop(context);
@@ -374,12 +539,13 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
             if (!context.mounted) return;
             if (changesMade == true) {
               // Trigger reload when returning from settings with changes
-              AppLogger.log('LibraryAppBar: Settings changed, triggering reload');
+              AppLogger.log(
+                'LibraryAppBar: Settings changed, triggering reload',
+              );
               // Force a rebuild by triggering a state change
               setState(() {});
               // Call the settings changed callback
               widget.onSettingsChanged();
-
             }
           },
         ),
@@ -393,7 +559,7 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
         icon: const Icon(Icons.close),
         onPressed: widget.onToggleMultiSelectMode,
       ),
-      title: Text('${widget.selectedPieceCount} selected'),
+      title: Text(context.l10n.itemsSelected(widget.selectedPieceCount)),
       actions: [
         IconButton(
           icon: const Icon(Icons.select_all),
@@ -402,7 +568,12 @@ class _LibraryAppBarState extends State<LibraryAppBar> {
       ],
     );
   }
-  Widget _buildFilterCategoryHeader(ThemeData theme, String title, IconData icon) {
+
+  Widget _buildFilterCategoryHeader(
+    ThemeData theme,
+    String title,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 12.0),
       child: Row(
@@ -460,7 +631,7 @@ class _QuickFilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.flash_on),
-      tooltip: 'Quick Filters',
+      tooltip: context.l10n.quickFilters,
       onSelected: (value) {
         if (value == _clearAction) {
           onClear();
@@ -470,13 +641,13 @@ class _QuickFilterButton extends StatelessWidget {
       },
       itemBuilder: (context) {
         return [
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: _clearAction,
             child: Row(
               children: [
                 Icon(Icons.filter_list_off, size: 20),
                 SizedBox(width: 8),
-                Text('Clear Filter'),
+                Text(context.l10n.clearFilter),
               ],
             ),
           ),
@@ -496,19 +667,22 @@ class _QuickFilterButton extends StatelessWidget {
                       final action = await showDialog<String>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text('Manage Filter: $name'),
+                          title: Text(context.l10n.manageFilter(name)),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, 'delete'),
-                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              child: Text(
+                                context.l10n.delete,
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, 'rename'),
-                              child: const Text('Rename'),
+                              child: Text(context.l10n.rename),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
+                              child: Text(context.l10n.cancel),
                             ),
                           ],
                         ),
@@ -518,25 +692,33 @@ class _QuickFilterButton extends StatelessWidget {
                         onDelete(name);
                       } else if (action == 'rename') {
                         if (!context.mounted) return;
-                        final nameController = TextEditingController(text: name);
+                        final nameController = TextEditingController(
+                          text: name,
+                        );
                         final newName = await showDialog<String>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Rename Quick Filter'),
+                            title: Text(context.l10n.renameQuickFilter),
                             content: TextField(
                               controller: nameController,
                               autofocus: true,
                             ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                               TextButton(
-                                onPressed: () => Navigator.pop(context, nameController.text),
-                                child: const Text('Save'),
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(context.l10n.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, nameController.text),
+                                child: Text(context.l10n.save),
                               ),
                             ],
                           ),
                         );
-                        if (newName != null && newName.isNotEmpty && newName != name) {
+                        if (newName != null &&
+                            newName.isNotEmpty &&
+                            newName != name) {
                           final options = quickFilters[name]!;
                           onDelete(name);
                           onEdit(newName, options);

@@ -27,6 +27,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   sqflite: ^2.3.3 # For SQLite database
   sqflite_common_ffi: ^2.3.3
   path_provider: ^2.1.3 # For getting local paths
@@ -88,6 +90,7 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true
   assets:
     - assets/contributors.json
     - assets/soundfonts/TimGM6mb.sf2

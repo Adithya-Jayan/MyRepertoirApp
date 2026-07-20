@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/media_cleanup_service.dart';
 import './unused_files_dialog.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that displays media cleanup scan results.
 class ScanResultsWidget extends StatelessWidget {
   final MediaCleanupInfo cleanupInfo;
@@ -36,10 +38,14 @@ class ScanResultsWidget extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.analytics_outlined, color: colorScheme.primary, size: 20),
+                  Icon(
+                    Icons.analytics_outlined,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Text(
-                    'Scan Results',
+                    context.l10n.scanResults,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.primary,
@@ -48,36 +54,50 @@ class ScanResultsWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              
-              _buildStatRow(theme, 'Total Files', '${cleanupInfo.totalFilesFound}', Icons.description_outlined),
+
+              _buildStatRow(
+                theme,
+                context.l10n.totalFiles,
+                '${cleanupInfo.totalFilesFound}',
+                Icons.description_outlined,
+              ),
               const SizedBox(height: 8),
-              _buildStatRow(theme, 'Total Size', cleanupInfo.totalSizeFormatted, Icons.storage_outlined),
-              
+              _buildStatRow(
+                theme,
+                context.l10n.totalSize,
+                cleanupInfo.totalSizeFormatted,
+                Icons.storage_outlined,
+              ),
+
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Divider(),
               ),
-              
+
               _buildStatRow(
-                theme, 
-                'Unused Files', 
-                '${cleanupInfo.unusedFilesFound}', 
+                theme,
+                context.l10n.unusedFiles,
+                '${cleanupInfo.unusedFilesFound}',
                 Icons.auto_delete_outlined,
-                valueColor: cleanupInfo.unusedFilesFound > 0 ? colorScheme.error : null,
+                valueColor: cleanupInfo.unusedFilesFound > 0
+                    ? colorScheme.error
+                    : null,
                 isBold: true,
               ),
               const SizedBox(height: 8),
               _buildStatRow(
-                theme, 
-                'Unused Size', 
-                cleanupInfo.unusedSizeFormatted, 
+                theme,
+                context.l10n.unusedSize,
+                cleanupInfo.unusedSizeFormatted,
                 Icons.cleaning_services_outlined,
-                valueColor: cleanupInfo.unusedFilesFound > 0 ? colorScheme.error : null,
+                valueColor: cleanupInfo.unusedFilesFound > 0
+                    ? colorScheme.error
+                    : null,
                 isBold: true,
               ),
 
               const SizedBox(height: 24),
-              
+
               if (cleanupInfo.unusedFiles.isNotEmpty)
                 Column(
                   children: [
@@ -93,26 +113,33 @@ class ScanResultsWidget extends StatelessWidget {
                             ),
                           );
                         },
-                        label: const Text('View Unused Files'),
+                        label: Text(context.l10n.viewUnusedFiles),
                       ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        icon: isCleaning 
-                          ? const SizedBox(
-                              width: 16, 
-                              height: 16, 
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.delete_sweep_outlined, size: 18),
+                        icon: isCleaning
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.delete_sweep_outlined, size: 18),
                         onPressed: isCleaning ? null : onPurgeUnusedFiles,
                         style: FilledButton.styleFrom(
                           backgroundColor: colorScheme.error,
                           foregroundColor: colorScheme.onError,
                         ),
-                        label: Text(isCleaning ? 'Purging...' : 'Purge Unused Files'),
+                        label: Text(
+                          isCleaning
+                              ? context.l10n.purging
+                              : context.l10n.purgeUnusedMedia,
+                        ),
                       ),
                     ),
                   ],
@@ -125,14 +152,21 @@ class ScanResultsWidget extends StatelessWidget {
                     color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                      Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.green,
+                        size: 20,
+                      ),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Your media library is clean!',
-                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                          context.l10n.yourMediaLibraryIsClean,
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -145,12 +179,28 @@ class ScanResultsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatRow(ThemeData theme, String label, String value, IconData icon, {Color? valueColor, bool isBold = false}) {
+  Widget _buildStatRow(
+    ThemeData theme,
+    String label,
+    String value,
+    IconData icon, {
+    Color? valueColor,
+    bool isBold = false,
+  }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
+        Icon(
+          icon,
+          size: 16,
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
         const SizedBox(width: 8),
-        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const Spacer(),
         Text(
           value,
@@ -163,4 +213,3 @@ class ScanResultsWidget extends StatelessWidget {
     );
   }
 }
- 

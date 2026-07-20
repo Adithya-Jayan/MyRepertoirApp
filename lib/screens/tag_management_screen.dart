@@ -3,6 +3,8 @@ import '../models/tag.dart';
 import 'package:uuid/uuid.dart';
 import '../database/music_piece_repository.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen for managing user-defined tags.
 ///
 /// This screen allows users to add new tags, view existing tags, and delete tags.
@@ -16,8 +18,10 @@ class TagManagementScreen extends StatefulWidget {
 /// The state class for [TagManagementScreen].
 /// Manages the UI and logic for adding, viewing, and deleting tags.
 class _TagManagementScreenState extends State<TagManagementScreen> {
-  final _tagNameController = TextEditingController(); // Controller for the new tag name input field.
-  final MusicPieceRepository _repository = MusicPieceRepository(); // Repository for tag data operations.
+  final _tagNameController =
+      TextEditingController(); // Controller for the new tag name input field.
+  final MusicPieceRepository _repository =
+      MusicPieceRepository(); // Repository for tag data operations.
   List<Tag> _tags = []; // List to hold the currently displayed tags.
 
   @override
@@ -50,9 +54,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Tags'),
-      ),
+      appBar: AppBar(title: Text(context.l10n.manageTags)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -62,13 +64,12 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                 Expanded(
                   child: TextField(
                     controller: _tagNameController,
-                    decoration: const InputDecoration(labelText: 'New Tag Name'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.newTagName,
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addTag,
-                ),
+                IconButton(icon: const Icon(Icons.add), onPressed: _addTag),
               ],
             ),
             Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:repertoire/l10n/app_localizations.dart';
 import 'dart:async';
 import '../utils/app_logger.dart';
 
@@ -12,16 +13,18 @@ import '../services/library_data_manager.dart';
 import '../utils/settings_manager.dart';
 import '../utils/music_piece_filter.dart';
 
-
 class LibraryScreenNotifier extends ChangeNotifier {
   final MusicPieceRepository _repository;
+  final AppLocalizations _l10n;
   late LibraryDataManager _libraryDataManager;
   late SettingsManager _settingsManager;
 
   // Notifiers for data and loading states
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier(true);
   final ValueNotifier<String?> errorMessageNotifier = ValueNotifier(null);
-  final ValueNotifier<List<MusicPiece>> allMusicPiecesNotifier = ValueNotifier([]);
+  final ValueNotifier<List<MusicPiece>> allMusicPiecesNotifier = ValueNotifier(
+    [],
+  );
   final ValueNotifier<List<MusicPiece>> musicPiecesNotifier = ValueNotifier([]);
   final ValueNotifier<List<Group>> groupsNotifier = ValueNotifier([]);
   final ValueNotifier<int> galleryColumnsNotifier = ValueNotifier(1);
@@ -38,7 +41,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
   String _searchQuery = '';
-  Map<String, dynamic> _filterOptions = {'orderedTags': <String, List<String>>{}};
+  Map<String, dynamic> _filterOptions = {
+    'orderedTags': <String, List<String>>{},
+  };
   Map<String, Map<String, dynamic>> _quickFilters = {};
   String _sortOption = 'A-Z (Title)';
   bool _hideEmptyGroups = false;
@@ -50,7 +55,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Key _groupListKey = UniqueKey();
   String? _selectedGroupId;
 
-  LibraryScreenNotifier(this._repository, SharedPreferences prefs) {
+  LibraryScreenNotifier(this._repository, SharedPreferences prefs, this._l10n) {
     _settingsManager = SettingsManager(galleryColumnsNotifier);
     _settingsManager.prefs = prefs;
     _initialize();
@@ -102,12 +107,15 @@ class LibraryScreenNotifier extends ChangeNotifier {
       musicPiecesNotifier,
       groupsNotifier,
       galleryColumnsNotifier,
+      _l10n,
     );
     await _libraryDataManager.loadInitialData();
-    
+
     // Load saved sort option
     _sortOption = _settingsManager.loadSortOption();
-    AppLogger.log('LibraryScreenNotifier: Loaded saved sort option: $_sortOption');
+    AppLogger.log(
+      'LibraryScreenNotifier: Loaded saved sort option: $_sortOption',
+    );
 
     // Load saved filter options
     _filterOptions = _settingsManager.loadFilterOptions();
@@ -115,23 +123,29 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
     // Load quick filters
     _quickFilters = _settingsManager.loadQuickFilters();
-    AppLogger.log('LibraryScreenNotifier: Loaded ${_quickFilters.length} quick filters');
+    AppLogger.log(
+      'LibraryScreenNotifier: Loaded ${_quickFilters.length} quick filters',
+    );
 
     // Load hide empty groups setting
     _hideEmptyGroups = _settingsManager.loadHideEmptyGroups();
-    AppLogger.log('LibraryScreenNotifier: Loaded hideEmptyGroups: $_hideEmptyGroups');
-    
+    AppLogger.log(
+      'LibraryScreenNotifier: Loaded hideEmptyGroups: $_hideEmptyGroups',
+    );
+
     // Set the first visible group as active if no group is selected
     final visibleGroups = getVisibleGroups();
     if (_selectedGroupId == null && visibleGroups.isNotEmpty) {
       _selectedGroupId = visibleGroups.first.id;
-      AppLogger.log('LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}');
+      AppLogger.log(
+        'LibraryScreenNotifier: Auto-selected first visible group on startup: ${visibleGroups.first.name}',
+      );
     }
-    
+
     // Update the cache with initial data and load music pieces
     _updateFilteredResultsCache();
     await loadMusicPieces();
-    
+
     _isInitialized = true;
     _isLoading = false;
     notifyListeners();
@@ -211,7 +225,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   Map<String, dynamic> _deepCopyFilterOptions(Map<String, dynamic> options) {
     final Map<String, dynamic> copy = Map<String, dynamic>.from(options);
-    
+
     // Deep copy orderedTags map and its lists
     if (copy['orderedTags'] != null && copy['orderedTags'] is Map) {
       final Map<dynamic, dynamic> orderedTags = copy['orderedTags'];
@@ -229,7 +243,7 @@ class LibraryScreenNotifier extends ChangeNotifier {
         copy[key] = List<String>.from(copy[key]);
       }
     }
-    
+
     return copy;
   }
 
@@ -276,7 +290,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
     errorMessageNotifier.value = null;
     try {
       final allDbGroups = await _repository.getGroups();
-      AppLogger.log('LibraryScreenNotifier: Loaded ${allDbGroups.length} groups from DB.');
+      AppLogger.log(
+        'LibraryScreenNotifier: Loaded ${allDbGroups.length} groups from DB.',
+      );
 
       final groupSettings = _settingsManager.loadGroupOrderSettings();
       final allGroup = Group(
@@ -303,16 +319,19 @@ class LibraryScreenNotifier extends ChangeNotifier {
       });
 
       groupsNotifier.value = combinedGroups;
-      AppLogger.log('LibraryScreenNotifier: All groups (including special): ${groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}');
-      
+      AppLogger.log(
+        'LibraryScreenNotifier: All groups (including special): ${groupsNotifier.value.map((g) => '${g.name} (id: ${g.id}, order: ${g.order}, hidden: ${g.isHidden})').join(', ')}',
+      );
+
       // Check if the currently selected group is still valid
-      if (_selectedGroupId != null && !groupsNotifier.value.any((g) => g.id == _selectedGroupId)) {
+      if (_selectedGroupId != null &&
+          !groupsNotifier.value.any((g) => g.id == _selectedGroupId)) {
         _selectedGroupId = null;
       }
-      
+
       _groupListKey = UniqueKey();
     } catch (e) {
-      errorMessageNotifier.value = 'Failed to load groups: $e';
+      errorMessageNotifier.value = _l10n.failedToLoadGroups(e.toString());
       AppLogger.log('LibraryScreenNotifier: Error loading groups: $e');
     } finally {
       isLoadingNotifier.value = false;
@@ -323,23 +342,27 @@ class LibraryScreenNotifier extends ChangeNotifier {
     if (_needsCacheUpdate()) {
       _updateFilteredResultsCache();
     }
-    
+
     // Use cached results for the selected group
     if (_selectedGroupId != null) {
       final cachedPieces = getFilteredPiecesForGroup(_selectedGroupId!);
       musicPiecesNotifier.value = cachedPieces;
-      AppLogger.log('LibraryScreenNotifier: Loaded ${cachedPieces.length} cached pieces for group $_selectedGroupId');
+      AppLogger.log(
+        'LibraryScreenNotifier: Loaded ${cachedPieces.length} cached pieces for group $_selectedGroupId',
+      );
     } else {
       musicPiecesNotifier.value = [];
     }
-    
+
     notifyListeners();
   }
 
   List<Group> getVisibleGroups() {
-    final nonHiddenGroups = groupsNotifier.value.where((group) => !group.isHidden).toList();
+    final nonHiddenGroups = groupsNotifier.value
+        .where((group) => !group.isHidden)
+        .toList();
     if (!_hideEmptyGroups) return nonHiddenGroups;
-    
+
     return nonHiddenGroups.where((group) {
       // Use the filter-only cache for visibility (ignores search bar)
       final pieces = _filterOnlyResultsCache[group.id] ?? [];
@@ -355,23 +378,26 @@ class LibraryScreenNotifier extends ChangeNotifier {
   /// Checks if the cache needs to be updated based on current search/filter criteria
   bool _needsCacheUpdate() {
     return _searchQuery != _lastSearchQuery ||
-           _sortOption != _lastSortOption ||
-           !_areFilterOptionsEqual(_filterOptions, _lastFilterOptions);
+        _sortOption != _lastSortOption ||
+        !_areFilterOptionsEqual(_filterOptions, _lastFilterOptions);
   }
 
   /// Compares two filter option maps for equality
   bool _areFilterOptionsEqual(Map<String, dynamic> a, Map<String, dynamic> b) {
     if (identical(a, b)) return true;
     if (a.length != b.length) return false;
-    
+
     for (final key in a.keys) {
       if (!b.containsKey(key)) return false;
-      
+
       final valA = a[key];
       final valB = b[key];
-      
+
       if (valA is Map && valB is Map) {
-        if (!_areFilterOptionsEqual(Map<String, dynamic>.from(valA), Map<String, dynamic>.from(valB))) {
+        if (!_areFilterOptionsEqual(
+          Map<String, dynamic>.from(valA),
+          Map<String, dynamic>.from(valB),
+        )) {
           return false;
         }
       } else if (valA is List && valB is List) {
@@ -391,23 +417,29 @@ class LibraryScreenNotifier extends ChangeNotifier {
     AppLogger.log('LibraryScreenNotifier: Updating filtered results cache');
     _filteredResultsCache.clear();
     _filterOnlyResultsCache.clear();
-    
+
     final allPieces = allMusicPiecesNotifier.value;
-    
+
     // We iterate over all non-hidden groups to populate the cache
-    final potentialGroups = groupsNotifier.value.where((group) => !group.isHidden).toList();
-    
+    final potentialGroups = groupsNotifier.value
+        .where((group) => !group.isHidden)
+        .toList();
+
     for (final group in potentialGroups) {
       // Filter pieces for this group
       List<MusicPiece> piecesForGroup;
       if (group.id == 'all_group') {
         piecesForGroup = List.from(allPieces);
       } else if (group.id == 'ungrouped_group') {
-        piecesForGroup = allPieces.where((piece) => piece.groupIds.isEmpty).toList();
+        piecesForGroup = allPieces
+            .where((piece) => piece.groupIds.isEmpty)
+            .toList();
       } else {
-        piecesForGroup = allPieces.where((piece) => piece.groupIds.contains(group.id)).toList();
+        piecesForGroup = allPieces
+            .where((piece) => piece.groupIds.contains(group.id))
+            .toList();
       }
-      
+
       final filter = MusicPieceFilter(
         searchQuery: _searchQuery,
         filterOptions: _filterOptions,
@@ -416,13 +448,18 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
       // 1. Cache results WITH search (for the main list)
       _filteredResultsCache[group.id] = filter.filterAndSort(piecesForGroup);
-      
+
       // 2. Cache results WITHOUT search (for group visibility toggle)
-      _filterOnlyResultsCache[group.id] = filter.filterAndSort(piecesForGroup, ignoreSearch: true);
-      
-      AppLogger.log('LibraryScreenNotifier: Cached ${_filteredResultsCache[group.id]!.length} pieces (with search) for group ${group.name}');
+      _filterOnlyResultsCache[group.id] = filter.filterAndSort(
+        piecesForGroup,
+        ignoreSearch: true,
+      );
+
+      AppLogger.log(
+        'LibraryScreenNotifier: Cached ${_filteredResultsCache[group.id]!.length} pieces (with search) for group ${group.name}',
+      );
     }
-    
+
     // Update last known criteria
     _lastSearchQuery = _searchQuery;
     _lastFilterOptions = _deepCopyFilterOptions(_filterOptions);
@@ -430,24 +467,28 @@ class LibraryScreenNotifier extends ChangeNotifier {
   }
 
   void onGroupSelected(String? groupId) {
-    AppLogger.log('LibraryScreenNotifier: onGroupSelected called with groupId: $groupId');
-    
+    AppLogger.log(
+      'LibraryScreenNotifier: onGroupSelected called with groupId: $groupId',
+    );
+
     // Avoid unnecessary updates if the group hasn't changed
     if (_selectedGroupId == groupId) {
       return;
     }
 
     _selectedGroupId = groupId;
-    
+
     // Update music pieces from cache instead of re-filtering
     if (groupId != null) {
       final cachedPieces = getFilteredPiecesForGroup(groupId);
       musicPiecesNotifier.value = cachedPieces;
-      AppLogger.log('LibraryScreenNotifier: Updated music pieces from cache for group $groupId: ${cachedPieces.length} pieces');
+      AppLogger.log(
+        'LibraryScreenNotifier: Updated music pieces from cache for group $groupId: ${cachedPieces.length} pieces',
+      );
     } else {
       musicPiecesNotifier.value = [];
     }
-    
+
     notifyListeners();
   }
 
@@ -460,13 +501,17 @@ class LibraryScreenNotifier extends ChangeNotifier {
       filterOptions: _filterOptions,
       sortOption: _sortOption,
     );
-    
+
     // Update the cache with new data
     _updateFilteredResultsCache();
-    
+
     await loadSettings(); // Call the notifier's loadSettings method
-    AppLogger.log('LibraryScreenNotifier: reloadData completed, notifying listeners');
-    AppLogger.log('LibraryScreenNotifier: Final galleryColumns value: ${galleryColumnsNotifier.value}');
+    AppLogger.log(
+      'LibraryScreenNotifier: reloadData completed, notifying listeners',
+    );
+    AppLogger.log(
+      'LibraryScreenNotifier: Final galleryColumns value: ${galleryColumnsNotifier.value}',
+    );
     notifyListeners();
   }
 
@@ -474,7 +519,9 @@ class LibraryScreenNotifier extends ChangeNotifier {
   Future<void> reloadSettings() async {
     AppLogger.log('LibraryScreenNotifier: reloadSettings called');
     await loadSettings();
-    AppLogger.log('LibraryScreenNotifier: reloadSettings completed, notifying listeners');
+    AppLogger.log(
+      'LibraryScreenNotifier: reloadSettings completed, notifying listeners',
+    );
     notifyListeners();
   }
 }

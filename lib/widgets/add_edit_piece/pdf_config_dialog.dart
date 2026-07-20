@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/models/pdf_config.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class PdfConfigDialog extends StatefulWidget {
   final PdfConfig initialConfig;
 
@@ -22,13 +24,13 @@ class _PdfConfigDialogState extends State<PdfConfigDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Configure PDF Viewer'),
+      title: Text(context.l10n.configurePdfViewer),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SwitchListTile(
-            title: const Text('Auto Scroll Enabled'),
-            subtitle: const Text('Show scroll controls in the viewer'),
+            title: Text(context.l10n.autoScrollEnabled),
+            subtitle: Text(context.l10n.showScrollControlsInTheViewer),
             value: _autoScrollEnabled,
             onChanged: (value) {
               setState(() {
@@ -41,7 +43,7 @@ class _PdfConfigDialogState extends State<PdfConfigDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         ElevatedButton(
           onPressed: () {
@@ -53,7 +55,7 @@ class _PdfConfigDialogState extends State<PdfConfigDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(context.l10n.save),
         ),
       ],
     );

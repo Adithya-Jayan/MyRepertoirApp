@@ -6,6 +6,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import 'package:repertoire/utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen that displays information about the application.
 ///
 /// This includes the app version, license, credits, and a link to the source code.
@@ -19,7 +21,7 @@ class AboutScreen extends StatefulWidget {
 /// The state class for [AboutScreen].
 /// Manages the display of app version and other static information.
 class _AboutScreenState extends State<AboutScreen> {
-  String _appVersion = 'Loading...'; // Stores the application version.
+  String? _appVersion; // Stores the application version.
   bool _isPlayStore = false;
 
   @override
@@ -30,11 +32,13 @@ class _AboutScreenState extends State<AboutScreen> {
 
   /// Asynchronously loads the application version from package info.
   Future<void> _loadAppVersion() async {
-    final packageInfo = await PackageInfo.fromPlatform(); // Get package information.
+    final packageInfo =
+        await PackageInfo.fromPlatform(); // Get package information.
     final isPlayStore = packageInfo.packageName.endsWith('.playstore');
     setState(() {
       _isPlayStore = isPlayStore;
-      _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}'; // Set the app version string.
+      _appVersion =
+          '${packageInfo.version}+${packageInfo.buildNumber}'; // Set the app version string.
     });
   }
 
@@ -42,27 +46,34 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('About'),
-      ),
+      appBar: AppBar(title: Text(context.l10n.about)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           children: [
-            _buildCategoryHeader(theme, 'App Information', Icons.info_outline),
+            _buildCategoryHeader(
+              theme,
+              context.l10n.appInformation,
+              Icons.info_outline,
+            ),
             _buildSettingsCard([
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Music Repertoire App',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      context.l10n.musicRepertoireApp,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Organize your music pieces, attach media, and track your practice journey.',
+                      context
+                          .l10n
+                          .organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney,
                       style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],
@@ -70,27 +81,46 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
               const Divider(indent: 16, endIndent: 16),
               ListTile(
-                title: const Text('Version'),
-                trailing: Text(_appVersion, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                title: Text(context.l10n.version),
+                trailing: Text(
+                  _appVersion ?? context.l10n.loading,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
               ),
-              const ListTile(
-                title: Text('License'),
-                trailing: Text('Apache 2.0', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              ListTile(
+                title: Text(context.l10n.license),
+                trailing: Text(
+                  context.l10n.apache20,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
             ]),
 
             const SizedBox(height: 16),
-            _buildCategoryHeader(theme, 'Credits', Icons.people_outline),
+            _buildCategoryHeader(
+              theme,
+              context.l10n.credits,
+              Icons.people_outline,
+            ),
             _buildSettingsCard([
-              const ListTile(
+              ListTile(
                 leading: Icon(Icons.person_outline, size: 20),
-                title: Text('Developed by'),
-                trailing: Text('Adithya Jayan', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                title: Text(context.l10n.developedBy),
+                trailing: Text(
+                  context.l10n.adithyaJayan,
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                ),
               ),
-              const ListTile(
+              ListTile(
                 leading: Icon(Icons.auto_awesome_outlined, size: 20),
-                title: Text('Inspired by'),
-                trailing: Text('Mihon', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                title: Text(context.l10n.inspiredBy),
+                trailing: Text(
+                  context.l10n.mihon,
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                ),
               ),
               if (!_isPlayStore) ...[
                 const Divider(indent: 16, endIndent: 16),
@@ -101,11 +131,13 @@ class _AboutScreenState extends State<AboutScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const CreditsScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const CreditsScreen(),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.group_outlined, size: 18),
-                      label: const Text('View All Contributors'),
+                      label: Text(context.l10n.viewAllContributors),
                     ),
                   ),
                 ),
@@ -113,29 +145,47 @@ class _AboutScreenState extends State<AboutScreen> {
             ]),
 
             const SizedBox(height: 16),
-            _buildCategoryHeader(theme, 'Links', Icons.link_outlined),
+            _buildCategoryHeader(
+              theme,
+              context.l10n.links,
+              Icons.link_outlined,
+            ),
             _buildSettingsCard([
               ListTile(
                 leading: const Icon(Icons.public, color: Colors.blue),
-                title: const Text('Website'),
-                subtitle: const Text('adithyajayan.in/MyRepertoirApp/', style: TextStyle(fontSize: 12)),
+                title: Text(context.l10n.website),
+                subtitle: Text(
+                  context.l10n.adithyajayanInMyrepertoirapp,
+                  style: TextStyle(fontSize: 12),
+                ),
                 trailing: const Icon(Icons.open_in_new, size: 16),
-                onTap: () => _launchUrl('https://adithyajayan.in/MyRepertoirApp/'),
+                onTap: () =>
+                    _launchUrl('https://adithyajayan.in/MyRepertoirApp/'),
               ),
               if (!_isPlayStore)
                 ListTile(
                   leading: const Icon(Icons.android, color: Colors.green),
-                  title: const Text('F-Droid'),
-                  subtitle: const Text('f-droid.org/.../myrepertoirapp', style: TextStyle(fontSize: 12)),
+                  title: Text(context.l10n.fDRoid),
+                  subtitle: Text(
+                    context.l10n.fDroidOrgMyrepertoirapp,
+                    style: TextStyle(fontSize: 12),
+                  ),
                   trailing: const Icon(Icons.open_in_new, size: 16),
-                  onTap: () => _launchUrl('https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/'),
+                  onTap: () => _launchUrl(
+                    'https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/',
+                  ),
                 ),
               ListTile(
                 leading: const Icon(Icons.code, color: Colors.black),
-                title: const Text('GitHub'),
-                subtitle: const Text('github.com/.../MyRepertoirApp', style: TextStyle(fontSize: 12)),
+                title: Text(context.l10n.github),
+                subtitle: Text(
+                  context.l10n.githubComMyrepertoirapp,
+                  style: TextStyle(fontSize: 12),
+                ),
                 trailing: const Icon(Icons.open_in_new, size: 16),
-                onTap: () => _launchUrl('https://github.com/Adithya-Jayan/MyRepertoirApp'),
+                onTap: () => _launchUrl(
+                  'https://github.com/Adithya-Jayan/MyRepertoirApp',
+                ),
               ),
             ]),
             const SizedBox(height: 24),
@@ -177,7 +227,9 @@ class _AboutScreenState extends State<AboutScreen> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
       child: Column(children: children),
     );
   }
@@ -207,23 +259,28 @@ class _CreditsScreenState extends State<CreditsScreen> {
       setState(() {
         _contributors = contributors;
       });
-      
+
       // Preload avatars in the background
       setState(() {
         _isPreloading = true;
       });
-      
+
       // Download all avatars and refresh the page
       for (final contributor in contributors) {
         try {
-          await ContributorImageCache.getCachedAvatarPath(contributor.login, contributor.avatarUrl);
+          await ContributorImageCache.getCachedAvatarPath(
+            contributor.login,
+            contributor.avatarUrl,
+          );
           // Add a small delay to avoid overwhelming the network
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
-          AppLogger.log('Error downloading avatar for ${contributor.login}: $e');
+          AppLogger.log(
+            'Error downloading avatar for ${contributor.login}: $e',
+          );
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _isPreloading = false;
@@ -245,7 +302,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contributors'), // Title of the Contributors screen.
+        title: Text(
+          context.l10n.contributors,
+        ), // Title of the Contributors screen.
         actions: [
           if (_isPreloading)
             const Padding(
@@ -260,45 +319,56 @@ class _CreditsScreenState extends State<CreditsScreen> {
       ),
       body: SafeArea(
         child: _contributors == null
-          ? const Center(child: CircularProgressIndicator()) // Show loading indicator.
-          : _contributors!.isEmpty
-              ? const Center(child: Text('No contributors found.')) // Message for no contributors.
-              : ListView.builder(
-                  itemCount: _contributors!.length,
-                  itemBuilder: (context, index) {
-                    final c = _contributors![index];
-                    return FutureBuilder<String?>(
-                      future: ContributorImageCache.getCachedAvatarPath(c.login, c.avatarUrl),
-                      builder: (context, snapshot) {
-                        Widget avatar;
-                        if (snapshot.hasData && snapshot.data != null) {
-                          // Use cached image
-                          avatar = CircleAvatar(
-                            backgroundImage: FileImage(File(snapshot.data!)),
-                          );
-                        } else {
-                          // Fallback to network image or placeholder
-                          avatar = CircleAvatar(
-                            backgroundImage: NetworkImage(c.avatarUrl),
-                            onBackgroundImageError: (exception, stackTrace) {
-                              // Handle error by showing a placeholder
-                            },
-                          );
-                        }
-                        
-                        return ListTile(
-                          leading: GestureDetector(
-                            onTap: () => launchUrl(Uri.parse(c.htmlUrl)), // Only avatar is clickable
-                            child: avatar,
-                          ),
-                          title: Text(c.login), // Contributor's login name.
-                          subtitle: Text('${c.contributions} contributions'), // Number of contributions.
-                          // Removed onTap from ListTile to prevent accidental clicks
+            ? const Center(
+                child: CircularProgressIndicator(),
+              ) // Show loading indicator.
+            : _contributors!.isEmpty
+            ? Center(
+                child: Text(context.l10n.noContributorsFound),
+              ) // Message for no contributors.
+            : ListView.builder(
+                itemCount: _contributors!.length,
+                itemBuilder: (context, index) {
+                  final c = _contributors![index];
+                  return FutureBuilder<String?>(
+                    future: ContributorImageCache.getCachedAvatarPath(
+                      c.login,
+                      c.avatarUrl,
+                    ),
+                    builder: (context, snapshot) {
+                      Widget avatar;
+                      if (snapshot.hasData && snapshot.data != null) {
+                        // Use cached image
+                        avatar = CircleAvatar(
+                          backgroundImage: FileImage(File(snapshot.data!)),
                         );
-                      },
-                    );
-                  },
-                ),
+                      } else {
+                        // Fallback to network image or placeholder
+                        avatar = CircleAvatar(
+                          backgroundImage: NetworkImage(c.avatarUrl),
+                          onBackgroundImageError: (exception, stackTrace) {
+                            // Handle error by showing a placeholder
+                          },
+                        );
+                      }
+
+                      return ListTile(
+                        leading: GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse(c.htmlUrl),
+                          ), // Only avatar is clickable
+                          child: avatar,
+                        ),
+                        title: Text(c.login), // Contributor's login name.
+                        subtitle: Text(
+                          context.l10n.contributionCount(c.contributions),
+                        ), // Number of contributions.
+                        // Removed onTap from ListTile to prevent accidental clicks
+                      );
+                    },
+                  );
+                },
+              ),
       ),
     );
   }

@@ -1,0 +1,1408 @@
+{
+  "@@locale": "zh",
+  "aLongWhile": "好长一段时间",
+  "about": "关于",
+  "accentColor": "强调色",
+  "add": "添加",
+  "addBookmark": "添加书签",
+  "addNewGroup": "添加新组",
+  "addPiece": "添加曲目",
+  "addPracticeSession": "添加练习记录",
+  "addStage": "添加阶段",
+  "addTag": "添加标签",
+  "addTagGroup": "添加标签组",
+  "addToRepertoire": "添加到曲目库",
+  "adithyaJayan": "Adithya Jayan",
+  "adithyajayanInMyrepertoirapp": "adithyajayan.in/MyRepertoirApp/",
+  "advancedSettings": "高级设置",
+  "all": "全部",
+  "allPieces": "全部曲目",
+  "allowAddingNotesToSessions": "允许为练习记录添加备注",
+  "alphabetical": "按字母顺序",
+  "anyTime": "任何时间",
+  "apache20": "Apache 2.0",
+  "appDocuments": "应用文档",
+  "appInformation": "应用信息",
+  "appLanguage": "应用语言",
+  "languageName": "简体中文",
+  "appTheme": "应用主题",
+  "appTitle": "音乐曲目库",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "appearanceAnswer": "转至“设置”>“个性化”以切换主题、强调色和布局选项。",
+  "appearanceQuestion": "如何更改应用程序的外观？",
+  "apply": "应用",
+  "applyAndClose": "应用并关闭",
+  "applyFilters": "应用过滤器",
+  "areYouSureYouWantToDeleteTheDebugLogFile": "您确定要删除调试日志文件吗？",
+  "areYouSureYouWantToDeleteThisMusicPiece": "确定要删除这首曲目吗？",
+  "areYouSureYouWantToDeleteThisPracticeSessionThisAction": "您确定要删除本次练习吗？此操作无法撤消。",
+  "artistComposer": "艺术家 / 作曲家",
+  "associatedTags": "相关标签：",
+  "audio": "音频",
+  "audioFile": "音频文件",
+  "audioFileDoesNotExist": "音频文件不存在",
+  "audioMidi": "音频/MIDI",
+  "audioNotLoadedYetPleaseWait": "音频尚未加载。请稍等。",
+  "autoBackupCompletedSuccessfully": "自动备份成功完成！",
+  "autoBackupFailed": "自动备份失败：{error}",
+  "@autoBackupFailed": {
+    "description": "Localized message for autoBackupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "autoBackupFailedStoragePathNotConfigured": "自动备份失败：未配置存储路径。",
+  "autoBackupStartingInAFewSeconds": "几秒钟后开始自动备份...",
+  "autoScrollEnabled": "自动滚动启用",
+  "automaticBackupFoundMessage": "在所选存储文件夹中找到自动备份。您想恢复它吗？\n\n注意：这将替换安装期间创建的任何模板数据。",
+  "@automaticBackupFoundMessage": {
+    "description": "Explanation shown when an automatic backup is discovered during setup."
+  },
+  "automaticBackups": "自动备份",
+  "automaticallyCreateBackupsAtRegularIntervals": "定期自动创建备份",
+  "averageTime": "平均时间",
+  "back1sHoldForFrameSkip": "后退 1 秒（按住可跳帧）",
+  "back5s": "后退 5 秒",
+  "backingUpData": "正在备份数据...",
+  "backupAndRestore": "备份与恢复",
+  "backupAnswer": "可以。前往“设置”>“备份与恢复”执行手动或自动本地备份。",
+  "backupCancelled": "备份已取消。",
+  "backupFailed": "备份失败：{error}",
+  "@backupFailed": {
+    "description": "Localized message for backupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailedStoragePathNotConfigured": "备份失败：未配置存储路径。",
+  "backupFrequencyDays": "备份频率（天）",
+  "backupQuestion": "有办法备份我的数据吗？",
+  "backupRestoredSuccessfully": "备份恢复成功。",
+  "basicDetails": "基本信息",
+  "beenAWhile": "已经有一段时间了",
+  "beenTooLong": "已经太久了",
+  "blank": "空白",
+  "bookmarkDefaultName": "书签 {number}",
+  "@bookmarkDefaultName": {
+    "description": "Localized message for bookmarkDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "bookmarkDeleted": "{bookmarkName} 已删除",
+  "@bookmarkDeleted": {
+    "description": "Localized message for bookmarkDeleted.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarkDismissed": "已忽略 {bookmarkName}",
+  "@bookmarkDismissed": {
+    "description": "Localized message for bookmarkDismissed.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarks": "书签",
+  "browseAndManageInternalAppFiles": "浏览和管理内部应用程序文件",
+  "browserDownloads": "浏览器下载",
+  "bulkEditTagGroupsAndColors": "批量编辑标签组和颜色",
+  "cancel": "取消",
+  "captureTechnicalLogsForTroubleshooting": "捕获技术日志以进行故障排除",
+  "changeColor": "更改颜色",
+  "changeImage": "更改图像",
+  "changeStorageFolder": "更改存储文件夹",
+  "channelDefaultName": "通道 {number}",
+  "@channelDefaultName": {
+    "description": "Localized message for channelDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "checkForUpdatesNow": "立即检查更新",
+  "checkGithubForAppUpdates": "检查 GitHub 上的应用程序更新",
+  "chooseGroupColor": "选择组颜色",
+  "chooseYourAccentColor": "选择你的强调色：",
+  "classification": "分类",
+  "cleanup": "清理",
+  "cleanupPartialMessage": "已删除 {deletedCount, plural, other{{deletedCount} 个文件}}，但遇到 {errorCount, plural, other{{errorCount} 个错误}}。",
+  "@cleanupPartialMessage": {
+    "description": "Localized message for cleanupPartialMessage.",
+    "placeholders": {
+      "deletedCount": {
+        "type": "int"
+      },
+      "errorCount": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupSuccessMessage": "已成功删除 {count, plural, other{{count} 个未使用的文件}}（释放 {size}）。",
+  "@cleanupSuccessMessage": {
+    "description": "Localized message for cleanupSuccessMessage.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupSummary": "清理摘要",
+  "clearAll": "全部清除",
+  "clearFilter": "清除过滤器",
+  "close": "关闭",
+  "color": "颜色",
+  "columns": "列数",
+  "count": "计数",
+  "configureAutoScroll": "配置自动滚动",
+  "configureLearningProgress": "配置学习进度",
+  "configureMidiTracks": "配置 MIDI 轨道",
+  "configurePdfViewer": "配置 PDF 查看器",
+  "configureProgressBar": "配置进度条",
+  "confirmRestore": "确认恢复",
+  "confirmRestoreMessage": "您确定要从此备份恢复吗？这将替换您当前的所有数据。",
+  "@confirmRestoreMessage": {
+    "description": "Localized message for confirmRestoreMessage."
+  },
+  "contentAndDisplay": "内容与展示",
+  "contributionCount": "{count, plural, other{{count} 次贡献}}",
+  "@contributionCount": {
+    "description": "Localized message for contributionCount.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contributors": "贡献者",
+  "coral": "珊瑚色",
+  "couldNotOpenLogFile": "无法打开日志文件",
+  "countProgress": "数量：{current} / {max}",
+  "@countProgress": {
+    "description": "Localized message for countProgress.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "create": "创建",
+  "createABackupOfAllYourData": "创建所有数据的备份",
+  "createLocalBackup": "创建本地备份",
+  "createNewPiece": "新建曲目",
+  "createdAt": "创建时间：{date}",
+  "@createdAt": {
+    "description": "Localized message for createdAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creatingAutoBackup": "正在创建自动备份...",
+  "credits": "致谢",
+  "currentStage": "当前阶段：{stage}",
+  "@currentStage": {
+    "description": "Localized message for currentStage.",
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "customCategoriesAnswer": "可以。前往“设置”>“分组”为曲目创建和管理自定义分组。",
+  "customCategoriesQuestion": "我可以将我的音乐分为自定义类别吗？",
+  "customColor": "自定义颜色",
+  "dark": "深色",
+  "dataBackedUpSuccessfully": "数据备份成功！",
+  "dataManagement": "数据管理",
+  "dataRestoredSuccessfully": "数据恢复成功！",
+  "dateAndTime": "日期和时间",
+  "daysAgo": "{count, plural, other{{count} 天前}}",
+  "@daysAgo": {
+    "description": "Localized message for daysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultColor": "默认",
+  "delete": "删除",
+  "deleteBookmark": "删除书签",
+  "deleteConfirmation": "删除确认",
+  "deleteFileItemsConfirmation": "确定要删除 {count, plural, other{{count} 个项目}}吗？这可能会破坏乐谱条目中的链接。",
+  "@deleteFileItemsConfirmation": {
+    "description": "Localized message for deleteFileItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFiles": "删除文件",
+  "deleteGroup": "删除组",
+  "deleteGroupConfirmation": "确定要删除分组“{groupName}”吗？",
+  "@deleteGroupConfirmation": {
+    "description": "Localized message for deleteGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGroupWithItemsConfirmation": "确定要删除分组“{groupName}”吗？\n\n该分组包含 {count, plural, other{{count} 个项目}}。仅属于此分组的曲目将移至“未分组”。",
+  "@deleteGroupWithItemsConfirmation": {
+    "description": "Localized message for deleteGroupWithItemsConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteItem": "删除项目",
+  "deleteItems": "删除项目？",
+  "deleteLogFile": "删除日志文件？",
+  "deleteLogs": "删除日志",
+  "deleteLogs2": "删除日志？",
+  "deleteMediaItem": "删除媒体项目",
+  "deleteMusicPiece": "删除曲目",
+  "deleteNamedItem": "删除“{name}”",
+  "@deleteNamedItem": {
+    "description": "Localized message for deleteNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePracticeSession": "删除练习记录",
+  "deleteSelectedItemsConfirmation": "确定要删除选中的 {count, plural, other{{count} 个项目}}吗？",
+  "@deleteSelectedItemsConfirmation": {
+    "description": "Localized message for deleteSelectedItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTag": "删除标签",
+  "deleteTagGroup": "删除标签组",
+  "deleteTagGroup2": "删除标签组",
+  "deleteTagGroupConfirmation": "确定要删除标签组“{groupName}”并将其从所有曲目中移除吗？",
+  "@deleteTagGroupConfirmation": {
+    "description": "Localized message for deleteTagGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deny": "拒绝",
+  "details": "详情",
+  "developedBy": "开发者",
+  "developerTools": "开发者工具",
+  "discard": "丢弃",
+  "dismiss": "关闭",
+  "displayOptions": "显示选项",
+  "doNotShowGroupsWithNoMatchingPieces": "不显示没有匹配曲目的分组",
+  "documentsRepertoireApp": "文稿/RepertoireApp",
+  "doubleTapNameToEdit": "（双击名称即可编辑）",
+  "duplicate": "复制",
+  "durationHours": "{hours, plural, other{{hours} 小时}}",
+  "@durationHours": {
+    "description": "Localized message for durationHours.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours, plural, other{{hours} 小时}} {minutes, plural, other{{minutes} 分钟}}",
+  "@durationHoursMinutes": {
+    "description": "Localized message for durationHoursMinutes.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{minutes, plural, other{{minutes} 分钟}}",
+  "@durationMinutes": {
+    "description": "Localized message for durationMinutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutesLabel": "时长（分钟）",
+  "eG30": "例如，30",
+  "eGWorkedOnDynamicsFocusedOnDifficultPassages": "例如，致力于动态，专注于困难的段落",
+  "edit": "编辑",
+  "editGroupName": "编辑分组名称",
+  "editPiece": "编辑曲目",
+  "editPracticeSession": "编辑练习记录",
+  "empty": "空",
+  "enableAutomaticBackups": "启用自动备份",
+  "enableDebugLogs": "启用调试日志",
+  "enablePracticeTracking": "启用练习跟踪",
+  "enterFilterName": "输入过滤器名称",
+  "enterTitleForTheNewPiece": "输入新曲目的标题",
+  "errorAddingGroup": "添加组时出错：{error}",
+  "@errorAddingGroup": {
+    "description": "Localized message for errorAddingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAddingMedia": "添加媒体时出错：{error}",
+  "@errorAddingMedia": {
+    "description": "Shown when shared media cannot be added to a piece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaAddedToPiece": "媒体已添加到“{title}”",
+  "@mediaAddedToPiece": {
+    "description": "Shown after shared media is added to an existing piece.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "newPieceCreatedWithSharedMedia": "已通过共享媒体创建新曲目“{title}”",
+  "@newPieceCreatedWithSharedMedia": {
+    "description": "Shown after creating a piece from shared media.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "repertoireAppDebugLog": "Repertoire 应用调试日志",
+  "sharedMedia": "共享媒体",
+  "errorChangingStorageFolder": "更改存储文件夹时出错：{error}",
+  "@errorChangingStorageFolder": {
+    "description": "Localized message for errorChangingStorageFolder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingGroup": "删除组时出错：{error}",
+  "@errorDeletingGroup": {
+    "description": "Localized message for errorDeletingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogFile": "删除日志文件时出错：{error}",
+  "@errorDeletingLogFile": {
+    "description": "Localized message for errorDeletingLogFile.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogs": "删除日志时出错：{error}",
+  "@errorDeletingLogs": {
+    "description": "Localized message for errorDeletingLogs.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingMusicPieces": "删除曲目时出错：{error}",
+  "@errorDeletingMusicPieces": {
+    "description": "Localized message for errorDeletingMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingPracticeSession": "删除练习时出错：{error}",
+  "@errorDeletingPracticeSession": {
+    "description": "Localized message for errorDeletingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDuplicatingMusicPiece": "复制曲目时出错：{error}",
+  "@errorDuplicatingMusicPiece": {
+    "description": "Localized message for errorDuplicatingMusicPiece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorExportingBackup": "导出备份时出错：{error}",
+  "@errorExportingBackup": {
+    "description": "Localized message for errorExportingBackup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingThumbnail": "获取缩略图时出错：{error}",
+  "@errorFetchingThumbnail": {
+    "description": "Localized message for errorFetchingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratingThumbnail": "生成缩略图时出错：{error}",
+  "@errorGeneratingThumbnail": {
+    "description": "Localized message for errorGeneratingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingAudio": "初始化音频时出错：{error}",
+  "@errorInitializingAudio": {
+    "description": "Localized message for errorInitializingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingPlayer": "初始化播放器时出错：{error}",
+  "@errorInitializingPlayer": {
+    "description": "Localized message for errorInitializingPlayer.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoading": "加载错误",
+  "errorLoadingGroups": "加载组时出错：{error}",
+  "@errorLoadingGroups": {
+    "description": "Localized message for errorLoadingGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoggingPracticeSession": "记录练习时出错：{error}",
+  "@errorLoggingPracticeSession": {
+    "description": "Localized message for errorLoggingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPerformingCleanup": "执行清理时出错：{error}",
+  "@errorPerformingCleanup": {
+    "description": "Localized message for errorPerformingCleanup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlayingAudio": "播放音频时出错：{error}",
+  "@errorPlayingAudio": {
+    "description": "Localized message for errorPlayingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessingFile": "处理 {fileName} 时出错：{error}",
+  "@errorProcessingFile": {
+    "description": "Localized message for errorProcessingFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingGroupOrder": "保存组顺序时出错：{error}",
+  "@errorSavingGroupOrder": {
+    "description": "Localized message for errorSavingGroupOrder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingSettings": "保存设置时出错：{error}",
+  "@errorSavingSettings": {
+    "description": "Localized message for errorSavingSettings.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorScanningUnusedMedia": "扫描未使用的媒体时出错：{error}",
+  "@errorScanningUnusedMedia": {
+    "description": "Localized message for errorScanningUnusedMedia.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSharing": "分享时出错：{error}",
+  "@errorSharing": {
+    "description": "Localized message for errorSharing.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTogglingGroupVisibility": "切换组可见性时出错：{error}",
+  "@errorTogglingGroupVisibility": {
+    "description": "Localized message for errorTogglingGroupVisibility.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingGroup": "更新组时出错：{error}",
+  "@errorUpdatingGroup": {
+    "description": "Localized message for errorUpdatingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingPracticeSession": "更新练习时出错：{error}",
+  "@errorUpdatingPracticeSession": {
+    "description": "Localized message for errorUpdatingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithDetails": "错误：{error}",
+  "@errorWithDetails": {
+    "description": "Localized message for errorWithDetails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorsEncountered": "遇到的错误：",
+  "existingBackupFound": "找到现有备份",
+  "fDRoid": "F-Droid",
+  "fDroidOrgMyrepertoirapp": "f-droid.org/.../myrepertoirapp",
+  "failedToDeleteFile": "删除{fileName}失败：{error}",
+  "@failedToDeleteFile": {
+    "description": "Localized message for failedToDeleteFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToFetchThumbnail": "无法获取缩略图。",
+  "failedToGeneratePdfThumbnail": "生成 PDF 缩略图失败。",
+  "failedToGenerateVideoThumbnail": "生成视频缩略图失败。",
+  "failedToInitializeBackupSettings": "无法初始化备份设置",
+  "failedToLoadGroups": "无法加载组：{error}",
+  "@failedToLoadGroups": {
+    "description": "Localized message for failedToLoadGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadMusicPieces": "无法加载曲目：{error}",
+  "@failedToLoadMusicPieces": {
+    "description": "Localized message for failedToLoadMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateImage": "更新图片失败：{error}",
+  "@failedToUpdateImage": {
+    "description": "Localized message for failedToUpdateImage.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "fetching": "正在获取...",
+  "fileCategories": "文件类别",
+  "fileExplorer": "文件浏览器",
+  "fileMissing": "文件丢失",
+  "fileNotFoundToShare": "找不到要共享的文件。",
+  "fileTypeAndName": "{fileType} • {fileName}",
+  "@fileTypeAndName": {
+    "description": "Localized message for fileTypeAndName.",
+    "placeholders": {
+      "fileType": {
+        "type": "String"
+      },
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTypes": "文件类型",
+  "filesDeleted": "文件已删除",
+  "filesToDelete": "要删除的文件",
+  "filterByTags": "按标签过滤",
+  "filterOptions": "过滤器选项",
+  "filterSaved": "过滤器“{name}”已保存",
+  "@filterSaved": {
+    "description": "Localized message for filterSaved.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldAll": "全部折叠",
+  "folderSelectionCancelled": "文件夹选择已取消",
+  "folderSelectionCancelled2": "文件夹选择已取消。",
+  "forward1sHoldFor50msFineSkip": "前进 1 秒（按住 50 毫秒微调）",
+  "forward1sHoldForFrameSkip": "快进 1 秒（按住跳帧）",
+  "forward5s": "前进 5 秒",
+  "frequentlyAskedQuestions": "常见问题解答",
+  "functionality": "功能",
+  "galleryLayout": "图库布局",
+  "generalSettings": "常规设置",
+  "getPdfThumbnail": "获取 PDF 缩略图",
+  "getVideoThumbnail": "获取视频缩略图",
+  "github": "GitHub",
+  "githubComAdithyaJayanMyrepertoirapp": "github.com/Adithya-Jayan/MyRepertoirApp",
+  "githubComMyrepertoirapp": "github.com/.../MyRepertoirApp",
+  "go": "跳转",
+  "goToPage": "前往页面",
+  "gradient": "渐变",
+  "gradientOverlay": "渐变叠加",
+  "grant": "授予",
+  "groupByPiece": "按曲目分组",
+  "groupByType": "按类型分组",
+  "groupItemCount": "{groupName}（{count}）",
+  "@groupItemCount": {
+    "description": "Localized message for groupItemCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupName": "分组名称",
+  "groupPieceCount": "{groupName}（{count}）",
+  "@groupPieceCount": {
+    "description": "Localized message for groupPieceCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groups": "分组",
+  "guidesAndTroubleshooting": "指南和故障排除",
+  "help": "帮助",
+  "helpAndFaq": "帮助和常见问题解答",
+  "hideEmptyGroups": "隐藏空组",
+  "hold": "保持",
+  "homeRepertoireApp": "主目录/RepertoireApp",
+  "hoursAgo": "{count, plural, other{{count} 小时前}}",
+  "@hoursAgo": {
+    "description": "Localized message for hoursAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "howFindPieceAnswer": "使用主库屏幕顶部的搜索栏。您可以按标题、艺术家/作曲家或标签进行搜索。",
+  "howFindPieceQuestion": "如何快速找到某首曲目？",
+  "howOftenToCreateAutomaticBackups": "创建自动备份的频率",
+  "image": "图像",
+  "imageUpdatedSuccessfully": "图片更新成功",
+  "imageViewer": "图片浏览器",
+  "images": "图片",
+  "information": "信息",
+  "initializingBackupSettings": "正在初始化备份设置...",
+  "inspiredBy": "灵感来自",
+  "internalFileExplorer": "内部文件浏览器",
+  "internalStorageRepertoireApp": "内部存储/RepertoireApp",
+  "invalidAudioFileType": "音频文件类型无效。支持：{extensions}",
+  "@invalidAudioFileType": {
+    "description": "Localized message for invalidAudioFileType.",
+    "placeholders": {
+      "extensions": {
+        "type": "String"
+      }
+    }
+  },
+  "itemNameAlreadyExists": "具有该名称的项目已存在。",
+  "itemsSelected": "{count, plural, other{已选择 {count} 项}}",
+  "@itemsSelected": {
+    "description": "Localized message for itemsSelected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "刚刚",
+  "keepTrackOfSessionsAndStatus": "记录练习与状态",
+  "lastAutomaticBackup": "上次自动备份",
+  "lastPracticed": "上次练习",
+  "lastPracticedAt": "上次练习：{date}",
+  "@lastPracticedAt": {
+    "description": "Localized message for lastPracticedAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lastPracticedDaysAgo": "上次练习：{count, plural, other{{count} 天前}}",
+  "@lastPracticedDaysAgo": {
+    "description": "Localized message for lastPracticedDaysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPracticedToday": "上次练习：今天",
+  "lastPracticedYesterday": "上次练习：昨天",
+  "learningProgress": "学习进度",
+  "letSGetYourRepertoireSetUpYouCanAlwaysChangeThese": "让我们来设置您的曲目。您以后随时可以更改这些设置。",
+  "license": "许可证",
+  "light": "浅色",
+  "lightPink": "浅粉色",
+  "lightSalmon": "浅鲑红",
+  "link": "链接",
+  "links": "链接",
+  "loading": "加载中...",
+  "localVideo": "本地视频",
+  "logFileDeleted": "日志文件已删除。",
+  "logPractice": "记录练习",
+  "loggingAndDeveloperOptions": "日志记录和开发人员选项",
+  "logsDeleted": "日志已删除。",
+  "longOverdue": "很久未练习",
+  "manageAndReorderGroups": "管理和重新排序组",
+  "manageFilter": "管理过滤器：{name}",
+  "@manageFilter": {
+    "description": "Localized message for manageFilter.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageGroups": "管理分组",
+  "manageTags": "管理标签",
+  "manualBackupAndRestore": "手动备份和恢复",
+  "manuallyTriggerAnAutomaticBackup": "手动触发自动备份",
+  "markdownContent": "Markdown 内容",
+  "markdownText": "Markdown 文本",
+  "maxCount": "最大计数",
+  "maximumNumberOfAutomaticBackupsToRetain": "最多保留的自动备份数量",
+  "media": "媒体",
+  "mediaName": "媒体名称",
+  "midiChannelNames": "MIDI 通道名称",
+  "midiChannelNumber": "通道 {number}：",
+  "@midiChannelNumber": {
+    "description": "Localized message for midiChannelNumber.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "midiDesktopUnsupported": "目前桌面平台不支持 MIDI 播放。",
+  "midiFileNotFound": "在 {path} 处找不到 MIDI 文件",
+  "@midiFileNotFound": {
+    "description": "Localized message for midiFileNotFound.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "midi": "MIDI",
+  "midiPlaybackIsNotSupportedOnWeb": "Web 上不支持 MIDI 播放。",
+  "mihon": "Mihon",
+  "mintGreen": "薄荷绿",
+  "minutesAgo": "{count, plural, other{{count} 分钟前}}",
+  "@minutesAgo": {
+    "description": "Localized message for minutesAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "missingBackupWarning": "警告：上次备份文件丢失（预期日期：{date}）。正在创建新备份。",
+  "@missingBackupWarning": {
+    "description": "Localized message for missingBackupWarning.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "modifyGroup": "修改组",
+  "modifyGroups": "修改组",
+  "musicPieceUpdatedSuccessfully": "曲目更新成功。",
+  "musicPieces": "曲目",
+  "musicRepertoireApp": "音乐曲目库",
+  "needsAttention": "需要注意",
+  "never": "从不",
+  "neverPracticed": "从未练习",
+  "newName": "新名称",
+  "newPieceTitle": "新曲目标题",
+  "newStageName": "新阶段名称",
+  "newTagName": "新标签名称",
+  "newUpdateAvailable": "新更新可用！",
+  "next": "下一个",
+  "no": "否",
+  "noAppWasFoundToOpenTheLogFileWouldYouLike": "没有可打开日志文件的应用。是否改为分享该文件？",
+  "noAutomaticBackupsFound": "未找到自动备份。",
+  "noBookmarksAddedYet": "尚未添加书签",
+  "noContributorsFound": "未找到贡献者。",
+  "noDurationRecorded": "未记录时长",
+  "noLogFileFound": "未找到日志文件。",
+  "noPiecesFound": "未找到曲目。",
+  "noPracticeSessionsRecordedYetTapThePlusButtonToAddYour": "还没有练习记录。\n点击 + 按钮添加第一条练习记录。",
+  "noShareableFilesSelected": "未选择可共享文件。",
+  "noStagesDefined": "未定义阶段",
+  "noStorageLocationSet": "未设置存储位置",
+  "noTagFiltersActive": "没有激活的标签过滤器",
+  "noTagGroupsFoundInYourLibrary": "在您的库中找不到标签组。",
+  "noTagsInThisGroup": "该组中没有标签。",
+  "noUnusedFilesFoundToCleanUp": "没有发现未使用的文件需要清理。",
+  "noVisibleGroups": "没有可见的组。",
+  "normal": "普通",
+  "notInLast30Days": "过去 30 天内没有",
+  "notSet": "未设置",
+  "noteFDRoidMayTakeAFewDaysToReflectThe": "注意：F-Droid 可能需要几天时间才能反映新版本。",
+  "notesOptional": "备注（可选）",
+  "notifyNewReleases": "通知新版本",
+  "numberOfBackupsToKeep": "要保留的备份数量",
+  "numberedStage": "{number}. {stage}",
+  "@numberedStage": {
+    "description": "Localized message for numberedStage.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "openLink": "打开链接",
+  "openLogs": "打开日志",
+  "openingFolderSelector": "正在打开文件夹选择器...",
+  "organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney": "整理曲目、添加相关媒体并记录练习历程。",
+  "other": "其他",
+  "outline": "大纲",
+  "outlineText": "大纲文本",
+  "pageIndicator": "{currentPage} / {totalPages}",
+  "@pageIndicator": {
+    "description": "Localized message for pageIndicator.",
+    "placeholders": {
+      "currentPage": {
+        "type": "int"
+      },
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "pageNumberHint": "输入页码 (1-{totalPages})",
+  "@pageNumberHint": {
+    "description": "Localized message for pageNumberHint.",
+    "placeholders": {
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "partialSuccess": "部分成功",
+  "pathOrUrl": "路径或 URL",
+  "pathValue": "路径：{path}",
+  "@pathValue": {
+    "description": "Localized message for pathValue.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "pause": "暂停",
+  "pdf": "PDF",
+  "pdfFilePathIsEmpty": "PDF 文件路径为空",
+  "pdfThumbnailGeneratedSuccessfully": "PDF缩略图生成成功！",
+  "pdfViewer": "PDF 查看器",
+  "pdfs": "PDF 文件",
+  "personalization": "个性化",
+  "percentage": "百分比",
+  "physicalView": "文件目录",
+  "pieceDuplicatedSuccessfully": "曲目复制成功",
+  "pitch": "音高：",
+  "play": "播放",
+  "playbackSpeed": "播放速度",
+  "pleaseEnterATitle": "请输入标题",
+  "pleaseGenerateAThumbnailFirst": "请先生成缩略图。",
+  "pleaseUseTheAndroidWindowsOrLinuxVersionForMidiSupport": "请使用 Android、Windows 或 Linux 版本来支持 MIDI。",
+  "practiceCountLabel": "练习次数：{count}",
+  "@practiceCountLabel": {
+    "description": "Localized message for practiceCountLabel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceLogsForPiece": "练习日志 - {pieceTitle}",
+  "@practiceLogsForPiece": {
+    "description": "Localized message for practiceLogsForPiece.",
+    "placeholders": {
+      "pieceTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "practiceNotes": "练习笔记",
+  "practiceOptions": "练习选项",
+  "practiceSessionDeletedSuccessfully": "练习记录已删除",
+  "practiceSessionLoggedSuccessfully": "练习记录已保存",
+  "practiceSessionUpdatedSuccessfully": "练习记录已更新",
+  "practiceStagesAndStatistics": "练习阶段和统计",
+  "practiceStatus": "练习状态",
+  "practiceSummary": "练习摘要",
+  "practiceTimeStats": "练习时间统计",
+  "practiceTracking": "练习跟踪",
+  "practicedRecently": "最近练习过",
+  "progress": "进度",
+  "progressPercent": "{value}%",
+  "@progressPercent": {
+    "description": "Localized message for progressPercent.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "protectAndSyncYourData": "保护和同步您的数据",
+  "purgeUnusedMedia": "清理未使用的媒体",
+  "purging": "正在清理...",
+  "quickFilters": "快速过滤器",
+  "recentlyPracticed": "最近练习过",
+  "refresh": "刷新",
+  "releaseNotes": "更新说明",
+  "removeMediaFilesNoLongerReferenced": "删除不再引用的媒体文件",
+  "removeTagFromGroupConfirmation": "确定要从所有曲目的标签组“{groupName}”中移除标签“{tagName}”吗？",
+  "@removeTagFromGroupConfirmation": {
+    "description": "Localized message for removeTagFromGroupConfirmation.",
+    "placeholders": {
+      "tagName": {
+        "type": "String"
+      },
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "重命名",
+  "renameBookmark": "重命名书签",
+  "renameFile": "重命名文件",
+  "renameFileWarning": "警告：重命名文件可能导致链接失效。应用会尝试自动更新所有曲目中的文件引用。",
+  "@renameFileWarning": {
+    "description": "Localized message for renameFileWarning."
+  },
+  "renameGroup": "重命名组",
+  "renameMedia": "重命名：{name}",
+  "@renameMedia": {
+    "description": "Localized message for renameMedia.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameNamedItem": "重命名“{name}”",
+  "@renameNamedItem": {
+    "description": "Localized message for renameNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameQuickFilter": "重命名快速过滤器",
+  "renameStage": "重命名阶段",
+  "renameTagGroup": "重命名标签组",
+  "renameTagInGroup": "重命名“{groupName}”中的标签",
+  "@renameTagInGroup": {
+    "description": "Localized message for renameTagInGroup.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "renamedSuccessfully": "重命名成功。",
+  "reorderMediaAnswer": "在“编辑曲目”页面中，使用媒体项目左侧的拖动手柄调整顺序。",
+  "reorderMediaQuestion": "如何重新排序媒体或标签？",
+  "reset": "重置",
+  "resetControls": "重置控制",
+  "resetZoom": "重置缩放",
+  "restore": "恢复",
+  "restoreCancelled": "恢复已取消。",
+  "restoreDataFromAPreviousBackup": "从以前的备份恢复数据",
+  "restoreFailed": "恢复失败：{error}",
+  "@restoreFailed": {
+    "description": "Localized message for restoreFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreFailedStoragePathNotConfigured": "恢复失败：未配置存储路径。",
+  "restoreFromLocalBackup": "从本地备份恢复",
+  "restoreInProgress": "恢复正在进行中...",
+  "restoreLatest": "恢复最新",
+  "restoreThisBackup": "恢复此备份",
+  "restoringBackup": "正在恢复备份...",
+  "restoringData": "正在恢复数据...",
+  "retry": "重试",
+  "revertedToDefaultStoragePath": "恢复为默认应用程序存储路径：{path}",
+  "@revertedToDefaultStoragePath": {
+    "description": "Localized message for revertedToDefaultStoragePath.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "rewind1sHoldFor50msFineSkip": "快退 1 秒（按住 50 毫秒微调）",
+  "rewind5s": "快退 5 秒",
+  "root": "根目录",
+  "runAutoBackupNow": "立即运行自动备份",
+  "save": "保存",
+  "saveAll": "全部保存",
+  "saveAsQuickFilter": "另存为快速过滤器",
+  "saveQuickFilter": "保存快速过滤器",
+  "scanResults": "扫描结果",
+  "searchExistingPiece": "搜索已有曲目",
+  "searchItems": "搜索项目...",
+  "searchTags": "搜索标签...",
+  "selectAFolder": "选择一个文件夹",
+  "selectAFolderWhereTheAppWillStoreItsFiles": "选择应用程序将存储其文件的文件夹：",
+  "selectColor": "选择颜色",
+  "selectManually": "手动选择",
+  "selectOrderedTags": "选择有序标签",
+  "selectedPathNotWritable": "所选路径不可写：{error}。请选择不同的位置。",
+  "@selectedPathNotWritable": {
+    "description": "Localized message for selectedPathNotWritable.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedPieceNoLongerExists": "所选曲目已不存在。",
+  "semitonesValue": "{value} 个半音",
+  "@semitonesValue": {
+    "description": "Localized message for semitonesValue.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settings": "设置",
+  "share": "分享",
+  "shareExportBackup": "分享/导出备份",
+  "shareLogFile": "共享日志文件",
+  "showAll": "显示全部",
+  "showDotPattern": "显示点阵图案",
+  "showDurationAndStatsInLogs": "在日志中显示持续时间和统计信息",
+  "showGradientBackground": "显示渐变背景",
+  "showLastPracticed": "显示上次练习时间",
+  "showPracticeCount": "显示练习次数",
+  "showScrollControlsInTheViewer": "在查看器中显示滚动控件",
+  "silver": "银",
+  "skip": "跳过",
+  "skyBlue": "天蓝色",
+  "someThemeChangesMayRequireAnAppRestartToTakeFullEffect": "某些主题更改可能需要重新启动应用程序才能完全生效。",
+  "sortOptions": "排序选项",
+  "sourceCodeOnGithub": "GitHub 上的源代码",
+  "spaceFreed": "已释放空间",
+  "spaceToFree": "将释放空间",
+  "speed": "速度：",
+  "speedMultiplier": "{speed} 倍",
+  "@speedMultiplier": {
+    "description": "Localized message for speedMultiplier.",
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "stageAlreadyExists": "阶段已存在",
+  "stageDefaultName": "阶段 {number}",
+  "@stageDefaultName": {
+    "description": "Localized message for stageDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "stageNameExists": "阶段名称已存在",
+  "stages": "阶段：",
+  "stagesLabel": "阶段",
+  "stagesForPracticeIndicatorsDragToReorderDoubleTapNameToEdit": "练习状态指示器使用的阶段。拖动可重新排序，双击名称可编辑。",
+  "startApp": "启动应用程序",
+  "status": "状态",
+  "stay": "继续编辑",
+  "storageFolder": "存储文件夹",
+  "storageFolderSelectionNotAvailableOnThisPlatform": "存储文件夹选择在此平台上不可用",
+  "storageFolderUpdatedSuccessfully": "存储文件夹更新成功",
+  "storageLocation": "存储位置",
+  "storagePathUpdated": "存储路径已更新。",
+  "storagePermissionExplanation": "此应用程序需要“所有文件访问”（管理外部存储）来管理您选择的外部存储文件夹中的备份，并访问您从任意位置链接的媒体文件。如果没有这个，备份/恢复和链接外部媒体可能无法正常工作。",
+  "@storagePermissionExplanation": {
+    "description": "Localized message for storagePermissionExplanation."
+  },
+  "storagePermissionNeeded": "需要存储权限",
+  "success": "成功",
+  "supportAndResources": "支持与资源",
+  "system": "系统",
+  "systemAndMaintenance": "系统与维护",
+  "systemDefault": "跟随系统",
+  "tagGroups": "标签组",
+  "tagName": "标签名称",
+  "tagNameOrCommaSeparatedList": "标签名称（或逗号分隔列表）",
+  "tagSetsActive": "{count, plural, other{已启用 {count} 个标签组}}",
+  "@tagSetsActive": {
+    "description": "Localized message for tagSetsActive.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagging": "标签",
+  "taggingManagement": "标签管理",
+  "tags": "标签",
+  "tagsAndCategories": "标签和类别",
+  "tan": "棕褐色",
+  "tapToEdit": "（点击即可编辑）",
+  "teal": "青色",
+  "textSearch": "文本搜索",
+  "theAppHasBeenUpdatedCheckTheReleaseNotesOnGithubFor": "该应用程序已更新！有关详细信息，请查看 GitHub 上的发行说明。",
+  "theFollowingFilesAreNotReferencedByAnyPiecesAndCanBe": "以下文件未被任何曲目引用，可以安全清理。",
+  "themeColorsAndLayout": "主题、颜色和布局",
+  "themeMode": "主题模式",
+  "thisActionCannotBeUndoneMakeSureYouHaveABackupBefore": "此操作无法撤消。在继续之前请确保您有备份。",
+  "thisGroupIsEmpty": "该分组为空。",
+  "thisWillPermanentlyDeleteUnusedMediaFilesThatAreNoLongerReferenced": "这将永久删除所有不再被曲目引用的媒体文件。",
+  "thumbnail": "缩略图",
+  "thumbnailFetchedSuccessfully": "缩略图获取成功！",
+  "thumbnailStyle": "缩略图样式",
+  "thumbnailWidgetVisibleInEditModeOnly": "缩略图组件（仅在编辑模式下显示）",
+  "title": "标题",
+  "titleContains": "标题包含...",
+  "todayAt": "今天 {time}",
+  "@todayAt": {
+    "description": "Localized message for todayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "toggleControls": "显示/隐藏控制栏",
+  "totalFiles": "文件总数",
+  "totalSessions": "练习总次数",
+  "totalSize": "总大小",
+  "totalTime": "总时间",
+  "trackControls": "轨道控制",
+  "tracking": "追踪",
+  "trackingDisabled": "跟踪已禁用",
+  "trackingEnabled": "启用跟踪",
+  "trackingStages": "练习状态阶段",
+  "trans": "过渡",
+  "trueBlackBackgroundInDarkMode": "深色模式下的纯黑色背景",
+  "type": "类型",
+  "ungrouped": "未分组",
+  "unknown": "未知",
+  "@unknown": {
+    "description": "Localized message for unknown."
+  },
+  "unknownArtist": "未知艺术家",
+  "unknownPiece": "未知曲目（{pieceId}）",
+  "@unknownPiece": {
+    "description": "Localized message for unknownPiece.",
+    "placeholders": {
+      "pieceId": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChanges": "未保存的更改",
+  "unusedFiles": "未使用的文件",
+  "unusedMediaDetails": "未使用媒体详情",
+  "unusedSize": "未使用空间",
+  "update": "更新",
+  "updateAll": "全部更新？",
+  "updateTagGroupColorQuestion": "是否更新所有曲目中标签组“{groupName}”的颜色？",
+  "@updateTagGroupColorQuestion": {
+    "description": "Localized message for updateTagGroupColorQuestion.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedToVersion": "更新为 v{version}",
+  "@updatedToVersion": {
+    "description": "Localized message for updatedToVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updates": "更新",
+  "updatesAreManagedByTheGooglePlayStore": "更新由 Google Play 商店管理。",
+  "urlIsEmpty": "网址为空",
+  "useOledBlack": "使用 OLED 纯黑",
+  "useThePlusSignToAddMedia": "使用“+”号添加媒体",
+  "usedInPieces": "用于 {count, plural, other{{count} 首曲目}}",
+  "@usedInPieces": {
+    "description": "Localized message for usedInPieces.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "version": "版本",
+  "versionAndContributorInfo": "版本和贡献者信息",
+  "versionAvailable": "版本 {version} 可用。",
+  "@versionAvailable": {
+    "description": "Localized message for versionAvailable.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "video": "视频",
+  "videoControls": "视频控制",
+  "videoFilePathIsEmpty": "视频文件路径为空",
+  "videoThumbnailGeneratedSuccessfully": "视频缩略图生成成功！",
+  "viewAllContributors": "查看所有贡献者",
+  "viewPdf": "查看 PDF",
+  "viewUnusedFiles": "查看未使用的文件",
+  "website": "网站",
+  "websiteAndDocumentation": "网站和文档",
+  "welcome": "欢迎！",
+  "whatsNewInVersion": "v{version} 的新增功能",
+  "@whatsNewInVersion": {
+    "description": "Localized message for whatsNewInVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "withinLast7Days": "过去 7 天内",
+  "wouldYouLikeToDeleteTheExistingDebugLogs": "您想删除现有的调试日志吗？",
+  "yellow": "黄色",
+  "yes": "是",
+  "yesDelete": "是，删除",
+  "yesterdayAt": "昨天 {time}",
+  "@yesterdayAt": {
+    "description": "Localized message for yesterdayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "youAreOnTheLatestVersion": "您使用的是最新版本。",
+  "youHaveUnsavedChangesAreYouSureYouWantToDiscardThem": "您有未保存的更改。您确定要丢弃它们吗？",
+  "yourMediaLibraryIsClean": "媒体库无需清理！",
+  "zoomIn": "放大",
+  "zoomOut": "缩小"
+}

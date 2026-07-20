@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/group.dart';
 import '../../utils/app_logger.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class GroupDialogManager {
   /// Prompts the user to add a new group.
   ///
@@ -12,18 +14,18 @@ class GroupDialogManager {
     final bool? groupAdded = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add New Group'),
+        title: Text(context.l10n.addNewGroup),
         content: TextField(
           onChanged: (value) {
             newGroupName = value;
           },
-          decoration: const InputDecoration(hintText: 'Group Name'),
+          decoration: InputDecoration(hintText: context.l10n.groupName),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -31,7 +33,7 @@ class GroupDialogManager {
                 Navigator.pop(context, true);
               }
             },
-            child: const Text('Add'),
+            child: Text(context.l10n.add),
           ),
         ],
       ),
@@ -48,24 +50,27 @@ class GroupDialogManager {
   ///
   /// Opens an AlertDialog with the current group name for editing.
   /// Returns the edited group name if provided, null otherwise.
-  static Future<String?> showEditGroupDialog(BuildContext context, Group group) async {
+  static Future<String?> showEditGroupDialog(
+    BuildContext context,
+    Group group,
+  ) async {
     String editedGroupName = group.name;
     final bool? groupEdited = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Group Name'),
+        title: Text(context.l10n.editGroupName),
         content: TextField(
           controller: TextEditingController(text: group.name),
           onChanged: (value) {
             editedGroupName = value;
           },
-          decoration: const InputDecoration(hintText: 'Group Name'),
+          decoration: InputDecoration(hintText: context.l10n.groupName),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -73,7 +78,7 @@ class GroupDialogManager {
                 Navigator.pop(context, true);
               }
             },
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -89,32 +94,44 @@ class GroupDialogManager {
   /// Prompts the user to confirm deletion of a group.
   ///
   /// Returns true if the user confirms deletion, false otherwise.
-  static Future<bool> showDeleteGroupDialog(BuildContext context, Group group) async {
+  static Future<bool> showDeleteGroupDialog(
+    BuildContext context,
+    Group group,
+  ) async {
     final bool hasItems = group.itemCount > 0;
-    
+
     final confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Group'),
+        title: Text(context.l10n.deleteGroup),
         content: Text(
-          'Are you sure you want to delete the group "${group.name}"?${hasItems ? '\n\nThis group contains ${group.itemCount} items. Music pieces associated ONLY with this group will be moved to the "Ungrouped" group.' : ''}'
+          hasItems
+              ? context.l10n.deleteGroupWithItemsConfirmation(
+                  group.localizedName(context.l10n),
+                  group.itemCount,
+                )
+              : context.l10n.deleteGroupConfirmation(
+                  group.localizedName(context.l10n),
+                ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
     );
 
     if (confirmDelete == true) {
-      AppLogger.log('GroupDialogManager: User confirmed deletion of group: ${group.name}');
+      AppLogger.log(
+        'GroupDialogManager: User confirmed deletion of group: ${group.name}',
+      );
     }
     return confirmDelete ?? false;
   }
-} 
+}

@@ -11,6 +11,7 @@ import '../../services/migration_service.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/permissions_utils.dart';
 import 'package:provider/provider.dart';
+import '../../utils/locale_notifier.dart';
 import '../../utils/theme_notifier.dart';
 import '../../services/practice_config_service.dart';
 
@@ -21,6 +22,7 @@ import '../../models/group.dart';
 import '../../models/practice_log.dart';
 import '../../models/media_item.dart';
 import '../../models/media_type.dart';
+import 'package:repertoire/l10n/l10n.dart';
 
 class RestoreManager {
   final MusicPieceRepository _repository;
@@ -29,35 +31,51 @@ class RestoreManager {
   RestoreManager(this._repository, this.prefs);
 
   /// Shows restore messages to the user
-  void _showRestoreMessage(ScaffoldMessengerState? messenger, bool success, String message) {
+  void _showRestoreMessage(
+    ScaffoldMessengerState? messenger,
+    bool success,
+    String Function(AppLocalizations l10n) messageBuilder,
+  ) {
     if (messenger != null) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(messageBuilder(messenger.context.l10n)),
           backgroundColor: success ? Colors.green : Colors.red,
-        )
+        ),
       );
     }
   }
 
   /// Extracts data from backup file
-  Future<Map<String, dynamic>?> _extractBackupData(String backupFilePath) async {
+  Future<Map<String, dynamic>?> _extractBackupData(
+    String backupFilePath,
+  ) async {
     try {
-      AppLogger.log('RestoreManager: Starting backup data extraction from: $backupFilePath');
+      AppLogger.log(
+        'RestoreManager: Starting backup data extraction from: $backupFilePath',
+      );
       final inputStream = InputFileStream(backupFilePath);
       final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
-      AppLogger.log('RestoreManager: Backup file decoded successfully. Archive contains ${archive.files.length} files');
+      AppLogger.log(
+        'RestoreManager: Backup file decoded successfully. Archive contains ${archive.files.length} files',
+      );
 
       final jsonFile = archive.findFile('music_repertoire.json');
       if (jsonFile == null) {
-        AppLogger.log('RestoreManager: ERROR - music_repertoire.json not found in backup');
-        throw Exception('Invalid backup file: music_repertoire.json not found.');
+        AppLogger.log(
+          'RestoreManager: ERROR - music_repertoire.json not found in backup',
+        );
+        throw Exception(
+          'Invalid backup file: music_repertoire.json not found.',
+        );
       }
 
       final jsonString = utf8.decode(jsonFile.content);
       final Map<String, dynamic> data = jsonDecode(jsonString);
-      AppLogger.log('RestoreManager: JSON data extracted successfully. Keys: ${data.keys.join(', ')}');
-      
+      AppLogger.log(
+        'RestoreManager: JSON data extracted successfully. Keys: ${data.keys.join(', ')}',
+      );
+
       return data;
     } catch (e) {
       AppLogger.log('RestoreManager: Error extracting backup data: $e');
@@ -66,20 +84,28 @@ class RestoreManager {
   }
 
   /// Restores music pieces from backup data with merge logic
-  Future<void> _restoreMusicPieces(List<dynamic> musicPiecesJson, String storagePath, int? backupVersion) async {
-    AppLogger.log('RestoreManager: Starting music pieces restore with merge logic. Count: ${musicPiecesJson.length}');
-    
+  Future<void> _restoreMusicPieces(
+    List<dynamic> musicPiecesJson,
+    String storagePath,
+    int? backupVersion,
+  ) async {
+    AppLogger.log(
+      'RestoreManager: Starting music pieces restore with merge logic. Count: ${musicPiecesJson.length}',
+    );
+
     // Get existing pieces for comparison
     final existingPieces = await _repository.getMusicPieces();
     final existingPieceIds = existingPieces.map((p) => p.id).toSet();
-    AppLogger.log('RestoreManager: Found ${existingPieces.length} existing pieces');
-    
+    AppLogger.log(
+      'RestoreManager: Found ${existingPieces.length} existing pieces',
+    );
+
     int insertedCount = 0;
     int updatedCount = 0;
-    
+
     final appDir = await getApplicationDocumentsDirectory();
     final internalStoragePath = appDir.path;
-    
+
     for (int i = 0; i < musicPiecesJson.length; i++) {
       final pieceJson = musicPiecesJson[i];
       try {
@@ -87,11 +113,15 @@ class RestoreManager {
             ? MusicPiece.fromJsonForBackup(pieceJson, internalStoragePath)
             : MusicPiece.fromJson(pieceJson);
 
-        AppLogger.log('RestoreManager: Processing piece ${i + 1}/${musicPiecesJson.length}: ${piece.title} (ID: ${piece.id})');
-        
+        AppLogger.log(
+          'RestoreManager: Processing piece ${i + 1}/${musicPiecesJson.length}: ${piece.title} (ID: ${piece.id})',
+        );
+
         if (existingPieceIds.contains(piece.id)) {
           // Piece exists - update it
-          AppLogger.log('RestoreManager: Updating existing piece: ${piece.title}');
+          AppLogger.log(
+            'RestoreManager: Updating existing piece: ${piece.title}',
+          );
           await _repository.updateMusicPiece(piece);
           updatedCount++;
         } else {
@@ -105,61 +135,79 @@ class RestoreManager {
         rethrow;
       }
     }
-    
-    AppLogger.log('RestoreManager: Music pieces restore completed. Inserted: $insertedCount, Updated: $updatedCount');
-  }
 
-  
+    AppLogger.log(
+      'RestoreManager: Music pieces restore completed. Inserted: $insertedCount, Updated: $updatedCount',
+    );
+  }
 
   /// Restores tags from backup data
   Future<void> _restoreTags(List<dynamic> tagsJson) async {
-    AppLogger.log('RestoreManager: Starting tags restore. Count: ${tagsJson.length}');
-    
+    AppLogger.log(
+      'RestoreManager: Starting tags restore. Count: ${tagsJson.length}',
+    );
+
     await _repository.deleteAllTags();
     AppLogger.log('RestoreManager: Deleted all existing tags');
-    
+
     for (int i = 0; i < tagsJson.length; i++) {
       final tagJson = tagsJson[i];
       try {
         final tag = Tag.fromJson(tagJson);
-        AppLogger.log('RestoreManager: Restoring tag ${i + 1}/${tagsJson.length}: ${tag.name} (ID: ${tag.id})');
+        AppLogger.log(
+          'RestoreManager: Restoring tag ${i + 1}/${tagsJson.length}: ${tag.name} (ID: ${tag.id})',
+        );
         await _repository.insertTag(tag);
       } catch (e) {
         AppLogger.log('RestoreManager: Error restoring tag ${i + 1}: $e');
         rethrow;
       }
     }
-    AppLogger.log('RestoreManager: Successfully restored ${tagsJson.length} tags');
+    AppLogger.log(
+      'RestoreManager: Successfully restored ${tagsJson.length} tags',
+    );
   }
 
   /// Restores groups from backup data
   Future<void> _restoreGroups(List<dynamic> groupsJson) async {
-    AppLogger.log('RestoreManager: Starting groups restore. Count: ${groupsJson.length}');
-    
+    AppLogger.log(
+      'RestoreManager: Starting groups restore. Count: ${groupsJson.length}',
+    );
+
     final List<Group> oldGroupsBeforeRestore = await _repository.getGroups();
-    AppLogger.log('RestoreManager: Found ${oldGroupsBeforeRestore.length} existing groups before restore');
+    AppLogger.log(
+      'RestoreManager: Found ${oldGroupsBeforeRestore.length} existing groups before restore',
+    );
 
     await _repository.deleteAllGroups();
     AppLogger.log('RestoreManager: Deleted all existing groups');
-    
+
     // Restore groups from backup
     for (int i = 0; i < groupsJson.length; i++) {
       final groupJson = groupsJson[i];
       try {
         final group = Group.fromJson(groupJson);
-        AppLogger.log('RestoreManager: Restoring group ${i + 1}/${groupsJson.length}: ${group.name} (ID: ${group.id})');
+        AppLogger.log(
+          'RestoreManager: Restoring group ${i + 1}/${groupsJson.length}: ${group.name} (ID: ${group.id})',
+        );
         await _repository.createGroup(group);
       } catch (e) {
         AppLogger.log('RestoreManager: Error restoring group ${i + 1}: $e');
         rethrow;
       }
     }
-    AppLogger.log('RestoreManager: Successfully restored ${groupsJson.length} groups from backup');
+    AppLogger.log(
+      'RestoreManager: Successfully restored ${groupsJson.length} groups from backup',
+    );
 
     // Get current groups after restore
     final List<Group> currentGroupsAfterRestore = await _repository.getGroups();
-    final Set<String> currentGroupIds = currentGroupsAfterRestore.map((g) => g.id).toSet();
-    AppLogger.log('RestoreManager: Current groups after restore: ${currentGroupsAfterRestore.length}');
+    final Set<String> currentGroupIds = currentGroupsAfterRestore
+        .map((g) => g.id)
+        .toSet();
+    AppLogger.log(
+      'RestoreManager: Current groups after restore: ${currentGroupsAfterRestore.length}',
+    );
 
     // Re-add old groups that weren't in the backup
     int nextOrder = currentGroupsAfterRestore.length;
@@ -171,21 +219,28 @@ class RestoreManager {
         final groupToReAdd = oldGroup.copyWith(order: newOrder);
         try {
           await _repository.createGroup(groupToReAdd);
-          AppLogger.log('RestoreManager: Re-added old group: ${groupToReAdd.name} (ID: ${groupToReAdd.id}, new order: $newOrder)');
+          AppLogger.log(
+            'RestoreManager: Re-added old group: ${groupToReAdd.name} (ID: ${groupToReAdd.id}, new order: $newOrder)',
+          );
           reAddedCount++;
         } catch (e) {
-          AppLogger.log('RestoreManager: Error re-adding old group ${oldGroup.name}: $e');
+          AppLogger.log(
+            'RestoreManager: Error re-adding old group ${oldGroup.name}: $e',
+          );
         }
       }
     }
-    AppLogger.log('RestoreManager: Finished re-adding old groups. Re-added: $reAddedCount');
+    AppLogger.log(
+      'RestoreManager: Finished re-adding old groups. Re-added: $reAddedCount',
+    );
   }
 
   /// Updates media file paths in music pieces to reflect the new storage location.
   /// This function is backwards-compatible and handles older backup versions.
   Future<void> _updateMediaFilePaths(String storagePath) async {
     AppLogger.log(
-        'RestoreManager: Starting media file path updates for storage path: $storagePath');
+      'RestoreManager: Starting media file path updates for storage path: $storagePath',
+    );
 
     final appDir = await getApplicationDocumentsDirectory();
     final allPieces = await _repository.getMusicPieces();
@@ -208,7 +263,8 @@ class RestoreManager {
 
           if (oldPath != newPath) {
             AppLogger.log(
-                'RestoreManager: Updating media path for piece [33m${piece.title} [0m:');
+              'RestoreManager: Updating media path for piece [33m${piece.title} [0m:',
+            );
             AppLogger.log('  Old path: $oldPath');
             AppLogger.log('  New path: $newPath');
 
@@ -224,7 +280,8 @@ class RestoreManager {
 
           if (oldThumbPath != newThumbPath) {
             AppLogger.log(
-                'RestoreManager: Updating media thumbnail path for piece [33m${piece.title} [0m:');
+              'RestoreManager: Updating media thumbnail path for piece [33m${piece.title} [0m:',
+            );
             AppLogger.log('  Old thumbnail path: $oldThumbPath');
             AppLogger.log('  New thumbnail path: $newThumbPath');
             updatedItem = updatedItem.copyWith(thumbnailPath: newThumbPath);
@@ -239,12 +296,15 @@ class RestoreManager {
       String? updatedPieceThumb = piece.thumbnailPath;
       if (piece.thumbnailPath != null && piece.thumbnailPath!.isNotEmpty) {
         final oldPieceThumbPath = piece.thumbnailPath!;
-        final newPieceThumbPath =
-            _getCorrectedPath(oldPieceThumbPath, appDir.path);
+        final newPieceThumbPath = _getCorrectedPath(
+          oldPieceThumbPath,
+          appDir.path,
+        );
 
         if (oldPieceThumbPath != newPieceThumbPath) {
           AppLogger.log(
-              'RestoreManager: Updating piece thumbnail path for piece [33m${piece.title} [0m:');
+            'RestoreManager: Updating piece thumbnail path for piece [33m${piece.title} [0m:',
+          );
           AppLogger.log('  Old piece thumbnail path: $oldPieceThumbPath');
           AppLogger.log('  New piece thumbnail path: $newPieceThumbPath');
           updatedPieceThumb = newPieceThumbPath;
@@ -253,16 +313,20 @@ class RestoreManager {
       }
       if (pieceUpdated) {
         final updatedPiece = piece.copyWith(
-            mediaItems: updatedMediaItems, thumbnailPath: updatedPieceThumb);
+          mediaItems: updatedMediaItems,
+          thumbnailPath: updatedPieceThumb,
+        );
         await _repository.updateMusicPiece(updatedPiece);
         updatedPieces++;
         AppLogger.log(
-            'RestoreManager: Updated media and thumbnail paths for piece: ${piece.title}');
+          'RestoreManager: Updated media and thumbnail paths for piece: ${piece.title}',
+        );
       }
     }
 
     AppLogger.log(
-        'RestoreManager: Media file path updates completed. Updated pieces: $updatedPieces');
+      'RestoreManager: Media file path updates completed. Updated pieces: $updatedPieces',
+    );
   }
 
   String _getCorrectedPath(String oldPath, String appDirPath) {
@@ -283,47 +347,65 @@ class RestoreManager {
       // with the new path. This is a fallback.
       final fileName = p.basename(normalizedOldPath);
       AppLogger.log(
-          'RestoreManager: "media" directory not found in path: $oldPath. Using fallback to filename: $fileName');
+        'RestoreManager: "media" directory not found in path: $oldPath. Using fallback to filename: $fileName',
+      );
       // This is a guess, as we don't know the pieceId or media type.
       // The file might not be found, but it's better than crashing.
-      return p.join(appDirPath, 'media',
-          'unknown_piece', 'unknown_type', fileName);
+      return p.join(
+        appDirPath,
+        'media',
+        'unknown_piece',
+        'unknown_type',
+        fileName,
+      );
     }
   }
 
   /// Restores practice logs from backup data
   Future<void> _restorePracticeLogs(List<dynamic> practiceLogsJson) async {
-    AppLogger.log('RestoreManager: Starting practice logs restore. Count: ${practiceLogsJson.length}');
-    
+    AppLogger.log(
+      'RestoreManager: Starting practice logs restore. Count: ${practiceLogsJson.length}',
+    );
+
     await _repository.deleteAllPracticeLogs();
     AppLogger.log('RestoreManager: Deleted all existing practice logs');
-    
+
     for (int i = 0; i < practiceLogsJson.length; i++) {
       final logJson = practiceLogsJson[i];
       try {
         final log = PracticeLog.fromJson(logJson);
-        AppLogger.log('RestoreManager: Restoring practice log ${i + 1}/${practiceLogsJson.length}: ${log.musicPieceId} - ${log.timestamp}');
+        AppLogger.log(
+          'RestoreManager: Restoring practice log ${i + 1}/${practiceLogsJson.length}: ${log.musicPieceId} - ${log.timestamp}',
+        );
         await _repository.insertPracticeLog(log);
       } catch (e) {
-        AppLogger.log('RestoreManager: Error restoring practice log ${i + 1}: $e');
+        AppLogger.log(
+          'RestoreManager: Error restoring practice log ${i + 1}: $e',
+        );
         rethrow;
       }
     }
-    AppLogger.log('RestoreManager: Successfully restored ${practiceLogsJson.length} practice logs from backup');
+    AppLogger.log(
+      'RestoreManager: Successfully restored ${practiceLogsJson.length} practice logs from backup',
+    );
   }
 
   /// Recalculates practice tracking data for all music pieces after restore
   Future<void> _recalculatePracticeTracking() async {
     AppLogger.log('RestoreManager: Starting practice tracking recalculation');
-    
+
     final allPieces = await _repository.getMusicPieces();
     int updatedPieces = 0;
-    
+
     for (final piece in allPieces) {
       try {
-        final practiceLogs = await _repository.getPracticeLogsForPiece(piece.id);
-        AppLogger.log('RestoreManager: Piece ${piece.title} has ${practiceLogs.length} practice logs');
-        
+        final practiceLogs = await _repository.getPracticeLogsForPiece(
+          piece.id,
+        );
+        AppLogger.log(
+          'RestoreManager: Piece ${piece.title} has ${practiceLogs.length} practice logs',
+        );
+
         if (practiceLogs.isEmpty) {
           // No practice logs, reset practice tracking
           final updatedPiece = piece.copyWithExplicit(
@@ -331,34 +413,46 @@ class RestoreManager {
             practiceCount: 0,
           );
           await _repository.updateMusicPiece(updatedPiece);
-          AppLogger.log('RestoreManager: Reset practice tracking for piece ${piece.title}');
+          AppLogger.log(
+            'RestoreManager: Reset practice tracking for piece ${piece.title}',
+          );
         } else {
           // Calculate new practice count and last practice time
           final practiceCount = practiceLogs.length;
           final lastPracticeTime = practiceLogs
               .map((log) => log.timestamp)
               .reduce((a, b) => a.isAfter(b) ? a : b);
-          
+
           final updatedPiece = piece.copyWith(
             lastPracticeTime: lastPracticeTime,
             practiceCount: practiceCount,
           );
           await _repository.updateMusicPiece(updatedPiece);
-          AppLogger.log('RestoreManager: Updated practice tracking for piece ${piece.title}: count=$practiceCount, lastTime=$lastPracticeTime');
+          AppLogger.log(
+            'RestoreManager: Updated practice tracking for piece ${piece.title}: count=$practiceCount, lastTime=$lastPracticeTime',
+          );
         }
         updatedPieces++;
       } catch (e) {
-        AppLogger.log('RestoreManager: Error updating practice tracking for piece ${piece.title}: $e');
+        AppLogger.log(
+          'RestoreManager: Error updating practice tracking for piece ${piece.title}: $e',
+        );
       }
     }
-    
-    AppLogger.log('RestoreManager: Practice tracking recalculation completed. Updated pieces: $updatedPieces');
+
+    AppLogger.log(
+      'RestoreManager: Practice tracking recalculation completed. Updated pieces: $updatedPieces',
+    );
   }
 
   /// Restores media files from backup
   Future<void> _restoreMediaFiles(Archive archive, String storagePath) async {
-    AppLogger.log('RestoreManager: Starting media files restore (with temp directory)');
-    AppLogger.log('RestoreManager: Archive contains  [archive.files.length] total files');
+    AppLogger.log(
+      'RestoreManager: Starting media files restore (with temp directory)',
+    );
+    AppLogger.log(
+      'RestoreManager: Archive contains  [archive.files.length] total files',
+    );
 
     final appDir = await getApplicationDocumentsDirectory();
     final mediaDir = Directory(p.join(appDir.path, 'media'));
@@ -373,8 +467,13 @@ class RestoreManager {
     int extractedFiles = 0;
     for (final file in archive.files) {
       if (file.name.startsWith('media/')) {
-        final tempFilePath = p.join(tempMediaDir.path, file.name.substring('media/'.length));
-        AppLogger.log('RestoreManager: Extracting media file: ${file.name} to $tempFilePath');
+        final tempFilePath = p.join(
+          tempMediaDir.path,
+          file.name.substring('media/'.length),
+        );
+        AppLogger.log(
+          'RestoreManager: Extracting media file: ${file.name} to $tempFilePath',
+        );
         if (file.isFile) {
           try {
             final fileDir = Directory(p.dirname(tempFilePath));
@@ -385,17 +484,25 @@ class RestoreManager {
             outputStream.writeBytes(file.content);
             outputStream.close();
             extractedFiles++;
-            AppLogger.log('RestoreManager: Successfully extracted: ${file.name}');
+            AppLogger.log(
+              'RestoreManager: Successfully extracted: ${file.name}',
+            );
           } catch (e) {
-            AppLogger.log('RestoreManager: Error extracting file ${file.name}: $e');
+            AppLogger.log(
+              'RestoreManager: Error extracting file ${file.name}: $e',
+            );
           }
         }
       }
     }
-    AppLogger.log('RestoreManager: Media files extraction to temp completed. Extracted: $extractedFiles files');
+    AppLogger.log(
+      'RestoreManager: Media files extraction to temp completed. Extracted: $extractedFiles files',
+    );
 
     // Now copy files from tempMediaDir to mediaDir, overwriting only files that exist in tempMediaDir
-    final tempPieceDirs = tempMediaDir.listSync(recursive: false).whereType<Directory>();
+    final tempPieceDirs = tempMediaDir
+        .listSync(recursive: false)
+        .whereType<Directory>();
     for (final tempPieceDir in tempPieceDirs) {
       final pieceId = p.basename(tempPieceDir.path);
       final destPieceDir = Directory(p.join(mediaDir.path, pieceId));
@@ -422,7 +529,9 @@ class RestoreManager {
         }
         await entity.copy(newFile.path);
       } else if (entity is Directory) {
-        final newDir = Directory(p.join(dest.path, p.relative(entity.path, from: src.path)));
+        final newDir = Directory(
+          p.join(dest.path, p.relative(entity.path, from: src.path)),
+        );
         if (!await newDir.exists()) {
           await newDir.create(recursive: true);
         }
@@ -431,91 +540,165 @@ class RestoreManager {
   }
 
   /// Restores app settings from backup data
-  Future<void> _restoreAppSettings(Map<String, dynamic>? appSettingsJson) async {
+  Future<void> _restoreAppSettings(
+    Map<String, dynamic>? appSettingsJson,
+  ) async {
     if (appSettingsJson == null) {
-      AppLogger.log('RestoreManager: No app settings found in backup, skipping settings restore');
+      AppLogger.log(
+        'RestoreManager: No app settings found in backup, skipping settings restore',
+      );
       return;
     }
 
     AppLogger.log('RestoreManager: Restoring app settings from backup...');
-    AppLogger.log('RestoreManager: Settings keys: ${appSettingsJson.keys.join(', ')}');
-    
+    AppLogger.log(
+      'RestoreManager: Settings keys: ${appSettingsJson.keys.join(', ')}',
+    );
+
     // Theme and appearance settings
     if (appSettingsJson['appThemePreference'] != null) {
-      await prefs.setString('appThemePreference', appSettingsJson['appThemePreference']);
-      AppLogger.log('RestoreManager: Restored appThemePreference: ${appSettingsJson['appThemePreference']}');
+      await prefs.setString(
+        'appThemePreference',
+        appSettingsJson['appThemePreference'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored appThemePreference: ${appSettingsJson['appThemePreference']}',
+      );
+    }
+    if (appSettingsJson['appLanguagePreference'] != null) {
+      await prefs.setString(
+        'appLanguagePreference',
+        appSettingsJson['appLanguagePreference'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored appLanguagePreference: ${appSettingsJson['appLanguagePreference']}',
+      );
     }
     if (appSettingsJson['appAccentColor'] != null) {
       await prefs.setInt('appAccentColor', appSettingsJson['appAccentColor']);
-      AppLogger.log('RestoreManager: Restored appAccentColor: ${appSettingsJson['appAccentColor']}');
+      AppLogger.log(
+        'RestoreManager: Restored appAccentColor: ${appSettingsJson['appAccentColor']}',
+      );
     }
     if (appSettingsJson['galleryColumns'] != null) {
       await prefs.setInt('galleryColumns', appSettingsJson['galleryColumns']);
-      AppLogger.log('RestoreManager: Restored galleryColumns: ${appSettingsJson['galleryColumns']}');
+      AppLogger.log(
+        'RestoreManager: Restored galleryColumns: ${appSettingsJson['galleryColumns']}',
+      );
     }
     if (appSettingsJson['thumbnailStyle'] != null) {
-      await prefs.setString('thumbnailStyle', appSettingsJson['thumbnailStyle']);
-      AppLogger.log('RestoreManager: Restored thumbnailStyle: ${appSettingsJson['thumbnailStyle']}');
+      await prefs.setString(
+        'thumbnailStyle',
+        appSettingsJson['thumbnailStyle'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored thumbnailStyle: ${appSettingsJson['thumbnailStyle']}',
+      );
     }
     if (appSettingsJson['showPracticeCount'] != null) {
-      await prefs.setBool('showPracticeCount', appSettingsJson['showPracticeCount']);
-      AppLogger.log('RestoreManager: Restored showPracticeCount: ${appSettingsJson['showPracticeCount']}');
+      await prefs.setBool(
+        'showPracticeCount',
+        appSettingsJson['showPracticeCount'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored showPracticeCount: ${appSettingsJson['showPracticeCount']}',
+      );
     }
     if (appSettingsJson['showLastPracticed'] != null) {
-      await prefs.setBool('showLastPracticed', appSettingsJson['showLastPracticed']);
-      AppLogger.log('RestoreManager: Restored showLastPracticed: ${appSettingsJson['showLastPracticed']}');
+      await prefs.setBool(
+        'showLastPracticed',
+        appSettingsJson['showLastPracticed'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored showLastPracticed: ${appSettingsJson['showLastPracticed']}',
+      );
     }
     if (appSettingsJson['showDotPatternBackground'] != null) {
-      await prefs.setBool('showDotPatternBackground', appSettingsJson['showDotPatternBackground']);
-      AppLogger.log('RestoreManager: Restored showDotPatternBackground: ${appSettingsJson['showDotPatternBackground']}');
+      await prefs.setBool(
+        'showDotPatternBackground',
+        appSettingsJson['showDotPatternBackground'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored showDotPatternBackground: ${appSettingsJson['showDotPatternBackground']}',
+      );
     }
     if (appSettingsJson['useOledBlack'] != null) {
       await prefs.setBool('useOledBlack', appSettingsJson['useOledBlack']);
-      AppLogger.log('RestoreManager: Restored useOledBlack: ${appSettingsJson['useOledBlack']}');
+      AppLogger.log(
+        'RestoreManager: Restored useOledBlack: ${appSettingsJson['useOledBlack']}',
+      );
     }
-    
+
     // Backup settings
     if (appSettingsJson['autoBackupEnabled'] != null) {
-      await prefs.setBool('autoBackupEnabled', appSettingsJson['autoBackupEnabled']);
-      AppLogger.log('RestoreManager: Restored autoBackupEnabled: ${appSettingsJson['autoBackupEnabled']}');
+      await prefs.setBool(
+        'autoBackupEnabled',
+        appSettingsJson['autoBackupEnabled'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored autoBackupEnabled: ${appSettingsJson['autoBackupEnabled']}',
+      );
     }
     if (appSettingsJson['autoBackupFrequency'] != null) {
-      await prefs.setDouble('autoBackupFrequency', (appSettingsJson['autoBackupFrequency'] as num).toDouble());
-      AppLogger.log('RestoreManager: Restored autoBackupFrequency: ${appSettingsJson['autoBackupFrequency']}');
+      await prefs.setDouble(
+        'autoBackupFrequency',
+        (appSettingsJson['autoBackupFrequency'] as num).toDouble(),
+      );
+      AppLogger.log(
+        'RestoreManager: Restored autoBackupFrequency: ${appSettingsJson['autoBackupFrequency']}',
+      );
     }
     if (appSettingsJson['autoBackupCount'] != null) {
       await prefs.setInt('autoBackupCount', appSettingsJson['autoBackupCount']);
-      AppLogger.log('RestoreManager: Restored autoBackupCount: ${appSettingsJson['autoBackupCount']}');
+      AppLogger.log(
+        'RestoreManager: Restored autoBackupCount: ${appSettingsJson['autoBackupCount']}',
+      );
     }
     if (appSettingsJson['lastAutoBackupTimestamp'] != null) {
-      await prefs.setInt('lastAutoBackupTimestamp', appSettingsJson['lastAutoBackupTimestamp']);
-      AppLogger.log('RestoreManager: Restored lastAutoBackupTimestamp: ${appSettingsJson['lastAutoBackupTimestamp']}');
+      await prefs.setInt(
+        'lastAutoBackupTimestamp',
+        appSettingsJson['lastAutoBackupTimestamp'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored lastAutoBackupTimestamp: ${appSettingsJson['lastAutoBackupTimestamp']}',
+      );
     }
-    
+
     // Storage and path settings
     if (appSettingsJson['appStoragePath'] != null) {
       String path = appSettingsJson['appStoragePath'];
       if (await isPlayStoreBuild()) {
         final appDocDir = await getApplicationDocumentsDirectory();
         path = appDocDir.path;
-        AppLogger.log('RestoreManager: Play Store detected. Forcing sandboxed appStoragePath: $path');
+        AppLogger.log(
+          'RestoreManager: Play Store detected. Forcing sandboxed appStoragePath: $path',
+        );
       }
       await prefs.setString('appStoragePath', path);
       AppLogger.log('RestoreManager: Restored appStoragePath: $path');
-      
+
       // Reinitialize the logger with the restored storage path
       await AppLogger.reinitialize();
-      AppLogger.log('RestoreManager: Logger reinitialized with restored storage path');
+      AppLogger.log(
+        'RestoreManager: Logger reinitialized with restored storage path',
+      );
     }
-    
+
     // Library and sorting settings
     if (appSettingsJson['sortOption'] != null) {
       await prefs.setString('sortOption', appSettingsJson['sortOption']);
-      AppLogger.log('RestoreManager: Restored sortOption: ${appSettingsJson['sortOption']}');
+      AppLogger.log(
+        'RestoreManager: Restored sortOption: ${appSettingsJson['sortOption']}',
+      );
     }
     if (appSettingsJson['hideEmptyGroups'] != null) {
-      await prefs.setBool('hideEmptyGroups', appSettingsJson['hideEmptyGroups']);
-      AppLogger.log('RestoreManager: Restored hideEmptyGroups: ${appSettingsJson['hideEmptyGroups']}');
+      await prefs.setBool(
+        'hideEmptyGroups',
+        appSettingsJson['hideEmptyGroups'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored hideEmptyGroups: ${appSettingsJson['hideEmptyGroups']}',
+      );
     }
     if (appSettingsJson['filterOptions'] != null) {
       await prefs.setString('filterOptions', appSettingsJson['filterOptions']);
@@ -525,67 +708,118 @@ class RestoreManager {
       await prefs.setString('quickFilters', appSettingsJson['quickFilters']);
       AppLogger.log('RestoreManager: Restored quickFilters');
     }
-    
+
     // Group visibility settings
     if (appSettingsJson['all_group_isHidden'] != null) {
-      await prefs.setBool('all_group_isHidden', appSettingsJson['all_group_isHidden']);
-      AppLogger.log('RestoreManager: Restored all_group_isHidden: ${appSettingsJson['all_group_isHidden']}');
+      await prefs.setBool(
+        'all_group_isHidden',
+        appSettingsJson['all_group_isHidden'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored all_group_isHidden: ${appSettingsJson['all_group_isHidden']}',
+      );
     }
     if (appSettingsJson['ungrouped_group_isHidden'] != null) {
-      await prefs.setBool('ungrouped_group_isHidden', appSettingsJson['ungrouped_group_isHidden']);
-      AppLogger.log('RestoreManager: Restored ungrouped_group_isHidden: ${appSettingsJson['ungrouped_group_isHidden']}');
+      await prefs.setBool(
+        'ungrouped_group_isHidden',
+        appSettingsJson['ungrouped_group_isHidden'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored ungrouped_group_isHidden: ${appSettingsJson['ungrouped_group_isHidden']}',
+      );
     }
     if (appSettingsJson['all_group_order'] != null) {
       await prefs.setInt('all_group_order', appSettingsJson['all_group_order']);
-      AppLogger.log('RestoreManager: Restored all_group_order: ${appSettingsJson['all_group_order']}');
+      AppLogger.log(
+        'RestoreManager: Restored all_group_order: ${appSettingsJson['all_group_order']}',
+      );
     }
     if (appSettingsJson['ungrouped_group_order'] != null) {
-      await prefs.setInt('ungrouped_group_order', appSettingsJson['ungrouped_group_order']);
-      AppLogger.log('RestoreManager: Restored ungrouped_group_order: ${appSettingsJson['ungrouped_group_order']}');
+      await prefs.setInt(
+        'ungrouped_group_order',
+        appSettingsJson['ungrouped_group_order'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored ungrouped_group_order: ${appSettingsJson['ungrouped_group_order']}',
+      );
     }
-    
+
     // Audio settings
     if (appSettingsJson['audio_speed'] != null) {
       await prefs.setDouble('audio_speed', appSettingsJson['audio_speed']);
-      AppLogger.log('RestoreManager: Restored audio_speed: ${appSettingsJson['audio_speed']}');
+      AppLogger.log(
+        'RestoreManager: Restored audio_speed: ${appSettingsJson['audio_speed']}',
+      );
     }
     if (appSettingsJson['audio_pitch'] != null) {
       await prefs.setDouble('audio_pitch', appSettingsJson['audio_pitch']);
-      AppLogger.log('RestoreManager: Restored audio_pitch: ${appSettingsJson['audio_pitch']}');
+      AppLogger.log(
+        'RestoreManager: Restored audio_pitch: ${appSettingsJson['audio_pitch']}',
+      );
     }
 
     // Practice settings
     if (appSettingsJson['practice_stages'] != null) {
-      await prefs.setString('practice_stages', appSettingsJson['practice_stages']);
+      await prefs.setString(
+        'practice_stages',
+        appSettingsJson['practice_stages'],
+      );
       AppLogger.log('RestoreManager: Restored practice_stages');
     }
     if (appSettingsJson['show_practice_time_stats'] != null) {
-      await prefs.setBool('show_practice_time_stats', appSettingsJson['show_practice_time_stats']);
-      AppLogger.log('RestoreManager: Restored show_practice_time_stats: ${appSettingsJson['show_practice_time_stats']}');
+      await prefs.setBool(
+        'show_practice_time_stats',
+        appSettingsJson['show_practice_time_stats'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored show_practice_time_stats: ${appSettingsJson['show_practice_time_stats']}',
+      );
     }
     if (appSettingsJson['show_practice_notes'] != null) {
-      await prefs.setBool('show_practice_notes', appSettingsJson['show_practice_notes']);
-      AppLogger.log('RestoreManager: Restored show_practice_notes: ${appSettingsJson['show_practice_notes']}');
+      await prefs.setBool(
+        'show_practice_notes',
+        appSettingsJson['show_practice_notes'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored show_practice_notes: ${appSettingsJson['show_practice_notes']}',
+      );
     }
-    
+
     // App state settings
     if (appSettingsJson['hasRunBefore'] != null) {
       await prefs.setBool('hasRunBefore', appSettingsJson['hasRunBefore']);
-      AppLogger.log('RestoreManager: Restored hasRunBefore: ${appSettingsJson['hasRunBefore']}');
+      AppLogger.log(
+        'RestoreManager: Restored hasRunBefore: ${appSettingsJson['hasRunBefore']}',
+      );
     }
     if (appSettingsJson['notifyNewReleases'] != null) {
-      await prefs.setBool('notifyNewReleases', appSettingsJson['notifyNewReleases']);
-      AppLogger.log('RestoreManager: Restored notifyNewReleases: ${appSettingsJson['notifyNewReleases']}');
+      await prefs.setBool(
+        'notifyNewReleases',
+        appSettingsJson['notifyNewReleases'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored notifyNewReleases: ${appSettingsJson['notifyNewReleases']}',
+      );
     }
     if (appSettingsJson['showGradientBackground'] != null) {
-      await prefs.setBool('showGradientBackground', appSettingsJson['showGradientBackground']);
-      AppLogger.log('RestoreManager: Restored showGradientBackground: ${appSettingsJson['showGradientBackground']}');
+      await prefs.setBool(
+        'showGradientBackground',
+        appSettingsJson['showGradientBackground'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored showGradientBackground: ${appSettingsJson['showGradientBackground']}',
+      );
     }
-    
+
     // Debug settings
     if (appSettingsJson['debugLogsEnabled'] != null) {
-      await prefs.setBool('debugLogsEnabled', appSettingsJson['debugLogsEnabled']);
-      AppLogger.log('RestoreManager: Restored debugLogsEnabled: ${appSettingsJson['debugLogsEnabled']}');
+      await prefs.setBool(
+        'debugLogsEnabled',
+        appSettingsJson['debugLogsEnabled'],
+      );
+      AppLogger.log(
+        'RestoreManager: Restored debugLogsEnabled: ${appSettingsJson['debugLogsEnabled']}',
+      );
     }
 
     // Practice stage transitions (legacy migration fields)
@@ -593,21 +827,36 @@ class RestoreManager {
       await prefs.setInt('greenPeriod', appSettingsJson['greenPeriod']);
     }
     if (appSettingsJson['greenToYellowTransition'] != null) {
-      await prefs.setInt('greenToYellowTransition', appSettingsJson['greenToYellowTransition']);
+      await prefs.setInt(
+        'greenToYellowTransition',
+        appSettingsJson['greenToYellowTransition'],
+      );
     }
     if (appSettingsJson['yellowToRedTransition'] != null) {
-      await prefs.setInt('yellowToRedTransition', appSettingsJson['yellowToRedTransition']);
+      await prefs.setInt(
+        'yellowToRedTransition',
+        appSettingsJson['yellowToRedTransition'],
+      );
     }
     if (appSettingsJson['redToBlackTransition'] != null) {
-      await prefs.setInt('redToBlackTransition', appSettingsJson['redToBlackTransition']);
+      await prefs.setInt(
+        'redToBlackTransition',
+        appSettingsJson['redToBlackTransition'],
+      );
     }
 
     // Dismissed version & last run version
     if (appSettingsJson['dismissed_update_version'] != null) {
-      await prefs.setString('dismissed_update_version', appSettingsJson['dismissed_update_version']);
+      await prefs.setString(
+        'dismissed_update_version',
+        appSettingsJson['dismissed_update_version'],
+      );
     }
     if (appSettingsJson['last_run_version'] != null) {
-      await prefs.setString('last_run_version', appSettingsJson['last_run_version']);
+      await prefs.setString(
+        'last_run_version',
+        appSettingsJson['last_run_version'],
+      );
     }
 
     // Restore dynamic / piece-specific & UI state settings
@@ -642,38 +891,47 @@ class RestoreManager {
         } else if (value is List) {
           await prefs.setStringList(key, List<String>.from(value));
         }
-        AppLogger.log('RestoreManager: Restored dynamic setting: $key = $value');
+        AppLogger.log(
+          'RestoreManager: Restored dynamic setting: $key = $value',
+        );
       }
     }
 
     // Clear practice config stages cache to force a reload on next use
     PracticeConfigService.clearCache();
     AppLogger.log('RestoreManager: PracticeConfigService cache cleared');
-    
+
     AppLogger.log('RestoreManager: App settings restored successfully');
   }
 
   /// Performs the complete restore process
-  Future<bool> performRestore({BuildContext? context, String? filePath, bool isFreshRestore = false, bool shouldPop = true}) async {
+  Future<bool> performRestore({
+    BuildContext? context,
+    String? filePath,
+    bool isFreshRestore = false,
+    bool shouldPop = true,
+  }) async {
     AppLogger.log('RestoreManager: Initiating data restore');
     final messenger = context != null ? ScaffoldMessenger.of(context) : null;
     final navigator = context != null ? Navigator.of(context) : null;
 
-    _showRestoreMessage(messenger, true, 'Restoring data...');
-    
+    _showRestoreMessage(messenger, true, (l10n) => l10n.restoringData);
+
     try {
       final storagePath = prefs.getString('appStoragePath');
       AppLogger.log('RestoreManager: Storage path: $storagePath');
-      
+
       String? backupPath = filePath;
-      
+
       if (backupPath == null) {
         String? backupDir;
         if (storagePath != null) {
           final backupsDir = Directory(p.join(storagePath, 'Backups'));
           if (await backupsDir.exists()) {
             backupDir = backupsDir.path;
-            AppLogger.log('RestoreManager: Default restore directory: $backupDir');
+            AppLogger.log(
+              'RestoreManager: Default restore directory: $backupDir',
+            );
           }
         }
 
@@ -682,18 +940,22 @@ class RestoreManager {
           allowedExtensions: ['zip'],
           initialDirectory: backupDir,
         );
-        AppLogger.log('RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}');
-        
+        AppLogger.log(
+          'RestoreManager: FilePicker.pickFiles returned: ${result?.files.single.path}',
+        );
+
         if (result != null && result.files.single.path != null) {
           backupPath = result.files.single.path!;
         }
       }
 
       if (backupPath != null) {
-        _showRestoreMessage(messenger, true, 'Restore in progress...');
-        
+        _showRestoreMessage(messenger, true, (l10n) => l10n.restoreInProgress);
+
         if (isFreshRestore) {
-          AppLogger.log('RestoreManager: Fresh restore detected. Clearing all existing music pieces.');
+          AppLogger.log(
+            'RestoreManager: Fresh restore detected. Clearing all existing music pieces.',
+          );
           await _repository.deleteAllMusicPieces();
         }
 
@@ -701,7 +963,11 @@ class RestoreManager {
         if (data == null) return false;
 
         if (storagePath == null) {
-          _showRestoreMessage(messenger, false, 'Restore failed: Storage path not configured.');
+          _showRestoreMessage(
+            messenger,
+            false,
+            (l10n) => l10n.restoreFailedStoragePathNotConfigured,
+          );
           return false;
         }
 
@@ -710,12 +976,15 @@ class RestoreManager {
         final List<dynamic> tagsJson = data['tags'] ?? [];
         final List<dynamic> groupsJson = data['groups'] ?? [];
         final List<dynamic> practiceLogsJson = data['practiceLogs'] ?? [];
-        final Map<String, dynamic>? appSettingsJson = data['appSettings'] as Map<String, dynamic>?;
+        final Map<String, dynamic>? appSettingsJson =
+            data['appSettings'] as Map<String, dynamic>?;
 
-        AppLogger.log('RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}');
+        AppLogger.log(
+          'RestoreManager: Data extracted - Music pieces: ${musicPiecesJson.length}, Tags: ${tagsJson.length}, Groups: ${groupsJson.length}, Practice logs: ${practiceLogsJson.length}',
+        );
 
         await _restoreMusicPieces(musicPiecesJson, storagePath, backupVersion);
-        
+
         // Extract media files EARLY so they exist for path updates/copying
         final inputStream = InputFileStream(backupPath);
         final archive = ZipDecoder().decodeBytes(inputStream.toUint8List());
@@ -734,19 +1003,27 @@ class RestoreManager {
         AppLogger.log('RestoreManager: Triggering migrations after restore...');
         await MigrationService(_repository, prefs).runMigrations();
 
-        _showRestoreMessage(messenger, true, 'Data restored successfully!');
+        _showRestoreMessage(
+          messenger,
+          true,
+          (l10n) => l10n.dataRestoredSuccessfully,
+        );
         AppLogger.log('RestoreManager: Data restored successfully');
 
-        // Reload settings in ThemeNotifier to update UI instantly
+        // Reload appearance and language settings to update the UI instantly.
         if (context != null && context.mounted) {
           try {
             Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
+            Provider.of<LocaleNotifier>(context, listen: false).loadLocale();
             AppLogger.log('RestoreManager: ThemeNotifier settings reloaded');
+            AppLogger.log('RestoreManager: LocaleNotifier settings reloaded');
           } catch (e) {
-            AppLogger.log('RestoreManager: Error reloading ThemeNotifier settings: $e');
+            AppLogger.log(
+              'RestoreManager: Error reloading ThemeNotifier settings: $e',
+            );
           }
         }
-        
+
         // Force a rebuild of the app to refresh all data
         if (shouldPop && navigator != null && navigator.context.mounted) {
           AppLogger.log('RestoreManager: Triggering app rebuild after restore');
@@ -755,14 +1032,18 @@ class RestoreManager {
         }
         return true;
       } else {
-        _showRestoreMessage(messenger, false, 'Restore cancelled.');
+        _showRestoreMessage(messenger, false, (l10n) => l10n.restoreCancelled);
         AppLogger.log('RestoreManager: Restore cancelled by user');
         return false;
       }
     } catch (e) {
       AppLogger.log('RestoreManager: Restore failed: $e');
-      _showRestoreMessage(messenger, false, 'Restore failed: $e');
+      _showRestoreMessage(
+        messenger,
+        false,
+        (l10n) => l10n.restoreFailed(e.toString()),
+      );
       return false;
     }
   }
-} 
+}

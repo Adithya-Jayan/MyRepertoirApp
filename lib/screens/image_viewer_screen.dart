@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A screen for viewing images with zoom and pan capabilities.
 ///
 /// This screen utilizes the `photo_view` package to provide an interactive
@@ -15,10 +17,14 @@ class ImageViewerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Image Viewer'), // Title of the image viewer screen.
+        title: Text(
+          context.l10n.imageViewer,
+        ), // Title of the image viewer screen.
       ),
       body: PhotoView(
-        imageProvider: FileImage(File(imagePath)), // Load image from the provided file path.
+        imageProvider: FileImage(
+          File(imagePath),
+        ), // Load image from the provided file path.
       ),
     );
   }

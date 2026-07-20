@@ -9,19 +9,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 import '../utils/permissions_utils.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 class UpdateService {
   static const String _githubRepo = 'Adithya-Jayan/MyRepertoirApp';
-  static const String _githubApiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
-  static const String _githubTagsUrl = 'https://api.github.com/repos/$_githubRepo/releases/tags';
+  static const String _githubApiUrl =
+      'https://api.github.com/repos/$_githubRepo/releases/latest';
+  static const String _githubTagsUrl =
+      'https://api.github.com/repos/$_githubRepo/releases/tags';
   static const String _githubUrl = 'https://github.com/$_githubRepo/releases';
-  static const String _fdroidUrl = 'https://f-droid.org/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/';
+  static const String _fdroidUrl =
+      'https://f-droid.org/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/';
 
   /// Checks for updates and shows a dialog if a new version is available.
-  Future<void> checkForUpdates(BuildContext context, {bool manual = false}) async {
+  Future<void> checkForUpdates(
+    BuildContext context, {
+    bool manual = false,
+  }) async {
     if (await isPlayStoreBuild()) {
       if (manual && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Updates are managed by the Google Play Store.')),
+          SnackBar(
+            content: Text(context.l10n.updatesAreManagedByTheGooglePlayStore),
+          ),
         );
       }
       return;
@@ -36,28 +46,40 @@ class UpdateService {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersionStr = packageInfo.version;
       final currentVersion = Version.parse(currentVersionStr);
-      
+
       final response = await http.get(Uri.parse(_githubApiUrl));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> releaseData = jsonDecode(response.body);
         String tagName = releaseData['tag_name'];
         if (tagName.startsWith('v')) tagName = tagName.substring(1);
-        
+
         // strip build info if present in tag
         if (tagName.contains('+')) tagName = tagName.split('+')[0];
 
         final latestVersion = Version.parse(tagName);
 
         // Compare ignoring build numbers (Version(major, minor, patch) does this)
-        final currentBase = Version(currentVersion.major, currentVersion.minor, currentVersion.patch);
-        final latestBase = Version(latestVersion.major, latestVersion.minor, latestVersion.patch);
+        final currentBase = Version(
+          currentVersion.major,
+          currentVersion.minor,
+          currentVersion.patch,
+        );
+        final latestBase = Version(
+          latestVersion.major,
+          latestVersion.minor,
+          latestVersion.patch,
+        );
 
-        AppLogger.log('UpdateService: Current: $currentBase, Latest: $latestBase');
+        AppLogger.log(
+          'UpdateService: Current: $currentBase, Latest: $latestBase',
+        );
 
         if (latestBase > currentBase) {
           if (!manual) {
-            final dismissedVersion = prefs.getString('dismissed_update_version');
+            final dismissedVersion = prefs.getString(
+              'dismissed_update_version',
+            );
             if (dismissedVersion == tagName) return;
           }
 
@@ -65,15 +87,17 @@ class UpdateService {
             _showUpdateAvailableDialog(context, tagName);
           }
         } else if (manual && context.mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('You are on the latest version.')),
-           );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.youAreOnTheLatestVersion)),
+          );
         }
       }
     } catch (e) {
       AppLogger.log('UpdateService: Error checking for updates: $e');
       if (manual && context.mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.errorWithDetails(e.toString()))),
+        );
       }
     }
   }
@@ -94,9 +118,17 @@ class UpdateService {
     try {
       final lastRunVersion = Version.parse(lastRunVersionStr);
       final currentVersion = Version.parse(currentVersionStr);
-      
-      final lastRunBase = Version(lastRunVersion.major, lastRunVersion.minor, lastRunVersion.patch);
-      final currentBase = Version(currentVersion.major, currentVersion.minor, currentVersion.patch);
+
+      final lastRunBase = Version(
+        lastRunVersion.major,
+        lastRunVersion.minor,
+        lastRunVersion.patch,
+      );
+      final currentBase = Version(
+        currentVersion.major,
+        currentVersion.minor,
+        currentVersion.patch,
+      );
 
       if (currentBase > lastRunBase) {
         // App updated
@@ -110,10 +142,9 @@ class UpdateService {
           }
         }
       }
-      
+
       // Update stored version after checking/showing dialog
       await prefs.setString('last_run_version', currentVersionStr);
-
     } catch (e) {
       AppLogger.log('UpdateService: Error parsing version for changelog: $e');
       // Even on error, update the version so we don't crash repeatedly or get stuck
@@ -128,18 +159,18 @@ class UpdateService {
       String cleanVersion = version;
       if (cleanVersion.contains('+')) cleanVersion = cleanVersion.split('+')[0];
 
-      final url = '$_githubTagsUrl/v$cleanVersion'; 
+      final url = '$_githubTagsUrl/v$cleanVersion';
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-         final data = jsonDecode(response.body);
-         return data['body'];
+        final data = jsonDecode(response.body);
+        return data['body'];
       }
-      
+
       final url2 = '$_githubTagsUrl/$cleanVersion';
       final response2 = await http.get(Uri.parse(url2));
       if (response2.statusCode == 200) {
-         final data = jsonDecode(response2.body);
-         return data['body'];
+        final data = jsonDecode(response2.body);
+        return data['body'];
       }
     } catch (_) {}
     return null;
@@ -149,16 +180,20 @@ class UpdateService {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Update Available!'),
+        title: Text(context.l10n.newUpdateAvailable),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Version $latestVersion is available.'),
+            Text(context.l10n.versionAvailable(latestVersion)),
             const SizedBox(height: 12),
-            const Text(
-              'Note: F-Droid may take a few days to reflect the new version.',
-              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+            Text(
+              context.l10n.noteFDRoidMayTakeAFewDaysToReflectThe,
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
             ),
           ],
         ),
@@ -169,10 +204,16 @@ class UpdateService {
               await prefs.setString('dismissed_update_version', latestVersion);
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Dismiss'),
+            child: Text(context.l10n.dismiss),
           ),
-          TextButton(onPressed: () => _launchUrl(_fdroidUrl), child: const Text('F-Droid')),
-          FilledButton(onPressed: () => _launchUrl(_githubUrl), child: const Text('GitHub')),
+          TextButton(
+            onPressed: () => _launchUrl(_fdroidUrl),
+            child: Text(context.l10n.fDRoid),
+          ),
+          FilledButton(
+            onPressed: () => _launchUrl(_githubUrl),
+            child: Text(context.l10n.github),
+          ),
         ],
       ),
     );
@@ -182,11 +223,19 @@ class UpdateService {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Updated to v$version'),
-        content: const Text('The app has been updated! Check the release notes on GitHub for details.'),
+        title: Text(context.l10n.updatedToVersion(version)),
+        content: Text(
+          context.l10n.theAppHasBeenUpdatedCheckTheReleaseNotesOnGithubFor,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
-          FilledButton(onPressed: () => _launchUrl(_githubUrl), child: const Text('Release Notes')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.close),
+          ),
+          FilledButton(
+            onPressed: () => _launchUrl(_githubUrl),
+            child: Text(context.l10n.releaseNotes),
+          ),
         ],
       ),
     );
@@ -199,9 +248,11 @@ class UpdateService {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('What\'s New in v$version'),
+        title: Text(context.l10n.whatsNewInVersion(version)),
         content: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -214,7 +265,10 @@ class UpdateService {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.close),
+          ),
         ],
       ),
     );

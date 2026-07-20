@@ -17,6 +17,8 @@ import 'package:repertoire/widgets/add_edit_piece/midi_track_config_dialog.dart'
 import 'package:repertoire/models/pdf_config.dart';
 import 'package:repertoire/widgets/add_edit_piece/pdf_config_dialog.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget for displaying and editing a single MediaItem.
 ///
 /// Allows users to modify the media item's title, path/URL, and set it as a thumbnail.
@@ -78,38 +80,43 @@ class _MediaSectionState extends State<MediaSection> {
 
   Future<void> _fetchThumbnail() async {
     if (widget.item.pathOrUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('URL is empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.urlIsEmpty)));
       return;
     }
 
-    AppLogger.log('MediaSection: Fetching thumbnail for URL: ${widget.item.pathOrUrl}');
+    AppLogger.log(
+      'MediaSection: Fetching thumbnail for URL: ${widget.item.pathOrUrl}',
+    );
     setState(() {
       _isLoadingThumbnail = true;
     });
 
     try {
-      final thumbnailPath = await ThumbnailService.fetchAndSaveThumbnail(widget.item, widget.musicPieceId);
-      
+      final thumbnailPath = await ThumbnailService.fetchAndSaveThumbnail(
+        widget.item,
+        widget.musicPieceId,
+      );
+
       if (thumbnailPath != null && mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
         });
-        
+
         final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
         widget.onUpdateMediaItem(updatedItem);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thumbnail fetched successfully!')),
+          SnackBar(content: Text(context.l10n.thumbnailFetchedSuccessfully)),
         );
       } else if (mounted) {
         setState(() {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to fetch thumbnail.')),
+          SnackBar(content: Text(context.l10n.failedToFetchThumbnail)),
         );
       }
     } catch (e) {
@@ -119,7 +126,9 @@ class _MediaSectionState extends State<MediaSection> {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching thumbnail: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorFetchingThumbnail(e.toString())),
+          ),
         );
       }
     }
@@ -128,37 +137,44 @@ class _MediaSectionState extends State<MediaSection> {
   Future<void> _generateVideoThumbnail() async {
     if (widget.item.pathOrUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video file path is empty')),
+        SnackBar(content: Text(context.l10n.videoFilePathIsEmpty)),
       );
       return;
     }
 
-    AppLogger.log('MediaSection: Generating thumbnail for video: ${widget.item.pathOrUrl}');
+    AppLogger.log(
+      'MediaSection: Generating thumbnail for video: ${widget.item.pathOrUrl}',
+    );
     setState(() {
       _isLoadingThumbnail = true;
     });
 
     try {
-      final thumbnailPath = await ThumbnailService.generateVideoThumbnail(widget.item, widget.musicPieceId);
-      
+      final thumbnailPath = await ThumbnailService.generateVideoThumbnail(
+        widget.item,
+        widget.musicPieceId,
+      );
+
       if (thumbnailPath != null && mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
         });
-        
+
         final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
         widget.onUpdateMediaItem(updatedItem);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Video thumbnail generated successfully!')),
+          SnackBar(
+            content: Text(context.l10n.videoThumbnailGeneratedSuccessfully),
+          ),
         );
       } else if (mounted) {
         setState(() {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to generate video thumbnail.')),
+          SnackBar(content: Text(context.l10n.failedToGenerateVideoThumbnail)),
         );
       }
     } catch (e) {
@@ -168,7 +184,9 @@ class _MediaSectionState extends State<MediaSection> {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating thumbnail: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorGeneratingThumbnail(e.toString())),
+          ),
         );
       }
     }
@@ -176,38 +194,45 @@ class _MediaSectionState extends State<MediaSection> {
 
   Future<void> _generatePdfThumbnail() async {
     if (widget.item.pathOrUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF file path is empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.pdfFilePathIsEmpty)));
       return;
     }
 
-    AppLogger.log('MediaSection: Generating thumbnail for PDF: ${widget.item.pathOrUrl}');
+    AppLogger.log(
+      'MediaSection: Generating thumbnail for PDF: ${widget.item.pathOrUrl}',
+    );
     setState(() {
       _isLoadingThumbnail = true;
     });
 
     try {
-      final thumbnailPath = await ThumbnailService.generatePdfThumbnail(widget.item, widget.musicPieceId);
-      
+      final thumbnailPath = await ThumbnailService.generatePdfThumbnail(
+        widget.item,
+        widget.musicPieceId,
+      );
+
       if (thumbnailPath != null && mounted) {
         setState(() {
           _currentThumbnailPath = thumbnailPath;
           _isLoadingThumbnail = false;
         });
-        
+
         final updatedItem = widget.item.copyWith(thumbnailPath: thumbnailPath);
         widget.onUpdateMediaItem(updatedItem);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PDF thumbnail generated successfully!')),
+          SnackBar(
+            content: Text(context.l10n.pdfThumbnailGeneratedSuccessfully),
+          ),
         );
       } else if (mounted) {
         setState(() {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to generate PDF thumbnail.')),
+          SnackBar(content: Text(context.l10n.failedToGeneratePdfThumbnail)),
         );
       }
     } catch (e) {
@@ -217,15 +242,19 @@ class _MediaSectionState extends State<MediaSection> {
           _isLoadingThumbnail = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating thumbnail: $e')),
+          SnackBar(
+            content: Text(context.l10n.errorGeneratingThumbnail(e.toString())),
+          ),
         );
       }
     }
   }
 
   void _removeThumbnail() {
-    AppLogger.log('MediaSection: _removeThumbnail called for item: ${widget.item.title}');
-    
+    AppLogger.log(
+      'MediaSection: _removeThumbnail called for item: ${widget.item.title}',
+    );
+
     if (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) {
       try {
         final file = File(_currentThumbnailPath!);
@@ -268,25 +297,27 @@ class _MediaSectionState extends State<MediaSection> {
       final result = await FilePicker.platform.pickFiles(type: FileType.image);
       if (result != null && result.files.single.path != null) {
         final sourcePath = result.files.single.path!;
-        
+
         final appDir = await getApplicationDocumentsDirectory();
-        final pieceMediaDir = Directory(p.join(appDir.path, 'media', widget.musicPieceId));
+        final pieceMediaDir = Directory(
+          p.join(appDir.path, 'media', widget.musicPieceId),
+        );
         if (!await pieceMediaDir.exists()) {
           await pieceMediaDir.create(recursive: true);
         }
-        
+
         final extension = p.extension(sourcePath);
         final newFileName = 'thumbnail_${const Uuid().v4()}$extension';
         final newFilePath = p.join(pieceMediaDir.path, newFileName);
-        
+
         await File(sourcePath).copy(newFilePath);
-        
+
         final updatedItem = widget.item.copyWith(pathOrUrl: newFilePath);
         widget.onUpdateMediaItem(updatedItem);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image updated successfully')),
+            SnackBar(content: Text(context.l10n.imageUpdatedSuccessfully)),
           );
         }
       }
@@ -294,7 +325,9 @@ class _MediaSectionState extends State<MediaSection> {
       AppLogger.log('MediaSection: Error changing image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update image: $e')),
+          SnackBar(
+            content: Text(context.l10n.failedToUpdateImage(e.toString())),
+          ),
         );
       }
     }
@@ -302,8 +335,10 @@ class _MediaSectionState extends State<MediaSection> {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.log('MediaSection: build called for item: ${widget.item.title}, _currentThumbnailPath: "$_currentThumbnailPath"');
-    
+    AppLogger.log(
+      'MediaSection: build called for item: ${widget.item.title}, _currentThumbnailPath: "$_currentThumbnailPath"',
+    );
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -321,7 +356,8 @@ class _MediaSectionState extends State<MediaSection> {
             musicPiece: widget.musicPiece,
             mediaItemIndex: widget.globalIndex,
             isEditable: true, // Always true as MediaSection is for editing
-            isTitleEditable: widget.isTitleEditable, // Pass the specific editability flag
+            isTitleEditable:
+                widget.isTitleEditable, // Pass the specific editability flag
             onTitleChanged: (newTitle) {
               widget.onUpdateMediaItem(widget.item.copyWith(title: newTitle));
             },
@@ -330,10 +366,11 @@ class _MediaSectionState extends State<MediaSection> {
             },
           ),
         ),
-        
-        if (widget.isPathEditable) ...[ // Wrap path section with flag check
+
+        if (widget.isPathEditable) ...[
+          // Wrap path section with flag check
           const SizedBox(height: 12),
-          
+
           // Middle Section: Content Configuration
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -343,71 +380,93 @@ class _MediaSectionState extends State<MediaSection> {
                 if (widget.item.type == MediaType.learningProgress)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.settings),
-                    label: const Text('Configure Progress Bar'),
+                    label: Text(context.l10n.configureProgressBar),
                     onPressed: () async {
-                       final currentConfig = LearningProgressConfig.decode(widget.item.pathOrUrl);
-                       final newConfig = await showDialog<LearningProgressConfig>(
-                          context: context,
-                          builder: (context) => LearningProgressConfigDialog(initialConfig: currentConfig),
-                       );
-                       if (newConfig != null) {
-                          widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: LearningProgressConfig.encode(newConfig)));
-                       }
+                      final currentConfig = LearningProgressConfig.decode(
+                        widget.item.pathOrUrl,
+                      );
+                      final newConfig =
+                          await showDialog<LearningProgressConfig>(
+                            context: context,
+                            builder: (context) => LearningProgressConfigDialog(
+                              initialConfig: currentConfig,
+                            ),
+                          );
+                      if (newConfig != null) {
+                        widget.onUpdateMediaItem(
+                          widget.item.copyWith(
+                            pathOrUrl: LearningProgressConfig.encode(newConfig),
+                          ),
+                        );
+                      }
                     },
                   )
                 else if (widget.item.type == MediaType.midi)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.settings),
-                    label: const Text('Configure MIDI Tracks'),
+                    label: Text(context.l10n.configureMidiTracks),
                     onPressed: () async {
-                       final currentConfig = MidiTrackConfig.fromJson(widget.item.configData ?? '{}');
-                       final newConfig = await showDialog<MidiTrackConfig>(
-                          context: context,
-                          builder: (context) => MidiTrackConfigDialog(
-                            midiPath: widget.item.pathOrUrl,
-                            initialConfig: currentConfig,
-                          ),
-                       );
-                       if (newConfig != null) {
-                          widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                       }
+                      final currentConfig = MidiTrackConfig.fromJson(
+                        widget.item.configData ?? '{}',
+                      );
+                      final newConfig = await showDialog<MidiTrackConfig>(
+                        context: context,
+                        builder: (context) => MidiTrackConfigDialog(
+                          midiPath: widget.item.pathOrUrl,
+                          initialConfig: currentConfig,
+                        ),
+                      );
+                      if (newConfig != null) {
+                        widget.onUpdateMediaItem(
+                          widget.item.copyWith(configData: newConfig.toJson()),
+                        );
+                      }
                     },
                   )
                 else if (widget.item.type == MediaType.pdf)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.settings),
-                    label: const Text('Configure Auto Scroll'),
+                    label: Text(context.l10n.configureAutoScroll),
                     onPressed: () async {
-                       final currentConfig = PdfConfig.fromJson(widget.item.configData ?? '{}');
-                       final newConfig = await showDialog<PdfConfig>(
-                          context: context,
-                          builder: (context) => PdfConfigDialog(initialConfig: currentConfig),
-                       );
-                       if (newConfig != null) {
-                          widget.onUpdateMediaItem(widget.item.copyWith(configData: newConfig.toJson()));
-                       }
+                      final currentConfig = PdfConfig.fromJson(
+                        widget.item.configData ?? '{}',
+                      );
+                      final newConfig = await showDialog<PdfConfig>(
+                        context: context,
+                        builder: (context) =>
+                            PdfConfigDialog(initialConfig: currentConfig),
+                      );
+                      if (newConfig != null) {
+                        widget.onUpdateMediaItem(
+                          widget.item.copyWith(configData: newConfig.toJson()),
+                        );
+                      }
                     },
                   )
                 else if (widget.item.type == MediaType.markdown)
                   TextFormField(
                     initialValue: widget.item.pathOrUrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Markdown Content',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.markdownContent,
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
                     maxLines: 5,
-                    onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
+                    onChanged: (value) => widget.onUpdateMediaItem(
+                      widget.item.copyWith(pathOrUrl: value),
+                    ),
                   )
                 else
                   TextFormField(
                     initialValue: widget.item.pathOrUrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Path or URL',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.pathOrUrl,
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
-                    onChanged: (value) => widget.onUpdateMediaItem(widget.item.copyWith(pathOrUrl: value)),
+                    onChanged: (value) => widget.onUpdateMediaItem(
+                      widget.item.copyWith(pathOrUrl: value),
+                    ),
                   ),
               ],
             ),
@@ -423,38 +482,61 @@ class _MediaSectionState extends State<MediaSection> {
             spacing: 8.0,
             runSpacing: 8.0,
             children: [
-              if (widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.localVideo || widget.item.type == MediaType.pdf)
+              if (widget.item.type == MediaType.mediaLink ||
+                  widget.item.type == MediaType.localVideo ||
+                  widget.item.type == MediaType.pdf)
                 _isLoadingThumbnail
-                    ? const Row(
+                    ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                           SizedBox(width: 8),
-                          Text('Fetching...', style: TextStyle(fontSize: 12)),
+                          Text(
+                            context.l10n.fetching,
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ],
                       )
                     : OutlinedButton.icon(
-                        onPressed: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
+                        onPressed:
+                            (_currentThumbnailPath != null &&
+                                _currentThumbnailPath!.isNotEmpty)
                             ? () => _removeThumbnail()
                             : () {
                                 if (widget.item.type == MediaType.mediaLink) {
                                   _fetchThumbnail();
-                                } else if (widget.item.type == MediaType.localVideo) {
+                                } else if (widget.item.type ==
+                                    MediaType.localVideo) {
                                   _generateVideoThumbnail();
                                 } else if (widget.item.type == MediaType.pdf) {
                                   _generatePdfThumbnail();
                                 }
                               },
-                        icon: Icon((_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) ? Icons.delete : Icons.image, size: 18),
+                        icon: Icon(
+                          (_currentThumbnailPath != null &&
+                                  _currentThumbnailPath!.isNotEmpty)
+                              ? Icons.delete
+                              : Icons.image,
+                          size: 18,
+                        ),
                         label: Text(
-                          (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty) 
-                              ? 'Remove Thumbnail' 
-                              : (widget.item.type == MediaType.mediaLink 
-                                  ? 'Get link thumbnail' 
-                                  : (widget.item.type == MediaType.localVideo ? 'Get video thumbnail' : 'Get PDF thumbnail')),
+                          (_currentThumbnailPath != null &&
+                                  _currentThumbnailPath!.isNotEmpty)
+                              ? 'Remove Thumbnail'
+                              : (widget.item.type == MediaType.mediaLink
+                                    ? 'Get link thumbnail'
+                                    : (widget.item.type == MediaType.localVideo
+                                          ? context.l10n.getVideoThumbnail
+                                          : context.l10n.getPdfThumbnail)),
                           style: const TextStyle(fontSize: 12),
                         ),
-                        style: (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)
+                        style:
+                            (_currentThumbnailPath != null &&
+                                _currentThumbnailPath!.isNotEmpty)
                             ? OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red[700],
                                 side: BorderSide(color: Colors.red[200]!),
@@ -465,53 +547,76 @@ class _MediaSectionState extends State<MediaSection> {
                 OutlinedButton.icon(
                   onPressed: _pickAndChangeImage,
                   icon: const Icon(Icons.image, size: 18),
-                  label: const Text('Change Image', style: TextStyle(fontSize: 12)),
+                  label: Text(
+                    context.l10n.changeImage,
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
-              if ((widget.item.type == MediaType.image || widget.item.type == MediaType.localVideo || widget.item.type == MediaType.pdf || (_currentThumbnailPath != null && _currentThumbnailPath!.isNotEmpty)) && widget.item.type != MediaType.thumbnails)
+              if ((widget.item.type == MediaType.image ||
+                      widget.item.type == MediaType.localVideo ||
+                      widget.item.type == MediaType.pdf ||
+                      (_currentThumbnailPath != null &&
+                          _currentThumbnailPath!.isNotEmpty)) &&
+                  widget.item.type != MediaType.thumbnails)
                 OutlinedButton.icon(
                   onPressed: () {
-                    final isCurrentlyThumbnail = widget.musicPieceThumbnail.isNotEmpty && 
-                           (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                            widget.musicPieceThumbnail == _currentThumbnailPath);
-                    
+                    final isCurrentlyThumbnail =
+                        widget.musicPieceThumbnail.isNotEmpty &&
+                        (widget.musicPieceThumbnail == widget.item.pathOrUrl ||
+                            widget.musicPieceThumbnail ==
+                                _currentThumbnailPath);
+
                     if (isCurrentlyThumbnail) {
                       widget.onSetThumbnail('');
                     } else {
                       String? path;
                       if (widget.item.type == MediaType.image) {
                         path = widget.item.pathOrUrl;
-                      } else if (widget.item.type == MediaType.localVideo || widget.item.type == MediaType.mediaLink || widget.item.type == MediaType.pdf) {
+                      } else if (widget.item.type == MediaType.localVideo ||
+                          widget.item.type == MediaType.mediaLink ||
+                          widget.item.type == MediaType.pdf) {
                         path = _currentThumbnailPath;
                       }
-                      
+
                       if (path != null && path.isNotEmpty) {
                         widget.onSetThumbnail(path);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please generate a thumbnail first.')),
+                          SnackBar(
+                            content: Text(
+                              context.l10n.pleaseGenerateAThumbnailFirst,
+                            ),
+                          ),
                         );
                       }
                     }
                   },
                   icon: Icon(
-                    (widget.musicPieceThumbnail.isNotEmpty && 
-                     (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                      widget.musicPieceThumbnail == _currentThumbnailPath))
+                    (widget.musicPieceThumbnail.isNotEmpty &&
+                            (widget.musicPieceThumbnail ==
+                                    widget.item.pathOrUrl ||
+                                widget.musicPieceThumbnail ==
+                                    _currentThumbnailPath))
                         ? Icons.star
                         : Icons.star_border,
                     size: 18,
                   ),
                   label: Text(
-                    (widget.musicPieceThumbnail.isNotEmpty && 
-                     (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                      widget.musicPieceThumbnail == _currentThumbnailPath))
+                    (widget.musicPieceThumbnail.isNotEmpty &&
+                            (widget.musicPieceThumbnail ==
+                                    widget.item.pathOrUrl ||
+                                widget.musicPieceThumbnail ==
+                                    _currentThumbnailPath))
                         ? 'Is Piece Thumbnail'
                         : 'Set as Piece Thumbnail',
                     style: const TextStyle(fontSize: 12),
                   ),
-                  style: (widget.musicPieceThumbnail.isNotEmpty && 
-                          (widget.musicPieceThumbnail == widget.item.pathOrUrl || 
-                           widget.musicPieceThumbnail == _currentThumbnailPath))
+                  style:
+                      (widget.musicPieceThumbnail.isNotEmpty &&
+                          (widget.musicPieceThumbnail ==
+                                  widget.item.pathOrUrl ||
+                              widget.musicPieceThumbnail ==
+                                  _currentThumbnailPath))
                       ? OutlinedButton.styleFrom(
                           foregroundColor: Colors.amber[800],
                           side: BorderSide(color: Colors.amber[200]!),
@@ -537,7 +642,7 @@ class _MediaSectionState extends State<MediaSection> {
               const Spacer(),
               TextButton.icon(
                 icon: const Icon(Icons.delete, size: 20),
-                label: const Text('Delete Item'),
+                label: Text(context.l10n.deleteItem),
                 onPressed: () => _deleteMediaItem(),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
               ),

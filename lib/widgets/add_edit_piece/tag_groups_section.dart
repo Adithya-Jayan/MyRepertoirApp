@@ -3,6 +3,8 @@ import '../../models/tag_group.dart';
 import '../detail_widgets/tag_group_section.dart';
 import './highlightable_widget.dart';
 
+import 'package:repertoire/l10n/l10n.dart';
+
 /// A widget that displays and manages tag groups for a music piece.
 class TagGroupsSection extends StatelessWidget {
   final List<TagGroup> tagGroups;
@@ -40,11 +42,14 @@ class TagGroupsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tag Groups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              context.l10n.tagGroups,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: onAddTagGroup,
-              tooltip: 'Add Tag Group',
+              tooltip: context.l10n.addTagGroup,
             ),
           ],
         ),
@@ -55,9 +60,12 @@ class TagGroupsSection extends StatelessWidget {
           buildDefaultDragHandles: false,
           itemBuilder: (context, index) {
             final tagGroup = tagGroups[index];
-            final itemKey = itemKeys.putIfAbsent(tagGroup.id, () => GlobalKey());
+            final itemKey = itemKeys.putIfAbsent(
+              tagGroup.id,
+              () => GlobalKey(),
+            );
             final isHighlighted = newlyAddedIds?.contains(tagGroup.id) ?? false;
-            
+
             return HighlightableWidget(
               key: ValueKey(tagGroup.id),
               isHighlighted: isHighlighted,
@@ -80,4 +88,4 @@ class TagGroupsSection extends StatelessWidget {
       ],
     );
   }
-} 
+}
