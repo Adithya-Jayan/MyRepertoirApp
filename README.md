@@ -29,7 +29,7 @@ Keep your sheet music, notes, audio recordings, videos, links, and practice logs
 
 ### Installation
 
-* **Android**: Follow our **[Step-by-Step Installation Guide](INSTALL.md)** or get it from F-Droid.
+* **Android**: Follow our **[Step-by-Step Installation Guide](docs/INSTALL.md)** or get it from F-Droid.
 * **Windows & Linux**: Download the pre-compiled `.zip` from the releases section, extract, and run.
 * **Web**: Access the live web version or download the web build from releases.
 
@@ -130,7 +130,7 @@ We are participating in Hacktoberfest! Look for the `hacktoberfest` and `good fi
 
 ### How to Contribute
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) before getting started.
+Please read our [Contributing Guidelines](docs/CONTRIBUTING.md) before getting started.
 
 **For Developers:**
 
