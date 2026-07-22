@@ -1,10 +1,14 @@
-# How to Install Repertoire on Your Android Phone
+﻿# How to Install Repertoire
 
-There are two ways to install Repertoire on your Android device. The recommended method is through F-Droid, which provides automatic updates.
+Repertoire is a cross-platform application available for Android and Windows. Choose your platform below for installation instructions.
 
 ---
 
-## Option 1: Install from F-Droid (Recommended)
+## Android
+
+There are two ways to install Repertoire on your Android device. The recommended method is through F-Droid, which provides automatic updates.
+
+### Option 1: Install from F-Droid (Recommended)
 
 F-Droid is a trusted, community-maintained software repository for Android. Installing from F-Droid is the easiest way to get the app and keep it updated.
 
@@ -17,50 +21,36 @@ F-Droid is a trusted, community-maintained software repository for Android. Inst
 
 3.  **Install:** Tap the "Install" button on the app page in F-Droid. The app will be downloaded, installed, and automatically updated in the future.
 
----
-
-## Option 2: Manual Installation (Advanced)
+### Option 2: Manual Installation (Advanced)
 
 If you prefer not to use F-Droid, you can download and install the app manually from our GitHub releases.
 
-### Step 1: Download the App Installer
-
-The installer file for an Android app is called an "APK" file.
-
 1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
 2.  On the release page, scroll down until you see a section labeled **Assets**. You may need to tap on it to see the list of files.
-3.  Look for the file that ends with `.apk`. It will typically be named `app-arm64-v8a-fdroid-release.apk` (for newer phones) or `app-armeabi-v7a-fdroid-release.apk` (for older phones).
+3.  Look for the file that ends with .apk. It will typically be named pp-fdroid-release.apk (or similar). This is a single, consolidated universal APK that works on all modern Android devices.
 4.  Tap on that file to download it to your phone.
 
-Here is what the "Assets" section looks like. You want to download one of the highlighted files:
-```
+Here is what the "Assets" section typically looks like. You want to download the highlighted file:
+`	ext
 ▼ Assets
-  app-arm64-v8a-fdroid-release.apk      <-- TAP THIS ONE (Most common)
-  app-armeabi-v7a-fdroid-release.apk    <-- OR THIS ONE (Older phones)
-  app-x86_64-fdroid-release.apk
-  app-fdroid-release.aab
+  app-fdroid-release.apk                <-- TAP THIS ONE
+  Repertoire-Windows-Setup.zip
   Source code (zip)
-  Source code (tar.gz)
-  web_build.zip
-```
-*(Note: The other files like `.aab` and `.sha256` are for developers or for verifying the download. You can safely ignore them.)*
+`
+*(Note: The other files are for Windows users or developers. You can safely ignore them.)*
 
-### Step 2: Allow Installation from Your Browser
+5.  **Allow Installation:** Once the download is complete, tap the notification to open the .apk file. Your phone may show a security pop-up. Tap **"Settings"** and enable **"Allow from this source"**.
+6.  **Install:** Press the back button, tap **"Install"**, and wait for it to complete.
 
-Android has a security feature that may block installations from outside the Google Play Store. You'll need to give your browser permission to install the app.
+---
 
-1.  Once the download is complete, tap the notification to open the downloaded `.apk` file. (If you can't find it, open your phone's "Files" or "Downloads" app).
-2.  Your phone will likely show a security pop-up message saying you are not allowed to install unknown apps from this source (e.g., from your web browser).
-3.  This pop-up should have a **"Settings"** button. Tap it.
-4.  You will be taken to a screen with an option like **"Allow from this source"**. Toggle the switch to enable it.
-5.  Press the back button. You will now be able to proceed with the installation.
+## Windows
 
-### Step 3: Install the App
+Repertoire is fully supported on Windows desktop.
 
-After allowing the installation, you should see a screen asking for confirmation to install Repertoire.
-
-1.  Tap the **"Install"** button.
-2.  Wait for the installation to complete.
-3.  Once it's done, you can tap **"Open"** to start using the app right away, or **"Done"** to open it later from your phone's home screen or app drawer.
-
-That's it! The Repertoire app is now installed and ready to use on your phone.
+1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
+2.  On the release page, scroll down to the **Assets** section.
+3.  Look for the Windows release file, which will typically be a .zip file or an .exe installer.
+4.  Download the file to your PC.
+5.  If it's a zip file, extract it to a folder of your choice and run the executable inside. If it's an installer, simply double-click it to run the setup.
+    *Note: Because this is an independent open-source project, Windows SmartScreen may sometimes show a "Windows protected your PC" warning when running the file for the first time. You can safely click **"More info"** and then **"Run anyway"**.*
