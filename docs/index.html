@@ -120,6 +120,47 @@
             width: 100%;
         }
 
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+        }
+
+        .dropdown-content a {
+            color: #555;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-content a::after {
+            display: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f9f9f9;
+            color: #111;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
         /* Hero Section */
         #hero {
             background: linear-gradient(135deg, #111111 0%, #333333 100%);
@@ -406,13 +447,17 @@
                     <li><a href="#features">Features</a></li>
                     <li><a href="#screenshots">Screenshots</a></li>
                     <li><a href="#download">Download</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/INSTALL.md" target="_blank">Installation</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/CONTRIBUTING.md" target="_blank">Contributing</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/RELEASE_WORKFLOW.md" target="_blank">Docs</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp/wiki" target="_blank">Wiki</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp/discussions" target="_blank">Forum</a></li>
                     <li><a href="privacy.html">Privacy</a></li>
-                    <li><a href="https://github.com/Adithya-Jayan/MyRepertoirApp" target="_blank">GitHub</a></li>
+                    <li class="dropdown">
+                        <a href="javascript:void(0)" class="dropbtn">Links ▾</a>
+                        <div class="dropdown-content">
+                            <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/INSTALL.md" target="_blank">Installation</a>
+                            <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/CONTRIBUTING.md" target="_blank">Contributing</a>
+                            <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/wiki" target="_blank">Wiki</a>
+                            <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/discussions" target="_blank">Forum</a>
+                            <a href="https://github.com/Adithya-Jayan/MyRepertoirApp" target="_blank">GitHub Repo</a>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
