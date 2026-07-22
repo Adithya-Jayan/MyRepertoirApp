@@ -48,9 +48,9 @@ You can host Repertoire yourself on any static web server (like GitHub Pages, Ve
 
 ---
 
-## Desktop (Experimental)
+## Desktop
 
-We also provide desktop builds for those who wish to try them out. Please note that these are currently untested and experimental.
+We also provide desktop builds for Windows and Linux. Please note that these builds are provided as-is and may not be actively tested prior to every release.
 
 ### Windows
 
