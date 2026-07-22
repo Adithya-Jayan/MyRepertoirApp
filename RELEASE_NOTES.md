@@ -1,3 +1,0 @@
-### ✨ New Features & Improvements
-* **Localization & Translations:** We've introduced a brand new Flutter localization infrastructure, allowing the app to support multiple languages! A massive thank you to our contributors for adding full support for **Simplified Chinese**.
-* **Android Privacy Enhancements:** We've stripped unnecessary media permissions (`READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO`) from the Android Manifest. The app continues to function perfectly while strictly minimizing the permissions it requests, ensuring full compliance with the latest privacy policies.
