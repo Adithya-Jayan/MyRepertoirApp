@@ -1,6 +1,6 @@
-﻿# How to Install Repertoire
+# How to Install Repertoire
 
-Repertoire is a cross-platform application available for Android, Windows, and Linux. Choose your platform below for installation instructions.
+Repertoire is a cross-platform application available for Android, with experimental desktop and web builds. Choose your platform below for installation instructions.
 
 ---
 
@@ -8,7 +8,7 @@ Repertoire is a cross-platform application available for Android, Windows, and L
 
 Repertoire comes in two flavors for Android:
 * **F-Droid Variant (Recommended):** Fully open-source, no proprietary code.
-* **Play Store Variant:** Includes proprietary Google services (like Google Drive sync and analytics).
+* **Play Store Variant:** Might include proprietary Google services in the future (like Google Drive sync and analytics).
 
 ### Option 1: Install from F-Droid (Recommended)
 
@@ -30,31 +30,39 @@ If you prefer to install manually without an app store:
 1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
 2.  Scroll down to the **Assets** section.
 3.  Download the universal APK for your preferred variant:
-    * pp-universal-fdroid-release.apk (For the fully open-source version)
-    * pp-universal-playstore-release.apk (If you want Google Drive sync support)
-4.  Once downloaded, tap the notification to open the .apk file. 
+    * `app-universal-fdroid-release.apk` (For the fully open-source version)
+    * `app-universal-playstore-release.apk` (For the Play Store variant)
+4.  Once downloaded, tap the notification to open the `.apk` file. 
     *Note: Your phone may show a security pop-up. Tap **"Settings"** and enable **"Allow from this source"**, then go back and tap **"Install"**.*
 
 ---
 
-## Windows Desktop
+## Web Server Hosting
 
-Repertoire is fully supported on Windows.
+You can host Repertoire yourself on any static web server (like GitHub Pages, Vercel, or Nginx).
 
 1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
-2.  Scroll down to the **Assets** section.
-3.  Look for the Windows release zip file (e.g., epertoire-windows-v1.0.0.zip).
-4.  Download the .zip file to your PC.
-5.  Extract the .zip file to a permanent folder on your computer.
-6.  Open the extracted folder and double-click epertoire.exe to run the app.
-    *Note: Since this is an independent open-source project, Windows SmartScreen may show a "Windows protected your PC" warning. Click **"More info"** and then **"Run anyway"**.*
+2.  Scroll down to the **Assets** section and download `web_build.zip`.
+3.  Extract the `.zip` file.
+4.  Upload the extracted contents to your static web hosting provider.
 
 ---
 
-## Linux Desktop
+## Desktop (Experimental)
+
+We also provide desktop builds for those who wish to try them out. Please note that these are currently untested and experimental.
+
+### Windows
 
 1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
-2.  Scroll down to the **Assets** section.
-3.  Download the Linux release zip file (e.g., epertoire-linux-v1.0.0.zip).
-4.  Extract the .zip file.
-5.  Open your terminal, navigate to the extracted folder, and execute the app by running ./repertoire.
+2.  Scroll down to the **Assets** section and download the Windows release zip file (e.g., `repertoire-windows-v1.0.0.zip`).
+3.  Extract the `.zip` file to a folder on your computer.
+4.  Open the folder and double-click `repertoire.exe` to run the app.
+    *Note: Windows SmartScreen may show a "Windows protected your PC" warning. Click **"More info"** and then **"Run anyway"**.*
+
+### Linux
+
+1.  **[Click here to go to the latest release page.](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)**
+2.  Scroll down to the **Assets** section and download the Linux release zip file (e.g., `repertoire-linux-v1.0.0.zip`).
+3.  Extract the `.zip` file.
+4.  Open your terminal, navigate to the extracted folder, and execute the app by running `./repertoire`.
