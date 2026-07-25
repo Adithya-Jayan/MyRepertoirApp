@@ -41,6 +41,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   int _currentPage = 1;
   bool _isDraggingScrollbar = false;
   Duration _lastUpdateElapsed = Duration.zero;
+  double _fitScale = 1.0;
 
   late AnimationController _scrollbarOpacityController;
   Timer? _scrollbarHideTimer;
@@ -227,19 +228,18 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   void _handleDoubleTap() {
     if (!_pdfViewerController.isReady) return;
     final currentZoom = _pdfViewerController.currentZoom;
-    final minZoom = _pdfViewerController.minScale;
 
     // Zoom out to fit page width if we are currently zoomed in
-    if (currentZoom > minZoom + 0.01) {
+    if (currentZoom > _fitScale + 0.01) {
       _pdfViewerController.setZoom(
         _pdfViewerController.centerPosition,
-        minZoom,
+        _fitScale,
       );
     } else {
       // Zoom in to 2.0 times the fit zoom (minScale)
       _pdfViewerController.setZoom(
         _pdfViewerController.centerPosition,
-        minZoom * 2.0,
+        _fitScale * 2.0,
       );
     }
   }
@@ -410,6 +410,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                 controller: _pdfViewerController,
                 params: PdfViewerParams(
                   margin: 8.0,
+                  minScale: 0.5,
+                  useAlternativeFitScaleAsMinScale: false,
                   behaviorControlParams: const PdfViewerBehaviorControlParams(
                     pageImageCachingDelay: Duration.zero,
                     partialImageLoadingDelay: Duration.zero,
@@ -419,6 +421,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                       setState(() {
                         _isLoaded = true;
                         _document = document;
+                      });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && controller.isReady) {
+                          _fitScale = controller.currentZoom;
+                        }
                       });
                     }
                   },
