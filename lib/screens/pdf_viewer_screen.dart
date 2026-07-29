@@ -227,19 +227,24 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   void _handleDoubleTap() {
     if (!_pdfViewerController.isReady) return;
     final currentZoom = _pdfViewerController.currentZoom;
-    final minZoom = _pdfViewerController.minScale;
 
     // Zoom out to fit page width if we are currently zoomed in
-    if (currentZoom > minZoom + 0.01) {
+    final double fitScale = _pdfViewerController.alternativeFitScale == null
+        ? _pdfViewerController.coverScale
+        : math.min(
+            _pdfViewerController.coverScale,
+            _pdfViewerController.alternativeFitScale!,
+          );
+
+    if (currentZoom > fitScale + 0.01) {
       _pdfViewerController.setZoom(
         _pdfViewerController.centerPosition,
-        minZoom,
+        fitScale,
       );
     } else {
-      // Zoom in to 2.0 times the fit zoom (minScale)
       _pdfViewerController.setZoom(
         _pdfViewerController.centerPosition,
-        minZoom * 2.0,
+        fitScale * 2.0,
       );
     }
   }
@@ -410,6 +415,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                 controller: _pdfViewerController,
                 params: PdfViewerParams(
                   margin: 8.0,
+                  minScale: 0.5,
+                  useAlternativeFitScaleAsMinScale: false,
                   behaviorControlParams: const PdfViewerBehaviorControlParams(
                     pageImageCachingDelay: Duration.zero,
                     partialImageLoadingDelay: Duration.zero,
