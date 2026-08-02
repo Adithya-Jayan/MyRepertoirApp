@@ -185,7 +185,7 @@ lib/
 Thank you to all the people who have contributed! (Please contribute to help improve the app 🥺)
 
 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Adithya-Jayan/MyRepertoirApp"  alt="MyRepertoir app contributors" title="MyRepertoir app contributors" width="100" anon=1/>
+  <img src="https://contrib.rocks/image?repo=Adithya-Jayan/MyRepertoirApp"  alt="MyRepertoir app contributors" title="MyRepertoir app contributors" width="300" anon=1/>
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
