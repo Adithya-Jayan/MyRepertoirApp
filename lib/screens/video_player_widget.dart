@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
+
 import 'dart:async';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:repertoire/models/music_piece.dart';
 import 'package:repertoire/models/bookmark.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
-import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:uuid/uuid.dart';
 import '../utils/app_logger.dart';
 
@@ -18,14 +18,14 @@ import 'package:repertoire/l10n/l10n.dart';
 class VideoPlayerWidget extends StatefulWidget {
   final MusicPiece musicPiece;
   final int mediaItemIndex;
-  final VideoPlayerController? controller;
+  final Player? player;
   final bool isFullscreen;
 
   const VideoPlayerWidget({
     super.key,
     required this.musicPiece,
     required this.mediaItemIndex,
-    this.controller,
+    this.player,
     this.isFullscreen = false,
   });
 
@@ -34,10 +34,10 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  late VideoPlayerController _controller;
-  final PitchControllablePlayer _audioPlayer = PitchControllablePlayer();
+  late final Player _player;
+  late final VideoController _videoController;
   bool _isInitialized = false;
-  bool _controllerIsLocal = false;
+  bool _playerIsLocal = false;
   List<Bookmark> _bookmarks = [];
   final MusicPieceRepository _repository = MusicPieceRepository();
   final Uuid _uuid = const Uuid();
@@ -46,8 +46,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   double? _dragValue;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  Timer? _syncTimer;
   Timer? _skipTimer;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playingSubscription;
 
   @override
   void initState() {
@@ -77,8 +78,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
 
-    final current = _controller.value.position;
-    final duration = _controller.value.duration;
+    final current = _player.state.position;
+    final duration = _player.state.duration;
     final amount = fine
         ? const Duration(milliseconds: 33)
         : Duration(seconds: seconds);
@@ -92,8 +93,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (targetPos < Duration.zero) targetPos = Duration.zero;
     }
 
-    _controller.seekTo(targetPos);
-    _audioPlayer.player.seek(targetPos);
+    _player.seek(targetPos);
   }
 
   void _startSkipTimer(bool forward, bool fine) {
@@ -127,8 +127,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       }
 
       if (_isInitialized) {
-        await _controller.setPlaybackSpeed(savedSpeed);
-        await _audioPlayer.setSpeed(savedSpeed);
+        await _player.setRate(savedSpeed);
         await _applyPitch(savedPitch);
       }
     } catch (e) {
@@ -151,44 +150,30 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _applyPitch(double semitones) async {
     try {
-      // Use the high-quality just_audio pitch shifting from the external player
-      await _audioPlayer.setPitch(semitones);
-      AppLogger.log('Applied synchronized video pitch shift: $semitones st');
+      await _player.setPitch(semitones);
+      AppLogger.log('Applied video pitch shift: $semitones st');
     } catch (e) {
-      AppLogger.log('Error applying synchronized video pitch: $e');
+      AppLogger.log('Error applying video pitch: $e');
     }
   }
 
   Future<void> _initializePlayer() async {
-    await _audioPlayer.initialize();
-
-    if (widget.controller != null) {
-      _controller = widget.controller!;
+    if (widget.player != null) {
+      _player = widget.player!;
+      _videoController = VideoController(_player);
       _isInitialized = true;
     } else {
-      _controllerIsLocal = true;
+      _playerIsLocal = true;
+      _player = Player();
+      _videoController = VideoController(_player);
+      
       final videoPath =
           widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
 
-      if (videoPath.startsWith('http')) {
-        _controller = VideoPlayerController.networkUrl(Uri.parse(videoPath));
-      } else {
-        _controller = VideoPlayerController.file(File(videoPath));
-      }
-
       try {
-        await _controller.initialize();
-
-        // Mute video so we only hear the high-quality external audio
-        await _controller.setVolume(0);
-
-        // Initialize external audio with the SAME video file
-        await _audioPlayer.setUrl(
-          videoPath,
-          title: widget.musicPiece.title,
-          artist: widget.musicPiece.artistComposer,
-        );
-
+        final media = videoPath.startsWith('http') ? Media(videoPath) : Media('file://$videoPath');
+        await _player.open(media, play: false);
+        
         if (mounted) {
           setState(() {
             _isInitialized = true;
@@ -199,50 +184,25 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       }
     }
 
-    // Do NOT add listener to _controller to avoid UI jitter from fvp progress reports.
-    // We will use the master audio clock for progress.
-    _startSyncTimer();
-  }
-
-  void _startSyncTimer() {
-    _syncTimer?.cancel();
-    _syncTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted || !_isInitialized) return;
-
-      // Update UI from Master Audio Clock
-      setState(() {});
-
-      if (!_controller.value.isPlaying) return;
-
-      final videoPos = _controller.value.position;
-      final audioPos = _audioPlayer.player.position;
-
-      // Softer sync: check drift every 1s (using counter or longer timer)
-      // but keep UI update fast.
-      if (timer.tick % 10 == 0) {
-        // Every 1 second
-        final drift = (videoPos.inMilliseconds - audioPos.inMilliseconds).abs();
-        if (drift > 300) {
-          AppLogger.log('[VideoPlayer] Syncing drift: ${drift}ms');
-          _controller.seekTo(audioPos);
-        }
+    _positionSubscription = _player.stream.position.listen((event) {
+      if (mounted && _dragValue == null) {
+        setState(() {});
       }
     });
-  }
-
-  void _onControllerUpdate() {
-    // We keep this method for re-initialization logic to maintain listener consistency,
-    // even though we rely on the sync timer for UI updates.
-    if (mounted) setState(() {});
+    
+    _playingSubscription = _player.stream.playing.listen((event) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
-    _syncTimer?.cancel();
     _skipTimer?.cancel();
     _disableWakelock();
-    if (_controllerIsLocal) {
-      _controller.dispose();
+    _positionSubscription?.cancel();
+    _playingSubscription?.cancel();
+    if (_playerIsLocal) {
+      _player.dispose();
     }
     super.dispose();
   }
@@ -261,11 +221,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _addBookmark() async {
-    if (!_controller.value.isInitialized) return;
+    if (!_isInitialized) return;
 
     final currentMediaId =
         widget.musicPiece.mediaItems[widget.mediaItemIndex].id;
-    final currentPosition = _controller.value.position;
+    final currentPosition = _player.state.position;
 
     final newBookmark = Bookmark(
       id: _uuid.v4(),
@@ -322,7 +282,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     if (widget.isFullscreen) {
       Navigator.of(context).pop();
     } else {
-      // Hide system UI for true fullscreen
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
       Navigator.of(context)
@@ -331,13 +290,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               builder: (context) => VideoPlayerWidget(
                 musicPiece: widget.musicPiece,
                 mediaItemIndex: widget.mediaItemIndex,
-                controller: _controller,
+                player: _player,
                 isFullscreen: true,
               ),
             ),
           )
           .then((_) {
-            // Restore system UI when back
             SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
           });
     }
@@ -391,7 +349,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               style: TextStyle(color: isDrawer ? Colors.white70 : null),
             ),
             onTap: () {
-              _controller.seekTo(bookmark.timestamp);
+              _player.seek(bookmark.timestamp);
               if (isDrawer) Navigator.of(context).pop();
             },
             onLongPress: () async {
@@ -435,138 +393,93 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     Duration? startAt,
     bool autoPlay = true,
   }) async {
-    if (_controllerIsLocal) {
-      AppLogger.log('[VideoPlayer] Re-initializing controller...');
+    if (_playerIsLocal) {
+      AppLogger.log('[VideoPlayer] Re-initializing player...');
 
       final videoPath =
           widget.musicPiece.mediaItems[widget.mediaItemIndex].pathOrUrl;
-      final newController = videoPath.startsWith('http')
-          ? VideoPlayerController.networkUrl(Uri.parse(videoPath))
-          : VideoPlayerController.file(File(videoPath));
+      final media = videoPath.startsWith('http') ? Media(videoPath) : Media('file://$videoPath');
 
       try {
-        await newController.initialize();
-        await newController.setVolume(0); // Ensure muted
+        await _player.open(media, play: autoPlay);
 
         if (_playbackSpeed != 1.0) {
-          await newController.setPlaybackSpeed(_playbackSpeed);
+          await _player.setRate(_playbackSpeed);
         }
 
         if (startAt != null) {
-          await newController.seekTo(startAt);
-          await _audioPlayer.player.seek(startAt);
-        }
-
-        final oldController = _controller;
-        oldController.removeListener(_onControllerUpdate);
-
-        setState(() {
-          _controller = newController;
-          _controller.addListener(_onControllerUpdate);
-        });
-
-        await oldController.dispose();
-
-        AppLogger.log('[VideoPlayer] Controller re-initialized.');
-        if (autoPlay) {
-          await _controller.play();
-          await _audioPlayer.play();
+          await _player.seek(startAt);
         }
       } catch (e) {
         AppLogger.log('[VideoPlayer] Error re-initializing player: $e');
       }
     } else {
-      AppLogger.log(
-        '[VideoPlayer] External controller. Using fallback seek...',
-      );
       if (startAt != null) {
-        await _controller.seekTo(startAt);
-        await _audioPlayer.player.seek(startAt);
+        await _player.seek(startAt);
         if (autoPlay) {
-          await _controller.play();
-          await _audioPlayer.play();
+          await _player.play();
         }
       } else {
-        await _controller.seekTo(const Duration(milliseconds: 10));
-        await _audioPlayer.player.seek(const Duration(milliseconds: 10));
-        await Future.delayed(const Duration(milliseconds: 100));
-        await _controller.play();
-        await _audioPlayer.play();
+        await _player.seek(const Duration(milliseconds: 10));
+        await _player.play();
       }
     }
   }
 
   Future<void> _onReplay() async {
-    // Replay implies starting from 0 and playing
     await _reinitializeController(startAt: Duration.zero, autoPlay: true);
   }
 
   Future<void> _onSeekBack() async {
-    final newPos = _controller.value.position - const Duration(seconds: 5);
+    final newPos = _player.state.position - const Duration(seconds: 5);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
 
-    // Check if we are finished or very close to end (stale state risk)
     bool isFinished =
-        _controller.value.isInitialized &&
-        (_controller.value.position >= _controller.value.duration ||
-            (_controller.value.duration - _controller.value.position)
-                    .inMilliseconds <
-                200);
+        _isInitialized &&
+        (_player.state.position >= _player.state.duration ||
+            (_player.state.duration - _player.state.position).inMilliseconds < 200);
 
-    if (isFinished && _controllerIsLocal) {
-      AppLogger.log(
-        '[VideoPlayer] Seek back from finished state. Re-initializing to prevent freeze...',
-      );
-      // Don't auto-play on seek back, just show the frame
+    if (isFinished && _playerIsLocal) {
       await _reinitializeController(startAt: targetPos, autoPlay: false);
     } else {
-      await _controller.seekTo(targetPos);
-      await _audioPlayer.player.seek(targetPos);
+      await _player.seek(targetPos);
     }
   }
 
   Future<void> _onSeekForward() async {
-    final newPos = _controller.value.position + const Duration(seconds: 5);
-    final targetPos = newPos > _controller.value.duration
-        ? _controller.value.duration
+    final newPos = _player.state.position + const Duration(seconds: 5);
+    final targetPos = newPos > _player.state.duration
+        ? _player.state.duration
         : newPos;
-    await _controller.seekTo(targetPos);
-    await _audioPlayer.player.seek(targetPos);
+    await _player.seek(targetPos);
   }
 
   Future<void> _onSeekFineBack() async {
-    final newPos = _controller.value.position - const Duration(seconds: 1);
+    final newPos = _player.state.position - const Duration(seconds: 1);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
-    await _controller.seekTo(targetPos);
-    await _audioPlayer.player.seek(targetPos);
+    await _player.seek(targetPos);
   }
 
   Future<void> _onSeekFineForward() async {
-    final newPos = _controller.value.position + const Duration(seconds: 1);
-    final targetPos = newPos > _controller.value.duration
-        ? _controller.value.duration
+    final newPos = _player.state.position + const Duration(seconds: 1);
+    final targetPos = newPos > _player.state.duration
+        ? _player.state.duration
         : newPos;
-    await _controller.seekTo(targetPos);
-    await _audioPlayer.player.seek(targetPos);
+    await _player.seek(targetPos);
   }
 
   Future<void> _onStepBack() async {
-    final newPos =
-        _controller.value.position -
-        const Duration(milliseconds: 33); // Approx 1 frame at 30fps
+    final newPos = _player.state.position - const Duration(milliseconds: 33);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
-    await _controller.seekTo(targetPos);
-    await _audioPlayer.player.seek(targetPos);
+    await _player.seek(targetPos);
   }
 
   Future<void> _onStepForward() async {
-    final newPos =
-        _controller.value.position + const Duration(milliseconds: 33);
-    final targetPos = newPos > _controller.value.duration
-        ? _controller.value.duration
+    final newPos = _player.state.position + const Duration(milliseconds: 33);
+    final targetPos = newPos > _player.state.duration
+        ? _player.state.duration
         : newPos;
-    await _controller.seekTo(targetPos);
-    await _audioPlayer.player.seek(targetPos);
+    await _player.seek(targetPos);
   }
 
   @override
@@ -577,13 +490,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         child: Center(child: CircularProgressIndicator()),
       );
     }
+    
+    double aspectRatio = _player.state.width != null && _player.state.height != null && _player.state.height! > 0
+        ? _player.state.width! / _player.state.height!
+        : 16 / 9;
 
     Widget videoPlayer = Stack(
       alignment: Alignment.bottomCenter,
       children: [
-        VideoPlayer(_controller),
+        Video(controller: _videoController, controls: NoVideoControls),
         _ControlsOverlay(
-          controller: _controller,
+          player: _player,
           isFullscreen: widget.isFullscreen,
           onToggleFullscreen: _toggleFullscreen,
           onReplay: _onReplay,
@@ -602,9 +519,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           onSpeedChanged: (speed) async {
             setState(() {
               _playbackSpeed = speed;
-              _controller.setPlaybackSpeed(speed);
+              _player.setRate(speed);
             });
-            await _audioPlayer.setSpeed(speed);
             await _saveSettings();
           },
         ),
@@ -651,8 +567,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                                 setState(() {
                                   _playbackSpeed = value;
                                 });
-                                await _controller.setPlaybackSpeed(value);
-                                await _audioPlayer.setSpeed(value);
+                                await _player.setRate(value);
                                 await _saveSettings();
                               },
                             ),
@@ -699,8 +614,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                             _playbackSpeed = 1.0;
                             _pitch = 0.0;
                           });
-                          await _controller.setPlaybackSpeed(1.0);
-                          await _audioPlayer.setSpeed(1.0);
+                          await _player.setRate(1.0);
                           await _applyPitch(0.0);
                           await _saveSettings();
                         },
@@ -736,22 +650,21 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         ),
         body: Center(
           child: AspectRatio(
-            aspectRatio: _controller.value.aspectRatio,
+            aspectRatio: aspectRatio,
             child: videoPlayer,
           ),
         ),
       );
     }
 
-    final duration = _controller.value.duration.inMilliseconds.toDouble();
-    final masterPosition = _audioPlayer.player.position.inMilliseconds
-        .toDouble();
+    final duration = _player.state.duration.inMilliseconds.toDouble();
+    final masterPosition = _player.state.position.inMilliseconds.toDouble();
     final position = _dragValue ?? masterPosition;
 
     return Column(
       children: [
         AspectRatio(
-          aspectRatio: _controller.value.aspectRatio,
+          aspectRatio: aspectRatio,
           child: videoPlayer,
         ),
 
@@ -766,8 +679,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                 setState(() {
                   _dragValue = value;
                 });
-                _controller.seekTo(Duration(milliseconds: value.toInt()));
-                _audioPlayer.player.seek(Duration(milliseconds: value.toInt()));
+                _player.seek(Duration(milliseconds: value.toInt()));
               },
               onChangeStart: (_) {
                 setState(() {
@@ -785,8 +697,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_formatDuration(_audioPlayer.player.position)),
-                  Text(_formatDuration(_controller.value.duration)),
+                  Text(_formatDuration(_player.state.position)),
+                  Text(_formatDuration(_player.state.duration)),
                 ],
               ),
             ),
@@ -812,8 +724,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                         setState(() {
                           _playbackSpeed = value;
                         });
-                        await _controller.setPlaybackSpeed(value);
-                        await _audioPlayer.setSpeed(value);
+                        await _player.setRate(value);
                         await _saveSettings();
                       },
                     ),
@@ -853,8 +764,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                     _playbackSpeed = 1.0;
                     _pitch = 0.0;
                   });
-                  await _controller.setPlaybackSpeed(1.0);
-                  await _audioPlayer.setSpeed(1.0);
+                  await _player.setRate(1.0);
                   await _applyPitch(0.0);
                   await _saveSettings();
                 },
@@ -884,7 +794,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
 class _ControlsOverlay extends StatelessWidget {
   const _ControlsOverlay({
-    required this.controller,
+    required this.player,
     required this.isFullscreen,
     required this.onToggleFullscreen,
     required this.onReplay,
@@ -901,7 +811,7 @@ class _ControlsOverlay extends StatelessWidget {
     required this.onSpeedChanged,
   });
 
-  final VideoPlayerController controller;
+  final Player player;
   final bool isFullscreen;
   final VoidCallback onToggleFullscreen;
   final VoidCallback onReplay;
@@ -918,28 +828,18 @@ class _ControlsOverlay extends StatelessWidget {
   final Function(double) onSpeedChanged;
 
   bool get _isFinished {
-    if (!controller.value.isInitialized) return false;
-    // Check if position is at or very close to the end (within 200ms)
-    return controller.value.position >= controller.value.duration ||
-        (controller.value.duration - controller.value.position).inMilliseconds <
+    return player.state.position >= player.state.duration ||
+        (player.state.duration - player.state.position).inMilliseconds <
             200;
   }
 
   void _togglePlay() {
-    AppLogger.log(
-      '[VideoPlayer] Toggle play called. isFinished: $_isFinished, isPlaying: ${controller.value.isPlaying}',
-    );
-
     if (_isFinished) {
       onReplay();
-    } else if (controller.value.isPlaying) {
-      controller.pause();
-      // External player sync
-      PitchControllablePlayer().pause();
+    } else if (player.state.playing) {
+      player.pause();
     } else {
-      controller.play();
-      // External player sync
-      PitchControllablePlayer().play();
+      player.play();
     }
   }
 
@@ -949,8 +849,6 @@ class _ControlsOverlay extends StatelessWidget {
       children: <Widget>[
         // Tap to play/pause
         GestureDetector(onTap: _togglePlay, behavior: HitTestBehavior.opaque),
-
-        // Removed semi-transparent background and center icons
 
         // Top Controls
         Positioned(
@@ -1044,10 +942,22 @@ class _ControlsOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isFullscreen)
-                  VideoProgressIndicator(
-                    controller,
-                    allowScrubbing: true,
-                    colors: const VideoProgressColors(playedColor: Colors.blue),
+                  // Use a custom slider for fullscreen since VideoProgressIndicator is video_player specific
+                  SliderTheme(
+                    data: const SliderThemeData(
+                      trackHeight: 4,
+                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+                    ),
+                    child: Slider(
+                      value: player.state.position.inMilliseconds.toDouble().clamp(0.0, player.state.duration.inMilliseconds.toDouble() > 0 ? player.state.duration.inMilliseconds.toDouble() : 1.0),
+                      min: 0.0,
+                      max: player.state.duration.inMilliseconds.toDouble() > 0 ? player.state.duration.inMilliseconds.toDouble() : 1.0,
+                      activeColor: Colors.blue,
+                      inactiveColor: Colors.white30,
+                      onChanged: (v) {
+                        player.seek(Duration(milliseconds: v.toInt()));
+                      },
+                    ),
                   ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1069,7 +979,7 @@ class _ControlsOverlay extends StatelessWidget {
                       icon: Icon(
                         _isFinished
                             ? Icons.replay
-                            : (controller.value.isPlaying
+                            : (player.state.playing
                                   ? Icons.pause
                                   : Icons.play_arrow),
                         color: Colors.white,

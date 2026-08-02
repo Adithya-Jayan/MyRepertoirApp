@@ -5,8 +5,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart'; // Add for kIsWeb
-import 'package:video_player/video_player.dart';
-import 'package:fvp/fvp.dart' as fvp;
+import 'package:media_kit/media_kit.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../utils/app_logger.dart';
@@ -111,14 +110,17 @@ class ThumbnailService {
 
     AppLogger.log('ThumbnailService: Generating video thumbnail for ${item.pathOrUrl}');
     
-    VideoPlayerController? controller;
+    Player? player;
     try {
-      controller = VideoPlayerController.file(File(item.pathOrUrl));
-      await controller.initialize();
+      player = Player();
+      final media = item.pathOrUrl.startsWith('http') ? Media(item.pathOrUrl) : Media('file://${item.pathOrUrl}');
+      await player.open(media, play: false);
       
-      // Target a reasonable thumbnail size (e.g. max 720 width)
-      double width = controller.value.size.width;
-      double height = controller.value.size.height;
+      // Wait for initialization
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      double width = player.state.width?.toDouble() ?? 720.0;
+      double height = player.state.height?.toDouble() ?? 480.0;
       const double maxDimension = 720.0;
       
       if (width > maxDimension || height > maxDimension) {
@@ -136,18 +138,18 @@ class ThumbnailService {
       }
 
       // Seek to 1 second (or 10% of duration) to avoid black frames at start
-      final duration = controller.value.duration;
+      final duration = player.state.duration;
       final seekPos = duration.inSeconds > 1 ? const Duration(seconds: 1) : Duration.zero;
-      await controller.seekTo(seekPos);
+      await player.seek(seekPos);
       
       // Wait for seek to complete and frame to be ready
       await Future.delayed(const Duration(milliseconds: 1000));
 
-      return await captureFrameFromController(controller, musicPieceId, item.id);
+      return await captureFrameFromController(player, musicPieceId, item.id);
     } catch (e) {
       AppLogger.log('ThumbnailService: Error generating video thumbnail: $e');
     } finally {
-      await controller?.dispose();
+      await player?.dispose();
     }
     return null;
   }
@@ -200,73 +202,26 @@ class ThumbnailService {
     return null;
   }
 
-  static Future<String?> captureFrameFromController(VideoPlayerController controller, String musicPieceId, String mediaItemId) async {
+  static Future<String?> captureFrameFromController(Player player, String musicPieceId, String mediaItemId) async {
     if (kIsWeb) return null;
-    if (!controller.value.isInitialized) return null;
 
     try {
-      // Target a reasonable thumbnail size (e.g. max 720 width)
-      double width = controller.value.size.width;
-      double height = controller.value.size.height;
-      const double maxDimension = 720.0;
-      
-      if (width > maxDimension || height > maxDimension) {
-        final double scale = maxDimension / (width > height ? width : height);
-        width *= scale;
-        height *= scale;
-      }
-      
-      final int iWidth = width.toInt();
-      final int iHeight = height.toInt();
-      
-      if (iWidth <= 0 || iHeight <= 0) {
-        AppLogger.log('ThumbnailService: Invalid video size for snapshot: $iWidth x $iHeight');
-        return null;
-      }
-
-      // Use fvp extension to take a snapshot (returns raw pixel data)
-      AppLogger.log('ThumbnailService: Requesting snapshot from active controller at $iWidth x $iHeight...');
-      final rawPixels = await fvp.FVPControllerExtensions(controller).snapshot(
-        width: iWidth,
-        height: iHeight,
-      );
+      AppLogger.log('ThumbnailService: Requesting snapshot from active player...');
+      final rawPixels = await player.screenshot();
       
       if (rawPixels != null && rawPixels.isNotEmpty) {
-        AppLogger.log('ThumbnailService: Captured raw frame (${rawPixels.length} bytes). Encoding to PNG...');
-        
-        final completer = Completer<ui.Image>();
-        ui.decodeImageFromPixels(
-          rawPixels,
-          iWidth,
-          iHeight,
-          ui.PixelFormat.rgba8888,
-          (ui.Image img) => completer.complete(img),
-        );
-        
-        final uiImage = await completer.future;
-        final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
-        
-        if (byteData != null) {
-          final pngBytes = byteData.buffer.asUint8List();
-          
-          if (pngBytes.isEmpty) {
-             AppLogger.log('ThumbnailService: Encoded PNG is empty!');
-             return null;
-          }
+        AppLogger.log('ThumbnailService: Captured raw frame (${rawPixels.length} bytes).');
 
-          final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
-          if (thumbnailDir != null) {
-            if (!await thumbnailDir.exists()) {
-              await thumbnailDir.create(recursive: true);
-            }
-            // Use a unique filename if capturing manually to avoid cache issues, 
-            // but for automatic generation we can stick to item ID.
-            final fileName = 'thumb_${mediaItemId}_${DateTime.now().millisecondsSinceEpoch}.png';
-            final thumbnailFile = File(p.join(thumbnailDir.path, fileName));
-            await thumbnailFile.writeAsBytes(pngBytes);
-            AppLogger.log('ThumbnailService: Captured frame saved to ${thumbnailFile.path}');
-            return thumbnailFile.path;
+        final thumbnailDir = await MediaStorageManager.getPieceMediaDirectory(musicPieceId, MediaType.thumbnails);
+        if (thumbnailDir != null) {
+          if (!await thumbnailDir.exists()) {
+            await thumbnailDir.create(recursive: true);
           }
+          final fileName = 'thumb_${mediaItemId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final thumbnailFile = File(p.join(thumbnailDir.path, fileName));
+          await thumbnailFile.writeAsBytes(rawPixels);
+          AppLogger.log('ThumbnailService: Captured frame saved to ${thumbnailFile.path}');
+          return thumbnailFile.path;
         }
       }
     } catch (e) {
