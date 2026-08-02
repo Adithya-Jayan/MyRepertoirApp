@@ -156,6 +156,7 @@ jobs:
         env:
           USER_NOTES: ${{ github.event.inputs.release_notes }}
           USE_RELEASE_FILE: ${{ github.event.inputs.use_release_file }}
+          IS_PRERELEASE: ${{ github.event.inputs.prerelease }}
         run: |
           # Parse literal \n into actual newlines
           FORMATTED_USER_NOTES=$(echo -e "${USER_NOTES//\\n/\\n}")
@@ -164,9 +165,13 @@ jobs:
           FILE_NOTES=""
           if [ "$USE_RELEASE_FILE" = "true" ] && [ -f RELEASE_NOTES.md ]; then
             FILE_NOTES=$(cat RELEASE_NOTES.md)
-            # Empty the release notes file to prevent stale notes in future runs
-            > RELEASE_NOTES.md
-            echo "Cleared RELEASE_NOTES.md"
+            if [ "$IS_PRERELEASE" != "true" ]; then
+              # Empty the release notes file to prevent stale notes in future runs
+              > RELEASE_NOTES.md
+              echo "Cleared RELEASE_NOTES.md"
+            else
+              echo "Kept RELEASE_NOTES.md intact for prerelease"
+            fi
           fi
           
           # Combine user notes (from text input) and file notes
@@ -502,12 +507,7 @@ jobs:
       - name: Install dependencies
         run: cd app_fdroid && flutter pub get
 
-      - name: Pre-download and extract MDK SDK (Windows)
-        if: matrix.target == 'windows'
-        shell: bash
-        run: |
-          curl -L -o mdk-sdk.7z https://sourceforge.net/projects/mdk-sdk/files/nightly/mdk-sdk-windows-x64.7z
-          7z x mdk-sdk.7z -oapp_fdroid/windows/flutter/ephemeral/.plugin_symlinks/fvp/windows/ -aoa
+
 
       - name: Build Desktop App
         run: cd app_fdroid && ${{ matrix.build_cmd }} --build-name="${{ needs.release.outputs.version_name }}" --build-number="${{ needs.release.outputs.build_number }}"
