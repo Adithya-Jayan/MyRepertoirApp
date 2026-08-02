@@ -42,7 +42,6 @@ dependencies:
   just_audio_platform_interface: ^4.5.0
   just_audio_windows: ^0.2.0 # Added for Windows support
   just_audio_mpv: ^0.1.1 # Added for Linux support
-  video_player: ^2.10.1 # For video playback
   url_launcher: ^6.3.0 # For opening URLs
   shared_preferences: ^2.2.3 # For storing simple key-value pairs
   vector_math: ^2.1.4
@@ -62,15 +61,17 @@ dependencies:
   flutter_markdown: ^0.7.1
   pub_semver: ^2.2.0
   audio_service: ^0.18.18
-  video_player_win: ^3.2.2
+
   wakelock_plus: ^1.4.0
-  fvp: ^0.35.2
   receive_sharing_intent: 1.8.1
   dart_melty_soundfont: ^2.0.0
   flutter_pcm_sound: ^1.0.2
   dart_midi_pro: ^1.0.4+2
   flutter_image_compress: ^2.4.0
   open_filex: ^4.7.0
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
 dev_dependencies:
   flutter_test:
     sdk: flutter

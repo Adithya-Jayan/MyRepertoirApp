@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart'; // Import kIsWeb
 
 import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:fvp/fvp.dart' as fvp; // Import fvp
+import 'package:media_kit/media_kit.dart';
 import 'package:just_audio_mpv/just_audio_mpv.dart'; // Import for Linux audio
 import 'package:repertoire/utils/theme_notifier.dart';
 import 'package:repertoire/utils/locale_notifier.dart';
@@ -55,28 +55,7 @@ Future<void> main() async {
       databaseFactory = databaseFactoryFfi;
     }
 
-    final Map<String, String> playerOptions = {"audio.resample": "1"};
-
-    if (Platform.isAndroid) {
-      playerOptions["audio.backend"] = "null"; // Disable audio output
-      playerOptions["audio.decoders"] =
-          "0"; // Disable audio decoding if possible
-      playerOptions["audio.filter"] = "0"; // Disable audio filters
-      playerOptions["audio.buffer"] = "0"; // Eliminate audio buffer allocation
-      playerOptions["audio.period"] = "0";
-    } else {
-      playerOptions["audio.buffer"] = "100";
-      playerOptions["audio.period"] = "20";
-    }
-
-    fvp.registerWith(
-      options: {
-        "video.decoders": Platform.isAndroid
-            ? ["MediaCodec", "FFmpeg"]
-            : (Platform.isWindows ? ["D3D11", "FFmpeg"] : ["FFmpeg"]),
-        "player": playerOptions,
-      },
-    ); // Initialize fvp for video playback on all native platforms
+    MediaKit.ensureInitialized();
 
     if (Platform.isLinux || Platform.isWindows) {
       JustAudioMpv.registerWith(); // Initialize just_audio_mpv for desktop audio
