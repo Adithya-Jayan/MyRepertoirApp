@@ -448,6 +448,16 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     await _saveBookmarks();
   }
 
+  Future<void> _renameBookmark(String bookmarkId, String newName) async {
+    setState(() {
+      final index = _bookmarks.indexWhere((b) => b.id == bookmarkId);
+      if (index != -1) {
+        _bookmarks[index] = _bookmarks[index].copyWith(name: newName);
+      }
+    });
+    await _saveBookmarks();
+  }
+
   void _showBookmarksSheet() {
     showModalBottomSheet(
       context: context,
@@ -513,6 +523,37 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                                   leading: const Icon(Icons.bookmark),
                                   title: Text(bookmark.name),
                                   subtitle: Text('Page ${bookmark.pageNumber ?? 1}'),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () async {
+                                      final controller = TextEditingController(text: bookmark.name);
+                                      final newName = await showDialog<String>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text(context.l10n.renameBookmark),
+                                          content: TextField(
+                                            controller: controller,
+                                            autofocus: true,
+                                            onSubmitted: (value) => Navigator.of(context).pop(value),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(),
+                                              child: Text(context.l10n.cancel),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(controller.text),
+                                              child: Text(context.l10n.rename),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (newName != null && newName.isNotEmpty && newName != bookmark.name) {
+                                        await _renameBookmark(bookmark.id, newName);
+                                        setSheetState(() {});
+                                      }
+                                    },
+                                  ),
                                   onTap: () {
                                     if (bookmark.pageNumber != null) {
                                       _pdfViewerController.goToPage(pageNumber: bookmark.pageNumber!);
