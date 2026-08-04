@@ -43,6 +43,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   final Uuid _uuid = Uuid(); // For generating unique bookmark IDs.
   late Future<void> _playerInitFuture;
   Timer? _skipTimer;
+  Timer? _delayTimer;
+  double _delaySeconds = 0.0;
+  bool _isSettingDelay = false;
+  bool _isCountingDown = false;
 
   @override
   void initState() {
@@ -53,6 +57,83 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         .where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null)
         .toList();
     _playerInitFuture = _initializeSequence();
+  }
+
+  Future<void> _playAudio(bool isMyAudio) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    try {
+      if (!_isInitialized || !isMyAudio) {
+        await _initAudio();
+      } else {
+        await _player.play();
+      }
+    } catch (e) {
+      AppLogger.log('AudioPlayerWidget: Error in play button: $e');
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(l10n.errorPlayingAudio(e.toString()))),
+      );
+    }
+  }
+
+  void _startSettingDelay() {
+    setState(() {
+      _isSettingDelay = true;
+      _delaySeconds = 0.0;
+    });
+    
+    _delayTimer?.cancel();
+    _delayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (mounted) {
+        setState(() {
+          _delaySeconds += 0.05;
+        });
+      }
+    });
+  }
+
+  void _stopSettingDelayAndStartCountdown(bool isMyAudio) {
+    _delayTimer?.cancel();
+    if (_delaySeconds < 0.5) {
+      // Didn't hold long enough, treat as a normal tap
+      setState(() {
+        _isSettingDelay = false;
+        _isCountingDown = false;
+      });
+      _playAudio(isMyAudio);
+      return;
+    }
+
+    setState(() {
+      _isSettingDelay = false;
+      _isCountingDown = true;
+      _delaySeconds = _delaySeconds.ceilToDouble(); // Start cleanly at full seconds
+    });
+
+    _delayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (mounted) {
+        setState(() {
+          _delaySeconds -= 0.05;
+          if (_delaySeconds <= 0) {
+            _delaySeconds = 0;
+            _isCountingDown = false;
+            timer.cancel();
+            _playAudio(isMyAudio);
+          }
+        });
+      }
+    });
+  }
+
+  void _cancelDelay() {
+    _delayTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _isSettingDelay = false;
+        _isCountingDown = false;
+        _delaySeconds = 0.0;
+      });
+    }
   }
 
   void _skip(bool forward, {int seconds = 1, bool fine = false}) {
@@ -285,6 +366,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void dispose() {
     _saveBookmarks(); // Save bookmarks when the widget is disposed.
     _skipTimer?.cancel();
+    _delayTimer?.cancel();
+    _player.dispose();
     super.dispose();
   }
 
@@ -386,35 +469,44 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         onPressed: _player.pause,
                       );
                     } else {
-                      mainButton = IconButton(
-                        icon: const Icon(Icons.play_arrow),
-                        iconSize: 64.0,
-                        onPressed: () async {
-                          final scaffoldMessenger = ScaffoldMessenger.of(
-                            context,
-                          );
-                          final l10n = context.l10n;
-                          try {
-                            // Always init if not my audio, effectively switching source
-                            if (!_isInitialized || !isMyAudio) {
-                              await _initAudio();
-                            } else {
-                              await _player.play();
-                            }
-                          } catch (e) {
-                            AppLogger.log(
-                              'AudioPlayerWidget: Error in play button: $e',
-                            );
-                            scaffoldMessenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  l10n.errorPlayingAudio(e.toString()),
+                      if (_isSettingDelay || _isCountingDown) {
+                        mainButton = GestureDetector(
+                          onTap: _cancelDelay,
+                          child: SizedBox(
+                            width: 80.0,
+                            height: 80.0,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 64.0,
+                                  height: 64.0,
+                                  child: CircularProgressIndicator(
+                                    value: (_delaySeconds % 1.0 == 0.0 && _delaySeconds > 0) ? 1.0 : (_delaySeconds % 1.0),
+                                    strokeWidth: 6.0,
+                                    backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                  ),
                                 ),
-                              ),
-                            );
-                          }
-                        },
-                      );
+                                Text(
+                                  _delaySeconds.ceil().toString(),
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        mainButton = GestureDetector(
+                          onTap: () => _playAudio(isMyAudio),
+                          onLongPressStart: (_) => _startSettingDelay(),
+                          onLongPressEnd: (_) => _stopSettingDelayAndStartCountdown(isMyAudio),
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Icon(Icons.play_arrow, size: 64.0),
+                          ),
+                        );
+                      }
                     }
 
                     // Return the Row with Skip buttons and Main button
