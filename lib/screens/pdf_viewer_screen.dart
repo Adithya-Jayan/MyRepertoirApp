@@ -4,12 +4,14 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/gestures.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:pdfrx/pdfrx.dart';
+import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/models/pdf_config.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:repertoire/utils/app_logger.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
 
@@ -49,6 +51,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   @override
   void initState() {
     super.initState();
+    WakelockPlus.enable();
     _pdfViewerController = PdfViewerController();
     _scrollSpeed = widget.config.defaultSpeed;
     _ticker = createTicker(_onTick);
@@ -63,6 +66,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     _loadSavedSpeed();
 
     _resetControlsTimer();
+    
+    // Show initially, then fade out
+    _showScrollbar();
   }
 
   void _resetControlsTimer() {
@@ -87,9 +93,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     } else {
       _controlsHideTimer?.cancel();
     }
-  }
-    // Show initially, then fade out
-    _showScrollbar();
   }
 
   void _showScrollbar() {
@@ -363,8 +366,21 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     _pdfViewerController.value = matrix;
   }
 
+  void _saveState() async {
+    if (!_isLoaded || _document == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final matrixList = _pdfViewerController.value.storage.toList();
+      await prefs.setString('pdf_matrix_${widget.pdfPath}', jsonEncode(matrixList));
+    } catch (e) {
+      AppLogger.log('Error saving PDF state: $e');
+    }
+  }
+
   @override
   void dispose() {
+    _saveState();
+    WakelockPlus.disable();
     _scrollbarHideTimer?.cancel();
     _scrollbarOpacityController.dispose();
     if (_ticker.isActive) {
@@ -469,12 +485,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                     pageImageCachingDelay: Duration.zero,
                     partialImageLoadingDelay: Duration.zero,
                   ),
-                  onViewerReady: (document, controller) {
+                  onViewerReady: (document, controller) async {
                     if (mounted) {
                       setState(() {
                         _isLoaded = true;
                         _document = document;
                       });
+                      
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        final savedMatrixStr = prefs.getString('pdf_matrix_${widget.pdfPath}');
+                        if (savedMatrixStr != null) {
+                          final List<dynamic> decoded = jsonDecode(savedMatrixStr);
+                          final List<double> matrixList = decoded.map((e) => (e as num).toDouble()).toList();
+                          controller.value = Matrix4.fromList(matrixList);
+                          return; // State restored successfully
+                        }
+                      } catch (e) {
+                        AppLogger.log('Error loading PDF state: $e');
+                      }
                       
                       // Explicitly set zoom to fit page width/height to avoid starting zoomed in
                       final double fitScale = controller.alternativeFitScale == null
