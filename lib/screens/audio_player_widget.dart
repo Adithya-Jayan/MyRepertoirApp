@@ -75,8 +75,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _player.player.seek(newPos);
   }
 
+  bool _wasPlayingBeforeScrub = false;
+
   void _startSkipTimer(bool forward, bool fine) {
     _skipTimer?.cancel();
+    
+    // Remember play state and pause to avoid jittery audio playback during continuous scrub
+    _wasPlayingBeforeScrub = _player.player.playing;
+    if (_wasPlayingBeforeScrub) {
+      _player.player.pause();
+    }
+    
     _skip(forward, fine: fine);
 
     // Use a periodic timer for rapid skipping
@@ -88,6 +97,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void _stopSkipTimer() {
     _skipTimer?.cancel();
     _skipTimer = null;
+    
+    // Resume playback if it was playing before scrubbing
+    if (_wasPlayingBeforeScrub) {
+      _player.player.play();
+      _wasPlayingBeforeScrub = false;
+    }
   }
 
   Future<void> _initializeSequence() async {
