@@ -12,18 +12,26 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
+import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/models/bookmark.dart';
+import 'package:repertoire/database/music_piece_repository.dart';
 
 /// A screen for viewing PDF documents with optional auto-scroll and hyperlink support.
 class PdfViewerScreen extends StatefulWidget {
   final String pdfPath;
   final PdfConfig config;
+  final MusicPiece? musicPiece;
+  final int? mediaItemIndex;
 
   const PdfViewerScreen({
     super.key,
     required this.pdfPath,
     this.config = const PdfConfig(),
+    this.musicPiece,
+    this.mediaItemIndex,
   });
 
   @override
@@ -44,6 +52,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   bool _isDraggingScrollbar = false;
   Duration _lastUpdateElapsed = Duration.zero;
 
+  List<Bookmark> _bookmarks = [];
+  final MusicPieceRepository _repository = MusicPieceRepository();
+  final Uuid _uuid = Uuid();
+
   late AnimationController _scrollbarOpacityController;
   Timer? _scrollbarHideTimer;
   Timer? _controlsHideTimer;
@@ -52,6 +64,14 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   void initState() {
     super.initState();
     WakelockPlus.enable();
+    
+    if (widget.musicPiece != null && widget.mediaItemIndex != null) {
+      final currentMediaId = widget.musicPiece!.mediaItems[widget.mediaItemIndex!].id;
+      _bookmarks = widget.musicPiece!.bookmarks
+          .where((b) => b.mediaItemId == currentMediaId || b.mediaItemId == null)
+          .toList();
+    }
+
     _pdfViewerController = PdfViewerController();
     _scrollSpeed = widget.config.defaultSpeed;
     _ticker = createTicker(_onTick);
@@ -377,6 +397,142 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     }
   }
 
+  Future<void> _saveBookmarks() async {
+    if (widget.musicPiece == null || widget.mediaItemIndex == null) return;
+    
+    // Update the piece's bookmarks (replacing those for this media item)
+    final currentMediaId = widget.musicPiece!.mediaItems[widget.mediaItemIndex!].id;
+    final otherBookmarks = widget.musicPiece!.bookmarks
+        .where((b) => b.mediaItemId != currentMediaId && b.mediaItemId != null)
+        .toList();
+    
+    widget.musicPiece!.bookmarks = [...otherBookmarks, ..._bookmarks];
+    
+    try {
+      await _repository.update(widget.musicPiece!);
+      AppLogger.log('PdfViewerScreen: Saved ${_bookmarks.length} bookmarks.');
+    } catch (e) {
+      AppLogger.log('PdfViewerScreen: Error saving bookmarks: $e');
+    }
+  }
+
+  Future<void> _addBookmark() async {
+    if (widget.musicPiece == null || widget.mediaItemIndex == null) return;
+    
+    final currentMediaId = widget.musicPiece!.mediaItems[widget.mediaItemIndex!].id;
+    final newBookmark = Bookmark(
+      id: _uuid.v4(),
+      pageNumber: _currentPage,
+      name: context.l10n.bookmarkDefaultName(_bookmarks.length + 1),
+      mediaItemId: currentMediaId,
+    );
+
+    setState(() {
+      _bookmarks.add(newBookmark);
+      // Sort by page number if possible
+      _bookmarks.sort((a, b) => (a.pageNumber ?? 0).compareTo(b.pageNumber ?? 0));
+    });
+    await _saveBookmarks();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bookmark added at page $_currentPage')),
+      );
+    }
+  }
+
+  Future<void> _removeBookmark(String bookmarkId) async {
+    setState(() {
+      _bookmarks.removeWhere((b) => b.id == bookmarkId);
+    });
+    await _saveBookmarks();
+  }
+
+  void _showBookmarksSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: const EdgeInsets.all(16.0),
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.l10n.bookmarks,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _addBookmark();
+                      setSheetState(() {});
+                    },
+                    icon: const Icon(Icons.bookmark_add),
+                    label: Text(context.l10n.addBookmark),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _bookmarks.isEmpty
+                        ? Center(child: Text(context.l10n.noBookmarksAddedYet))
+                        : ListView.builder(
+                            itemCount: _bookmarks.length,
+                            itemBuilder: (context, index) {
+                              final bookmark = _bookmarks[index];
+                              return Dismissible(
+                                key: Key(bookmark.id),
+                                direction: DismissDirection.endToStart,
+                                onDismissed: (direction) {
+                                  _removeBookmark(bookmark.id);
+                                  setSheetState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(context.l10n.bookmarkDismissed(bookmark.name)),
+                                    ),
+                                  );
+                                },
+                                background: Container(
+                                  color: Colors.red,
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20.0),
+                                  child: const Icon(Icons.delete, color: Colors.white),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(Icons.bookmark),
+                                  title: Text(bookmark.name),
+                                  subtitle: Text('Page ${bookmark.pageNumber ?? 1}'),
+                                  onTap: () {
+                                    if (bookmark.pageNumber != null) {
+                                      _pdfViewerController.goToPage(pageNumber: bookmark.pageNumber!);
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _saveState();
@@ -409,6 +565,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
               elevation: 0,
               title: Text(context.l10n.pdfViewer),
               actions: [
+                if (widget.musicPiece != null && widget.mediaItemIndex != null)
+                  IconButton(
+                    icon: const Icon(Icons.bookmarks),
+                    onPressed: _showBookmarksSheet,
+                    tooltip: context.l10n.bookmarks,
+                  ),
                 IconButton(
                   icon: const Icon(Icons.zoom_out),
                   onPressed: () => _updateZoom(0.8),
