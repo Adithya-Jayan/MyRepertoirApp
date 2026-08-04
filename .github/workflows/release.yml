@@ -360,16 +360,6 @@ jobs:
           zip -r web_build.zip web_build/
           cd ..
 
-      - name: Generate Checksums
-        run: |
-          cd release_assets
-          for file in *.apk *.aab; do
-            if [ -f "$file" ]; then
-              sha256sum "$file" > "$file.sha256"
-            fi
-          done
-          cd ..
-      
       - name: Setup SSH Key
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -441,13 +431,9 @@ jobs:
               - `repertoire-linux-v...zip` (Extract and run `./repertoire`)
           files: |
             ./release_assets/app-universal-playstore-release.apk
-            ./release_assets/app-universal-playstore-release.apk.sha256
             ./release_assets/app-playstore-release.aab
-            ./release_assets/app-playstore-release.aab.sha256
             ./release_assets/app-universal-fdroid-release.apk
-            ./release_assets/app-universal-fdroid-release.apk.sha256
             ./release_assets/app-fdroid-release.aab
-            ./release_assets/app-fdroid-release.aab.sha256
             ./release_assets/web_build.zip
           draft: false
           prerelease: ${{ github.event.inputs.prerelease }}

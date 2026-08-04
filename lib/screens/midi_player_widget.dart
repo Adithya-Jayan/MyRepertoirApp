@@ -265,8 +265,15 @@ class _MidiPlayerWidgetState extends State<MidiPlayerWidget> {
         throw Exception(l10n.midiFileNotFound(mediaItem.pathOrUrl));
       }
 
+      ByteData soundFontData;
+      try {
+        soundFontData = await rootBundle.load('assets/soundfonts/TimGM6mb.sf2');
+      } catch (_) {
+        soundFontData = await rootBundle.load('packages/repertoire/assets/soundfonts/TimGM6mb.sf2');
+      }
+
       _synth = Synthesizer.loadByteData(
-        await rootBundle.load('assets/soundfonts/TimGM6mb.sf2'),
+        soundFontData,
         SynthesizerSettings(sampleRate: 44100),
       );
 

@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// The application title
   ///
   /// In en, this message translates to:
-  /// **'Music Repertoire'**
+  /// **'Repertoire'**
   String get appTitle;
 
   /// No description provided for @appearanceAnswer.
@@ -2063,7 +2063,7 @@ abstract class AppLocalizations {
   /// No description provided for @musicRepertoireApp.
   ///
   /// In en, this message translates to:
-  /// **'Music Repertoire App'**
+  /// **'Repertoire'**
   String get musicRepertoireApp;
 
   /// No description provided for @needsAttention.
@@ -2291,7 +2291,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney.
   ///
   /// In en, this message translates to:
-  /// **'Organize your music pieces, attach media, and track your practice journey.'**
+  /// **'Organize your pieces, attach media, and track your practice journey.'**
   String get organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney;
 
   /// No description provided for @other.

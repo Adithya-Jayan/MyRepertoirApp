@@ -382,6 +382,8 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
             builder: (context) => PdfViewerScreen(
               pdfPath: currentMediaItem.pathOrUrl,
               config: PdfConfig.fromJson(currentMediaItem.configData ?? '{}'),
+              musicPiece: widget.musicPiece,
+              mediaItemIndex: widget.mediaItemIndex,
             ),
           ),
         );
