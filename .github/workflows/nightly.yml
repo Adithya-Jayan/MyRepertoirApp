@@ -167,17 +167,6 @@ jobs:
           zip -r web_build.zip web_build/
           cd ..
 
-      - name: Generate Nightly Checksums
-        if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
-        run: |
-          cd nightly_assets
-          for file in *.apk *.aab; do
-            if [ -f "$file" ]; then
-              sha256sum "$file" > "$file.sha256"
-            fi
-          done
-          cd ..
-          
       - name: Setup SSH Key
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
         uses: webfactory/ssh-agent@v0.9.0
@@ -205,13 +194,9 @@ jobs:
             --prerelease \
             --target main \
             nightly_assets/app-playstore-nightly.apk \
-            nightly_assets/app-playstore-nightly.apk.sha256 \
             nightly_assets/app-playstore-nightly.aab \
-            nightly_assets/app-playstore-nightly.aab.sha256 \
             nightly_assets/app-fdroid-nightly.apk \
-            nightly_assets/app-fdroid-nightly.apk.sha256 \
             nightly_assets/app-fdroid-nightly.aab \
-            nightly_assets/app-fdroid-nightly.aab.sha256 \
             nightly_assets/web_build.zip
 
       - name: Add immutable nightly tag for traceability
