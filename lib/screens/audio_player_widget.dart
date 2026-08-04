@@ -86,7 +86,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _delayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (mounted) {
         setState(() {
-          _delaySeconds += 0.05;
+          _delaySeconds += 0.10; // Count up at double speed (2 seconds per real second)
         });
       }
     });
