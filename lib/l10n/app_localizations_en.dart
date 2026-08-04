@@ -87,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTheme => 'App Theme';
 
   @override
-  String get appTitle => 'Music Repertoire';
+  String get appTitle => 'Repertoire';
 
   @override
   String get appearanceAnswer =>
@@ -1258,7 +1258,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get musicPieces => 'Music Pieces';
 
   @override
-  String get musicRepertoireApp => 'Music Repertoire App';
+  String get musicRepertoireApp => 'Repertoire';
 
   @override
   String get needsAttention => 'Needs attention';
@@ -1380,7 +1380,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney =>
-      'Organize your music pieces, attach media, and track your practice journey.';
+      'Organize your pieces, attach media, and track your practice journey.';
 
   @override
   String get other => 'Other';
