@@ -427,6 +427,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                         _isLoaded = true;
                         _document = document;
                       });
+                      
+                      // Explicitly set zoom to fit page width/height to avoid starting zoomed in
+                      final double fitScale = controller.alternativeFitScale == null
+                          ? controller.coverScale
+                          : math.min(
+                              controller.coverScale,
+                              controller.alternativeFitScale!,
+                            );
+                      controller.setZoom(controller.centerPosition, fitScale);
                     }
                   },
                   onPageChanged: (page) {
@@ -515,8 +524,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
                                 height: thumbHeight,
                                 decoration: BoxDecoration(
                                   color: _isDraggingScrollbar
-                                      ? Colors.white70
-                                      : Colors.white38,
+                                      ? Colors.black87
+                                      : Colors.black54,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
