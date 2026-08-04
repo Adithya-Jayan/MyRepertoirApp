@@ -409,7 +409,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     widget.musicPiece!.bookmarks = [...otherBookmarks, ..._bookmarks];
     
     try {
-      await _repository.update(widget.musicPiece!);
+      await _repository.updateMusicPiece(widget.musicPiece!);
       AppLogger.log('PdfViewerScreen: Saved ${_bookmarks.length} bookmarks.');
     } catch (e) {
       AppLogger.log('PdfViewerScreen: Error saving bookmarks: $e');
