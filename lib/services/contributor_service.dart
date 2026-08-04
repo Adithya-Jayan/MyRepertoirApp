@@ -13,7 +13,15 @@ import 'package:repertoire/utils/app_logger.dart';
 /// This function reads the JSON file, decodes it, and maps the data
 /// to a list of [Contributor] objects, filtering out bots and action agents.
 Future<List<Contributor>> loadContributors() async {
-  final jsonString = await rootBundle.loadString('assets/contributors.json'); // Load the JSON string from assets.
+  String jsonString;
+  try {
+    jsonString = await rootBundle.loadString('assets/contributors.json');
+  } catch (_) {
+    // Fallback for when the app is built from a flavor directory (e.g. app_fdroid)
+    // where 'repertoire' acts as a package dependency.
+    jsonString = await rootBundle.loadString('packages/repertoire/assets/contributors.json');
+  }
+  
   final List<dynamic> jsonData = jsonDecode(jsonString); // Decode the JSON string into a list of dynamic objects.
   
   // Filter out bots and action agents
