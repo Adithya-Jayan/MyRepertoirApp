@@ -26,7 +26,7 @@
   "appLanguage": "App Language",
   "languageName": "English",
   "appTheme": "App Theme",
-  "appTitle": "Music Repertoire",
+  "appTitle": "Repertoire",
   "@appTitle": {
     "description": "The application title"
   },
@@ -918,7 +918,7 @@
   "modifyGroups": "Modify Groups",
   "musicPieceUpdatedSuccessfully": "Music piece updated successfully.",
   "musicPieces": "Music Pieces",
-  "musicRepertoireApp": "Music Repertoire App",
+  "musicRepertoireApp": "Repertoire",
   "needsAttention": "Needs attention",
   "never": "Never",
   "neverPracticed": "Never practiced",
@@ -967,7 +967,7 @@
   "openLink": "Open Link",
   "openLogs": "Open Logs",
   "openingFolderSelector": "Opening folder selector...",
-  "organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney": "Organize your music pieces, attach media, and track your practice journey.",
+  "organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney": "Organize your pieces, attach media, and track your practice journey.",
   "other": "Other",
   "outline": "Outline",
   "outlineText": "Outline Text",
