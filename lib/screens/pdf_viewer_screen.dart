@@ -221,7 +221,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
 
   void _resetZoom() {
     if (!_pdfViewerController.isReady) return;
-    _pdfViewerController.goTo(Matrix4.identity());
+    final double fitScale = _pdfViewerController.alternativeFitScale == null
+        ? _pdfViewerController.coverScale
+        : math.min(
+            _pdfViewerController.coverScale,
+            _pdfViewerController.alternativeFitScale!,
+          );
+    _pdfViewerController.setZoom(_pdfViewerController.centerPosition, fitScale);
   }
 
   void _handleDoubleTap() {
