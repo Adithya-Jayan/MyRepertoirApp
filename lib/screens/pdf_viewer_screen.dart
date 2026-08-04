@@ -44,6 +44,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
 
   late AnimationController _scrollbarOpacityController;
   Timer? _scrollbarHideTimer;
+  Timer? _controlsHideTimer;
 
   @override
   void initState() {
@@ -61,6 +62,32 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
     _pdfViewerController.addListener(_onTransformationChanged);
     _loadSavedSpeed();
 
+    _resetControlsTimer();
+  }
+
+  void _resetControlsTimer() {
+    _controlsHideTimer?.cancel();
+    if (_showControls) {
+      _controlsHideTimer = Timer(const Duration(seconds: 4), () {
+        if (mounted && _showControls) {
+          setState(() {
+            _showControls = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (_showControls) {
+      _resetControlsTimer();
+    } else {
+      _controlsHideTimer?.cancel();
+    }
+  }
     // Show initially, then fade out
     _showScrollbar();
   }
@@ -353,49 +380,64 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        title: Text(context.l10n.pdfViewer),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.zoom_out),
-            onPressed: () => _updateZoom(0.8),
-            tooltip: context.l10n.zoomOut,
-          ),
-          IconButton(
-            icon: const Icon(Icons.zoom_in),
-            onPressed: () => _updateZoom(1.2),
-            tooltip: context.l10n.zoomIn,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_backup_restore),
-            onPressed: _resetZoom,
-            tooltip: context.l10n.resetZoom,
-          ),
-          if (widget.config.autoScrollEnabled && !_showControls)
-            IconButton(
-              icon: Icon(_isAutoScrolling ? Icons.pause : Icons.play_arrow),
-              onPressed: () => _toggleAutoScroll(!_isAutoScrolling),
-              tooltip: _isAutoScrolling
-                  ? context.l10n.pause
-                  : context.l10n.play,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AnimatedOpacity(
+          opacity: _showControls ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          child: IgnorePointer(
+            ignoring: !_showControls,
+            child: AppBar(
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor?.withOpacity(0.8) ?? Colors.black87,
+              elevation: 0,
+              title: Text(context.l10n.pdfViewer),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.zoom_out),
+                  onPressed: () => _updateZoom(0.8),
+                  tooltip: context.l10n.zoomOut,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.zoom_in),
+                  onPressed: () => _updateZoom(1.2),
+                  tooltip: context.l10n.zoomIn,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_backup_restore),
+                  onPressed: _resetZoom,
+                  tooltip: context.l10n.resetZoom,
+                ),
+                if (widget.config.autoScrollEnabled && !_showControls)
+                  IconButton(
+                    icon: Icon(_isAutoScrolling ? Icons.pause : Icons.play_arrow),
+                    onPressed: () => _toggleAutoScroll(!_isAutoScrolling),
+                    tooltip: _isAutoScrolling
+                        ? context.l10n.pause
+                        : context.l10n.play,
+                  ),
+                if (widget.config.autoScrollEnabled)
+                  IconButton(
+                    icon: Icon(
+                      _showControls ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: _toggleControls,
+                    tooltip: context.l10n.toggleControls,
+                  ),
+              ],
             ),
-          if (widget.config.autoScrollEnabled)
-            IconButton(
-              icon: Icon(
-                _showControls ? Icons.visibility : Icons.visibility_off,
-              ),
-              onPressed: () => setState(() => _showControls = !_showControls),
-              tooltip: context.l10n.toggleControls,
-            ),
-        ],
+          ),
+        ),
       ),
       body: Stack(
         children: [
           GestureDetector(
             onDoubleTap: _handleDoubleTap,
+            onTap: _toggleControls,
             child: Listener(
               behavior: HitTestBehavior.translucent,
               onPointerDown: (_) {
+                if (_showControls) _resetControlsTimer();
                 _showScrollbar();
                 if (_isAutoScrolling) {
                   _toggleAutoScroll(false);
