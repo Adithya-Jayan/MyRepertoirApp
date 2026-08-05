@@ -602,7 +602,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
           child: IgnorePointer(
             ignoring: !_showControls,
             child: AppBar(
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor?.withOpacity(0.8) ?? Colors.black87,
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor?.withValues(alpha: 0.8) ?? Colors.black87,
               elevation: 0,
               title: Text(context.l10n.pdfViewer),
               actions: [
