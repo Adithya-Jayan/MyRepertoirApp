@@ -17,8 +17,8 @@ void main() {
       final english = await AppLocalizations.delegate.load(const Locale('en'));
       final chinese = await AppLocalizations.delegate.load(const Locale('zh'));
 
-      expect(english.appTitle, 'Music Repertoire');
-      expect(chinese.appTitle, '音乐曲目库');
+      expect(english.appTitle, 'Repertoire');
+      expect(chinese.appTitle, '曲目库');
       expect(english.languageName, 'English');
       expect(chinese.languageName, '简体中文');
       expect(chinese.mediaAddedToPiece('月光奏鸣曲'), '媒体已添加到“月光奏鸣曲”');
