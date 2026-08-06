@@ -87,7 +87,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTheme => '应用主题';
 
   @override
-  String get appTitle => '音乐曲目库';
+  String get appTitle => '曲目库';
 
   @override
   String get appearanceAnswer => '转至“设置”>“个性化”以切换主题、强调色和布局选项。';

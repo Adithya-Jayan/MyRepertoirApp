@@ -26,7 +26,7 @@
   "appLanguage": "应用语言",
   "languageName": "简体中文",
   "appTheme": "应用主题",
-  "appTitle": "音乐曲目库",
+  "appTitle": "曲目库",
   "@appTitle": {
     "description": "The application title"
   },
