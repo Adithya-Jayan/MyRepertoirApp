@@ -47,6 +47,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   double _delaySeconds = 0.0;
   bool _isSettingDelay = false;
   bool _isCountingDown = false;
+  double? _dragValue;
+  Duration? _targetSeekPosition;
 
   @override
   void initState() {
@@ -138,10 +140,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
-    final current = _player.player.position;
+    
+    // Use target seek position if a seek is already in progress, 
+    // otherwise use the player's actual position.
+    final current = _targetSeekPosition ?? _player.player.position;
     final duration = _player.player.duration ?? Duration.zero;
     final amount = fine
-        ? const Duration(milliseconds: 50)
+        ? const Duration(milliseconds: 200)
         : Duration(seconds: seconds);
 
     Duration newPos;
@@ -153,7 +158,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       if (newPos < Duration.zero) newPos = Duration.zero;
     }
 
-    _player.player.seek(newPos);
+    _targetSeekPosition = newPos;
+    _player.player.seek(newPos).then((_) {
+      if (mounted && _targetSeekPosition == newPos) {
+        // Clear target once the exact seek completes
+        _targetSeekPosition = null;
+      }
+    });
   }
 
   bool _wasPlayingBeforeScrub = false;
@@ -469,44 +480,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         onPressed: _player.pause,
                       );
                     } else {
-                      if (_isSettingDelay || _isCountingDown) {
-                        mainButton = GestureDetector(
-                          onTap: _cancelDelay,
-                          child: SizedBox(
-                            width: 80.0,
-                            height: 80.0,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 64.0,
-                                  height: 64.0,
-                                  child: CircularProgressIndicator(
-                                    value: (_delaySeconds % 1.0 == 0.0 && _delaySeconds > 0) ? 1.0 : (_delaySeconds % 1.0),
-                                    strokeWidth: 6.0,
-                                    backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                                  ),
+                      mainButton = GestureDetector(
+                        onTap: (_isSettingDelay || _isCountingDown) ? _cancelDelay : () => _playAudio(isMyAudio),
+                        onLongPressStart: (_isSettingDelay || _isCountingDown) ? null : (_) => _startSettingDelay(),
+                        onLongPressEnd: _isSettingDelay ? (_) => _stopSettingDelayAndStartCountdown(isMyAudio) : null,
+                        child: (_isSettingDelay || _isCountingDown)
+                            ? SizedBox(
+                                width: 80.0,
+                                height: 80.0,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 64.0,
+                                      height: 64.0,
+                                      child: CircularProgressIndicator(
+                                        value: (_delaySeconds % 1.0 == 0.0 && _delaySeconds > 0) ? 1.0 : (_delaySeconds % 1.0),
+                                        strokeWidth: 6.0,
+                                        backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                      ),
+                                    ),
+                                    Text(
+                                      _delaySeconds.toStringAsFixed(2),
+                                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  _delaySeconds.ceil().toString(),
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      } else {
-                        mainButton = GestureDetector(
-                          onTap: () => _playAudio(isMyAudio),
-                          onLongPressStart: (_) => _startSettingDelay(),
-                          onLongPressEnd: (_) => _stopSettingDelayAndStartCountdown(isMyAudio),
-                          child: const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Icon(Icons.play_arrow, size: 64.0),
-                          ),
-                        );
-                      }
+                              )
+                            : const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(Icons.play_arrow, size: 64.0),
+                              ),
+                      );
                     }
 
                     // Return the Row with Skip buttons and Main button
@@ -620,12 +626,29 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                               max: max > 0
                                   ? max
                                   : 1.0, // Prevent division by zero
-                              value: max > 0 ? value : 0.0,
+                              value: _dragValue ?? (max > 0 ? value : 0.0),
+                              onChangeStart: (isMyAudio && max > 0)
+                                  ? (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    }
+                                  : null,
                               onChanged: (isMyAudio && max > 0)
+                                  ? (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    }
+                                  : null,
+                              onChangeEnd: (isMyAudio && max > 0)
                                   ? (value) {
                                       _player.player.seek(
                                         Duration(milliseconds: value.toInt()),
                                       ); // Use new player's seek
+                                      setState(() {
+                                        _dragValue = null;
+                                      });
                                     }
                                   : null, // Disable slider if not my audio
                             ),
@@ -853,7 +876,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+    String oneDigitMillis = (duration.inMilliseconds.remainder(1000) ~/ 100).toString();
+    if (duration.inHours > 0) {
+      return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$oneDigitMillis";
+    } else {
+      return "$twoDigitMinutes:$twoDigitSeconds.$oneDigitMillis";
+    }
   }
 
   // Bookmark Management Methods

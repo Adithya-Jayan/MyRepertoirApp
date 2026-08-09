@@ -307,17 +307,18 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                                       );
                                     },
                                     onFieldSubmitted: (value) async {
+                                      final updatedGroup = widget.tagGroup.copyWith(name: value);
                                       widget.onUpdateTagGroup(
                                         widget.tagGroup,
-                                        widget.tagGroup.copyWith(name: value),
+                                        updatedGroup,
                                       );
                                       onFieldSubmitted();
                                       final mostCommonColor = await widget
                                           .onFetchMostCommonColor(value);
                                       if (mostCommonColor != null) {
                                         widget.onUpdateTagGroup(
-                                          widget.tagGroup,
-                                          widget.tagGroup.copyWith(
+                                          updatedGroup,
+                                          updatedGroup.copyWith(
                                             color: mostCommonColor,
                                           ),
                                           isAutofill: true,
@@ -337,16 +338,17 @@ class _TagGroupSectionState extends State<TagGroupSection> {
                               );
                             },
                             onSelected: (selection) async {
+                              final updatedGroup = widget.tagGroup.copyWith(name: selection);
                               widget.onUpdateTagGroup(
                                 widget.tagGroup,
-                                widget.tagGroup.copyWith(name: selection),
+                                updatedGroup,
                               );
                               final mostCommonColor = await widget
                                   .onFetchMostCommonColor(selection);
                               if (mostCommonColor != null) {
                                 widget.onUpdateTagGroup(
-                                  widget.tagGroup,
-                                  widget.tagGroup.copyWith(
+                                  updatedGroup,
+                                  updatedGroup.copyWith(
                                     color: mostCommonColor,
                                   ),
                                   isAutofill: true,

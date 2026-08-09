@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:archive/archive_io.dart';
 
@@ -269,19 +270,24 @@ class BackupManager {
       AppLogger.log('Handling manual backup save.');
       String? outputFile;
       if (Platform.isAndroid || Platform.isIOS) {
-        // On mobile, we can't control the initial directory, so we'll save to the app's documents directory
-        // and let the user move it if needed
-        final appDocDir = await getApplicationDocumentsDirectory();
-        final defaultPath = p.join(appDocDir.path, fileName);
+        // On mobile, pass large files via Share to avoid TransactionTooLargeException
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = p.join(tempDir.path, fileName);
+        
         AppLogger.log(
-          'Mobile platform detected, using default path: $defaultPath',
+          'Mobile platform detected, writing to temp path: $tempPath before sharing',
         );
-
-        outputFile = await FilePicker.platform.saveFile(
-          fileName: fileName,
-          bytes: zipBytes,
+        
+        await File(tempPath).writeAsBytes(zipBytes);
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(tempPath, mimeType: 'application/zip')],
+            subject: fileName,
+          ),
         );
-        AppLogger.log('FilePicker.saveFile (mobile) returned: $outputFile');
+        
+        outputFile = tempPath;
+        AppLogger.log('Share.shareXFiles invoked for mobile.');
       } else {
         outputFile = await FilePicker.platform.saveFile(
           fileName: fileName,

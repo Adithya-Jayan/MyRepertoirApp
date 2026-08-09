@@ -131,6 +131,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
           key.currentContext!,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
         );
       }
     });
@@ -305,46 +306,45 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
       (item) => item.type == MediaType.thumbnails,
     );
 
-    return SafeArea(
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-          if (!_hasChanges()) {
-            if (mounted) Navigator.of(context).pop();
-            return;
-          }
+        if (!_hasChanges()) {
+          if (mounted) Navigator.of(context).pop();
+          return;
+        }
 
-          final navigator = Navigator.of(context);
-          final shouldPop = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(context.l10n.unsavedChanges),
-              content: Text(
-                context
-                    .l10n
-                    .youHaveUnsavedChangesAreYouSureYouWantToDiscardThem,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => navigator.pop(false),
-                  child: Text(context.l10n.stay),
-                ),
-                TextButton(
-                  onPressed: () => navigator.pop(true),
-                  child: Text(context.l10n.discard),
-                ),
-              ],
+        final navigator = Navigator.of(context);
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(context.l10n.unsavedChanges),
+            content: Text(
+              context
+                  .l10n
+                  .youHaveUnsavedChangesAreYouSureYouWantToDiscardThem,
             ),
-          );
+            actions: [
+              TextButton(
+                onPressed: () => navigator.pop(false),
+                child: Text(context.l10n.stay),
+              ),
+              TextButton(
+                onPressed: () => navigator.pop(true),
+                child: Text(context.l10n.discard),
+              ),
+            ],
+          ),
+        );
 
-          if (shouldPop == true && mounted) {
-            navigator.pop();
-          }
-        },
-        child: Scaffold(
-          appBar: AppBar(
+        if (shouldPop == true && mounted) {
+          navigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
             title: Text(
               widget.musicPiece == null
                   ? context.l10n.addPiece
@@ -364,7 +364,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 IconButton(icon: const Icon(Icons.save), onPressed: _savePiece),
             ],
           ),
-          body: Form(
+          body: SafeArea(
+          child: Form(
             key: _formKey,
             child: ListView(
               controller: _scrollController,
@@ -494,14 +495,17 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     ),
                   ),
                 ]),
-                const SizedBox(height: 80),
-              ],
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
           floatingActionButton: SpeedDialWidget(
             hasThumbnail: hasThumbnail,
             onAddMediaItem: (mediaType) async {
               final l10n = context.l10n;
+              final messenger = ScaffoldMessenger.of(context);
+              List<String> skippedFiles = [];
               if (mediaType == MediaType.learningProgress) {
                 final config = await showDialog<LearningProgressConfig>(
                   context: context,
@@ -509,7 +513,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                 );
                 if (config != null) {
                   final configJson = LearningProgressConfig.encode(config);
-                  _mediaManager.addMediaItem(
+                  skippedFiles = await _mediaManager.addMediaItem(
                     mediaType,
                     List<MediaItem>.from(_musicPiece.mediaItems),
                     configData: configJson,
@@ -517,16 +521,26 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                   );
                 }
               } else {
-                _mediaManager.addMediaItem(
+                skippedFiles = await _mediaManager.addMediaItem(
                   mediaType,
                   List<MediaItem>.from(_musicPiece.mediaItems),
                   defaultTitle: l10n.learningProgress,
                 );
               }
+
+              if (skippedFiles.isNotEmpty && mounted) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Skipped ${skippedFiles.length} unsupported file(s): ${skippedFiles.take(3).join(', ')}${skippedFiles.length > 3 ? '...' : ''}',
+                    ),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
             },
           ),
         ),
-      ),
     );
   }
 
