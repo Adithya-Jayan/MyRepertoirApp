@@ -446,6 +446,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     _autoBackupCount,
                     messenger: ScaffoldMessenger.of(context),
                   );
+                  if (mounted) {
+                    setState(() {});
+                  }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
