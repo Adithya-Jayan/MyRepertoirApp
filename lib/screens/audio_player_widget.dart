@@ -47,6 +47,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   double _delaySeconds = 0.0;
   bool _isSettingDelay = false;
   bool _isCountingDown = false;
+  double? _dragValue;
 
   @override
   void initState() {
@@ -615,12 +616,29 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                               max: max > 0
                                   ? max
                                   : 1.0, // Prevent division by zero
-                              value: max > 0 ? value : 0.0,
+                              value: _dragValue ?? (max > 0 ? value : 0.0),
+                              onChangeStart: (isMyAudio && max > 0)
+                                  ? (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    }
+                                  : null,
                               onChanged: (isMyAudio && max > 0)
+                                  ? (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    }
+                                  : null,
+                              onChangeEnd: (isMyAudio && max > 0)
                                   ? (value) {
                                       _player.player.seek(
                                         Duration(milliseconds: value.toInt()),
                                       ); // Use new player's seek
+                                      setState(() {
+                                        _dragValue = null;
+                                      });
                                     }
                                   : null, // Disable slider if not my audio
                             ),
