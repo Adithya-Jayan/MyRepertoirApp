@@ -141,7 +141,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     final current = _player.player.position;
     final duration = _player.player.duration ?? Duration.zero;
     final amount = fine
-        ? const Duration(milliseconds: 50)
+        ? const Duration(milliseconds: 200)
         : Duration(seconds: seconds);
 
     Duration newPos;
@@ -848,7 +848,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+    String oneDigitMillis = (duration.inMilliseconds.remainder(1000) ~/ 100).toString();
+    if (duration.inHours > 0) {
+      return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$oneDigitMillis";
+    } else {
+      return "$twoDigitMinutes:$twoDigitSeconds.$oneDigitMillis";
+    }
   }
 
   // Bookmark Management Methods
