@@ -2,4 +2,11 @@
 * **Open-Source Video Engine:** Upgraded the core video player to use `media_kit`. This fully replaces the proprietary `fvp` implementation, ensuring the entire codebase (including desktop platforms like Windows and Linux) remains 100% open-source and F-Droid compliant. Enjoy smoother playback, native pitch shifting, and robust frame capture.
 * **Localization & Translations:** We've introduced a brand new Flutter localization infrastructure, allowing the app to support multiple languages! A massive thank you to our contributors for adding full support for **Simplified Chinese**.
 * **Android Privacy Enhancements:** We've stripped unnecessary media permissions (`READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO`) from the Android Manifest. The app continues to function perfectly while strictly minimizing the permissions it requests, ensuring full compliance with the latest privacy policies.
+* **Batch Media Import:** You can now select multiple files at once when adding media items (audio, video, images, etc.) to a piece. The app will automatically import valid files and skip unsupported ones.
 
+### 🐛 Bug Fixes & UX Improvements
+* **Audio Player Refinements:** The "pause-before-play" countdown feature now works reliably, timers now show 2 decimal digits for precision, and skipping/scrubbing during active playback has been fixed.
+* **Backup Stability:** Fixed an issue where manually exporting a backup could crash the app on Android due to file size sharing constraints.
+* **Tag Group Auto-Complete:** Fixed a bug where accepting a tag group auto-complete suggestion would incorrectly overwrite your input when auto-applying the group color.
+* **Add Piece Screen Tweaks:** Eliminated a visual glitch that caused black screens during rotation/keyboard popups, and refined the auto-scrolling behavior when adding new fields so it is much smoother.
+* **Group Selection Fix:** Fixed an issue where creating a new piece from the library sometimes defaulted to the wrong library group if you had recently swiped between tabs.
