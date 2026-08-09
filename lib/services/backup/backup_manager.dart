@@ -279,7 +279,7 @@ class BackupManager {
         );
         
         await File(tempPath).writeAsBytes(zipBytes);
-        await Share.shareXFiles(
+        await SharePlus.instance.share(
           [XFile(tempPath, mimeType: 'application/zip')],
           subject: fileName,
         );
