@@ -495,14 +495,16 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                     ),
                   ),
                 ]),
-                const SizedBox(height: 80),
-              ],
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
           floatingActionButton: SpeedDialWidget(
             hasThumbnail: hasThumbnail,
             onAddMediaItem: (mediaType) async {
               final l10n = context.l10n;
+              final messenger = ScaffoldMessenger.of(context);
               List<String> skippedFiles = [];
               if (mediaType == MediaType.learningProgress) {
                 final config = await showDialog<LearningProgressConfig>(
@@ -527,7 +529,7 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
               }
 
               if (skippedFiles.isNotEmpty && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text(
                       'Skipped ${skippedFiles.length} unsupported file(s): ${skippedFiles.take(3).join(', ')}${skippedFiles.length > 3 ? '...' : ''}',
@@ -539,7 +541,6 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
             },
           ),
         ),
-      ),
     );
   }
 
