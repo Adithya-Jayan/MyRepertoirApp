@@ -469,44 +469,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         onPressed: _player.pause,
                       );
                     } else {
-                      if (_isSettingDelay || _isCountingDown) {
-                        mainButton = GestureDetector(
-                          onTap: _cancelDelay,
-                          child: SizedBox(
-                            width: 80.0,
-                            height: 80.0,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 64.0,
-                                  height: 64.0,
-                                  child: CircularProgressIndicator(
-                                    value: (_delaySeconds % 1.0 == 0.0 && _delaySeconds > 0) ? 1.0 : (_delaySeconds % 1.0),
-                                    strokeWidth: 6.0,
-                                    backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                                  ),
+                      mainButton = GestureDetector(
+                        onTap: (_isSettingDelay || _isCountingDown) ? _cancelDelay : () => _playAudio(isMyAudio),
+                        onLongPressStart: (_isSettingDelay || _isCountingDown) ? null : (_) => _startSettingDelay(),
+                        onLongPressEnd: _isSettingDelay ? (_) => _stopSettingDelayAndStartCountdown(isMyAudio) : null,
+                        child: (_isSettingDelay || _isCountingDown)
+                            ? SizedBox(
+                                width: 80.0,
+                                height: 80.0,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 64.0,
+                                      height: 64.0,
+                                      child: CircularProgressIndicator(
+                                        value: (_delaySeconds % 1.0 == 0.0 && _delaySeconds > 0) ? 1.0 : (_delaySeconds % 1.0),
+                                        strokeWidth: 6.0,
+                                        backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                      ),
+                                    ),
+                                    Text(
+                                      _delaySeconds.ceil().toString(),
+                                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  _delaySeconds.ceil().toString(),
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      } else {
-                        mainButton = GestureDetector(
-                          onTap: () => _playAudio(isMyAudio),
-                          onLongPressStart: (_) => _startSettingDelay(),
-                          onLongPressEnd: (_) => _stopSettingDelayAndStartCountdown(isMyAudio),
-                          child: const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Icon(Icons.play_arrow, size: 64.0),
-                          ),
-                        );
-                      }
+                              )
+                            : const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(Icons.play_arrow, size: 64.0),
+                              ),
+                      );
                     }
 
                     // Return the Row with Skip buttons and Main button
