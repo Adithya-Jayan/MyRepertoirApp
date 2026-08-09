@@ -48,6 +48,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   bool _isSettingDelay = false;
   bool _isCountingDown = false;
   double? _dragValue;
+  Duration? _targetSeekPosition;
 
   @override
   void initState() {
@@ -139,7 +140,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   void _skip(bool forward, {int seconds = 1, bool fine = false}) {
     if (!_isInitialized) return;
-    final current = _player.player.position;
+    
+    // Use target seek position if a seek is already in progress, 
+    // otherwise use the player's actual position.
+    final current = _targetSeekPosition ?? _player.player.position;
     final duration = _player.player.duration ?? Duration.zero;
     final amount = fine
         ? const Duration(milliseconds: 200)
@@ -154,7 +158,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       if (newPos < Duration.zero) newPos = Duration.zero;
     }
 
-    _player.player.seek(newPos);
+    _targetSeekPosition = newPos;
+    _player.player.seek(newPos).then((_) {
+      if (mounted && _targetSeekPosition == newPos) {
+        // Clear target once the exact seek completes
+        _targetSeekPosition = null;
+      }
+    });
   }
 
   bool _wasPlayingBeforeScrub = false;
