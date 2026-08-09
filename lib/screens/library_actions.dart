@@ -121,7 +121,7 @@ class LibraryActions {
                             group.id != 'all_group' &&
                             group.id != 'ungrouped_group',
                       )
-                      .map((group) {
+                      .map<Widget>((group) {
                         // Determine initial state
                         final isSelectedInAllInitial =
                             currentSelectedPiecesInDialog.every(
