@@ -598,7 +598,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AnimatedOpacity(
           opacity: _showControls ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 800),
           child: IgnorePointer(
             ignoring: !_showControls,
             child: AppBar(
@@ -656,7 +656,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen>
             child: Listener(
               behavior: HitTestBehavior.translucent,
               onPointerDown: (_) {
-                if (_showControls) _resetControlsTimer();
+                if (!_showControls) {
+                  setState(() {
+                    _showControls = true;
+                  });
+                }
+                _resetControlsTimer();
                 _showScrollbar();
                 if (_isAutoScrolling) {
                   _toggleAutoScroll(false);
