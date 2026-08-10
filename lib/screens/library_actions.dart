@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repertoire/database/music_piece_repository.dart';
 import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/models/group.dart';
 import 'package:repertoire/utils/app_logger.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
@@ -93,7 +94,7 @@ class LibraryActions {
   Future<void> modifyGroupOfSelectedPieces(
     BuildContext context,
     Set<String> selectedPieceIds,
-    List<dynamic> groups,
+    List<Group> groups,
   ) async {
     AppLogger.log('LibraryActions: modifyGroupOfSelectedPieces called');
     await showDialog(
