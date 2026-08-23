@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repertoire Alpha Testing</title>
+    <link rel="icon" href="assets/images/logo.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        nav {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #111;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #FF6B6B;
+            color: #fff !important;
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            background: #ff5252;
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #1A2980 !important;
+            border: 2px solid #1A2980;
+            box-shadow: none;
+        }
+        
+        .btn-outline:hover {
+            background: rgba(26, 41, 128, 0.05);
+            box-shadow: none;
+        }
+
+        /* Alpha Content */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+        }
+
+        .alpha-card {
+            background: #fff;
+            max-width: 800px;
+            width: 100%;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border-top: 5px solid #FF6B6B;
+            text-align: center;
+        }
+
+        .alpha-card h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: #1A2980;
+            font-weight: 800;
+        }
+
+        .alpha-card p {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            text-align: left;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        footer {
+            background: #111;
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer p {
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        footer a {
+            color: #26D0CE;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        footer a:hover {
+            color: #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .alpha-card h2 { font-size: 32px; }
+            .alpha-card p { font-size: 16px; }
+            .action-buttons { flex-direction: column; align-items: center; }
+            .action-buttons .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="assets/images/logo.png" alt="Repertoire Logo">
+                <h1>Repertoire</h1>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">← Back to Main Site</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="alpha-card">
+                <h2>Join the Play Store Alpha</h2>
+                <p>Repertoire is preparing for its official launch on the Google Play Store! We are looking for early adopters and alpha testers to help us squash bugs, polish the experience, and shape the future of the app.</p>
+                <p>Repertoire is currently in early access. To join, simply <strong>join our Google Group</strong> using the same Google account you use for Google Play, or email us your account email and we can add you manually. Once you've joined the group, you'll be able to access and download the app directly from the Google Play Store!</p>
+                
+                <div class="action-buttons">
+                    <a href="https://groups.google.com/g/repertoire-alpha-testers" target="_blank" class="btn">1. Join Google Group</a>
+                    <a href="mailto:repertoire-app@adithyajayan.in?subject=Repertoire%20Alpha%20Testing&body=Hi%20Adithya%2C%0A%0AI'd%20love%20to%20join%20the%20Repertoire%20Alpha%20testing%20program%20on%20the%20Google%20Play%20Store.%0A%0AMy%20Google%20Play%20Email%3A%20%5BYour%20Email%20Here%5D%0A%0AThanks!" class="btn btn-outline" style="border-color: #FF6B6B; color: #FF6B6B !important;">Or Request via Email</a>
+                    <a href="https://play.google.com/apps/testing/io.github.adithya_jayan.myrepertoirapp.playstore" target="_blank" class="btn btn-outline">2. Open in Google Play</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
+            <p>Built with ❤️ by the open source community | <a href="privacy.html">Privacy Policy</a></p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -25,19 +25,51 @@ There are many ways to contribute to Repertoire, from writing code to improving 
     ```sh
     cd MyRepertoirApp
     ```
-4.  **Install dependencies:**
-    ```sh
-    flutter pub get
-    ```
+4.  **Choose the project variant to run and install dependencies:**
+    Because of our flavor setup, dependencies must be fetched in both the root directory and the specific variant directory.
+
+    * **F-Droid Build (FOSS)**:
+      ```sh
+      flutter pub get
+      cd app_fdroid
+      flutter pub get
+      flutter run
+      ```
+    * **Play Store Build (Google Play)**:
+      ```sh
+      flutter pub get
+      cd app_playstore
+      flutter pub get
+      flutter run
+      ```
 5.  **Create a new branch** for your feature or bug fix:
     ```sh
     git checkout -b feature/YourAmazingFeature
     ```
 6.  **Make your changes**.
-7.  **Run the app** to test your changes:
-    ```sh
-    flutter run
-    ```
+7.  **Run the app** to test your changes.
+
+### Project Structure
+
+```
+lib/
+├── database/     # Database helper and schema
+├── models/       # Core data models (MusicPiece, MediaItem, etc.)
+├── screens/      # UI for each screen of the app
+├── services/     # Business logic for services
+├── utils/        # Utility functions and constants
+├── widgets/      # Reusable custom widgets
+└── main.dart     # App entry point
+```
+
+### Tech Stack
+
+- **Flutter (Dart)**
+- **SQLite** (`sqflite` / `sqflite_common_ffi`) for local storage
+- **pdfrx** for F-Droid compatible PDF rendering
+- **just_audio** & **media_kit** for rich media playback
+- **Provider** for state management
+- Other libraries: `file_picker`, `archive`, `dart_midi_pro`, `share_plus`, etc.
 8.  **Commit your changes** with a clear and descriptive commit message:
     ```sh
     git commit -m 'Add some AmazingFeature'

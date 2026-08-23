@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repertoire: Music Practice & Sheet Music Organizer</title>
+    <title>Repertoire: Universal Practice & Media Organizer</title>
     <link rel="icon" href="assets/images/logo.png" type="image/png">
     <style>
         * {
@@ -14,7 +14,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             color: #333;
             line-height: 1.6;
             overflow-x: hidden;
@@ -24,6 +24,30 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+        }
+
+        /* Announcement Banner */
+        .announcement-banner {
+            background: #FF6B6B;
+            color: #fff;
+            text-align: center;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            z-index: 1001;
+            position: relative;
+        }
+
+        .announcement-banner a {
+            color: #fff;
+            text-decoration: underline;
+            font-weight: 700;
+            margin-left: 10px;
+            transition: opacity 0.3s ease;
+        }
+
+        .announcement-banner a:hover {
+            opacity: 0.8;
         }
 
         /* Header */
@@ -39,14 +63,8 @@
         }
 
         @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         header .container {
@@ -72,7 +90,7 @@
 
         .logo h1 {
             font-size: 26px;
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -88,9 +106,10 @@
         nav ul {
             list-style: none;
             display: flex;
-            gap: 30px;
+            gap: 25px;
             flex-wrap: wrap;
             justify-content: flex-end;
+            align-items: center;
         }
 
         nav a {
@@ -108,7 +127,7 @@
             left: 0;
             width: 0;
             height: 2px;
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             transition: width 0.3s ease;
         }
 
@@ -162,7 +181,7 @@
 
         /* Hero Section */
         #hero {
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             color: #fff;
             padding: 120px 0;
             text-align: center;
@@ -183,12 +202,8 @@
         }
 
         @keyframes wave {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
         }
 
         #hero .container {
@@ -200,38 +215,34 @@
             font-size: 56px;
             margin-bottom: 20px;
             animation: fadeInUp 0.8s ease-out;
-            font-weight: 700;
+            font-weight: 800;
             text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+            letter-spacing: -1px;
         }
 
         #hero p {
-            font-size: 20px;
-            max-width: 700px;
+            font-size: 22px;
+            max-width: 800px;
             margin: 0 auto 40px;
             animation: fadeInUp 0.8s ease-out 0.2s both;
             opacity: 0.95;
-            line-height: 1.8;
+            line-height: 1.6;
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .btn {
             display: inline-block;
             background: #fff;
-            color: #111;
+            color: #1A2980;
             padding: 16px 40px;
             border-radius: 50px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 18px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             animation: fadeInUp 0.8s ease-out 0.4s both;
@@ -240,12 +251,58 @@
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            color: #26D0CE;
+        }
+
+        /* Story Section */
+        #story {
+            padding: 100px 0;
+            background: #fff;
+            position: relative;
+        }
+        
+        .story-content {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .story-content h2 {
+            font-size: 42px;
+            margin-bottom: 30px;
+            color: #1A2980;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .story-content h3 {
+            font-size: 24px;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            color: #26D0CE;
+        }
+
+        .story-content p {
+            margin-bottom: 20px;
+        }
+        
+        .story-content blockquote {
+            border-left: 5px solid #26D0CE;
+            padding-left: 20px;
+            margin: 30px 0;
+            font-style: italic;
+            color: #666;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
         }
 
         /* Features Section */
         #features {
             padding: 100px 0;
-            background: #f4f1ea;
+            background: #f4f7f6;
             position: relative;
         }
 
@@ -253,8 +310,8 @@
             text-align: center;
             font-size: 42px;
             margin-bottom: 60px;
-            color: #2d3748;
-            font-weight: 700;
+            color: #1A2980;
+            font-weight: 800;
         }
 
         .feature-grid {
@@ -267,10 +324,11 @@
             background: #fff;
             padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.05);
             transition: all 0.4s ease;
             position: relative;
             overflow: hidden;
+            border: 1px solid #eee;
         }
 
         .feature::before {
@@ -279,15 +337,16 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            height: 5px;
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             transform: scaleX(0);
             transition: transform 0.4s ease;
+            transform-origin: left;
         }
 
         .feature:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
         }
 
         .feature:hover::before {
@@ -298,7 +357,7 @@
             font-size: 24px;
             margin-bottom: 15px;
             color: #111;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .feature p {
@@ -316,8 +375,8 @@
             text-align: center;
             font-size: 42px;
             margin-bottom: 60px;
-            color: #2d3748;
-            font-weight: 700;
+            color: #1A2980;
+            font-weight: 800;
         }
 
         .screenshot-grid {
@@ -343,14 +402,14 @@
         #download {
             padding: 100px 0;
             text-align: center;
-            background: linear-gradient(135deg, #111111 0%, #333333 100%);
+            background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%);
             color: #fff;
         }
 
         #download h2 {
             font-size: 42px;
             margin-bottom: 20px;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         #download p {
@@ -366,75 +425,61 @@
             flex-wrap: wrap;
         }
 
-        .download-buttons .btn {
-            background: #fff;
-            color: #111;
-        }
-
         .btn-secondary {
             background: transparent;
-            color: #fff;
+            color: #fff !important;
             border: 2px solid #fff;
+            box-shadow: none;
         }
 
         .btn-secondary:hover {
-            background: #fff;
-            color: #111;
+            background: rgba(255,255,255,0.1);
+            color: #fff !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         /* Footer */
         footer {
-            background: #2d3748;
+            background: #111;
             color: #fff;
             padding: 40px 0;
             text-align: center;
         }
 
         footer p {
-            opacity: 0.8;
+            opacity: 0.7;
+            margin-bottom: 10px;
         }
 
         footer a {
-            color: #aaa;
+            color: #26D0CE;
             text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        footer a:hover {
+            color: #fff;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            #hero h2 {
-                font-size: 36px;
-            }
-
-            #hero p {
-                font-size: 16px;
-            }
-
-            nav ul {
-                gap: 15px;
-            }
-
-            .feature-grid,
-            .screenshot-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .download-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .download-buttons .btn {
-                width: 80%;
-            }
+            #hero h2 { font-size: 40px; }
+            #hero p { font-size: 18px; }
+            nav ul { gap: 15px; justify-content: center; margin-top: 10px; }
+            .feature-grid, .screenshot-grid { grid-template-columns: 1fr; }
+            .download-buttons { flex-direction: column; align-items: center; }
+            .download-buttons .btn { width: 80%; }
         }
 
         /* Smooth scroll */
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body>
+    <div class="announcement-banner">
+        🚀 We're launching on the Google Play Store! <a href="alpha.html">Join our Alpha Testing Group</a>
+    </div>
+
     <header>
         <div class="container">
             <div class="logo">
@@ -443,13 +488,15 @@
             </div>
             <nav>
                 <ul>
+                    <li><a href="#story">Origin</a></li>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#screenshots">Screenshots</a></li>
                     <li><a href="#download">Download</a></li>
-                    <li><a href="privacy.html">Privacy</a></li>
                     <li class="dropdown">
                         <a href="javascript:void(0)" class="dropbtn">Links ▾</a>
                         <div class="dropdown-content">
+                            <a href="alpha.html">Early Access</a>
+                            <a href="privacy.html">Privacy</a>
                             <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/INSTALL.md" target="_blank">Installation</a>
                             <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/docs/CONTRIBUTING.md" target="_blank">Contributing</a>
                             <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/wiki" target="_blank">Wiki</a>
@@ -464,9 +511,28 @@
 
     <section id="hero">
         <div class="container">
-            <h2>Music Practice & Sheet Music Organizer</h2>
-            <p>A powerful cross-platform application for musicians, dancers, magicians, and performers. Manage your repertoire, track practice sessions, and organize all your media in one beautiful place.</p>
+            <h2>Your Universal Practice & Media Organizer</h2>
+            <p>Designed for musicians, magicians, dancers, and performers. Keep track of everything you learn, organize your materials, and never forget a piece again.</p>
             <a href="#download" class="btn">Download Now</a>
+        </div>
+    </section>
+
+    <section id="story">
+        <div class="container">
+            <div class="story-content">
+                <h2>Why I Made Repertoire</h2>
+                
+                <h3>It started with the keyboard.</h3>
+                <p>After learning to play the keyboard for 8 years and mastering hundreds of songs, I had a sudden realization: <strong>I could only play about 5 to 8 songs off the top of my head.</strong></p>
+                <p>I had forgotten almost everything else. If I wanted to play those older pieces again, I would have to dig through old physical notes, scour the internet for sheet music I once had, and try to piece it all together. To make matters worse, some of my older notebooks were lost entirely.</p>
+                
+                <blockquote>"I needed a single, reliable place to store all my learnings, materials, PDFs, audio tracks, and setups, without the fear of losing them."</blockquote>
+
+                <h3>Then, it happened again.</h3>
+                <p>As I started learning magic, I ran into the exact same problem. There are countless magic tricks out there that have similar effects but use completely different methods. I found myself unable to keep track of all the sources, where I had originally learned a trick, the specific setups required, and the subtle nuances of the performances.</p>
+                
+                <p>That's when I realized this wasn't just a music problem. It's a problem for anyone who builds a <em>repertoire</em> of skills. That's why I built this app—to give performers of all kinds a dedicated space to track their growth and preserve their hard-earned repertoire.</p>
+            </div>
         </div>
     </section>
 
@@ -484,7 +550,7 @@
                 </div>
                 <div class="feature">
                     <h3>📎 Flexible Media Attachments</h3>
-                    <p>Attach PDFs, Markdown notes, images, audio files, and video links. All your materials in one place.</p>
+                    <p>Attach PDFs, Markdown notes, images, audio files, and video links. Keep all your sheet music, tutorials, and performances in one place.</p>
                 </div>
                 <div class="feature">
                     <h3>⏱️ Practice Tracking</h3>
@@ -523,11 +589,12 @@
             <h2>Get Started Today</h2>
             <p>Download the app from your preferred source. For automatic updates, we recommend F-Droid.</p>
             <div class="download-buttons">
-                <a href="https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/" class="btn" target="_blank" style="background: #0D90D9; color: #fff; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <a href="https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/" class="btn" target="_blank" style="background: #fff; color: #1A2980; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <img src="https://gitlab.com/fdroid/fdroidclient/-/raw/master/logo-icon.svg" alt="F-Droid Logo" style="height: 2em; vertical-align: middle;">
                     Get it on F-Droid
                 </a>
-                <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest" class="btn" target="_blank">📥 Latest Release</a>
+                <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest" class="btn btn-secondary" target="_blank">📥 Latest Release</a>
+                <a href="alpha.html" class="btn btn-secondary" style="border-color: #FF6B6B; color: #fff !important; background: rgba(255, 107, 107, 0.2);">🚀 Play Store Alpha</a>
                 <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly" class="btn btn-secondary" target="_blank">🌙 Nightly Build</a>
             </div>
         </div>
@@ -535,7 +602,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
+            <p>&copy; 2026 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
             <p>Built with ❤️ by the open source community | <a href="privacy.html">Privacy Policy</a></p>
         </div>
     </footer>

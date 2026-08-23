@@ -1,6 +1,11 @@
 <div align="center">
 
-<a href="https://hacktoberfest.digitalocean.com/"><img src="https://img.shields.io/badge/Hacktoberfest-2025-2ea44f?style=flat-square" alt="Hacktoberfest 2025"/></a>
+<blockquote>
+  🚀 <strong>We're launching on the Google Play Store!</strong> <a href="https://adithyajayan.in/MyRepertoirApp/alpha.html">Join our Alpha Testing Group here</a>.
+</blockquote>
+<br>
+
+<!-- <a href="https://hacktoberfest.digitalocean.com/"><img src="https://img.shields.io/badge/Hacktoberfest-2025-2ea44f?style=flat-square" alt="Hacktoberfest 2025"/></a> -->
 
 [![Build Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/release.yml)
 [![Nightly Status](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml/badge.svg)](https://github.com/Adithya-Jayan/MyRepertoirApp/actions/workflows/nightly.yml)
@@ -17,7 +22,9 @@
 
 # Repertoire: Music Practice & Sheet Music Organizer
 
-**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)** | **[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)** | **[Download from F-Droid](https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/)** | **[View the Webpage](https://adithyajayan.in/MyRepertoirApp/)**
+**[Download Latest Release](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/latest)** | **[Download Nightly Build](https://github.com/Adithya-Jayan/MyRepertoirApp/releases/tag/nightly)** | **[Download from F-Droid](https://f-droid.org/en/packages/io.github.adithya_jayan.myrepertoirapp.fdroid/)** 
+
+**[View the Webpage](https://adithyajayan.in/MyRepertoirApp/)**
 
 Repertoire is an app designed for musicians, dancers, magicians, or performers to help manage their repertoire, track practice sessions, and organize all related media in one place.
 
@@ -122,63 +129,17 @@ Personalize your experience and keep your data safe
 
 We welcome contributions from everyone! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
 
+<!-- 
 ### Hacktoberfest 2025
 
 <a href="https://hacktoberfest.digitalocean.com/"><img src="https://img.shields.io/badge/Hacktoberfest-2025-2ea44f?style=flat-square" alt="Hacktoberfest 2025"/></a>
 
 We are participating in Hacktoberfest! Look for the `hacktoberfest` and `good first issue` labels in our [issues tab](https://github.com/Adithya-Jayan/MyRepertoirApp/issues).
+-->
 
 ### How to Contribute
 
-Please read our [Contributing Guidelines](docs/CONTRIBUTING.md) before getting started.
-
-**For Developers:**
-
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/Adithya-Jayan/MyRepertoirApp.git
-   cd MyRepertoirApp
-   ```
-
-2. Choose the project variant to run:
-   * **F-Droid Build (FOSS)**:
-     ```sh
-     flutter pub get
-     cd app_fdroid
-     flutter pub get
-     flutter run
-     ```
-   * **Play Store Build (Google Play)**:
-     ```sh
-     flutter pub get
-     cd app_playstore
-     flutter pub get
-     flutter run
-     ```
-     *(Note: Because of our flavor setup, dependencies must be fetched in both the root directory and the specific variant directory).*
-
-**Prerequisites:** Ensure you have the Flutter SDK installed. See the [official Flutter installation guide](https://flutter.dev/docs/get-started/install).
-
-### Project Structure
-
-```
-lib/
-├── database/     # Database helper and schema
-├── models/       # Core data models (MusicPiece, MediaItem, etc.)
-├── screens/      # UI for each screen of the app
-├── services/     # Business logic for services
-├── utils/        # Utility functions and constants
-├── widgets/      # Reusable custom widgets
-└── main.dart     # App entry point
-```
-
-### Tech Stack
-
-- Flutter (Dart)
-- SQLite (local storage)
-- just_audio, video_player (media playback)
-- Provider (state management)
-- Other libraries: file_picker, share_plus, url_launcher, etc.
+Please read our [Contributing Guidelines](docs/CONTRIBUTING.md) before getting started. It contains instructions on our dual-flavor setup, project structure, and up-to-date tech stack.
 
 ## Credits
 
