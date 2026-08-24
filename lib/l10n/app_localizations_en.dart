@@ -1944,6 +1944,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleContains => 'Title contains...';
 
   @override
+  String get transposeSemitones => 'Transpose (semitones)';
+
+  @override
+  String get transposeSemitonesHint => 'e.g. +2 or -3';
+
+  @override
   String todayAt(String time) {
     return 'Today at $time';
   }

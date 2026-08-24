@@ -196,6 +196,13 @@ class MusicPieceCard extends StatelessWidget {
                     piece.artistComposer,
                     Theme.of(context).textTheme.titleSmall,
                   ),
+                  if (piece.transposeSemitones != 0)
+                    textWithOutline(
+                      piece.transposeSemitones > 0
+                          ? '+${piece.transposeSemitones}'
+                          : '${piece.transposeSemitones}',
+                      Theme.of(context).textTheme.bodySmall,
+                    ),
                   const SizedBox(height: 8.0),
                   if (piece.tagGroups.isNotEmpty)
                     isListView

@@ -255,7 +255,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         _musicPiece.artistComposer !=
             (widget.musicPiece?.artistComposer ?? '') ||
         _musicPiece.enablePracticeTracking !=
-            (widget.musicPiece?.enablePracticeTracking ?? true)) {
+            (widget.musicPiece?.enablePracticeTracking ?? true) ||
+        _musicPiece.transposeSemitones !=
+            (widget.musicPiece?.transposeSemitones ?? 0)) {
       return true;
     }
 
@@ -387,6 +389,8 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       onTitleChanged: (value) => _musicPiece.title = value,
                       onArtistComposerChanged: (value) =>
                           _musicPiece.artistComposer = value,
+                      onTransposeSemitonesChanged: (value) =>
+                          _musicPiece.transposeSemitones = value,
                       onSaveRequested: _savePiece,
                     ),
                   ),

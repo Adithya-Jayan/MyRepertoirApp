@@ -1880,6 +1880,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get titleContains => '标题包含...';
 
   @override
+  String get transposeSemitones => '移调（半音）';
+
+  @override
+  String get transposeSemitonesHint => '例如 +2 或 -3';
+
+  @override
   String todayAt(String time) {
     return '今天 $time';
   }

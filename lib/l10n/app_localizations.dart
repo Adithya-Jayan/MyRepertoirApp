@@ -3284,6 +3284,18 @@ abstract class AppLocalizations {
   /// **'Title contains...'**
   String get titleContains;
 
+  /// No description provided for @transposeSemitones.
+  ///
+  /// In en, this message translates to:
+  /// **'Transpose (semitones)'**
+  String get transposeSemitones;
+
+  /// No description provided for @transposeSemitonesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. +2 or -3'**
+  String get transposeSemitonesHint;
+
   /// Localized message for todayAt.
   ///
   /// In en, this message translates to:

@@ -1281,6 +1281,8 @@
   "thumbnailWidgetVisibleInEditModeOnly": "缩略图组件（仅在编辑模式下显示）",
   "title": "标题",
   "titleContains": "标题包含...",
+  "transposeSemitones": "移调（半音）",
+  "transposeSemitonesHint": "例如 +2 或 -3",
   "todayAt": "今天 {time}",
   "@todayAt": {
     "description": "Localized message for todayAt.",

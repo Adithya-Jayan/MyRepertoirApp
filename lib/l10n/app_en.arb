@@ -1281,6 +1281,8 @@
   "thumbnailWidgetVisibleInEditModeOnly": "Thumbnail Widget (Visible in Edit Mode only)",
   "title": "Title",
   "titleContains": "Title contains...",
+  "transposeSemitones": "Transpose (semitones)",
+  "transposeSemitonesHint": "e.g. +2 or -3",
   "todayAt": "Today at {time}",
   "@todayAt": {
     "description": "Localized message for todayAt.",

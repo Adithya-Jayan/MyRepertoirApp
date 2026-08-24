@@ -7,6 +7,7 @@ class BasicDetailsSection extends StatelessWidget {
   final MusicPiece musicPiece;
   final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onArtistComposerChanged;
+  final ValueChanged<int> onTransposeSemitonesChanged;
   final VoidCallback? onSaveRequested;
 
   const BasicDetailsSection({
@@ -14,6 +15,7 @@ class BasicDetailsSection extends StatelessWidget {
     required this.musicPiece,
     required this.onTitleChanged,
     required this.onArtistComposerChanged,
+    required this.onTransposeSemitonesChanged,
     this.onSaveRequested,
   });
 
@@ -33,9 +35,24 @@ class BasicDetailsSection extends StatelessWidget {
         TextFormField(
           initialValue: musicPiece.artistComposer,
           decoration: InputDecoration(labelText: context.l10n.artistComposer),
-          textInputAction: TextInputAction.done,
+          textInputAction: TextInputAction.next,
           onChanged: onArtistComposerChanged,
           onSaved: (value) => onArtistComposerChanged(value!),
+        ),
+        TextFormField(
+          initialValue: musicPiece.transposeSemitones == 0
+              ? ''
+              : musicPiece.transposeSemitones.toString(),
+          decoration: InputDecoration(
+            labelText: context.l10n.transposeSemitones,
+            hintText: context.l10n.transposeSemitonesHint,
+          ),
+          keyboardType: const TextInputType.numberWithOptions(signed: true),
+          textInputAction: TextInputAction.done,
+          onChanged: (value) =>
+              onTransposeSemitonesChanged(int.tryParse(value) ?? 0),
+          onSaved: (value) =>
+              onTransposeSemitonesChanged(int.tryParse(value ?? '') ?? 0),
           onFieldSubmitted: (_) => onSaveRequested?.call(),
         ),
       ],
