@@ -69,7 +69,7 @@ class _MusicBrainzSearchDialogState extends State<MusicBrainzSearchDialog> {
 
   Future<void> _search() async {
     final title = _titleController.text.trim();
-    if (title.isEmpty) return;
+    if (title.isEmpty || _fetchingMbid != null) return;
 
     setState(() {
       _isSearching = true;
@@ -154,7 +154,7 @@ class _MusicBrainzSearchDialogState extends State<MusicBrainzSearchDialog> {
             FilledButton.icon(
               icon: const Icon(Icons.search),
               label: Text(context.l10n.searchMusicBrainz),
-              onPressed: (_isSearching || title.isEmpty) ? null : _search,
+              onPressed: (_isSearching || _fetchingMbid != null || title.isEmpty) ? null : _search,
             ),
             const SizedBox(height: 12),
             if (_isSearching) const Center(child: CircularProgressIndicator()),
