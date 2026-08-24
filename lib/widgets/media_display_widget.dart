@@ -173,6 +173,9 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
       case MediaType.markdown:
         content = MarkdownBody(data: currentMediaItem.pathOrUrl);
         break;
+      case MediaType.lyrics:
+        content = SelectableText(currentMediaItem.pathOrUrl);
+        break;
       case MediaType.pdf:
         content = Center(
           child: FilledButton.icon(

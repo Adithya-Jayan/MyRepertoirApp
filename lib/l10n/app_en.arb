@@ -850,6 +850,23 @@
   "logFileDeleted": "Log file deleted.",
   "logPractice": "Log Practice",
   "loggingAndDeveloperOptions": "Logging and developer options",
+  "lyrics": "Lyrics",
+  "lyricsContent": "Lyrics",
+  "searchLyrics": "Search lyrics (lrclib.net)",
+  "searchLyricsDialogTitle": "Search lyrics",
+  "trackNameLabel": "Track name",
+  "artistNameLabel": "Artist name",
+  "noLyricsAvailable": "No plain lyrics",
+  "noLyricsFound": "No results found",
+  "lyricsSearchError": "Couldn't reach lrclib.net: {error}",
+  "@lyricsSearchError": {
+    "description": "Shown when a lrclib.net lyrics search fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "logsDeleted": "Logs deleted.",
   "longOverdue": "Long overdue",
   "manageAndReorderGroups": "Manage and reorder groups",

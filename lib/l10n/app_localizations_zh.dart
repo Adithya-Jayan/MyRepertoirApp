@@ -1114,6 +1114,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggingAndDeveloperOptions => '日志记录和开发人员选项';
 
   @override
+  String get lyrics => '歌词';
+
+  @override
+  String get lyricsContent => '歌词';
+
+  @override
+  String get searchLyrics => '搜索歌词 (lrclib.net)';
+
+  @override
+  String get searchLyricsDialogTitle => '搜索歌词';
+
+  @override
+  String get trackNameLabel => '曲目名称';
+
+  @override
+  String get artistNameLabel => '艺术家名称';
+
+  @override
+  String get noLyricsAvailable => '无纯文本歌词';
+
+  @override
+  String get noLyricsFound => '未找到结果';
+
+  @override
+  String lyricsSearchError(String error) {
+    return '无法连接到 lrclib.net：$error';
+  }
+
+  @override
   String get logsDeleted => '日志已删除。';
 
   @override

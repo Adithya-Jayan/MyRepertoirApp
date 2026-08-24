@@ -257,6 +257,7 @@ class RestoreManager {
         if (mediaItem.type != MediaType.mediaLink &&
             mediaItem.type != MediaType.markdown &&
             mediaItem.type != MediaType.learningProgress &&
+            mediaItem.type != MediaType.lyrics &&
             mediaItem.pathOrUrl.isNotEmpty) {
           final oldPath = mediaItem.pathOrUrl;
           final newPath = _getCorrectedPath(oldPath, appDir.path);

@@ -1892,6 +1892,60 @@ abstract class AppLocalizations {
   /// **'Logging and developer options'**
   String get loggingAndDeveloperOptions;
 
+  /// No description provided for @lyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get lyrics;
+
+  /// No description provided for @lyricsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get lyricsContent;
+
+  /// No description provided for @searchLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Search lyrics (lrclib.net)'**
+  String get searchLyrics;
+
+  /// No description provided for @searchLyricsDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search lyrics'**
+  String get searchLyricsDialogTitle;
+
+  /// No description provided for @trackNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Track name'**
+  String get trackNameLabel;
+
+  /// No description provided for @artistNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist name'**
+  String get artistNameLabel;
+
+  /// No description provided for @noLyricsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No plain lyrics'**
+  String get noLyricsAvailable;
+
+  /// No description provided for @noLyricsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noLyricsFound;
+
+  /// Shown when a lrclib.net lyrics search fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach lrclib.net: {error}'**
+  String lyricsSearchError(String error);
+
   /// No description provided for @logsDeleted.
   ///
   /// In en, this message translates to:

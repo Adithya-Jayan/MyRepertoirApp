@@ -850,6 +850,23 @@
   "logFileDeleted": "日志文件已删除。",
   "logPractice": "记录练习",
   "loggingAndDeveloperOptions": "日志记录和开发人员选项",
+  "lyrics": "歌词",
+  "lyricsContent": "歌词",
+  "searchLyrics": "搜索歌词 (lrclib.net)",
+  "searchLyricsDialogTitle": "搜索歌词",
+  "trackNameLabel": "曲目名称",
+  "artistNameLabel": "艺术家名称",
+  "noLyricsAvailable": "无纯文本歌词",
+  "noLyricsFound": "未找到结果",
+  "lyricsSearchError": "无法连接到 lrclib.net：{error}",
+  "@lyricsSearchError": {
+    "description": "Shown when a lrclib.net lyrics search fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "logsDeleted": "日志已删除。",
   "longOverdue": "很久未练习",
   "manageAndReorderGroups": "管理和重新排序组",

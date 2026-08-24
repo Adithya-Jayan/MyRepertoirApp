@@ -1153,6 +1153,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loggingAndDeveloperOptions => 'Logging and developer options';
 
   @override
+  String get lyrics => 'Lyrics';
+
+  @override
+  String get lyricsContent => 'Lyrics';
+
+  @override
+  String get searchLyrics => 'Search lyrics (lrclib.net)';
+
+  @override
+  String get searchLyricsDialogTitle => 'Search lyrics';
+
+  @override
+  String get trackNameLabel => 'Track name';
+
+  @override
+  String get artistNameLabel => 'Artist name';
+
+  @override
+  String get noLyricsAvailable => 'No plain lyrics';
+
+  @override
+  String get noLyricsFound => 'No results found';
+
+  @override
+  String lyricsSearchError(String error) {
+    return 'Couldn\'t reach lrclib.net: $error';
+  }
+
+  @override
   String get logsDeleted => 'Logs deleted.';
 
   @override
