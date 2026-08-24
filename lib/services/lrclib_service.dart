@@ -74,24 +74,22 @@ class LrcLibService {
           .get(uri, headers: {'User-Agent': 'Repertoire Music App (Flutter)'})
           .timeout(const Duration(seconds: 10));
     } catch (e) {
-      throw LrcLibException('Network error: $e');
+      throw LrcLibException('Connection failed');
     }
 
     if (response.statusCode != 200) {
-      throw LrcLibException(
-        'lrclib.net returned status ${response.statusCode}',
-      );
+      throw LrcLibException('Server error (${response.statusCode})');
     }
 
     dynamic decoded;
     try {
       decoded = jsonDecode(response.body);
     } catch (e) {
-      throw LrcLibException('Invalid response from lrclib.net');
+      throw LrcLibException('Invalid response');
     }
 
     if (decoded is! List) {
-      throw LrcLibException('Unexpected response format from lrclib.net');
+      throw LrcLibException('Unexpected response format');
     }
 
     final results = <LrcLibResult>[];

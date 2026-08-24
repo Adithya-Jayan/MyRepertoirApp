@@ -140,7 +140,7 @@ class _LyricsSearchDialogState extends State<LyricsSearchDialog> {
                         itemCount: _results!.length,
                         itemBuilder: (context, index) {
                           final result = _results![index];
-                          final hasLyrics = result.plainLyrics != null;
+                          final hasLyrics = result.plainLyrics?.isNotEmpty ?? false;
                           final duration = result.durationSeconds;
                           final subtitleParts = <String>[
                             result.artistName,
