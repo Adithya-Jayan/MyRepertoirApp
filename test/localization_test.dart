@@ -6,9 +6,10 @@ import 'package:repertoire/l10n/l10n.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('English and Simplified Chinese are supported', () {
+  test('English, Simplified Chinese, and Italian are supported', () {
     expect(AppLocalizations.supportedLocales, contains(const Locale('en')));
     expect(AppLocalizations.supportedLocales, contains(const Locale('zh')));
+    expect(AppLocalizations.supportedLocales, contains(const Locale('it')));
   });
 
   test(
