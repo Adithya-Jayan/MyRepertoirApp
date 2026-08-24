@@ -62,7 +62,7 @@ class MediaItem {
         'id': id,
         'type': type.name,
         // Only relativize local file paths. Leave external links, inline content, and config data untouched
-        'pathOrUrl': (type == MediaType.mediaLink || type == MediaType.markdown || type == MediaType.learningProgress)
+        'pathOrUrl': (type == MediaType.mediaLink || type == MediaType.markdown || type == MediaType.learningProgress || type == MediaType.lyrics)
             ? pathOrUrl
             : getRelativePath(pathOrUrl, storagePath),
         'title': title,
@@ -80,7 +80,7 @@ class MediaItem {
         // Leave media links, markdown content, and config data untouched; absolutize only local file paths
         pathOrUrl: (() {
           final mediaType = MediaType.values.firstWhere((e) => e.name == json['type']);
-          if (mediaType == MediaType.mediaLink || mediaType == MediaType.markdown || mediaType == MediaType.learningProgress) {
+          if (mediaType == MediaType.mediaLink || mediaType == MediaType.markdown || mediaType == MediaType.learningProgress || mediaType == MediaType.lyrics) {
             return json['pathOrUrl'];
           }
           return getAbsolutePath(json['pathOrUrl'], storagePath);

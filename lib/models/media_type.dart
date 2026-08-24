@@ -21,5 +21,7 @@ enum MediaType {
   localVideo,
   /// Represents a MIDI file.
   midi,
+  /// Represents song lyrics as plain text.
+  lyrics,
   // Add other types as needed, e.g., 'text' for plain text notes
 }

@@ -18,6 +18,7 @@ void main() {
         MediaType.learningProgress,
         MediaType.localVideo,
         MediaType.midi,
+        MediaType.lyrics,
       ]);
     });
   });
@@ -169,6 +170,20 @@ void main() {
 
       final roundTripped = MusicPiece.fromJson(json);
       expect(roundTripped.transposeSemitones, -3);
+    });
+
+    test('MediaItem with type lyrics keeps pathOrUrl as inline text through backup round-trip', () {
+      final item = MediaItem(
+        id: 'lyr1',
+        type: MediaType.lyrics,
+        pathOrUrl: 'Line one\nLine two',
+      );
+
+      final json = item.toJsonForBackup('/some/storage/path');
+      expect(json['pathOrUrl'], 'Line one\nLine two');
+
+      final roundTripped = MediaItem.fromJsonForBackup(json, '/some/storage/path');
+      expect(roundTripped.pathOrUrl, 'Line one\nLine two');
     });
   });
 
