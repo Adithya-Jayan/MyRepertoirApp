@@ -2120,6 +2120,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewAllContributors => 'View All Contributors';
 
   @override
+  String get viewLyrics => 'View Lyrics';
+
+  @override
   String get viewPdf => 'View PDF';
 
   @override

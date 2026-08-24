@@ -2052,6 +2052,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewAllContributors => '查看所有贡献者';
 
   @override
+  String get viewLyrics => '查看歌词';
+
+  @override
   String get viewPdf => '查看 PDF';
 
   @override

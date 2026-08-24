@@ -3592,6 +3592,12 @@ abstract class AppLocalizations {
   /// **'View All Contributors'**
   String get viewAllContributors;
 
+  /// No description provided for @viewLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'View Lyrics'**
+  String get viewLyrics;
+
   /// No description provided for @viewPdf.
   ///
   /// In en, this message translates to:

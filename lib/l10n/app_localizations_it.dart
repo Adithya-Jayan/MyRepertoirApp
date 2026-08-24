@@ -2135,6 +2135,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get viewAllContributors => 'Visualizza Tutti i Contributori';
 
   @override
+  String get viewLyrics => 'Visualizza testo';
+
+  @override
   String get viewPdf => 'Visualizza PDF';
 
   @override
