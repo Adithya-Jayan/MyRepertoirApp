@@ -850,6 +850,18 @@
   "logFileDeleted": "日志文件已删除。",
   "logPractice": "记录练习",
   "loggingAndDeveloperOptions": "日志记录和开发人员选项",
+  "searchMusicBrainz": "在 MusicBrainz 上搜索",
+  "searchMusicBrainzDialogTitle": "搜索 MusicBrainz",
+  "noCoverArtAvailable": "未找到此发行版的封面",
+  "musicBrainzSearchError": "无法连接到 MusicBrainz：{error}",
+  "@musicBrainzSearchError": {
+    "description": "Shown when a MusicBrainz search or cover art lookup fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "lyrics": "歌词",
   "lyricsContent": "歌词",
   "searchLyrics": "搜索歌词 (lrclib.net)",

@@ -850,6 +850,18 @@
   "logFileDeleted": "File di log eliminato.",
   "logPractice": "Registra Pratica",
   "loggingAndDeveloperOptions": "Logging e opzioni sviluppatore",
+  "searchMusicBrainz": "Cerca su MusicBrainz",
+  "searchMusicBrainzDialogTitle": "Cerca su MusicBrainz",
+  "noCoverArtAvailable": "Nessuna copertina trovata per questa release",
+  "musicBrainzSearchError": "Impossibile raggiungere MusicBrainz: {error}",
+  "@musicBrainzSearchError": {
+    "description": "Shown when a MusicBrainz search or cover art lookup fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "lyrics": "Testi",
   "lyricsContent": "Testi",
   "searchLyrics": "Cerca testi (lrclib.net)",

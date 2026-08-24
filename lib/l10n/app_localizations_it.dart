@@ -1163,6 +1163,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get loggingAndDeveloperOptions => 'Logging e opzioni sviluppatore';
 
   @override
+  String get searchMusicBrainz => 'Cerca su MusicBrainz';
+
+  @override
+  String get searchMusicBrainzDialogTitle => 'Cerca su MusicBrainz';
+
+  @override
+  String get noCoverArtAvailable =>
+      'Nessuna copertina trovata per questa release';
+
+  @override
+  String musicBrainzSearchError(String error) {
+    return 'Impossibile raggiungere MusicBrainz: $error';
+  }
+
+  @override
   String get lyrics => 'Testi';
 
   @override

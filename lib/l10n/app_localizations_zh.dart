@@ -1114,6 +1114,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggingAndDeveloperOptions => '日志记录和开发人员选项';
 
   @override
+  String get searchMusicBrainz => '在 MusicBrainz 上搜索';
+
+  @override
+  String get searchMusicBrainzDialogTitle => '搜索 MusicBrainz';
+
+  @override
+  String get noCoverArtAvailable => '未找到此发行版的封面';
+
+  @override
+  String musicBrainzSearchError(String error) {
+    return '无法连接到 MusicBrainz：$error';
+  }
+
+  @override
   String get lyrics => '歌词';
 
   @override

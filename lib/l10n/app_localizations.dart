@@ -1894,6 +1894,30 @@ abstract class AppLocalizations {
   /// **'Logging and developer options'**
   String get loggingAndDeveloperOptions;
 
+  /// No description provided for @searchMusicBrainz.
+  ///
+  /// In en, this message translates to:
+  /// **'Search on MusicBrainz'**
+  String get searchMusicBrainz;
+
+  /// No description provided for @searchMusicBrainzDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search MusicBrainz'**
+  String get searchMusicBrainzDialogTitle;
+
+  /// No description provided for @noCoverArtAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No cover art found for this release'**
+  String get noCoverArtAvailable;
+
+  /// Shown when a MusicBrainz search or cover art lookup fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach MusicBrainz: {error}'**
+  String musicBrainzSearchError(String error);
+
   /// No description provided for @lyrics.
   ///
   /// In en, this message translates to:
