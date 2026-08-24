@@ -120,3 +120,6 @@ unlinked_spec.ds
 **/macos/Runner.xcodeproj/project.xcworkspace
 **/macos/Runner.xcodeproj/xcuserdata
 .DS_Store
+
+# Git worktrees for isolated feature work
+.worktrees/
