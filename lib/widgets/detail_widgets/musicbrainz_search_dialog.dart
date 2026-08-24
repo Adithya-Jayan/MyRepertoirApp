@@ -184,6 +184,7 @@ class _MusicBrainzSearchDialogState extends State<MusicBrainzSearchDialog> {
                           final isFetching = _fetchingMbid == result.mbid;
                           final subtitleParts = <String>[
                             result.artist,
+                            result.releaseTitle,
                             if (result.date != null) result.date!,
                           ];
                           return ListTile(

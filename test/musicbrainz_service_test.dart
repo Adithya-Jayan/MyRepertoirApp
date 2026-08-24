@@ -11,13 +11,19 @@ void main() {
         final mockClient = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'releases': [
+              'recordings': [
                 {
-                  'id': 'abc-123',
-                  'title': 'A Night at the Opera',
-                  'date': '1975-11-21',
+                  'id': 'recording-mbid-not-used-for-cover-art',
+                  'title': 'La fine',
                   'artist-credit': [
-                    {'name': 'Queen'},
+                    {'name': 'Tiziano Ferro'},
+                  ],
+                  'releases': [
+                    {
+                      'id': 'release-abc-123',
+                      'title': 'TZN: The Best of Tiziano Ferro',
+                      'date': '2012-05-04',
+                    },
                   ],
                 },
               ],
@@ -28,33 +34,39 @@ void main() {
         final service = MusicBrainzService(client: mockClient);
 
         final results = await service.search(
-          title: 'Bohemian Rhapsody',
-          artist: 'Queen',
+          title: 'La fine',
+          artist: 'Tiziano Ferro',
         );
 
         expect(results, hasLength(1));
-        expect(results[0].mbid, 'abc-123');
-        expect(results[0].title, 'A Night at the Opera');
-        expect(results[0].artist, 'Queen');
-        expect(results[0].date, '1975-11-21');
+        expect(results[0].mbid, 'release-abc-123');
+        expect(results[0].title, 'La fine');
+        expect(results[0].artist, 'Tiziano Ferro');
+        expect(results[0].releaseTitle, 'TZN: The Best of Tiziano Ferro');
+        expect(results[0].date, '2012-05-04');
       });
 
-      test('skips entries missing id or title', () async {
+      test('skips entries missing title', () async {
         final mockClient = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'releases': [
+              'recordings': [
                 {
-                  'title': 'No ID',
                   'artist-credit': [
                     {'name': 'Someone'},
                   ],
+                  'releases': [
+                    {'id': 'r1', 'title': 'Some Release'},
+                  ],
                 },
                 {
-                  'id': 'valid-1',
+                  'id': 'rec-2',
                   'title': 'Valid',
                   'artist-credit': [
                     {'name': 'Valid Artist'},
+                  ],
+                  'releases': [
+                    {'id': 'r2', 'title': 'Valid Release'},
                   ],
                 },
               ],
@@ -74,8 +86,40 @@ void main() {
         final mockClient = MockClient((request) async {
           return http.Response(
             jsonEncode({
-              'releases': [
-                {'id': 'no-artist', 'title': 'No Artist', 'artist-credit': []},
+              'recordings': [
+                {
+                  'id': 'no-artist',
+                  'title': 'No Artist',
+                  'artist-credit': [],
+                  'releases': [
+                    {'id': 'r1', 'title': 'Some Release'},
+                  ],
+                },
+              ],
+            }),
+            200,
+          );
+        });
+        final service = MusicBrainzService(client: mockClient);
+
+        final results = await service.search(title: 'x', artist: 'y');
+
+        expect(results, isEmpty);
+      });
+
+      test('skips entries with no releases (nothing to fetch cover art for)', () async {
+        final mockClient = MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'recordings': [
+                {
+                  'id': 'no-release',
+                  'title': 'No Release',
+                  'artist-credit': [
+                    {'name': 'Someone'},
+                  ],
+                  'releases': [],
+                },
               ],
             }),
             200,
@@ -101,7 +145,7 @@ void main() {
       });
 
       test(
-        'throws MusicBrainzException when response has no releases array',
+        'throws MusicBrainzException when response has no recordings array',
         () async {
           final mockClient = MockClient((request) async {
             return http.Response(jsonEncode({'error': 'nope'}), 200);

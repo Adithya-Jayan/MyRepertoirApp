@@ -12,27 +12,31 @@ class MusicBrainzException implements Exception {
   String toString() => message;
 }
 
-/// One release result from a MusicBrainz search.
+/// One search result: a MusicBrainz recording (song), paired with one of
+/// its releases (album/single) to source cover art from. [mbid] is the
+/// RELEASE's id — not the recording's — since that's what the Cover Art
+/// Archive is keyed by.
 class MusicBrainzResult {
   final String mbid;
   final String title;
   final String artist;
+  final String releaseTitle;
   final String? date;
 
   MusicBrainzResult({
     required this.mbid,
     required this.title,
     required this.artist,
+    required this.releaseTitle,
     this.date,
   });
 
-  /// Returns null if the entry is missing an id, a title, or a usable
-  /// artist credit — such entries are skipped rather than shown as a
-  /// broken result.
+  /// Returns null if the entry is missing a title, a usable artist
+  /// credit, or any release to source cover art from — such entries are
+  /// skipped rather than shown as a broken result.
   static MusicBrainzResult? fromJson(Map<String, dynamic> json) {
-    final mbid = json['id'];
     final title = json['title'];
-    if (mbid is! String || title is! String) return null;
+    if (title is! String) return null;
 
     String? artist;
     final artistCredit = json['artist-credit'];
@@ -44,27 +48,42 @@ class MusicBrainzResult {
     }
     if (artist == null) return null;
 
-    final date = json['date'];
+    final releases = json['releases'];
+    if (releases is! List || releases.isEmpty) return null;
+    final firstRelease = releases.first;
+    if (firstRelease is! Map<String, dynamic>) return null;
+
+    final mbid = firstRelease['id'];
+    final releaseTitle = firstRelease['title'];
+    if (mbid is! String || releaseTitle is! String) return null;
+
+    final date = firstRelease['date'];
 
     return MusicBrainzResult(
       mbid: mbid,
       title: title,
       artist: artist,
+      releaseTitle: releaseTitle,
       date: date is String ? date : null,
     );
   }
 }
 
-/// Thin client for MusicBrainz's public, key-less release search
-/// (https://musicbrainz.org/ws/2/release/) and the Cover Art Archive
-/// (https://coverartarchive.org).
+/// Thin client for MusicBrainz's public, key-less recording search
+/// (https://musicbrainz.org/ws/2/recording/) and the Cover Art Archive
+/// (https://coverartarchive.org). Recordings are searched — rather than
+/// releases — because a user searches by song title, and a song's release
+/// (album/single) title is very often different from the song title
+/// itself; a recording search still returns each match's associated
+/// releases inline, so no extra lookup call is needed to get a
+/// Cover-Art-Archive-usable release id.
 class MusicBrainzService {
   final http.Client _client;
 
   MusicBrainzService({http.Client? client})
     : _client = client ?? http.Client();
 
-  static const String _searchUrl = 'https://musicbrainz.org/ws/2/release/';
+  static const String _searchUrl = 'https://musicbrainz.org/ws/2/recording/';
   static const String _coverArtBaseUrl =
       'https://coverartarchive.org/release';
   static const Map<String, String> _headers = {
@@ -78,8 +97,8 @@ class MusicBrainzService {
     final cleanTitle = title.replaceAll('"', '');
     final cleanArtist = artist.replaceAll('"', '');
     final query = cleanArtist.isEmpty
-        ? 'release:"$cleanTitle"'
-        : 'release:"$cleanTitle" AND artist:"$cleanArtist"';
+        ? 'recording:"$cleanTitle"'
+        : 'recording:"$cleanTitle" AND artist:"$cleanArtist"';
 
     final uri = Uri.parse(_searchUrl).replace(
       queryParameters: {'query': query, 'fmt': 'json', 'limit': '10'},
@@ -105,12 +124,12 @@ class MusicBrainzService {
       throw MusicBrainzException('Invalid response');
     }
 
-    if (decoded is! Map<String, dynamic> || decoded['releases'] is! List) {
+    if (decoded is! Map<String, dynamic> || decoded['recordings'] is! List) {
       throw MusicBrainzException('Unexpected response format');
     }
 
     final results = <MusicBrainzResult>[];
-    for (final entry in decoded['releases'] as List) {
+    for (final entry in decoded['recordings'] as List) {
       if (entry is Map<String, dynamic>) {
         final parsed = MusicBrainzResult.fromJson(entry);
         if (parsed != null) results.add(parsed);
