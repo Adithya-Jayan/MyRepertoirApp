@@ -2,7 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:numberpicker/numberpicker.dart';
+import 'package:provider/provider.dart';
 import 'package:repertoire/models/music_piece.dart';
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 import 'package:repertoire/widgets/detail_widgets/musicbrainz_search_dialog.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
@@ -111,6 +113,7 @@ class _BasicDetailsSectionState extends State<BasicDetailsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final featureFlags = context.watch<FeatureFlagsNotifier>();
     return Column(
       children: [
         TextFormField(
@@ -129,23 +132,25 @@ class _BasicDetailsSectionState extends State<BasicDetailsSection> {
           onChanged: widget.onArtistComposerChanged,
           onSaved: (value) => widget.onArtistComposerChanged(value!),
         ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.search),
-            label: Text(context.l10n.searchMusicBrainz),
-            onPressed: _showMusicBrainzSearch,
-          ),
-        ),
-        InkWell(
-          onTap: _showTransposePicker,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              labelText: context.l10n.transposeSemitones,
+        if (featureFlags.musicBrainzSearchEnabled)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.search),
+              label: Text(context.l10n.searchMusicBrainz),
+              onPressed: _showMusicBrainzSearch,
             ),
-            child: Text(_formatSemitones(_transposeSemitones)),
           ),
-        ),
+        if (featureFlags.transposeFieldEnabled)
+          InkWell(
+            onTap: _showTransposePicker,
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: context.l10n.transposeSemitones,
+              ),
+              child: Text(_formatSemitones(_transposeSemitones)),
+            ),
+          ),
       ],
     );
   }

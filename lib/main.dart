@@ -10,6 +10,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:just_audio_mpv/just_audio_mpv.dart'; // Import for Linux audio
 import 'package:repertoire/utils/theme_notifier.dart';
 import 'package:repertoire/utils/locale_notifier.dart';
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 import 'package:repertoire/l10n/l10n.dart';
 
 import 'package:repertoire/utils/app_logger.dart';
@@ -77,6 +78,7 @@ Future<void> main() async {
           ),
         ),
         ChangeNotifierProvider(create: (_) => SectionStateService()),
+        ChangeNotifierProvider(create: (_) => FeatureFlagsNotifier()),
       ],
       child: const MyApp(),
     ),
@@ -160,6 +162,7 @@ class _MyAppState extends State<MyApp> {
       if (!mounted) return;
       Provider.of<ThemeNotifier>(context, listen: false).loadTheme();
       Provider.of<LocaleNotifier>(context, listen: false).loadLocale();
+      Provider.of<FeatureFlagsNotifier>(context, listen: false).load();
 
       // Request permissions after the first frame, when context is fully available
       // Moved to WelcomeScreen and LibraryScreen

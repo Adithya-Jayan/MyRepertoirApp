@@ -657,7 +657,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enableDebugLogs => 'Enable Debug Logs';
 
   @override
+  String get enableLyricsSearch => 'Lyrics Search';
+
+  @override
+  String get enableLyricsSearchDescription =>
+      'Search and attach song lyrics from lrclib.net';
+
+  @override
+  String get enableMusicBrainzSearch => 'MusicBrainz Search';
+
+  @override
+  String get enableMusicBrainzSearchDescription =>
+      'Search MusicBrainz to fill in title, artist, and cover art';
+
+  @override
   String get enablePracticeTracking => 'Enable Practice Tracking';
+
+  @override
+  String get enableTransposeField => 'Transpose Field';
+
+  @override
+  String get enableTransposeFieldDescription =>
+      'Show a field to note semitone transposition on pieces';
 
   @override
   String get enterFilterName => 'Enter filter name';
@@ -1796,6 +1817,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get silver => 'Silver';
+
+  @override
+  String get skillSpecificFeatures => 'Skill-Specific Features';
+
+  @override
+  String get skillSpecificFeaturesDescription =>
+      'Optional tools for specific skills. Off by default to keep the app simple; turn on what you need.';
 
   @override
   String get skip => 'Skip';

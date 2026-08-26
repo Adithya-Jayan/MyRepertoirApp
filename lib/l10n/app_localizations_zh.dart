@@ -629,7 +629,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enableDebugLogs => '启用调试日志';
 
   @override
+  String get enableLyricsSearch => '歌词搜索';
+
+  @override
+  String get enableLyricsSearchDescription => '从 lrclib.net 搜索并添加歌词';
+
+  @override
+  String get enableMusicBrainzSearch => 'MusicBrainz 搜索';
+
+  @override
+  String get enableMusicBrainzSearchDescription =>
+      '在 MusicBrainz 上搜索以填写标题、艺术家和封面';
+
+  @override
   String get enablePracticeTracking => '启用练习跟踪';
+
+  @override
+  String get enableTransposeField => '移调字段';
+
+  @override
+  String get enableTransposeFieldDescription => '显示用于记录乐曲移调半音数的字段';
 
   @override
   String get enterFilterName => '输入过滤器名称';
@@ -1736,6 +1755,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get silver => '银';
+
+  @override
+  String get skillSpecificFeatures => '特定技能功能';
+
+  @override
+  String get skillSpecificFeaturesDescription => '针对特定技能的可选工具。默认关闭以保持应用简洁；按需开启。';
 
   @override
   String get skip => '跳过';
