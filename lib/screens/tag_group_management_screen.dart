@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../database/music_piece_repository.dart';
 import '../utils/app_logger.dart';
 import '../utils/color_utils.dart';
+import '../utils/settings_manager.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
 
@@ -15,6 +17,9 @@ class TagGroupManagementScreen extends StatefulWidget {
 
 class _TagGroupManagementScreenState extends State<TagGroupManagementScreen> {
   final MusicPieceRepository _repository = MusicPieceRepository();
+  // galleryColumns notifier is unused here; SettingsManager only needs prefs.
+  final SettingsManager _settingsManager = SettingsManager(ValueNotifier<int>(1));
+  late final Future<void> _settingsReady;
   List<Map<String, dynamic>> _tagGroupStats = [];
   bool _isLoading = true;
   bool _changesMade = false;
@@ -22,7 +27,12 @@ class _TagGroupManagementScreenState extends State<TagGroupManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _settingsReady = _initSettings();
     _loadStats();
+  }
+
+  Future<void> _initSettings() async {
+    _settingsManager.prefs = await SharedPreferences.getInstance();
   }
 
   Future<void> _loadStats() async {
@@ -65,6 +75,9 @@ class _TagGroupManagementScreenState extends State<TagGroupManagementScreen> {
 
     if (newName != null && newName.isNotEmpty && newName != oldName) {
       await _repository.renameTagGroupGlobally(oldName, newName);
+      // Keep saved quick filters / active filter options in sync with the new name.
+      await _settingsReady;
+      await _settingsManager.syncTagGroupRenameInFilters(oldName, newName);
       _changesMade = true;
       _loadStats();
     }
@@ -98,6 +111,13 @@ class _TagGroupManagementScreenState extends State<TagGroupManagementScreen> {
         newTagName.isNotEmpty &&
         newTagName != oldTagName) {
       await _repository.renameTagGlobally(groupName, oldTagName, newTagName);
+      // Keep saved quick filters / active filter options in sync with the new tag.
+      await _settingsReady;
+      await _settingsManager.syncTagRenameInFilters(
+        groupName,
+        oldTagName,
+        newTagName,
+      );
       _changesMade = true;
       _loadStats();
     }

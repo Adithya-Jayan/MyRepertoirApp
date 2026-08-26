@@ -494,6 +494,10 @@ class LibraryScreenNotifier extends ChangeNotifier {
 
   Future<void> reloadData() async {
     AppLogger.log('LibraryScreenNotifier: reloadData called');
+    // Reload filters from prefs so tag renames applied in settings are picked up.
+    _filterOptions = _settingsManager.loadFilterOptions();
+    _quickFilters = _settingsManager.loadQuickFilters();
+
     await _libraryDataManager.loadGroups();
     await _libraryDataManager.loadMusicPieces(
       selectedGroupId: _selectedGroupId,
