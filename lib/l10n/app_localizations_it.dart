@@ -664,7 +664,28 @@ class AppLocalizationsIt extends AppLocalizations {
   String get enableDebugLogs => 'Abilita Log di Debug';
 
   @override
+  String get enableLyricsSearch => 'Ricerca testi';
+
+  @override
+  String get enableLyricsSearchDescription =>
+      'Cerca e allega il testo di un brano da lrclib.net';
+
+  @override
+  String get enableMusicBrainzSearch => 'Ricerca MusicBrainz';
+
+  @override
+  String get enableMusicBrainzSearchDescription =>
+      'Cerca su MusicBrainz per compilare titolo, artista e copertina';
+
+  @override
   String get enablePracticeTracking => 'Abilita Tracciamento Pratica';
+
+  @override
+  String get enableTransposeField => 'Campo trasposizione';
+
+  @override
+  String get enableTransposeFieldDescription =>
+      'Mostra un campo per annotare la trasposizione in semitoni di un brano';
 
   @override
   String get enterFilterName => 'Inserisci nome filtro';
@@ -1810,6 +1831,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get silver => 'Argento';
+
+  @override
+  String get skillSpecificFeatures => 'Funzionalità specifiche per disciplina';
+
+  @override
+  String get skillSpecificFeaturesDescription =>
+      'Strumenti opzionali per discipline specifiche. Disattivati di default per mantenere l\'app semplice; attiva ciò che ti serve.';
 
   @override
   String get skip => 'Salta';

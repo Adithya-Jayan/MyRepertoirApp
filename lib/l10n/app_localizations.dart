@@ -1126,11 +1126,47 @@ abstract class AppLocalizations {
   /// **'Enable Debug Logs'**
   String get enableDebugLogs;
 
+  /// No description provided for @enableLyricsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Search'**
+  String get enableLyricsSearch;
+
+  /// No description provided for @enableLyricsSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and attach song lyrics from lrclib.net'**
+  String get enableLyricsSearchDescription;
+
+  /// No description provided for @enableMusicBrainzSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'MusicBrainz Search'**
+  String get enableMusicBrainzSearch;
+
+  /// No description provided for @enableMusicBrainzSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search MusicBrainz to fill in title, artist, and cover art'**
+  String get enableMusicBrainzSearchDescription;
+
   /// No description provided for @enablePracticeTracking.
   ///
   /// In en, this message translates to:
   /// **'Enable Practice Tracking'**
   String get enablePracticeTracking;
+
+  /// No description provided for @enableTransposeField.
+  ///
+  /// In en, this message translates to:
+  /// **'Transpose Field'**
+  String get enableTransposeField;
+
+  /// No description provided for @enableTransposeFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a field to note semitone transposition on pieces'**
+  String get enableTransposeFieldDescription;
 
   /// No description provided for @enterFilterName.
   ///
@@ -3033,6 +3069,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Silver'**
   String get silver;
+
+  /// No description provided for @skillSpecificFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill-Specific Features'**
+  String get skillSpecificFeatures;
+
+  /// No description provided for @skillSpecificFeaturesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional tools for specific skills. Off by default to keep the app simple; turn on what you need.'**
+  String get skillSpecificFeaturesDescription;
 
   /// No description provided for @skip.
   ///
