@@ -6,6 +6,7 @@ import 'package:repertoire/utils/color_utils.dart';
 import 'package:repertoire/utils/app_logger.dart';
 import 'package:repertoire/utils/practice_indicator_utils.dart';
 import 'package:repertoire/utils/theme_notifier.dart'; // Import ThemeNotifier
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 import 'package:repertoire/l10n/l10n.dart';
 import '../models/music_piece.dart';
 
@@ -196,7 +197,7 @@ class MusicPieceCard extends StatelessWidget {
                     piece.artistComposer,
                     Theme.of(context).textTheme.titleSmall,
                   ),
-                  if (piece.transposeSemitones != 0)
+                  if (context.watch<FeatureFlagsNotifier>().transposeFieldEnabled && piece.transposeSemitones != 0)
                     textWithOutline(
                       piece.transposeSemitones > 0
                           ? '+${piece.transposeSemitones}'
