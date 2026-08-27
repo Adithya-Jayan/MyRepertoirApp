@@ -17,7 +17,6 @@ import 'package:repertoire/services/share_handler_service.dart';
 
 import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
-import 'package:repertoire/utils/feature_flags_notifier.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
 
@@ -189,7 +188,7 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        if (context.watch<FeatureFlagsNotifier>().transposeFieldEnabled && _musicPiece.transposeSemitones != 0) ...[
+                        if (_musicPiece.transposeSemitones != 0) ...[
                           const SizedBox(height: 4.0),
                           Text(
                             _musicPiece.transposeSemitones > 0
