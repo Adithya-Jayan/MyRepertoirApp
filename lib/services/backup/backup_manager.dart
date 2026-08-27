@@ -68,6 +68,11 @@ class BackupManager {
     settings['autoBackupEnabled'] = prefs.getBool('autoBackupEnabled');
     settings['autoBackupFrequency'] = prefs.getDouble('autoBackupFrequency');
     settings['autoBackupCount'] = prefs.getInt('autoBackupCount');
+    
+    // Skill-Specific Features
+    settings['feature_transpose_field_enabled'] = prefs.getBool('feature_transpose_field_enabled');
+    settings['feature_lyrics_search_enabled'] = prefs.getBool('feature_lyrics_search_enabled');
+    settings['feature_musicbrainz_search_enabled'] = prefs.getBool('feature_musicbrainz_search_enabled');
     settings['lastAutoBackupTimestamp'] = prefs.getInt(
       'lastAutoBackupTimestamp',
     );

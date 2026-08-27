@@ -629,7 +629,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enableDebugLogs => '启用调试日志';
 
   @override
+  String get enableLyricsSearch => '歌词搜索';
+
+  @override
+  String get enableLyricsSearchDescription => '从 lrclib.net 搜索并添加歌词';
+
+  @override
+  String get enableMusicBrainzSearch => 'MusicBrainz 搜索';
+
+  @override
+  String get enableMusicBrainzSearchDescription =>
+      '在 MusicBrainz 上搜索以填写标题、艺术家和封面';
+
+  @override
   String get enablePracticeTracking => '启用练习跟踪';
+
+  @override
+  String get enableTransposeField => '移调字段';
+
+  @override
+  String get enableTransposeFieldDescription => '显示用于记录乐曲移调半音数的字段';
 
   @override
   String get enterFilterName => '输入过滤器名称';
@@ -1112,6 +1131,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get loggingAndDeveloperOptions => '日志记录和开发人员选项';
+
+  @override
+  String get searchMusicBrainz => '在 MusicBrainz 上搜索';
+
+  @override
+  String get searchMusicBrainzDialogTitle => '搜索 MusicBrainz';
+
+  @override
+  String get noCoverArtAvailable => '未找到此发行版的封面';
+
+  @override
+  String musicBrainzSearchError(String error) {
+    return '无法连接到 MusicBrainz：$error';
+  }
+
+  @override
+  String get lyrics => '歌词';
+
+  @override
+  String get lyricsContent => '歌词';
+
+  @override
+  String get searchLyrics => '搜索歌词 (lrclib.net)';
+
+  @override
+  String get searchLyricsDialogTitle => '搜索歌词';
+
+  @override
+  String get trackNameLabel => '曲目名称';
+
+  @override
+  String get artistNameLabel => '艺术家名称';
+
+  @override
+  String get noLyricsAvailable => '无纯文本歌词';
+
+  @override
+  String get noLyricsFound => '未找到结果';
+
+  @override
+  String lyricsSearchError(String error) {
+    return '无法连接到 lrclib.net：$error';
+  }
 
   @override
   String get logsDeleted => '日志已删除。';
@@ -1695,6 +1757,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get silver => '银';
 
   @override
+  String get skillSpecificFeatures => '特定技能功能';
+
+  @override
+  String get skillSpecificFeaturesDescription => '针对特定技能的可选工具。默认关闭以保持应用简洁；按需开启。';
+
+  @override
   String get skip => '跳过';
 
   @override
@@ -1880,6 +1948,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get titleContains => '标题包含...';
 
   @override
+  String get transposeSemitones => '移调（半音）';
+
+  @override
+  String get transposeSemitonesHint => '例如 +2 或 -3';
+
+  @override
   String todayAt(String time) {
     return '今天 $time';
   }
@@ -2015,6 +2089,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewAllContributors => '查看所有贡献者';
+
+  @override
+  String get viewLyrics => '查看歌词';
 
   @override
   String get viewPdf => '查看 PDF';

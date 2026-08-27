@@ -188,6 +188,17 @@ class _PieceDetailScreenState extends State<PieceDetailScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        if (_musicPiece.transposeSemitones != 0) ...[
+                          const SizedBox(height: 4.0),
+                          Text(
+                            _musicPiece.transposeSemitones > 0
+                                ? '+${_musicPiece.transposeSemitones}'
+                                : '${_musicPiece.transposeSemitones}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

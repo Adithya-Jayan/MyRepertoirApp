@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
 import '../../models/media_type.dart';
 import 'package:repertoire/l10n/l10n.dart';
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 
 /// A widget that displays a speed dial for adding different types of media items.
 class SpeedDialWidget extends StatelessWidget {
@@ -61,6 +63,12 @@ class SpeedDialWidget extends StatelessWidget {
         label: context.l10n.learningProgress,
         onTap: () => onAddMediaItem(MediaType.learningProgress),
       ),
+      if (context.watch<FeatureFlagsNotifier>().lyricsSearchEnabled)
+        SpeedDialChild(
+          child: const Icon(Icons.lyrics),
+          label: context.l10n.lyrics,
+          onTap: () => onAddMediaItem(MediaType.lyrics),
+        ),
     ];
 
     // Sort children alphabetically by label

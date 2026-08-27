@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:repertoire/models/media_item.dart';
 import 'package:repertoire/models/media_type.dart';
 import 'package:repertoire/models/music_piece.dart';
@@ -16,6 +17,8 @@ import 'package:repertoire/models/midi_track_config.dart';
 import 'package:repertoire/widgets/add_edit_piece/midi_track_config_dialog.dart';
 import 'package:repertoire/models/pdf_config.dart';
 import 'package:repertoire/widgets/add_edit_piece/pdf_config_dialog.dart';
+import 'package:repertoire/widgets/detail_widgets/lyrics_search_dialog.dart';
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 
 import 'package:repertoire/l10n/l10n.dart';
 
@@ -61,11 +64,15 @@ class MediaSection extends StatefulWidget {
 class _MediaSectionState extends State<MediaSection> {
   bool _isLoadingThumbnail = false;
   String? _currentThumbnailPath;
+  TextEditingController? _lyricsController;
 
   @override
   void initState() {
     super.initState();
     _currentThumbnailPath = widget.item.thumbnailPath;
+    if (widget.item.type == MediaType.lyrics) {
+      _lyricsController = TextEditingController(text: widget.item.pathOrUrl);
+    }
   }
 
   @override
@@ -76,6 +83,12 @@ class _MediaSectionState extends State<MediaSection> {
         _currentThumbnailPath = widget.item.thumbnailPath;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _lyricsController?.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchThumbnail() async {
@@ -455,6 +468,47 @@ class _MediaSectionState extends State<MediaSection> {
                     onChanged: (value) => widget.onUpdateMediaItem(
                       widget.item.copyWith(pathOrUrl: value),
                     ),
+                  )
+                else if (widget.item.type == MediaType.lyrics)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (context.watch<FeatureFlagsNotifier>().lyricsSearchEnabled) ...[
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.search),
+                          label: Text(context.l10n.searchLyrics),
+                          onPressed: () async {
+                            final picked = await showDialog<String>(
+                              context: context,
+                              builder: (context) => LyricsSearchDialog(
+                                initialTrackName: widget.musicPiece.title,
+                                initialArtistName:
+                                    widget.musicPiece.artistComposer,
+                              ),
+                            );
+                            if (picked != null) {
+                              _lyricsController?.text = picked;
+                              widget.onUpdateMediaItem(
+                                widget.item.copyWith(pathOrUrl: picked),
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      TextFormField(
+                        controller: _lyricsController,
+                        decoration: InputDecoration(
+                          labelText: context.l10n.lyricsContent,
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        maxLines: 8,
+                        onChanged: (value) => widget.onUpdateMediaItem(
+                          widget.item.copyWith(pathOrUrl: value),
+                        ),
+                      ),
+                    ],
                   )
                 else
                   TextFormField(

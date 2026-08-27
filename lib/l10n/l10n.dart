@@ -43,6 +43,7 @@ extension LocalizedMediaTypeX on MediaType {
       MediaType.learningProgress => l10n.learningProgress,
       MediaType.localVideo => l10n.localVideo,
       MediaType.midi => l10n.midi,
+      MediaType.lyrics => l10n.lyrics,
     };
   }
 }

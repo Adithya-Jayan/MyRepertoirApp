@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS music_pieces (
   groupIds TEXT DEFAULT '[]', -- New column for group IDs, default to empty JSON array
   tagGroups TEXT DEFAULT '[]', -- New column for tag groups, default to empty JSON array
   bookmarks TEXT DEFAULT '[]', -- New column for bookmarks, default to empty JSON array
-  thumbnailPath TEXT -- New column for thumbnail path
+  thumbnailPath TEXT, -- New column for thumbnail path
+  transposeSemitones INTEGER DEFAULT 0 -- Semitones to transpose relative to original key
 )
 ''');
 
@@ -90,6 +91,9 @@ CREATE TABLE IF NOT EXISTS practice_logs (
     }
     if (oldVersion < 6) {
       await db.execute("ALTER TABLE music_pieces ADD COLUMN bookmarks TEXT DEFAULT '[]';");
+    }
+    if (oldVersion < 7) {
+      await db.execute("ALTER TABLE music_pieces ADD COLUMN transposeSemitones INTEGER DEFAULT 0;");
     }
   }
 

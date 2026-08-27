@@ -24,6 +24,7 @@ class MusicPiece {
   List<TagGroup> tagGroups; // List of TagGroup objects associated with the piece
   List<Bookmark> bookmarks; // List of bookmarks for audio/video
   String? thumbnailPath; // Path to the thumbnail image for the piece (nullable)
+  int transposeSemitones; // Semitones to transpose relative to the original key (can be negative)
 
   /// Constructor for the MusicPiece class.
   MusicPiece({
@@ -42,6 +43,7 @@ class MusicPiece {
     this.tagGroups = const [],
     this.bookmarks = const [],
     this.thumbnailPath,
+    this.transposeSemitones = 0,
   });
 
   /// Converts a [MusicPiece] object into a JSON-compatible Map.
@@ -64,6 +66,7 @@ class MusicPiece {
         'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()), // Encode list of TagGroup to JSON string
         'bookmarks': jsonEncode(bookmarks.map((e) => e.toJson()).toList()), // Encode list of Bookmark to JSON string
         'thumbnailPath': thumbnailPath,
+        'transposeSemitones': transposeSemitones,
       };
 
   /// Creates a [MusicPiece] object from a JSON-compatible Map.
@@ -97,6 +100,7 @@ class MusicPiece {
             .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
             .toList(), // Decode JSON string to List<Bookmark>
         thumbnailPath: json['thumbnailPath'],
+        transposeSemitones: json['transposeSemitones'] ?? 0,
       );
 
   /// Converts a [MusicPiece] object into a JSON-compatible Map for backup.
@@ -116,6 +120,7 @@ class MusicPiece {
         'tagGroups': jsonEncode(tagGroups.map((e) => e.toJson()).toList()),
         'bookmarks': jsonEncode(bookmarks.map((e) => e.toJson()).toList()),
         'thumbnailPath': thumbnailPath != null ? getRelativePath(thumbnailPath!, storagePath) : null,
+        'transposeSemitones': transposeSemitones,
       };
 
   /// Creates a [MusicPiece] object from a JSON-compatible Map for backup.
@@ -146,6 +151,7 @@ class MusicPiece {
             .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
             .toList(),
         thumbnailPath: json['thumbnailPath'] != null ? getAbsolutePath(json['thumbnailPath'], storagePath) : null,
+        transposeSemitones: json['transposeSemitones'] ?? 0,
       );
 
   /// Creates a copy of this [MusicPiece] object with optional new values.
@@ -168,6 +174,7 @@ class MusicPiece {
     List<Bookmark>? bookmarks,
     String? thumbnailPath,
     bool clearThumbnail = false,
+    int? transposeSemitones,
   }) {
     return MusicPiece(
       id: id ?? this.id,
@@ -185,6 +192,7 @@ class MusicPiece {
       tagGroups: tagGroups ?? this.tagGroups,
       bookmarks: bookmarks ?? this.bookmarks,
       thumbnailPath: clearThumbnail ? null : (thumbnailPath ?? this.thumbnailPath),
+      transposeSemitones: transposeSemitones ?? this.transposeSemitones,
     );
   }
 
@@ -207,6 +215,7 @@ class MusicPiece {
     List<TagGroup>? tagGroups,
     List<Bookmark>? bookmarks,
     String? thumbnailPath,
+    int? transposeSemitones,
   }) {
     return MusicPiece(
       id: id ?? this.id,
@@ -224,6 +233,7 @@ class MusicPiece {
       tagGroups: tagGroups ?? this.tagGroups,
       bookmarks: bookmarks ?? this.bookmarks,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      transposeSemitones: transposeSemitones ?? this.transposeSemitones,
     );
   }
 }

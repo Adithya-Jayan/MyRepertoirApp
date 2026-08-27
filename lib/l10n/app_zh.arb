@@ -371,7 +371,13 @@
   "empty": "空",
   "enableAutomaticBackups": "启用自动备份",
   "enableDebugLogs": "启用调试日志",
+  "enableLyricsSearch": "歌词搜索",
+  "enableLyricsSearchDescription": "从 lrclib.net 搜索并添加歌词",
+  "enableMusicBrainzSearch": "MusicBrainz 搜索",
+  "enableMusicBrainzSearchDescription": "在 MusicBrainz 上搜索以填写标题、艺术家和封面",
   "enablePracticeTracking": "启用练习跟踪",
+  "enableTransposeField": "移调字段",
+  "enableTransposeFieldDescription": "显示用于记录乐曲移调半音数的字段",
   "enterFilterName": "输入过滤器名称",
   "enterTitleForTheNewPiece": "输入新曲目的标题",
   "errorAddingGroup": "添加组时出错：{error}",
@@ -850,6 +856,35 @@
   "logFileDeleted": "日志文件已删除。",
   "logPractice": "记录练习",
   "loggingAndDeveloperOptions": "日志记录和开发人员选项",
+  "searchMusicBrainz": "在 MusicBrainz 上搜索",
+  "searchMusicBrainzDialogTitle": "搜索 MusicBrainz",
+  "noCoverArtAvailable": "未找到此发行版的封面",
+  "musicBrainzSearchError": "无法连接到 MusicBrainz：{error}",
+  "@musicBrainzSearchError": {
+    "description": "Shown when a MusicBrainz search or cover art lookup fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "lyrics": "歌词",
+  "lyricsContent": "歌词",
+  "searchLyrics": "搜索歌词 (lrclib.net)",
+  "searchLyricsDialogTitle": "搜索歌词",
+  "trackNameLabel": "曲目名称",
+  "artistNameLabel": "艺术家名称",
+  "noLyricsAvailable": "无纯文本歌词",
+  "noLyricsFound": "未找到结果",
+  "lyricsSearchError": "无法连接到 lrclib.net：{error}",
+  "@lyricsSearchError": {
+    "description": "Shown when a lrclib.net lyrics search fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "logsDeleted": "日志已删除。",
   "longOverdue": "很久未练习",
   "manageAndReorderGroups": "管理和重新排序组",
@@ -1199,6 +1234,8 @@
   "showPracticeCount": "显示练习次数",
   "showScrollControlsInTheViewer": "在查看器中显示滚动控件",
   "silver": "银",
+  "skillSpecificFeatures": "特定技能功能",
+  "skillSpecificFeaturesDescription": "针对特定技能的可选工具。默认关闭以保持应用简洁；按需开启。",
   "skip": "跳过",
   "skyBlue": "天蓝色",
   "someThemeChangesMayRequireAnAppRestartToTakeFullEffect": "某些主题更改可能需要重新启动应用程序才能完全生效。",
@@ -1281,6 +1318,8 @@
   "thumbnailWidgetVisibleInEditModeOnly": "缩略图组件（仅在编辑模式下显示）",
   "title": "标题",
   "titleContains": "标题包含...",
+  "transposeSemitones": "移调（半音）",
+  "transposeSemitonesHint": "例如 +2 或 -3",
   "todayAt": "今天 {time}",
   "@todayAt": {
     "description": "Localized message for todayAt.",
@@ -1372,6 +1411,7 @@
   "videoFilePathIsEmpty": "视频文件路径为空",
   "videoThumbnailGeneratedSuccessfully": "视频缩略图生成成功！",
   "viewAllContributors": "查看所有贡献者",
+  "viewLyrics": "查看歌词",
   "viewPdf": "查看 PDF",
   "viewUnusedFiles": "查看未使用的文件",
   "website": "网站",

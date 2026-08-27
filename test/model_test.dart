@@ -18,6 +18,7 @@ void main() {
         MediaType.learningProgress,
         MediaType.localVideo,
         MediaType.midi,
+        MediaType.lyrics,
       ]);
     });
   });
@@ -136,6 +137,53 @@ void main() {
       expect(json['googleDriveFileId'], 'gdrive123');
       expect(jsonDecode(json['mediaItems']), isA<List>());
       expect(jsonDecode(json['mediaItems'])[0]['id'], 'mi1');
+    });
+
+    test('transposeSemitones defaults to 0 when absent from JSON', () {
+      final json = {
+        'id': 'mp1',
+        'title': 'Test Piece',
+        'artistComposer': 'Test Artist',
+        'tags': jsonEncode([]),
+        'isFavorite': 0,
+        'practiceCount': 0,
+        'enablePracticeTracking': 0,
+        'mediaItems': jsonEncode([]),
+        'groupIds': jsonEncode([]),
+        'tagGroups': jsonEncode([]),
+        'bookmarks': jsonEncode([]),
+      };
+      final musicPiece = MusicPiece.fromJson(json);
+      expect(musicPiece.transposeSemitones, 0);
+    });
+
+    test('transposeSemitones round-trips through toJson/fromJson', () {
+      final musicPiece = MusicPiece(
+        id: 'mp1',
+        title: 'Test Piece',
+        artistComposer: 'Test Artist',
+        transposeSemitones: -3,
+      );
+
+      final json = musicPiece.toJson();
+      expect(json['transposeSemitones'], -3);
+
+      final roundTripped = MusicPiece.fromJson(json);
+      expect(roundTripped.transposeSemitones, -3);
+    });
+
+    test('MediaItem with type lyrics keeps pathOrUrl as inline text through backup round-trip', () {
+      final item = MediaItem(
+        id: 'lyr1',
+        type: MediaType.lyrics,
+        pathOrUrl: 'Line one\nLine two',
+      );
+
+      final json = item.toJsonForBackup('/some/storage/path');
+      expect(json['pathOrUrl'], 'Line one\nLine two');
+
+      final roundTripped = MediaItem.fromJsonForBackup(json, '/some/storage/path');
+      expect(roundTripped.pathOrUrl, 'Line one\nLine two');
     });
   });
 

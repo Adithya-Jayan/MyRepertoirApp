@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:repertoire/services/update_service.dart';
 import 'package:repertoire/models/practice_stage.dart';
 import 'package:repertoire/services/practice_config_service.dart';
+import 'package:repertoire/utils/feature_flags_notifier.dart';
 import 'package:repertoire/utils/theme_notifier.dart';
 import 'package:repertoire/utils/permissions_utils.dart';
 import 'package:uuid/uuid.dart';
@@ -159,6 +161,7 @@ class _FunctionalitySettingsScreenState
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final theme = Theme.of(context);
+    final featureFlags = context.watch<FeatureFlagsNotifier>();
 
     return PopScope(
       canPop: false,
@@ -447,6 +450,43 @@ class _FunctionalitySettingsScreenState
                     setState(() => _showPracticeNotes = v);
                     _saveOtherSettings();
                   },
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              _buildCategoryHeader(
+                theme,
+                context.l10n.skillSpecificFeatures,
+                Icons.extension_outlined,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+                child: Text(
+                  context.l10n.skillSpecificFeaturesDescription,
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ),
+              _buildSettingsCard([
+                SwitchListTile(
+                  title: Text(context.l10n.enableTransposeField),
+                  subtitle: Text(context.l10n.enableTransposeFieldDescription),
+                  value: featureFlags.transposeFieldEnabled,
+                  onChanged: (v) => featureFlags.setTransposeFieldEnabled(v),
+                ),
+                SwitchListTile(
+                  title: Text(context.l10n.enableLyricsSearch),
+                  subtitle: Text(context.l10n.enableLyricsSearchDescription),
+                  value: featureFlags.lyricsSearchEnabled,
+                  onChanged: (v) => featureFlags.setLyricsSearchEnabled(v),
+                ),
+                SwitchListTile(
+                  title: Text(context.l10n.enableMusicBrainzSearch),
+                  subtitle: Text(
+                    context.l10n.enableMusicBrainzSearchDescription,
+                  ),
+                  value: featureFlags.musicBrainzSearchEnabled,
+                  onChanged: (v) =>
+                      featureFlags.setMusicBrainzSearchEnabled(v),
                 ),
               ]),
 

@@ -1,0 +1,1448 @@
+{
+  "@@locale": "it",
+  "aLongWhile": "Un bel po' di tempo",
+  "about": "Informazioni",
+  "accentColor": "Colore Accent",
+  "add": "Aggiungi",
+  "addBookmark": "Aggiungi Segnalibro",
+  "addNewGroup": "Aggiungi Nuovo Gruppo",
+  "addPiece": "Aggiungi Pezzo",
+  "addPracticeSession": "Aggiungi Sessione di Pratica",
+  "addStage": "Aggiungi Fase",
+  "addTag": "Aggiungi tag",
+  "addTagGroup": "Aggiungi Gruppo di Tag",
+  "addToRepertoire": "Aggiungi al Repertorio",
+  "adithyaJayan": "Adithya Jayan",
+  "adithyajayanInMyrepertoirapp": "adithyajayan.in/MyRepertoirApp/",
+  "advancedSettings": "Impostazioni Avanzate",
+  "all": "Tutti",
+  "allPieces": "Tutti i Pezzi",
+  "allowAddingNotesToSessions": "Consenti l'aggiunta di note alle sessioni",
+  "alphabetical": "Alfabetico",
+  "anyTime": "Qualsiasi Momento",
+  "apache20": "Apache 2.0",
+  "appDocuments": "Documenti App",
+  "appInformation": "Informazioni App",
+  "appLanguage": "Lingua App",
+  "languageName": "Italiano",
+  "appTheme": "Tema App",
+  "appTitle": "Repertoire",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "appearanceAnswer": "Vai a Impostazioni > Personalizzazione per cambiare temi, colori accent e opzioni di layout.",
+  "appearanceQuestion": "Come cambio l'aspetto dell'app?",
+  "apply": "Applica",
+  "applyAndClose": "Applica e Chiudi",
+  "applyFilters": "Applica Filtri",
+  "areYouSureYouWantToDeleteTheDebugLogFile": "Sei sicuro di voler eliminare il file di log di debug?",
+  "areYouSureYouWantToDeleteThisMusicPiece": "Sei sicuro di voler eliminare questo pezzo musicale?",
+  "areYouSureYouWantToDeleteThisPracticeSessionThisAction": "Sei sicuro di voler eliminare questa sessione di pratica? Questa azione non può essere annullata.",
+  "artistComposer": "Artista / Compositore",
+  "associatedTags": "Tag Associati:",
+  "audio": "Audio",
+  "audioFile": "File Audio",
+  "audioFileDoesNotExist": "Il file audio non esiste",
+  "audioMidi": "Audio/MIDI",
+  "audioNotLoadedYetPleaseWait": "Audio non ancora caricato. Attendi.",
+  "autoBackupCompletedSuccessfully": "Backup automatico completato con successo!",
+  "autoBackupFailed": "Backup automatico non riuscito: {error}",
+  "@autoBackupFailed": {
+    "description": "Localized message for autoBackupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "autoBackupFailedStoragePathNotConfigured": "Backup automatico non riuscito: Percorso di archiviazione non configurato.",
+  "autoBackupStartingInAFewSeconds": "Avvio backup automatico tra pochi secondi...",
+  "autoScrollEnabled": "Scorrimento Automatico Abilitato",
+  "automaticBackupFoundMessage": "È stato trovato un backup automatico nella cartella di archiviazione selezionata. Desideri ripristinarlo?\n\nNota: Questo sostituirà tutti i dati di template creati durante l'installazione.",
+  "@automaticBackupFoundMessage": {
+    "description": "Explanation shown when an automatic backup is discovered during setup."
+  },
+  "automaticBackups": "Backup Automatici",
+  "automaticallyCreateBackupsAtRegularIntervals": "Crea automaticamente backup a intervalli regolari",
+  "averageTime": "Tempo Medio",
+  "back1sHoldForFrameSkip": "Indietro 1s (Tieni premuto per saltare frame)",
+  "back5s": "Indietro 5s",
+  "backingUpData": "Backup dei dati in corso...",
+  "backupAndRestore": "Backup e Ripristino",
+  "backupAnswer": "Sì, visita Impostazioni > Backup e Ripristino per eseguire backup locali manuali o automatici.",
+  "backupCancelled": "Backup annullato.",
+  "backupFailed": "Backup non riuscito: {error}",
+  "@backupFailed": {
+    "description": "Localized message for backupFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailedStoragePathNotConfigured": "Backup non riuscito: Percorso di archiviazione non configurato.",
+  "backupFrequencyDays": "Frequenza Backup (giorni)",
+  "backupQuestion": "C'è un modo per fare il backup dei miei dati?",
+  "backupRestoredSuccessfully": "Backup ripristinato con successo.",
+  "basicDetails": "Dettagli di Base",
+  "beenAWhile": "È passato un po'",
+  "beenTooLong": "È passato troppo tempo",
+  "blank": "Vuoto",
+  "bookmarkDefaultName": "Segnalibro {number}",
+  "@bookmarkDefaultName": {
+    "description": "Localized message for bookmarkDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "bookmarkDeleted": "{bookmarkName} eliminato",
+  "@bookmarkDeleted": {
+    "description": "Localized message for bookmarkDeleted.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarkDismissed": "{bookmarkName} ignorato",
+  "@bookmarkDismissed": {
+    "description": "Localized message for bookmarkDismissed.",
+    "placeholders": {
+      "bookmarkName": {
+        "type": "String"
+      }
+    }
+  },
+  "bookmarks": "Segnalibri",
+  "browseAndManageInternalAppFiles": "Sfoglia e gestisci i file app interni",
+  "browserDownloads": "Download del Browser",
+  "bulkEditTagGroupsAndColors": "Modifica in massa gruppi di tag e colori",
+  "cancel": "Annulla",
+  "captureTechnicalLogsForTroubleshooting": "Cattura log tecnici per la risoluzione dei problemi",
+  "changeColor": "Cambia Colore",
+  "changeImage": "Cambia Immagine",
+  "changeStorageFolder": "Cambia Cartella di Archiviazione",
+  "channelDefaultName": "Canale {number}",
+  "@channelDefaultName": {
+    "description": "Localized message for channelDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "checkForUpdatesNow": "Controlla Aggiornamenti Ora",
+  "checkGithubForAppUpdates": "Controlla GitHub per aggiornamenti app",
+  "chooseGroupColor": "Scegli Colore Gruppo",
+  "chooseYourAccentColor": "Scegli il tuo colore accent:",
+  "classification": "Classificazione",
+  "cleanup": "Pulizia",
+  "cleanupPartialMessage": "Eliminato {deletedCount, plural, =1{1 file} other{{deletedCount} file}} ma incontrato {errorCount, plural, =1{1 errore} other{{errorCount} errori}}.",
+  "@cleanupPartialMessage": {
+    "description": "Localized message for cleanupPartialMessage.",
+    "placeholders": {
+      "deletedCount": {
+        "type": "int"
+      },
+      "errorCount": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupSuccessMessage": "Eliminati con successo {count, plural, =1{1 file non utilizzato} other{{count} file non utilizzati}} ({size} liberati).",
+  "@cleanupSuccessMessage": {
+    "description": "Localized message for cleanupSuccessMessage.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupSummary": "Riepilogo Pulizia",
+  "clearAll": "Cancella Tutto",
+  "clearFilter": "Cancella Filtro",
+  "close": "Chiudi",
+  "color": "Colore",
+  "columns": "Colonne",
+  "count": "Conteggio",
+  "configureAutoScroll": "Configura Scorrimento Automatico",
+  "configureLearningProgress": "Configura Progresso di Apprendimento",
+  "configureMidiTracks": "Configura Tracce MIDI",
+  "configurePdfViewer": "Configura Visualizzatore PDF",
+  "configureProgressBar": "Configura Barra di Progresso",
+  "confirmRestore": "Conferma Ripristino",
+  "confirmRestoreMessage": "Sei sicuro di voler ripristinare da questo backup? Questo sostituirà tutti i tuoi dati attuali.",
+  "@confirmRestoreMessage": {
+    "description": "Localized message for confirmRestoreMessage."
+  },
+  "contentAndDisplay": "Contenuto e Display",
+  "contributionCount": "{count, plural, =1{1 contributo} other{{count} contributi}}",
+  "@contributionCount": {
+    "description": "Localized message for contributionCount.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contributors": "Contributori",
+  "coral": "Corallo",
+  "couldNotOpenLogFile": "Impossibile aprire il file di log",
+  "countProgress": "Conteggio: {current} / {max}",
+  "@countProgress": {
+    "description": "Localized message for countProgress.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "create": "Crea",
+  "createABackupOfAllYourData": "Crea un backup di tutti i tuoi dati",
+  "createLocalBackup": "Crea Backup Locale",
+  "createNewPiece": "Crea Nuovo Pezzo",
+  "createdAt": "Creato: {date}",
+  "@createdAt": {
+    "description": "Localized message for createdAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creatingAutoBackup": "Creazione auto-backup in corso...",
+  "credits": "Crediti",
+  "currentStage": "Fase Attuale: {stage}",
+  "@currentStage": {
+    "description": "Localized message for currentStage.",
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "customCategoriesAnswer": "Sì, vai a Impostazioni > Gruppi per creare e gestire gruppi personalizzati per i tuoi pezzi.",
+  "customCategoriesQuestion": "Posso organizzare la mia musica in categorie personalizzate?",
+  "customColor": "Colore Personalizzato",
+  "dark": "Scuro",
+  "dataBackedUpSuccessfully": "Backup dei dati completato con successo!",
+  "dataManagement": "Gestione Dati",
+  "dataRestoredSuccessfully": "Dati ripristinati con successo!",
+  "dateAndTime": "Data e Ora",
+  "daysAgo": "{count, plural, =1{1 giorno fa} other{{count} giorni fa}}",
+  "@daysAgo": {
+    "description": "Localized message for daysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultColor": "Predefinito",
+  "delete": "Elimina",
+  "deleteBookmark": "Elimina segnalibro",
+  "deleteConfirmation": "Conferma Eliminazione",
+  "deleteFileItemsConfirmation": "Sei sicuro di voler eliminare {count, plural, =1{1 elemento} other{{count} elementi}}? Questo potrebbe rompere i link nei tuoi pezzi musicali.",
+  "@deleteFileItemsConfirmation": {
+    "description": "Localized message for deleteFileItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFiles": "Elimina File",
+  "deleteGroup": "Elimina Gruppo",
+  "deleteGroupConfirmation": "Sei sicuro di voler eliminare il gruppo \"{groupName}\"?",
+  "@deleteGroupConfirmation": {
+    "description": "Localized message for deleteGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGroupWithItemsConfirmation": "Sei sicuro di voler eliminare il gruppo \"{groupName}\"?\n\nQuesto gruppo contiene {count, plural, =1{1 elemento} other{{count} elementi}}. I pezzi musicali associati SOLO a questo gruppo verranno spostati al gruppo \"Non Raggruppato\".",
+  "@deleteGroupWithItemsConfirmation": {
+    "description": "Localized message for deleteGroupWithItemsConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteItem": "Elimina Elemento",
+  "deleteItems": "Elimina Elementi?",
+  "deleteLogFile": "Elimina File di Log?",
+  "deleteLogs": "Elimina Log",
+  "deleteLogs2": "Elimina Log?",
+  "deleteMediaItem": "Elimina elemento multimediale",
+  "deleteMusicPiece": "Elimina Pezzo Musicale",
+  "deleteNamedItem": "Elimina \"{name}\"",
+  "@deleteNamedItem": {
+    "description": "Localized message for deleteNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePracticeSession": "Elimina Sessione di Pratica",
+  "deleteSelectedItemsConfirmation": "Sei sicuro di voler eliminare {count, plural, =1{1 elemento selezionato} other{{count} elementi selezionati}}?",
+  "@deleteSelectedItemsConfirmation": {
+    "description": "Localized message for deleteSelectedItemsConfirmation.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTag": "Elimina Tag",
+  "deleteTagGroup": "Elimina Gruppo di Tag",
+  "deleteTagGroup2": "Elimina gruppo di tag",
+  "deleteTagGroupConfirmation": "Sei sicuro di voler eliminare il gruppo di tag \"{groupName}\" e rimuoverlo da tutti i pezzi?",
+  "@deleteTagGroupConfirmation": {
+    "description": "Localized message for deleteTagGroupConfirmation.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "deny": "Nega",
+  "details": "Dettagli",
+  "developedBy": "Sviluppato da",
+  "developerTools": "Strumenti Sviluppatore",
+  "discard": "Scarta",
+  "dismiss": "Ignora",
+  "displayOptions": "Opzioni Display",
+  "doNotShowGroupsWithNoMatchingPieces": "Non mostrare gruppi senza pezzi corrispondenti",
+  "documentsRepertoireApp": "Documenti/RepertoireApp",
+  "doubleTapNameToEdit": "(Doppio tap sul nome per modificare)",
+  "duplicate": "Duplica",
+  "durationHours": "{hours, plural, =1{1 ora} other{{hours} ore}}",
+  "@durationHours": {
+    "description": "Localized message for durationHours.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours, plural, =1{1 ora} other{{hours} ore}} {minutes, plural, =1{1 minuto} other{{minutes} minuti}}",
+  "@durationHoursMinutes": {
+    "description": "Localized message for durationHoursMinutes.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{minutes, plural, =1{1 minuto} other{{minutes} minuti}}",
+  "@durationMinutes": {
+    "description": "Localized message for durationMinutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutesLabel": "Durata (minuti)",
+  "eG30": "es. 30",
+  "eGWorkedOnDynamicsFocusedOnDifficultPassages": "es. Lavoro sulle dinamiche, focus sui passaggi difficili",
+  "edit": "Modifica",
+  "editGroupName": "Modifica Nome Gruppo",
+  "editPiece": "Modifica Pezzo",
+  "editPracticeSession": "Modifica Sessione di Pratica",
+  "empty": "Vuoto",
+  "enableAutomaticBackups": "Abilita Backup Automatici",
+  "enableDebugLogs": "Abilita Log di Debug",
+  "enableLyricsSearch": "Ricerca testi",
+  "enableLyricsSearchDescription": "Cerca e allega il testo di un brano da lrclib.net",
+  "enableMusicBrainzSearch": "Ricerca MusicBrainz",
+  "enableMusicBrainzSearchDescription": "Cerca su MusicBrainz per compilare titolo, artista e copertina",
+  "enablePracticeTracking": "Abilita Tracciamento Pratica",
+  "enableTransposeField": "Campo trasposizione",
+  "enableTransposeFieldDescription": "Mostra un campo per annotare la trasposizione in semitoni di un brano",
+  "enterFilterName": "Inserisci nome filtro",
+  "enterTitleForTheNewPiece": "Inserisci titolo per il nuovo pezzo",
+  "errorAddingGroup": "Errore nell'aggiunta del gruppo: {error}",
+  "@errorAddingGroup": {
+    "description": "Localized message for errorAddingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAddingMedia": "Errore nell'aggiunta di media: {error}",
+  "@errorAddingMedia": {
+    "description": "Shown when shared media cannot be added to a piece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaAddedToPiece": "Media aggiunto a \"{title}\"",
+  "@mediaAddedToPiece": {
+    "description": "Shown after shared media is added to an existing piece.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "newPieceCreatedWithSharedMedia": "Nuovo pezzo \"{title}\" creato con media condiviso",
+  "@newPieceCreatedWithSharedMedia": {
+    "description": "Shown after creating a piece from shared media.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "repertoireAppDebugLog": "Log di debug dell'app Repertoire",
+  "sharedMedia": "Media Condiviso",
+  "errorChangingStorageFolder": "Errore nel cambio della cartella di archiviazione: {error}",
+  "@errorChangingStorageFolder": {
+    "description": "Localized message for errorChangingStorageFolder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingGroup": "Errore nell'eliminazione del gruppo: {error}",
+  "@errorDeletingGroup": {
+    "description": "Localized message for errorDeletingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogFile": "Errore nell'eliminazione del file di log: {error}",
+  "@errorDeletingLogFile": {
+    "description": "Localized message for errorDeletingLogFile.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingLogs": "Errore nell'eliminazione dei log: {error}",
+  "@errorDeletingLogs": {
+    "description": "Localized message for errorDeletingLogs.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingMusicPieces": "Errore nell'eliminazione dei pezzi musicali: {error}",
+  "@errorDeletingMusicPieces": {
+    "description": "Localized message for errorDeletingMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeletingPracticeSession": "Errore nell'eliminazione della sessione di pratica: {error}",
+  "@errorDeletingPracticeSession": {
+    "description": "Localized message for errorDeletingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDuplicatingMusicPiece": "Errore nella duplicazione del pezzo musicale: {error}",
+  "@errorDuplicatingMusicPiece": {
+    "description": "Localized message for errorDuplicatingMusicPiece.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorExportingBackup": "Errore nell'esportazione del backup: {error}",
+  "@errorExportingBackup": {
+    "description": "Localized message for errorExportingBackup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingThumbnail": "Errore nel recupero della miniatura: {error}",
+  "@errorFetchingThumbnail": {
+    "description": "Localized message for errorFetchingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratingThumbnail": "Errore nella generazione della miniatura: {error}",
+  "@errorGeneratingThumbnail": {
+    "description": "Localized message for errorGeneratingThumbnail.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingAudio": "Errore nell'inizializzazione dell'audio: {error}",
+  "@errorInitializingAudio": {
+    "description": "Localized message for errorInitializingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorInitializingPlayer": "Errore nell'inizializzazione del lettore: {error}",
+  "@errorInitializingPlayer": {
+    "description": "Localized message for errorInitializingPlayer.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoading": "Errore di caricamento",
+  "errorLoadingGroups": "Errore nel caricamento dei gruppi: {error}",
+  "@errorLoadingGroups": {
+    "description": "Localized message for errorLoadingGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoggingPracticeSession": "Errore nella registrazione della sessione di pratica: {error}",
+  "@errorLoggingPracticeSession": {
+    "description": "Localized message for errorLoggingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPerformingCleanup": "Errore durante la pulizia: {error}",
+  "@errorPerformingCleanup": {
+    "description": "Localized message for errorPerformingCleanup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlayingAudio": "Errore nella riproduzione dell'audio: {error}",
+  "@errorPlayingAudio": {
+    "description": "Localized message for errorPlayingAudio.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProcessingFile": "Errore nell'elaborazione di {fileName}: {error}",
+  "@errorProcessingFile": {
+    "description": "Localized message for errorProcessingFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingGroupOrder": "Errore nel salvataggio dell'ordine del gruppo: {error}",
+  "@errorSavingGroupOrder": {
+    "description": "Localized message for errorSavingGroupOrder.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingSettings": "Errore nel salvataggio delle impostazioni: {error}",
+  "@errorSavingSettings": {
+    "description": "Localized message for errorSavingSettings.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorScanningUnusedMedia": "Errore nella scansione dei media non utilizzati: {error}",
+  "@errorScanningUnusedMedia": {
+    "description": "Localized message for errorScanningUnusedMedia.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSharing": "Errore nella condivisione: {error}",
+  "@errorSharing": {
+    "description": "Localized message for errorSharing.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTogglingGroupVisibility": "Errore nell'attivazione/disattivazione della visibilità del gruppo: {error}",
+  "@errorTogglingGroupVisibility": {
+    "description": "Localized message for errorTogglingGroupVisibility.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingGroup": "Errore nell'aggiornamento del gruppo: {error}",
+  "@errorUpdatingGroup": {
+    "description": "Localized message for errorUpdatingGroup.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUpdatingPracticeSession": "Errore nell'aggiornamento della sessione di pratica: {error}",
+  "@errorUpdatingPracticeSession": {
+    "description": "Localized message for errorUpdatingPracticeSession.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithDetails": "Errore: {error}",
+  "@errorWithDetails": {
+    "description": "Localized message for errorWithDetails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorsEncountered": "Errori incontrati:",
+  "existingBackupFound": "Backup Esistente Trovato",
+  "fDRoid": "F-Droid",
+  "fDroidOrgMyrepertoirapp": "f-droid.org/.../myrepertoirapp",
+  "failedToDeleteFile": "Impossibile eliminare {fileName}: {error}",
+  "@failedToDeleteFile": {
+    "description": "Localized message for failedToDeleteFile.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToFetchThumbnail": "Impossibile recuperare la miniatura.",
+  "failedToGeneratePdfThumbnail": "Impossibile generare la miniatura PDF.",
+  "failedToGenerateVideoThumbnail": "Impossibile generare la miniatura del video.",
+  "failedToInitializeBackupSettings": "Impossibile inizializzare le impostazioni di backup",
+  "failedToLoadGroups": "Impossibile caricare i gruppi: {error}",
+  "@failedToLoadGroups": {
+    "description": "Localized message for failedToLoadGroups.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadMusicPieces": "Impossibile caricare i pezzi musicali: {error}",
+  "@failedToLoadMusicPieces": {
+    "description": "Localized message for failedToLoadMusicPieces.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateImage": "Impossibile aggiornare l'immagine: {error}",
+  "@failedToUpdateImage": {
+    "description": "Localized message for failedToUpdateImage.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "fetching": "Recupero in corso...",
+  "fileCategories": "Categorie File",
+  "fileExplorer": "Esplora File",
+  "fileMissing": "File mancante",
+  "fileNotFoundToShare": "File non trovato da condividere.",
+  "fileTypeAndName": "{fileType} • {fileName}",
+  "@fileTypeAndName": {
+    "description": "Localized message for fileTypeAndName.",
+    "placeholders": {
+      "fileType": {
+        "type": "String"
+      },
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTypes": "Tipi di File",
+  "filesDeleted": "File Eliminati",
+  "filesToDelete": "File da eliminare",
+  "filterByTags": "Filtra per Tag",
+  "filterOptions": "Opzioni Filtro",
+  "filterSaved": "Filtro \"{name}\" salvato",
+  "@filterSaved": {
+    "description": "Localized message for filterSaved.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldAll": "Ripiega Tutto",
+  "folderSelectionCancelled": "Selezione cartella annullata",
+  "folderSelectionCancelled2": "Selezione cartella annullata.",
+  "forward1sHoldFor50msFineSkip": "Avanti 1s (Tieni premuto per salto fine 50ms)",
+  "forward1sHoldForFrameSkip": "Avanti 1s (Tieni premuto per saltare frame)",
+  "forward5s": "Avanti 5s",
+  "frequentlyAskedQuestions": "Domande Frequenti",
+  "functionality": "Funzionalità",
+  "galleryLayout": "Layout Galleria",
+  "generalSettings": "Impostazioni Generali",
+  "getPdfThumbnail": "Ottieni miniatura PDF",
+  "getVideoThumbnail": "Ottieni miniatura video",
+  "github": "GitHub",
+  "githubComAdithyaJayanMyrepertoirapp": "github.com/Adithya-Jayan/MyRepertoirApp",
+  "githubComMyrepertoirapp": "github.com/.../MyRepertoirApp",
+  "go": "Vai",
+  "goToPage": "Vai a Pagina",
+  "gradient": "Gradiente",
+  "gradientOverlay": "Sovrapposizione Gradiente",
+  "grant": "Consenti",
+  "groupByPiece": "Raggruppa per Pezzo",
+  "groupByType": "Raggruppa per Tipo",
+  "groupItemCount": "{groupName} ({count})",
+  "@groupItemCount": {
+    "description": "Localized message for groupItemCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupName": "Nome Gruppo",
+  "groupPieceCount": "{groupName} ({count})",
+  "@groupPieceCount": {
+    "description": "Localized message for groupPieceCount.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groups": "Gruppi",
+  "guidesAndTroubleshooting": "Guide e risoluzione dei problemi",
+  "help": "Aiuto",
+  "helpAndFaq": "Aiuto e FAQ",
+  "hideEmptyGroups": "Nascondi Gruppi Vuoti",
+  "hold": "Tieni Premuto",
+  "homeRepertoireApp": "Home/RepertoireApp",
+  "hoursAgo": "{count, plural, =1{1 ora fa} other{{count} ore fa}}",
+  "@hoursAgo": {
+    "description": "Localized message for hoursAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "howFindPieceAnswer": "Usa la barra di ricerca in cima alla schermata principale della libreria. Puoi cercare per titolo, artista/compositore o tag.",
+  "howFindPieceQuestion": "Come faccio a trovare velocemente uno specifico pezzo musicale?",
+  "howOftenToCreateAutomaticBackups": "Con che frequenza creare backup automatici",
+  "image": "Immagine",
+  "imageUpdatedSuccessfully": "Immagine aggiornata con successo",
+  "imageViewer": "Visualizzatore Immagini",
+  "images": "Immagini",
+  "information": "Informazioni",
+  "initializingBackupSettings": "Inizializzazione impostazioni di backup...",
+  "inspiredBy": "Ispirato da",
+  "internalFileExplorer": "Esplora File Interni",
+  "internalStorageRepertoireApp": "Archiviazione Interna/RepertoireApp",
+  "invalidAudioFileType": "Tipo di file audio non valido. Supportati: {extensions}",
+  "@invalidAudioFileType": {
+    "description": "Localized message for invalidAudioFileType.",
+    "placeholders": {
+      "extensions": {
+        "type": "String"
+      }
+    }
+  },
+  "itemNameAlreadyExists": "Un elemento con questo nome esiste già.",
+  "itemsSelected": "{count, plural, =1{1 selezionato} other{{count} selezionati}}",
+  "@itemsSelected": {
+    "description": "Localized message for itemsSelected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "Proprio ora",
+  "keepTrackOfSessionsAndStatus": "Tieni traccia delle sessioni e dello stato",
+  "lastAutomaticBackup": "Ultimo Backup Automatico",
+  "lastPracticed": "Ultima Pratica",
+  "lastPracticedAt": "Ultima pratica: {date}",
+  "@lastPracticedAt": {
+    "description": "Localized message for lastPracticedAt.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lastPracticedDaysAgo": "Ultima pratica: {count, plural, =1{1 giorno fa} other{{count} giorni fa}}",
+  "@lastPracticedDaysAgo": {
+    "description": "Localized message for lastPracticedDaysAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPracticedToday": "Ultima pratica: Oggi",
+  "lastPracticedYesterday": "Ultima pratica: Ieri",
+  "learningProgress": "Progresso di Apprendimento",
+  "letSGetYourRepertoireSetUpYouCanAlwaysChangeThese": "Configuriamo il tuo repertorio. Puoi sempre cambiare queste impostazioni in seguito.",
+  "license": "Licenza",
+  "light": "Chiaro",
+  "lightPink": "Rosa Chiaro",
+  "lightSalmon": "Salmone Chiaro",
+  "link": "Link",
+  "links": "Link",
+  "loading": "Caricamento...",
+  "localVideo": "Video Locale",
+  "logFileDeleted": "File di log eliminato.",
+  "logPractice": "Registra Pratica",
+  "loggingAndDeveloperOptions": "Logging e opzioni sviluppatore",
+  "searchMusicBrainz": "Cerca su MusicBrainz",
+  "searchMusicBrainzDialogTitle": "Cerca su MusicBrainz",
+  "noCoverArtAvailable": "Nessuna copertina trovata per questa release",
+  "musicBrainzSearchError": "Impossibile raggiungere MusicBrainz: {error}",
+  "@musicBrainzSearchError": {
+    "description": "Shown when a MusicBrainz search or cover art lookup fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "lyrics": "Testi",
+  "lyricsContent": "Testi",
+  "searchLyrics": "Cerca testi (lrclib.net)",
+  "searchLyricsDialogTitle": "Cerca testi",
+  "trackNameLabel": "Nome traccia",
+  "artistNameLabel": "Nome artista",
+  "noLyricsAvailable": "Nessun testo disponibile",
+  "noLyricsFound": "Nessun risultato trovato",
+  "lyricsSearchError": "Impossibile raggiungere lrclib.net: {error}",
+  "@lyricsSearchError": {
+    "description": "Shown when a lrclib.net lyrics search fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "logsDeleted": "Log eliminati.",
+  "longOverdue": "Molto in ritardo",
+  "manageAndReorderGroups": "Gestisci e riordina i gruppi",
+  "manageFilter": "Gestisci Filtro: {name}",
+  "@manageFilter": {
+    "description": "Localized message for manageFilter.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageGroups": "Gestisci Gruppi",
+  "manageTags": "Gestisci Tag",
+  "manualBackupAndRestore": "Backup e Ripristino Manuale",
+  "manuallyTriggerAnAutomaticBackup": "Attiva manualmente un backup automatico",
+  "markdownContent": "Contenuto Markdown",
+  "markdownText": "Testo Markdown",
+  "maxCount": "Conteggio Massimo",
+  "maximumNumberOfAutomaticBackupsToRetain": "Numero massimo di backup automatici da conservare",
+  "media": "Media",
+  "mediaName": "Nome Media",
+  "midiChannelNames": "Nomi Canali MIDI",
+  "midiChannelNumber": "Ch {number}:",
+  "@midiChannelNumber": {
+    "description": "Localized message for midiChannelNumber.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "midiDesktopUnsupported": "La riproduzione MIDI non è attualmente supportata su piattaforme desktop.",
+  "midiFileNotFound": "File MIDI non trovato in {path}",
+  "@midiFileNotFound": {
+    "description": "Localized message for midiFileNotFound.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "midi": "MIDI",
+  "midiPlaybackIsNotSupportedOnWeb": "La riproduzione MIDI non è supportata sul Web.",
+  "mihon": "Mihon",
+  "mintGreen": "Verde Menta",
+  "minutesAgo": "{count, plural, =1{1 minuto fa} other{{count} minuti fa}}",
+  "@minutesAgo": {
+    "description": "Localized message for minutesAgo.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "missingBackupWarning": "Avviso: File di backup ultimo mancante (previsto in {date}). Creazione nuovo backup.",
+  "@missingBackupWarning": {
+    "description": "Localized message for missingBackupWarning.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "modifyGroup": "Modifica Gruppo",
+  "modifyGroups": "Modifica Gruppi",
+  "musicPieceUpdatedSuccessfully": "Pezzo musicale aggiornato con successo.",
+  "musicPieces": "Pezzi Musicali",
+  "musicRepertoireApp": "Repertoire",
+  "needsAttention": "Necessita di attenzione",
+  "never": "Mai",
+  "neverPracticed": "Mai praticato",
+  "newName": "Nuovo Nome",
+  "newPieceTitle": "Titolo Nuovo Pezzo",
+  "newStageName": "Nome Nuova Fase",
+  "newTagName": "Nome Nuovo Tag",
+  "newUpdateAvailable": "Nuovo Aggiornamento Disponibile!",
+  "next": "Successivo",
+  "no": "No",
+  "noAppWasFoundToOpenTheLogFileWouldYouLike": "Nessuna app trovata per aprire il file di log. Desideri condividerlo invece?",
+  "noAutomaticBackupsFound": "Nessun backup automatico trovato.",
+  "noBookmarksAddedYet": "Nessun segnalibro aggiunto ancora",
+  "noContributorsFound": "Nessun contributore trovato.",
+  "noDurationRecorded": "Nessuna durata registrata",
+  "noLogFileFound": "Nessun file di log trovato.",
+  "noPiecesFound": "Nessun pezzo trovato.",
+  "noPracticeSessionsRecordedYetTapThePlusButtonToAddYour": "Nessuna sessione di pratica registrata ancora.\nTocca il pulsante + per aggiungere la tua prima sessione di pratica.",
+  "noShareableFilesSelected": "Nessun file condivisibile selezionato.",
+  "noStagesDefined": "Nessuna fase definita",
+  "noStorageLocationSet": "Nessun percorso di archiviazione impostato",
+  "noTagFiltersActive": "Nessun filtro tag attivo",
+  "noTagGroupsFoundInYourLibrary": "Nessun gruppo di tag trovato nella tua libreria.",
+  "noTagsInThisGroup": "Nessun tag in questo gruppo.",
+  "noUnusedFilesFoundToCleanUp": "Nessun file non utilizzato trovato da pulire.",
+  "noVisibleGroups": "Nessun gruppo visibile.",
+  "normal": "Normale",
+  "notInLast30Days": "Non negli ultimi 30 giorni",
+  "notSet": "Non impostato",
+  "noteFDRoidMayTakeAFewDaysToReflectThe": "Nota: F-Droid potrebbe richiedere alcuni giorni per riflettere la nuova versione.",
+  "notesOptional": "Note (opzionali)",
+  "notifyNewReleases": "Notifica Nuove Versioni",
+  "numberOfBackupsToKeep": "Numero di Backup da Conservare",
+  "numberedStage": "{number}. {stage}",
+  "@numberedStage": {
+    "description": "Localized message for numberedStage.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "openLink": "Apri Link",
+  "openLogs": "Apri Log",
+  "openingFolderSelector": "Apertura selettore cartella...",
+  "organizeYourMusicPiecesAttachMediaAndTrackYourPracticeJourney": "Organizza i tuoi pezzi, allega media e traccia il tuo percorso di pratica.",
+  "other": "Altro",
+  "outline": "Contorno",
+  "outlineText": "Testo Contorno",
+  "pageIndicator": "{currentPage} / {totalPages}",
+  "@pageIndicator": {
+    "description": "Localized message for pageIndicator.",
+    "placeholders": {
+      "currentPage": {
+        "type": "int"
+      },
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "pageNumberHint": "Inserisci numero pagina (1-{totalPages})",
+  "@pageNumberHint": {
+    "description": "Localized message for pageNumberHint.",
+    "placeholders": {
+      "totalPages": {
+        "type": "int"
+      }
+    }
+  },
+  "partialSuccess": "Successo Parziale",
+  "pathOrUrl": "Percorso o URL",
+  "pathValue": "Percorso: {path}",
+  "@pathValue": {
+    "description": "Localized message for pathValue.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "pause": "Pausa",
+  "pdf": "PDF",
+  "pdfFilePathIsEmpty": "Il percorso del file PDF è vuoto",
+  "pdfThumbnailGeneratedSuccessfully": "Miniatura PDF generata con successo!",
+  "pdfViewer": "Visualizzatore PDF",
+  "pdfs": "PDF",
+  "personalization": "Personalizzazione",
+  "percentage": "Percentuale",
+  "physicalView": "Vista Fisica",
+  "pieceDuplicatedSuccessfully": "Pezzo duplicato con successo",
+  "pitch": "Pitch:",
+  "play": "Riproduci",
+  "playbackSpeed": "Velocità di Riproduzione",
+  "pleaseEnterATitle": "Inserisci un titolo",
+  "pleaseGenerateAThumbnailFirst": "Genera prima una miniatura.",
+  "pleaseUseTheAndroidWindowsOrLinuxVersionForMidiSupport": "Utilizza la versione Android, Windows o Linux per il supporto MIDI.",
+  "practiceCountLabel": "Conteggio pratica: {count}",
+  "@practiceCountLabel": {
+    "description": "Localized message for practiceCountLabel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceLogsForPiece": "Log Pratica - {pieceTitle}",
+  "@practiceLogsForPiece": {
+    "description": "Localized message for practiceLogsForPiece.",
+    "placeholders": {
+      "pieceTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "practiceNotes": "Note di Pratica",
+  "practiceOptions": "Opzioni di Pratica",
+  "practiceSessionDeletedSuccessfully": "Sessione di pratica eliminata con successo",
+  "practiceSessionLoggedSuccessfully": "Sessione di pratica registrata con successo",
+  "practiceSessionUpdatedSuccessfully": "Sessione di pratica aggiornata con successo",
+  "practiceStagesAndStatistics": "Fasi di pratica e statistiche",
+  "practiceStatus": "Stato di Pratica",
+  "practiceSummary": "Riepilogo Pratica",
+  "practiceTimeStats": "Statistiche Tempo di Pratica",
+  "practiceTracking": "Tracciamento Pratica",
+  "practicedRecently": "Praticato di recente",
+  "progress": "Progresso",
+  "progressPercent": "{value}%",
+  "@progressPercent": {
+    "description": "Localized message for progressPercent.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "protectAndSyncYourData": "Proteggi e sincronizza i tuoi dati",
+  "purgeUnusedMedia": "Elimina Media Non Utilizzati",
+  "purging": "Eliminazione in corso...",
+  "quickFilters": "Filtri Rapidi",
+  "recentlyPracticed": "Praticato di recente",
+  "refresh": "Aggiorna",
+  "releaseNotes": "Note di Rilascio",
+  "removeMediaFilesNoLongerReferenced": "Rimuovi i file multimediali non più referenziati",
+  "removeTagFromGroupConfirmation": "Rimuovi tag \"{tagName}\" dal gruppo \"{groupName}\" su tutti i pezzi?",
+  "@removeTagFromGroupConfirmation": {
+    "description": "Localized message for removeTagFromGroupConfirmation.",
+    "placeholders": {
+      "tagName": {
+        "type": "String"
+      },
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "Rinomina",
+  "renameBookmark": "Rinomina Segnalibro",
+  "renameFile": "Rinomina File",
+  "renameFileWarning": "AVVISO: La ridenominazione dei file potrebbe interrompere i link se non gestita correttamente. L'app tenterà di aggiornare automaticamente tutti i riferimenti dei pezzi.",
+  "@renameFileWarning": {
+    "description": "Localized message for renameFileWarning."
+  },
+  "renameGroup": "Rinomina Gruppo",
+  "renameMedia": "Rinomina: {name}",
+  "@renameMedia": {
+    "description": "Localized message for renameMedia.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameNamedItem": "Rinomina \"{name}\"",
+  "@renameNamedItem": {
+    "description": "Localized message for renameNamedItem.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameQuickFilter": "Rinomina Filtro Rapido",
+  "renameStage": "Rinomina Fase",
+  "renameTagGroup": "Rinomina Gruppo di Tag",
+  "renameTagInGroup": "Rinomina Tag in \"{groupName}\"",
+  "@renameTagInGroup": {
+    "description": "Localized message for renameTagInGroup.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "renamedSuccessfully": "Rinominato con successo.",
+  "reorderMediaAnswer": "Nella schermata Modifica Pezzo, usa gli handle di trascinamento a sinistra degli elementi multimediali per riordinarli.",
+  "reorderMediaQuestion": "Come posso riordinare i media o i tag?",
+  "reset": "Ripristina",
+  "resetControls": "Ripristina Controlli",
+  "resetZoom": "Ripristina Zoom",
+  "restore": "Ripristina",
+  "restoreCancelled": "Ripristino annullato.",
+  "restoreDataFromAPreviousBackup": "Ripristina i dati da un backup precedente",
+  "restoreFailed": "Ripristino non riuscito: {error}",
+  "@restoreFailed": {
+    "description": "Localized message for restoreFailed.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreFailedStoragePathNotConfigured": "Ripristino non riuscito: Percorso di archiviazione non configurato.",
+  "restoreFromLocalBackup": "Ripristina da Backup Locale",
+  "restoreInProgress": "Ripristino in corso...",
+  "restoreLatest": "Ripristina Ultimo",
+  "restoreThisBackup": "Ripristina questo backup",
+  "restoringBackup": "Ripristino backup in corso...",
+  "restoringData": "Ripristino dei dati in corso...",
+  "retry": "Riprova",
+  "revertedToDefaultStoragePath": "Ripristinato al percorso di archiviazione dell'app predefinito: {path}",
+  "@revertedToDefaultStoragePath": {
+    "description": "Localized message for revertedToDefaultStoragePath.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "rewind1sHoldFor50msFineSkip": "Riavvolgi 1s (Tieni premuto per salto fine 50ms)",
+  "rewind5s": "Riavvolgi 5s",
+  "root": "Root",
+  "runAutoBackupNow": "Esegui Backup Automatico Ora",
+  "save": "Salva",
+  "saveAll": "Salva Tutto",
+  "saveAsQuickFilter": "Salva come Filtro Rapido",
+  "saveQuickFilter": "Salva Filtro Rapido",
+  "scanResults": "Risultati Scansione",
+  "searchExistingPiece": "Cerca Pezzo Esistente",
+  "searchItems": "Cerca elementi...",
+  "searchTags": "Cerca tag...",
+  "selectAFolder": "Seleziona una cartella",
+  "selectAFolderWhereTheAppWillStoreItsFiles": "Seleziona una cartella dove l'app archivierà i suoi file:",
+  "selectColor": "Seleziona Colore",
+  "selectManually": "Seleziona Manualmente",
+  "selectOrderedTags": "Seleziona Tag Ordinati",
+  "selectedPathNotWritable": "Il percorso selezionato non è scrivibile: {error}. Scegli una posizione diversa.",
+  "@selectedPathNotWritable": {
+    "description": "Localized message for selectedPathNotWritable.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedPieceNoLongerExists": "Il pezzo selezionato non esiste più.",
+  "semitonesValue": "{value} st",
+  "@semitonesValue": {
+    "description": "Localized message for semitonesValue.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settings": "Impostazioni",
+  "share": "Condividi",
+  "shareExportBackup": "Condividi/Esporta backup",
+  "shareLogFile": "Condividi File di Log",
+  "showAll": "Mostra Tutto",
+  "showDotPattern": "Mostra Motivo Punteggiato",
+  "showDurationAndStatsInLogs": "Mostra durata e statistiche nei log",
+  "showGradientBackground": "Mostra Sfondo Gradiente",
+  "showLastPracticed": "Mostra Ultima Pratica",
+  "showPracticeCount": "Mostra Conteggio Pratica",
+  "showScrollControlsInTheViewer": "Mostra controlli di scorrimento nel visualizzatore",
+  "silver": "Argento",
+  "skillSpecificFeatures": "Funzionalità specifiche per disciplina",
+  "skillSpecificFeaturesDescription": "Strumenti opzionali per discipline specifiche. Disattivati di default per mantenere l'app semplice; attiva ciò che ti serve.",
+  "skip": "Salta",
+  "skyBlue": "Blu Cielo",
+  "someThemeChangesMayRequireAnAppRestartToTakeFullEffect": "Alcuni cambiamenti di tema potrebbero richiedere un riavvio dell'app per avere effetto completo.",
+  "sortOptions": "Opzioni di Ordinamento",
+  "sourceCodeOnGithub": "Codice Sorgente su GitHub",
+  "spaceFreed": "Spazio Liberato",
+  "spaceToFree": "Spazio da liberare",
+  "speed": "Velocità:",
+  "speedMultiplier": "{speed}x",
+  "@speedMultiplier": {
+    "description": "Localized message for speedMultiplier.",
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "stageAlreadyExists": "La fase esiste già",
+  "stageDefaultName": "Fase {number}",
+  "@stageDefaultName": {
+    "description": "Localized message for stageDefaultName.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "stageNameExists": "Il nome della fase esiste",
+  "stages": "Fasi:",
+  "stagesLabel": "Fasi",
+  "stagesForPracticeIndicatorsDragToReorderDoubleTapNameToEdit": "Fasi per gli indicatori di pratica. Trascina per riordinare. Doppio tap sul nome per modificare.",
+  "startApp": "Avvia App",
+  "status": "Stato",
+  "stay": "Rimani",
+  "storageFolder": "Cartella di Archiviazione",
+  "storageFolderSelectionNotAvailableOnThisPlatform": "La selezione della cartella di archiviazione non è disponibile su questa piattaforma",
+  "storageFolderUpdatedSuccessfully": "Cartella di archiviazione aggiornata con successo",
+  "storageLocation": "Percorso di Archiviazione",
+  "storagePathUpdated": "Percorso di archiviazione aggiornato.",
+  "storagePermissionExplanation": "Questa app ha bisogno dell'accesso \"A tutti i file\" (Gestisci Archiviazione Esterna) per gestire i backup nella cartella di archiviazione esterna scelta e per accedere ai file multimediali che colleghi da posizioni arbitrarie. Senza questo, il backup/ripristino e il collegamento di media esterni potrebbe non funzionare correttamente.",
+  "@storagePermissionExplanation": {
+    "description": "Localized message for storagePermissionExplanation."
+  },
+  "storagePermissionNeeded": "Permesso di Archiviazione Necessario",
+  "success": "Successo",
+  "supportAndResources": "Supporto e Risorse",
+  "system": "Sistema",
+  "systemAndMaintenance": "Sistema e Manutenzione",
+  "systemDefault": "Sistema Predefinito",
+  "tagGroups": "Gruppi di Tag",
+  "tagName": "Nome Tag",
+  "tagNameOrCommaSeparatedList": "Nome tag (o lista separata da virgole)",
+  "tagSetsActive": "{count, plural, =1{1 set di tag attivo} other{{count} set di tag attivi}}",
+  "@tagSetsActive": {
+    "description": "Localized message for tagSetsActive.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagging": "Etichettatura",
+  "taggingManagement": "Gestione Etichettatura",
+  "tags": "Tag",
+  "tagsAndCategories": "Tag e Categorie",
+  "tan": "Marrone Chiaro",
+  "tapToEdit": "(Tocca per modificare)",
+  "teal": "Verde-Blu",
+  "textSearch": "Ricerca Testo",
+  "theAppHasBeenUpdatedCheckTheReleaseNotesOnGithubFor": "L'app è stata aggiornata! Controlla le note di rilascio su GitHub per i dettagli.",
+  "theFollowingFilesAreNotReferencedByAnyPiecesAndCanBe": "I seguenti file non sono referenziati da alcun pezzo e possono essere eliminati in sicurezza.",
+  "themeColorsAndLayout": "Tema, colori e layout",
+  "themeMode": "Modalità Tema",
+  "thisActionCannotBeUndoneMakeSureYouHaveABackupBefore": "Questa azione non può essere annullata. Assicurati di avere un backup prima di procedere.",
+  "thisGroupIsEmpty": "Questo gruppo è vuoto.",
+  "thisWillPermanentlyDeleteUnusedMediaFilesThatAreNoLongerReferenced": "Questo eliminerà permanentemente i file multimediali non utilizzati che non sono più referenziati da alcun pezzo musicale.",
+  "thumbnail": "Miniatura",
+  "thumbnailFetchedSuccessfully": "Miniatura recuperata con successo!",
+  "thumbnailStyle": "Stile Miniatura",
+  "thumbnailWidgetVisibleInEditModeOnly": "Widget Miniatura (Visibile solo in Modalità Modifica)",
+  "title": "Titolo",
+  "titleContains": "Il titolo contiene...",
+  "transposeSemitones": "Trasponi (semitoni)",
+  "transposeSemitonesHint": "es. +2 o -3",
+  "todayAt": "Oggi alle {time}",
+  "@todayAt": {
+    "description": "Localized message for todayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "toggleControls": "Attiva/Disattiva Controlli",
+  "totalFiles": "File Totali",
+  "totalSessions": "Sessioni Totali",
+  "totalSize": "Dimensione Totale",
+  "totalTime": "Tempo Totale",
+  "trackControls": "Controlli Traccia",
+  "tracking": "Tracciamento",
+  "trackingDisabled": "Tracciamento Disabilitato",
+  "trackingEnabled": "Tracciamento Abilitato",
+  "trackingStages": "Fasi di Tracciamento",
+  "trans": "Trans",
+  "trueBlackBackgroundInDarkMode": "Sfondo nero vero in modalità scura",
+  "type": "Tipo",
+  "ungrouped": "Non Raggruppato",
+  "unknown": "Sconosciuto",
+  "@unknown": {
+    "description": "Localized message for unknown."
+  },
+  "unknownArtist": "Artista Sconosciuto",
+  "unknownPiece": "Pezzo Sconosciuto ({pieceId})",
+  "@unknownPiece": {
+    "description": "Localized message for unknownPiece.",
+    "placeholders": {
+      "pieceId": {
+        "type": "String"
+      }
+    }
+  },
+  "unsavedChanges": "Modifiche Non Salvate",
+  "unusedFiles": "File Non Utilizzati",
+  "unusedMediaDetails": "Dettagli Media Non Utilizzati",
+  "unusedSize": "Dimensione Non Utilizzata",
+  "update": "Aggiorna",
+  "updateAll": "Aggiorna Tutto?",
+  "updateTagGroupColorQuestion": "Desideri aggiornare il colore del gruppo di tag \"{groupName}\" su tutti i pezzi?",
+  "@updateTagGroupColorQuestion": {
+    "description": "Localized message for updateTagGroupColorQuestion.",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedToVersion": "Aggiornato a v{version}",
+  "@updatedToVersion": {
+    "description": "Localized message for updatedToVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updates": "Aggiornamenti",
+  "updatesAreManagedByTheGooglePlayStore": "Gli aggiornamenti sono gestiti dal Google Play Store.",
+  "urlIsEmpty": "L'URL è vuoto",
+  "useOledBlack": "Usa Nero OLED",
+  "useThePlusSignToAddMedia": "Usa il segno '+' per aggiungere media",
+  "usedInPieces": "Utilizzato in {count, plural, =1{1 pezzo} other{{count} pezzi}}",
+  "@usedInPieces": {
+    "description": "Localized message for usedInPieces.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "version": "Versione",
+  "versionAndContributorInfo": "Info versione e contributori",
+  "versionAvailable": "La versione {version} è disponibile.",
+  "@versionAvailable": {
+    "description": "Localized message for versionAvailable.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "video": "Video",
+  "videoControls": "Controlli Video",
+  "videoFilePathIsEmpty": "Il percorso del file video è vuoto",
+  "videoThumbnailGeneratedSuccessfully": "Miniatura video generata con successo!",
+  "viewAllContributors": "Visualizza Tutti i Contributori",
+  "viewLyrics": "Visualizza testo",
+  "viewPdf": "Visualizza PDF",
+  "viewUnusedFiles": "Visualizza File Non Utilizzati",
+  "website": "Sito Web",
+  "websiteAndDocumentation": "Sito Web e Documentazione",
+  "welcome": "Benvenuto!",
+  "whatsNewInVersion": "Novità in v{version}",
+  "@whatsNewInVersion": {
+    "description": "Localized message for whatsNewInVersion.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "withinLast7Days": "Negli ultimi 7 giorni",
+  "wouldYouLikeToDeleteTheExistingDebugLogs": "Desideri eliminare i log di debug esistenti?",
+  "yellow": "Giallo",
+  "yes": "Sì",
+  "yesDelete": "Sì, elimina",
+  "yesterdayAt": "Ieri alle {time}",
+  "@yesterdayAt": {
+    "description": "Localized message for yesterdayAt.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "youAreOnTheLatestVersion": "Sei sulla versione più recente.",
+  "youHaveUnsavedChangesAreYouSureYouWantToDiscardThem": "Hai modifiche non salvate. Sei sicuro di voler scartarle?",
+  "yourMediaLibraryIsClean": "La tua libreria multimediale è pulita!",
+  "zoomIn": "Zoom Avanti",
+  "zoomOut": "Zoom Indietro"
+}

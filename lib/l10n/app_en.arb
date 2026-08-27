@@ -371,7 +371,13 @@
   "empty": "Empty",
   "enableAutomaticBackups": "Enable Automatic Backups",
   "enableDebugLogs": "Enable Debug Logs",
+  "enableLyricsSearch": "Lyrics Search",
+  "enableLyricsSearchDescription": "Search and attach song lyrics from lrclib.net",
+  "enableMusicBrainzSearch": "MusicBrainz Search",
+  "enableMusicBrainzSearchDescription": "Search MusicBrainz to fill in title, artist, and cover art",
   "enablePracticeTracking": "Enable Practice Tracking",
+  "enableTransposeField": "Transpose Field",
+  "enableTransposeFieldDescription": "Show a field to note semitone transposition on pieces",
   "enterFilterName": "Enter filter name",
   "enterTitleForTheNewPiece": "Enter title for the new piece",
   "errorAddingGroup": "Error adding group: {error}",
@@ -850,6 +856,35 @@
   "logFileDeleted": "Log file deleted.",
   "logPractice": "Log Practice",
   "loggingAndDeveloperOptions": "Logging and developer options",
+  "searchMusicBrainz": "Search on MusicBrainz",
+  "searchMusicBrainzDialogTitle": "Search MusicBrainz",
+  "noCoverArtAvailable": "No cover art found for this release",
+  "musicBrainzSearchError": "Couldn't reach MusicBrainz: {error}",
+  "@musicBrainzSearchError": {
+    "description": "Shown when a MusicBrainz search or cover art lookup fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "lyrics": "Lyrics",
+  "lyricsContent": "Lyrics",
+  "searchLyrics": "Search lyrics (lrclib.net)",
+  "searchLyricsDialogTitle": "Search lyrics",
+  "trackNameLabel": "Track name",
+  "artistNameLabel": "Artist name",
+  "noLyricsAvailable": "No plain lyrics",
+  "noLyricsFound": "No results found",
+  "lyricsSearchError": "Couldn't reach lrclib.net: {error}",
+  "@lyricsSearchError": {
+    "description": "Shown when a lrclib.net lyrics search fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "logsDeleted": "Logs deleted.",
   "longOverdue": "Long overdue",
   "manageAndReorderGroups": "Manage and reorder groups",
@@ -1199,6 +1234,8 @@
   "showPracticeCount": "Show Practice Count",
   "showScrollControlsInTheViewer": "Show scroll controls in the viewer",
   "silver": "Silver",
+  "skillSpecificFeatures": "Skill-Specific Features",
+  "skillSpecificFeaturesDescription": "Optional tools for specific skills. Off by default to keep the app simple; turn on what you need.",
   "skip": "Skip",
   "skyBlue": "Sky Blue",
   "someThemeChangesMayRequireAnAppRestartToTakeFullEffect": "Some theme changes may require an app restart to take full effect.",
@@ -1281,6 +1318,8 @@
   "thumbnailWidgetVisibleInEditModeOnly": "Thumbnail Widget (Visible in Edit Mode only)",
   "title": "Title",
   "titleContains": "Title contains...",
+  "transposeSemitones": "Transpose (semitones)",
+  "transposeSemitonesHint": "e.g. +2 or -3",
   "todayAt": "Today at {time}",
   "@todayAt": {
     "description": "Localized message for todayAt.",
@@ -1372,6 +1411,7 @@
   "videoFilePathIsEmpty": "Video file path is empty",
   "videoThumbnailGeneratedSuccessfully": "Video thumbnail generated successfully!",
   "viewAllContributors": "View All Contributors",
+  "viewLyrics": "View Lyrics",
   "viewPdf": "View PDF",
   "viewUnusedFiles": "View Unused Files",
   "website": "Website",

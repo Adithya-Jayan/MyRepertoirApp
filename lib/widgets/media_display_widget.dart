@@ -9,6 +9,7 @@ import 'package:repertoire/widgets/learning_progress_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/pdf_viewer_screen.dart';
 import '../screens/image_viewer_screen.dart';
+import '../screens/lyrics_viewer_screen.dart';
 import '../screens/audio_player_widget.dart';
 import '../screens/video_player_widget.dart';
 import '../screens/midi_player_widget.dart'
@@ -172,6 +173,15 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     switch (currentMediaItem.type) {
       case MediaType.markdown:
         content = MarkdownBody(data: currentMediaItem.pathOrUrl);
+        break;
+      case MediaType.lyrics:
+        content = Center(
+          child: FilledButton.icon(
+            onPressed: () => _openMedia(context),
+            icon: const Icon(Icons.lyrics),
+            label: Text(context.l10n.viewLyrics),
+          ),
+        );
         break;
       case MediaType.pdf:
         content = Center(
@@ -376,6 +386,16 @@ class _MediaDisplayWidgetState extends State<MediaDisplayWidget> {
     final currentMediaItem =
         widget.musicPiece.mediaItems[widget.mediaItemIndex];
     switch (currentMediaItem.type) {
+      case MediaType.lyrics:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => LyricsViewerScreen(
+              lyrics: currentMediaItem.pathOrUrl,
+              pieceTitle: widget.musicPiece.title,
+            ),
+          ),
+        );
+        break;
       case MediaType.pdf:
         Navigator.of(context).push(
           MaterialPageRoute(

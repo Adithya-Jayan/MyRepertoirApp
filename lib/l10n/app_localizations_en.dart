@@ -657,7 +657,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enableDebugLogs => 'Enable Debug Logs';
 
   @override
+  String get enableLyricsSearch => 'Lyrics Search';
+
+  @override
+  String get enableLyricsSearchDescription =>
+      'Search and attach song lyrics from lrclib.net';
+
+  @override
+  String get enableMusicBrainzSearch => 'MusicBrainz Search';
+
+  @override
+  String get enableMusicBrainzSearchDescription =>
+      'Search MusicBrainz to fill in title, artist, and cover art';
+
+  @override
   String get enablePracticeTracking => 'Enable Practice Tracking';
+
+  @override
+  String get enableTransposeField => 'Transpose Field';
+
+  @override
+  String get enableTransposeFieldDescription =>
+      'Show a field to note semitone transposition on pieces';
 
   @override
   String get enterFilterName => 'Enter filter name';
@@ -1151,6 +1172,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loggingAndDeveloperOptions => 'Logging and developer options';
+
+  @override
+  String get searchMusicBrainz => 'Search on MusicBrainz';
+
+  @override
+  String get searchMusicBrainzDialogTitle => 'Search MusicBrainz';
+
+  @override
+  String get noCoverArtAvailable => 'No cover art found for this release';
+
+  @override
+  String musicBrainzSearchError(String error) {
+    return 'Couldn\'t reach MusicBrainz: $error';
+  }
+
+  @override
+  String get lyrics => 'Lyrics';
+
+  @override
+  String get lyricsContent => 'Lyrics';
+
+  @override
+  String get searchLyrics => 'Search lyrics (lrclib.net)';
+
+  @override
+  String get searchLyricsDialogTitle => 'Search lyrics';
+
+  @override
+  String get trackNameLabel => 'Track name';
+
+  @override
+  String get artistNameLabel => 'Artist name';
+
+  @override
+  String get noLyricsAvailable => 'No plain lyrics';
+
+  @override
+  String get noLyricsFound => 'No results found';
+
+  @override
+  String lyricsSearchError(String error) {
+    return 'Couldn\'t reach lrclib.net: $error';
+  }
 
   @override
   String get logsDeleted => 'Logs deleted.';
@@ -1755,6 +1819,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get silver => 'Silver';
 
   @override
+  String get skillSpecificFeatures => 'Skill-Specific Features';
+
+  @override
+  String get skillSpecificFeaturesDescription =>
+      'Optional tools for specific skills. Off by default to keep the app simple; turn on what you need.';
+
+  @override
   String get skip => 'Skip';
 
   @override
@@ -1944,6 +2015,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleContains => 'Title contains...';
 
   @override
+  String get transposeSemitones => 'Transpose (semitones)';
+
+  @override
+  String get transposeSemitonesHint => 'e.g. +2 or -3';
+
+  @override
   String todayAt(String time) {
     return 'Today at $time';
   }
@@ -2083,6 +2160,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewAllContributors => 'View All Contributors';
+
+  @override
+  String get viewLyrics => 'View Lyrics';
 
   @override
   String get viewPdf => 'View PDF';

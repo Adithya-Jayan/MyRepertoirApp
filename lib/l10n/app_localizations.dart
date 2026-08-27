@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_it.dart';
 import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
@@ -95,6 +96,7 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('it'),
     Locale('zh'),
   ];
 
@@ -1124,11 +1126,47 @@ abstract class AppLocalizations {
   /// **'Enable Debug Logs'**
   String get enableDebugLogs;
 
+  /// No description provided for @enableLyricsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Search'**
+  String get enableLyricsSearch;
+
+  /// No description provided for @enableLyricsSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and attach song lyrics from lrclib.net'**
+  String get enableLyricsSearchDescription;
+
+  /// No description provided for @enableMusicBrainzSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'MusicBrainz Search'**
+  String get enableMusicBrainzSearch;
+
+  /// No description provided for @enableMusicBrainzSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search MusicBrainz to fill in title, artist, and cover art'**
+  String get enableMusicBrainzSearchDescription;
+
   /// No description provided for @enablePracticeTracking.
   ///
   /// In en, this message translates to:
   /// **'Enable Practice Tracking'**
   String get enablePracticeTracking;
+
+  /// No description provided for @enableTransposeField.
+  ///
+  /// In en, this message translates to:
+  /// **'Transpose Field'**
+  String get enableTransposeField;
+
+  /// No description provided for @enableTransposeFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a field to note semitone transposition on pieces'**
+  String get enableTransposeFieldDescription;
 
   /// No description provided for @enterFilterName.
   ///
@@ -1891,6 +1929,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logging and developer options'**
   String get loggingAndDeveloperOptions;
+
+  /// No description provided for @searchMusicBrainz.
+  ///
+  /// In en, this message translates to:
+  /// **'Search on MusicBrainz'**
+  String get searchMusicBrainz;
+
+  /// No description provided for @searchMusicBrainzDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search MusicBrainz'**
+  String get searchMusicBrainzDialogTitle;
+
+  /// No description provided for @noCoverArtAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No cover art found for this release'**
+  String get noCoverArtAvailable;
+
+  /// Shown when a MusicBrainz search or cover art lookup fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach MusicBrainz: {error}'**
+  String musicBrainzSearchError(String error);
+
+  /// No description provided for @lyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get lyrics;
+
+  /// No description provided for @lyricsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get lyricsContent;
+
+  /// No description provided for @searchLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Search lyrics (lrclib.net)'**
+  String get searchLyrics;
+
+  /// No description provided for @searchLyricsDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search lyrics'**
+  String get searchLyricsDialogTitle;
+
+  /// No description provided for @trackNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Track name'**
+  String get trackNameLabel;
+
+  /// No description provided for @artistNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist name'**
+  String get artistNameLabel;
+
+  /// No description provided for @noLyricsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No plain lyrics'**
+  String get noLyricsAvailable;
+
+  /// No description provided for @noLyricsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noLyricsFound;
+
+  /// Shown when a lrclib.net lyrics search fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach lrclib.net: {error}'**
+  String lyricsSearchError(String error);
 
   /// No description provided for @logsDeleted.
   ///
@@ -2954,6 +3070,18 @@ abstract class AppLocalizations {
   /// **'Silver'**
   String get silver;
 
+  /// No description provided for @skillSpecificFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill-Specific Features'**
+  String get skillSpecificFeatures;
+
+  /// No description provided for @skillSpecificFeaturesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional tools for specific skills. Off by default to keep the app simple; turn on what you need.'**
+  String get skillSpecificFeaturesDescription;
+
   /// No description provided for @skip.
   ///
   /// In en, this message translates to:
@@ -3284,6 +3412,18 @@ abstract class AppLocalizations {
   /// **'Title contains...'**
   String get titleContains;
 
+  /// No description provided for @transposeSemitones.
+  ///
+  /// In en, this message translates to:
+  /// **'Transpose (semitones)'**
+  String get transposeSemitones;
+
+  /// No description provided for @transposeSemitonesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. +2 or -3'**
+  String get transposeSemitonesHint;
+
   /// Localized message for todayAt.
   ///
   /// In en, this message translates to:
@@ -3524,6 +3664,12 @@ abstract class AppLocalizations {
   /// **'View All Contributors'**
   String get viewAllContributors;
 
+  /// No description provided for @viewLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'View Lyrics'**
+  String get viewLyrics;
+
   /// No description provided for @viewPdf.
   ///
   /// In en, this message translates to:
@@ -3638,7 +3784,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'zh'].contains(locale.languageCode);
+      <String>['en', 'it', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -3649,6 +3795,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'it':
+      return AppLocalizationsIt();
     case 'zh':
       return AppLocalizationsZh();
   }

@@ -75,6 +75,7 @@ class AddEditPieceMediaManager {
         break;
       case MediaType.mediaLink:
       case MediaType.learningProgress: // Handled separately
+      case MediaType.lyrics: // Handled separately (inline text, no file picker)
         return [];
     }
 
@@ -140,7 +141,9 @@ class AddEditPieceMediaManager {
     String? defaultTitle,
   }) async {
     final newMediaItems = List<MediaItem>.from(currentMediaItems);
-    if (type == MediaType.mediaLink || type == MediaType.markdown) {
+    if (type == MediaType.mediaLink ||
+        type == MediaType.markdown ||
+        type == MediaType.lyrics) {
       newMediaItems.add(
         MediaItem(id: const Uuid().v4(), type: type, pathOrUrl: ''),
       );

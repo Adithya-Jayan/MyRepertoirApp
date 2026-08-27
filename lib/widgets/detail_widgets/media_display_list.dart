@@ -56,6 +56,7 @@ class _MediaDisplayListState extends State<MediaDisplayList> {
       switch (item.type) {
         case MediaType.mediaLink:
         case MediaType.markdown:
+        case MediaType.lyrics:
           params = ShareParams(
             text: item.pathOrUrl,
             sharePositionOrigin: shareOrigin,

@@ -257,6 +257,7 @@ class RestoreManager {
         if (mediaItem.type != MediaType.mediaLink &&
             mediaItem.type != MediaType.markdown &&
             mediaItem.type != MediaType.learningProgress &&
+            mediaItem.type != MediaType.lyrics &&
             mediaItem.pathOrUrl.isNotEmpty) {
           final oldPath = mediaItem.pathOrUrl;
           final newPath = _getCorrectedPath(oldPath, appDir.path);
@@ -630,6 +631,16 @@ class RestoreManager {
     }
 
     // Backup settings
+    if (appSettingsJson['feature_transpose_field_enabled'] != null) {
+      await prefs.setBool('feature_transpose_field_enabled', appSettingsJson['feature_transpose_field_enabled']);
+    }
+    if (appSettingsJson['feature_lyrics_search_enabled'] != null) {
+      await prefs.setBool('feature_lyrics_search_enabled', appSettingsJson['feature_lyrics_search_enabled']);
+    }
+    if (appSettingsJson['feature_musicbrainz_search_enabled'] != null) {
+      await prefs.setBool('feature_musicbrainz_search_enabled', appSettingsJson['feature_musicbrainz_search_enabled']);
+    }
+    
     if (appSettingsJson['autoBackupEnabled'] != null) {
       await prefs.setBool(
         'autoBackupEnabled',

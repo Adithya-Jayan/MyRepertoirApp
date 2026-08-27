@@ -19,6 +19,10 @@ import 'add_edit_piece/add_edit_piece_tag_manager.dart';
 import 'add_edit_piece/add_edit_piece_form_handler.dart';
 
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import 'package:repertoire/services/media_storage_manager.dart';
 import 'package:repertoire/services/pitch_controllable_player.dart';
 import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 
@@ -163,6 +167,53 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
     });
   }
 
+  Future<void> _onMusicBrainzResultApplied(
+    String title,
+    String artist,
+    Uint8List? coverArtBytes,
+  ) async {
+    String? newThumbnailPath = _musicPiece.thumbnailPath;
+    var mediaItems = _musicPiece.mediaItems;
+
+    if (coverArtBytes != null) {
+      final dir = await MediaStorageManager.getPieceMediaDirectory(
+        _musicPiece.id,
+        MediaType.thumbnails,
+      );
+      if (dir != null) {
+        if (!await dir.exists()) {
+          await dir.create(recursive: true);
+        }
+        final file = File(p.join(dir.path, '${const Uuid().v4()}.jpg'));
+        await file.writeAsBytes(coverArtBytes);
+        newThumbnailPath = file.path;
+
+        mediaItems = [
+          ...mediaItems.where((m) => m.type != MediaType.thumbnails),
+          MediaItem(
+            id: const Uuid().v4(),
+            type: MediaType.thumbnails,
+            pathOrUrl: file.path,
+          ),
+        ];
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.noCoverArtAvailable)),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _musicPiece = _musicPiece.copyWith(
+        title: title,
+        artistComposer: artist,
+        mediaItems: mediaItems,
+        thumbnailPath: newThumbnailPath,
+      );
+    });
+  }
+
   void _onTagGroupsChanged(List<TagGroup> newTagGroups) {
     AppLogger.log(
       'AddEditPieceScreen: Tag groups updated - ${newTagGroups.length} groups',
@@ -255,7 +306,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
         _musicPiece.artistComposer !=
             (widget.musicPiece?.artistComposer ?? '') ||
         _musicPiece.enablePracticeTracking !=
-            (widget.musicPiece?.enablePracticeTracking ?? true)) {
+            (widget.musicPiece?.enablePracticeTracking ?? true) ||
+        _musicPiece.transposeSemitones !=
+            (widget.musicPiece?.transposeSemitones ?? 0)) {
       return true;
     }
 
@@ -387,6 +440,9 @@ class _AddEditPieceScreenState extends State<AddEditPieceScreen> {
                       onTitleChanged: (value) => _musicPiece.title = value,
                       onArtistComposerChanged: (value) =>
                           _musicPiece.artistComposer = value,
+                      onTransposeSemitonesChanged: (value) =>
+                          _musicPiece.transposeSemitones = value,
+                      onMusicBrainzResultApplied: _onMusicBrainzResultApplied,
                       onSaveRequested: _savePiece,
                     ),
                   ),
