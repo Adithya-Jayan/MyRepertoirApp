@@ -171,5 +171,173 @@ class SettingsManager {
       AppLogger.log('SettingsManager: Error encoding quick filters: $e');
     }
   }
+
+  /// Renames a tag group key inside an `orderedTags` map.
+  ///
+  /// Pure helper used for active filters and saved quick filters.
+  static Map<String, List<String>> renameTagGroupInOrderedTags(
+    Map<String, List<String>> orderedTags,
+    String oldName,
+    String newName,
+  ) {
+    if (oldName == newName || !orderedTags.containsKey(oldName)) {
+      return orderedTags;
+    }
+
+    final result = <String, List<String>>{};
+    orderedTags.forEach((key, tags) {
+      if (key == oldName) return;
+      result[key] = List<String>.from(tags);
+    });
+
+    final oldTags = List<String>.from(orderedTags[oldName]!);
+    if (result.containsKey(newName)) {
+      final merged = List<String>.from(result[newName]!);
+      for (final tag in oldTags) {
+        if (!merged.contains(tag)) merged.add(tag);
+      }
+      result[newName] = merged;
+    } else {
+      result[newName] = oldTags;
+    }
+    return result;
+  }
+
+  /// Renames a tag value inside a specific group in an `orderedTags` map.
+  static Map<String, List<String>> renameTagInOrderedTags(
+    Map<String, List<String>> orderedTags,
+    String groupName,
+    String oldTagName,
+    String newTagName,
+  ) {
+    if (oldTagName == newTagName || !orderedTags.containsKey(groupName)) {
+      return orderedTags;
+    }
+
+    final result = <String, List<String>>{};
+    orderedTags.forEach((key, tags) {
+      if (key != groupName) {
+        result[key] = List<String>.from(tags);
+        return;
+      }
+      final updated = <String>[];
+      for (final tag in tags) {
+        final next = tag == oldTagName ? newTagName : tag;
+        if (!updated.contains(next)) updated.add(next);
+      }
+      result[key] = updated;
+    });
+    return result;
+  }
+
+  /// Applies a tag-group rename to a single filter-options map.
+  static Map<String, dynamic> renameTagGroupInFilterOptions(
+    Map<String, dynamic> filterOptions,
+    String oldName,
+    String newName,
+  ) {
+    final copy = Map<String, dynamic>.from(filterOptions);
+    final orderedTags = _extractOrderedTags(copy);
+    if (orderedTags == null) return copy;
+    copy['orderedTags'] =
+        renameTagGroupInOrderedTags(orderedTags, oldName, newName);
+    return copy;
+  }
+
+  /// Applies a tag rename to a single filter-options map.
+  static Map<String, dynamic> renameTagInFilterOptions(
+    Map<String, dynamic> filterOptions,
+    String groupName,
+    String oldTagName,
+    String newTagName,
+  ) {
+    final copy = Map<String, dynamic>.from(filterOptions);
+    final orderedTags = _extractOrderedTags(copy);
+    if (orderedTags == null) return copy;
+    copy['orderedTags'] = renameTagInOrderedTags(
+      orderedTags,
+      groupName,
+      oldTagName,
+      newTagName,
+    );
+    return copy;
+  }
+
+  static Map<String, List<String>>? _extractOrderedTags(
+    Map<String, dynamic> filterOptions,
+  ) {
+    final raw = filterOptions['orderedTags'];
+    if (raw is! Map) return null;
+    final orderedTags = <String, List<String>>{};
+    raw.forEach((key, value) {
+      if (value is List) {
+        orderedTags[key.toString()] = List<String>.from(value);
+      }
+    });
+    return orderedTags;
+  }
+
+  /// Updates persisted filter options and quick filters after a tag group rename.
+  Future<void> syncTagGroupRenameInFilters(
+    String oldName,
+    String newName,
+  ) async {
+    if (oldName == newName) return;
+
+    final filterOptions = loadFilterOptions();
+    await saveFilterOptions(
+      renameTagGroupInFilterOptions(filterOptions, oldName, newName),
+    );
+
+    final quickFilters = loadQuickFilters();
+    if (quickFilters.isEmpty) return;
+
+    final updated = <String, Map<String, dynamic>>{};
+    quickFilters.forEach((name, options) {
+      updated[name] =
+          renameTagGroupInFilterOptions(options, oldName, newName);
+    });
+    await saveQuickFilters(updated);
+    AppLogger.log(
+      'SettingsManager: Synced tag group rename "$oldName" -> "$newName" in filters',
+    );
+  }
+
+  /// Updates persisted filter options and quick filters after a tag rename.
+  Future<void> syncTagRenameInFilters(
+    String groupName,
+    String oldTagName,
+    String newTagName,
+  ) async {
+    if (oldTagName == newTagName) return;
+
+    final filterOptions = loadFilterOptions();
+    await saveFilterOptions(
+      renameTagInFilterOptions(
+        filterOptions,
+        groupName,
+        oldTagName,
+        newTagName,
+      ),
+    );
+
+    final quickFilters = loadQuickFilters();
+    if (quickFilters.isEmpty) return;
+
+    final updated = <String, Map<String, dynamic>>{};
+    quickFilters.forEach((name, options) {
+      updated[name] = renameTagInFilterOptions(
+        options,
+        groupName,
+        oldTagName,
+        newTagName,
+      );
+    });
+    await saveQuickFilters(updated);
+    AppLogger.log(
+      'SettingsManager: Synced tag rename "$oldTagName" -> "$newTagName" '
+      'in group "$groupName" in filters',
+    );
+  }
 }
  
