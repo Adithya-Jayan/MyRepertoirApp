@@ -1,9 +1,15 @@
 [
   {
     "login": "Adithya-Jayan",
-    "contributions": 893,
+    "contributions": 898,
     "avatar_url": "https://avatars.githubusercontent.com/u/50314485?v=4",
     "html_url": "https://github.com/Adithya-Jayan"
+  },
+  {
+    "login": "ilbebino08",
+    "contributions": 22,
+    "avatar_url": "https://avatars.githubusercontent.com/u/154010870?v=4",
+    "html_url": "https://github.com/ilbebino08"
   },
   {
     "login": "zlh123123",
@@ -22,5 +28,11 @@
     "contributions": 2,
     "avatar_url": "https://avatars.githubusercontent.com/u/136355785?v=4",
     "html_url": "https://github.com/ThunderSpear21"
+  },
+  {
+    "login": "VedantMadane",
+    "contributions": 1,
+    "avatar_url": "https://avatars.githubusercontent.com/u/6527493?v=4",
+    "html_url": "https://github.com/VedantMadane"
   }
 ]
