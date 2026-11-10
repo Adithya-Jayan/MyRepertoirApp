@@ -17,51 +17,68 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine last nightly reference
-        id: last
-        run: |
-          git fetch --tags --force
-          LAST_NIGHTLY_TAG=$(git tag --list 'nightly-*' --sort=-creatordate | head -n1)
-          echo "last_tag=$LAST_NIGHTLY_TAG" >> $GITHUB_OUTPUT
-
       - name: Check if changes since last nightly
         id: changes
-        run: |
-          set -e
-          DEFAULT_BRANCH="main"
-          if [ -z "${{ steps.last.outputs.last_tag }}" ]; then
-            echo "no_last=true" >> $GITHUB_OUTPUT
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            RANGE="${{ steps.last.outputs.last_tag }}..origin/$DEFAULT_BRANCH"
-            if git rev-list --count "$RANGE" | grep -q '^[1-9]'; then
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-            else
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-            fi
-          fi
-
-      - name: Skip/fail run if no changes (scheduled runs only)
-        if: steps.changes.outputs.has_changes == 'false' && github.event_name == 'schedule'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "No changes since last nightly. Checking previous nightly run status..."
-          # Fetch the last completed run for this workflow on main
-          LAST_CONCLUSION=$(gh run list \
+          set -e
+          DEFAULT_BRANCH="main"
+          CURRENT_SHA=$(git rev-parse HEAD)
+          echo "Current commit: $CURRENT_SHA"
+
+          # Get commit SHA of the last completed nightly workflow run
+          LAST_RUN_SHA=$(gh run list \
             --workflow nightly.yml \
-            --branch main \
+            --branch "$DEFAULT_BRANCH" \
             --status completed \
             --limit 1 \
-            --json conclusion \
-            --jq '.[0].conclusion')
-          echo "Last nightly conclusion: ${LAST_CONCLUSION:-unknown}"
-          if [ "$LAST_CONCLUSION" = "failure" ]; then
-            echo "Previous nightly failed and there are no new changes. Failing this run to preserve status."
-            exit 1
+            --json headSha \
+            --jq '.[0].headSha // empty' 2>/dev/null || true)
+          echo "Last nightly run commit: ${LAST_RUN_SHA:-none}"
+
+          if [ -n "$LAST_RUN_SHA" ]; then
+            if [ "$LAST_RUN_SHA" = "$CURRENT_SHA" ]; then
+              echo "HEAD has not changed since last nightly run."
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            elif git merge-base --is-ancestor "$LAST_RUN_SHA" "$CURRENT_SHA" 2>/dev/null && [ "$LAST_RUN_SHA" != "$CURRENT_SHA" ]; then
+              echo "Found new commits since last nightly run."
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "Commit history diverged or unknown; treating as having changes."
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Fallback to tag-based check if no workflow run found
+            git fetch --tags --force
+            LAST_TAG=$(git tag --list 'nightly-*' --sort=-creatordate | head -n1)
+            if [ -z "$LAST_TAG" ]; then
+              echo "No previous nightly tag found. Running build."
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              RANGE="$LAST_TAG..origin/$DEFAULT_BRANCH"
+              if git rev-list --count "$RANGE" | grep -q '^[1-9]'; then
+                echo "Found changes since tag $LAST_TAG."
+                echo "has_changes=true" >> $GITHUB_OUTPUT
+              else
+                echo "No changes since tag $LAST_TAG."
+                echo "has_changes=false" >> $GITHUB_OUTPUT
+              fi
+            fi
           fi
-          echo "Previous nightly succeeded (or unknown). Skipping build."
+
+      - name: Skip run if no changes (scheduled runs only)
+        if: steps.changes.outputs.has_changes == 'false' && github.event_name == 'schedule'
+        run: |
+          echo "No new changes on main since last nightly run. Skipping build."
           exit 0
+
+      - name: Setup Java
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Flutter
         if: steps.changes.outputs.has_changes == 'true' || github.event_name != 'schedule'
