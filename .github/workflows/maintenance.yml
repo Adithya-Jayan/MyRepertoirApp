@@ -22,7 +22,7 @@ jobs:
         id: check_changes
         if: github.event_name == 'schedule'
         run: |
-          LAST_UPDATE_COMMIT=$(git log --author="github-actions[bot]" --grep="Update contributors.json in assets" -n 1 --pretty=format:%H)
+          LAST_UPDATE_COMMIT=$(git log --author="github-actions\[bot\]" --grep="^Update contributors\.json in assets$" -n 1 --pretty=format:%H)
           if [ -z "$LAST_UPDATE_COMMIT" ]; then
             echo "No previous contributor update found. Running job."
             echo "has_changes=true" >> $GITHUB_OUTPUT
