@@ -252,14 +252,14 @@
     <main>
         <div class="container">
             <h1>Privacy Policy</h1>
-            <p class="last-updated">Last Updated: October 6, 2025</p>
+            <p class="last-updated">Last Updated: November 14, 2026</p>
 
             <div class="highlight">
                 <p><strong>Summary:</strong> Repertoire is designed with your privacy in mind. All your data stays on your device. We don't collect, transmit, or store any of your personal information on external servers.</p>
             </div>
 
             <h2>1. Introduction</h2>
-            <p>Welcome to Repertoire ("we," "our," or "the app"). This Privacy Policy explains how we handle information when you use our music practice and sheet music organizer application.</p>
+            <p>Welcome to Repertoire ("we," "our," or "the app"). This Privacy Policy explains how we handle information when you use our practice and repertoire management application for performers.</p>
             <p>Repertoire is an open-source application developed to help musicians, dancers, magicians, and performers manage their repertoire, track practice sessions, and organize media files. We are committed to protecting your privacy and ensuring transparency in how the app operates.</p>
 
             <h2>2. Information We Do NOT Collect</h2>
@@ -295,14 +295,23 @@
             <h2>4. Permissions We Request</h2>
             <p>Repertoire may request the following permissions to provide its functionality:</p>
             <ul>
-                <li><strong>Storage/File Access:</strong> To read and write media files (PDFs, images, audio) that you attach to your music pieces</li>
-                <li><strong>Internet Access (if applicable):</strong> Only used if you choose to add external video links or media URLs. No data is transmitted to our servers</li>
+                <li><strong>Storage/File Access:</strong> To read and write media files (PDFs, images, audio) that you attach to your music pieces. (On Google Play Store builds, scoped sandboxing is used).</li>
+                <li><strong>Foreground Service (Media Playback):</strong> To allow uninterrupted audio and playback controls via the notification shade when you switch apps or practice with your device screen off.</li>
+                <li><strong>Internet Access:</strong> Used exclusively to open external media links you provide (e.g., YouTube or Spotify) and for optional lyrics or metadata lookups (LRCLIB and MusicBrainz) if enabled in settings. No personal data is transmitted to our servers.</li>
             </ul>
-            <p>These permissions are used solely for the functionality of the app and are not used to collect or transmit data.</p>
+            <p>These permissions are used solely for the functionality of the app and are not used to collect or transmit personal data.</p>
 
             <h2>5. Third-Party Services</h2>
             <h3>No Third-Party Analytics or Advertising</h3>
             <p>Repertoire does not integrate with any third-party analytics services, advertising networks, or data collection platforms.</p>
+
+            <h3>Optional Online Metadata & Lyrics Search (LRCLIB & MusicBrainz)</h3>
+            <p>Repertoire provides optional online search features to help you retrieve song lyrics (via <a href="https://lrclib.net" target="_blank">LRCLIB</a>) and music metadata or cover art (via <a href="https://musicbrainz.org" target="_blank">MusicBrainz</a> and the Cover Art Archive):</p>
+            <ul>
+                <li><strong>User-Configurable:</strong> These lookup features are completely optional. They can be independently enabled or disabled at any time under <em>Settings &gt; Functional Customization</em>.</li>
+                <li><strong>No Personal Identifiers:</strong> When performing a lookup, only the search query (e.g. piece title or artist name) is sent directly from your device over an encrypted HTTPS connection to the respective public API. No personal identifiers, account details, or device telemetry are collected or transmitted.</li>
+                <li><strong>Direct Communication:</strong> Queries are made directly to the public API endpoints; Repertoire does not operate intermediary servers or log your search queries.</li>
+            </ul>
 
             <h3>External Links</h3>
             <p>If you add external links (such as YouTube videos or Spotify tracks) to your pieces, clicking these links will open them in your default browser or app. The privacy policies of those external services will apply when you interact with them.</p>
@@ -365,7 +374,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
+            <p>&copy; 2026 Repertoire. Licensed under the <a href="https://github.com/Adithya-Jayan/MyRepertoirApp/blob/main/LICENSE" target="_blank">Apache 2.0 License</a>.</p>
             <p>Built with ❤️ by the open source community</p>
         </div>
     </footer>

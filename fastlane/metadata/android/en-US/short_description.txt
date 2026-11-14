@@ -1,1 +1,1 @@
-An app for musicians to track their repertoire and media.
+Organize pieces, routines, media, and practice logs for all performers.
